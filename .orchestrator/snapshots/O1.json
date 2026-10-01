@@ -1,0 +1,12 @@
+{
+  "snapshot_id": "O1",
+  "phase_completed": "F1",
+  "timestamp": "2026-10-01T00:00:00-03:00",
+  "frozen_sections": ["product", "scope", "feasibility"],
+  "context_hash": "sha256:615c1462aa3308297679fb1fc003873f521fb1619e971541f6737125d2c6176f",
+  "quality_gate_approval": {
+    "approved_by": "QualityGateEngine",
+    "criteria_met": ["2 personas com dores e objetivos (P1, P2)", "MVP hypothesis declarada; H1 pré-validada, H2 pendente de métrica pós-lançamento", "escopo incluído/excluído explícito", "6 métricas mensuráveis", "viabilidade VIÁVEL_COM_RISCOS"],
+    "artifacts": ["docs/business/product.md", "docs/business/business-rules.md", "docs/business/requirements.md"]
+  }
+}
