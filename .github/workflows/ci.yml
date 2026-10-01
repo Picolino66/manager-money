@@ -27,10 +27,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run verify
-      - name: Auditoria de dependências de produção
-        # Triagem em docs/quality/security-report.md (F6). Não bloqueante até a triagem.
-        continue-on-error: true
-        run: npm audit --omit=dev --audit-level=high
+      - name: Auditoria de dependências (bloqueia crítica)
+        # Altas/moderadas restantes são ferramentas de build do Expo SDK 54 — ver docs/quality/security-report.md
+        run: npm audit --omit=dev --audit-level=critical
 
   database:
     name: Migrations e RLS (Postgres 15)

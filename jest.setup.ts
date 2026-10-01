@@ -6,3 +6,8 @@ jest.mock('@react-native-community/netinfo', () =>
   // eslint-disable-next-line @typescript-eslint/no-require-imports -- factory do jest.mock é síncrona
   require('@react-native-community/netinfo/jest/netinfo-mock.js'),
 );
+
+jest.mock('react-native-safe-area-context', () =>
+  // eslint-disable-next-line @typescript-eslint/no-require-imports -- factory do jest.mock é síncrona
+  require('react-native-safe-area-context/jest/mock').default,
+);

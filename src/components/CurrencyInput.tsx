@@ -24,6 +24,8 @@ export function CurrencyInput({
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
+        accessibilityHint={error}
+        accessibilityLabel={label}
         keyboardType="numeric"
         onBlur={onBlur}
         onChangeText={(text) => onChangeValue(parseCurrencyInputToCents(text))}

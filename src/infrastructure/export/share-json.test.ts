@@ -3,10 +3,11 @@ import { buildExportPayload, exportFileName, shareJson } from './share-json';
 
 const mockWrite = jest.fn();
 const mockCreate = jest.fn();
+const mockDelete = jest.fn();
 
 jest.mock('expo-file-system', () => ({
   Paths: { cache: 'cache://' },
-  File: jest.fn().mockImplementation((dir: string, name: string) => ({ uri: `${dir}${name}`, create: mockCreate, write: mockWrite })),
+  File: jest.fn().mockImplementation((dir: string, name: string) => ({ uri: `${dir}${name}`, create: mockCreate, write: mockWrite, delete: mockDelete })),
 }));
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn().mockResolvedValue(true),
@@ -29,10 +30,13 @@ describe('exportação (BR-ACC-004)', () => {
     expect(mockCreate).toHaveBeenCalledWith({ overwrite: true });
     expect(mockWrite).toHaveBeenCalledWith('{}');
     expect(Sharing.shareAsync).toHaveBeenCalledWith('cache://a.json', expect.objectContaining({ mimeType: 'application/json' }));
+    expect(mockDelete).toHaveBeenCalled();
   });
 
   it('falha quando o compartilhamento não existe', async () => {
     Sharing.isAvailableAsync.mockResolvedValueOnce(false);
+    mockDelete.mockClear();
     await expect(shareJson('a.json', '{}')).rejects.toThrow('compartilhamento não está disponível');
+    expect(mockDelete).toHaveBeenCalled();
   });
 });

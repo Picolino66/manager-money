@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-01T14:49:19.599Z",
-  "source_commit": "359de21",
+  "generated_at": "2026-10-01T14:55:09.489Z",
+  "source_commit": "06f7782",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -561,6 +561,15 @@
       "spec": "SPEC-008"
     },
     {
+      "id": "operations.runbook",
+      "type": "module",
+      "module": "operations",
+      "title": "Runbook de operação",
+      "summary": "Como configurar Supabase e EAS, publicar nas lojas, monitorar, responder a incidentes e reverter versões.",
+      "doc": "operations/runbook.md",
+      "state": "implemented"
+    },
+    {
       "id": "planning",
       "type": "module",
       "module": "planning",
@@ -627,6 +636,27 @@
         "src/domain/financial/financial.calculations.test.ts"
       ],
       "spec": "SPEC-001"
+    },
+    {
+      "id": "quality.manual-qa",
+      "type": "module",
+      "module": "quality",
+      "title": "Campanha de QA manual (v1.0)",
+      "summary": "Roteiro de testes manuais em aparelho real, por dia e sequência, cobrindo as telas e fluxos críticos antes da publicação nas lojas.",
+      "doc": "quality/manual-qa.md",
+      "state": "implemented"
+    },
+    {
+      "id": "quality.security-report",
+      "type": "module",
+      "module": "quality",
+      "title": "Relatório de segurança (F6)",
+      "summary": "Resultado do security-testing-engine: auditoria de dependências com triagem, testes de RLS, varredura de segredos, verificação do threat model e achados de revisão de código.",
+      "doc": "quality/security-report.md",
+      "state": "implemented",
+      "adrs": [
+        "ADR-006"
+      ]
     },
     {
       "id": "settings",

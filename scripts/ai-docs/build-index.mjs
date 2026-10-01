@@ -223,6 +223,8 @@ function build() {
   features.sort((a, b) => a.id.localeCompare(b.id));
   for (const m of modules) m.features = features.filter((f) => f.module === m.id && f.type === 'feature').length;
 
+  // Suíte de retrieval é autoral (não gerada): apenas referenciada no manifesto.
+  const retrievalTests = readJson(path.join(AI, 'retrieval-tests.json'));
   const states = Object.values(documents).map((d) => d.state);
   const featuresJson = { ...meta, features };
   const freshnessJson = { ...meta, documents };
@@ -238,6 +240,9 @@ function build() {
     artifacts: {
       features: artifact('features.json', featuresJson, features.length),
       freshness: artifact('freshness.json', freshnessJson, Object.keys(documents).length),
+      ...(retrievalTests
+        ? { retrieval_tests: artifact('retrieval-tests.json', retrievalTests, retrievalTests.questions?.length ?? 0) }
+        : {}),
     },
     entry_points: {
       business_rules: 'business/business-rules.md',

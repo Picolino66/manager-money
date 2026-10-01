@@ -12,6 +12,8 @@ export function TextInputField({ label, error, style, ...props }: TextInputField
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
       <TextInput
+        accessibilityHint={error}
+        accessibilityLabel={label}
         placeholderTextColor={colors.disabled}
         style={[styles.input, error ? styles.inputError : null, style]}
         {...props}

@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-01T14:49:19.599Z",
-  "source_commit": "359de21",
+  "generated_at": "2026-10-01T14:55:09.489Z",
+  "source_commit": "06f7782",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -93,11 +93,11 @@
     },
     "modules/account/export.md": {
       "id": "account.export",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "F6-PENDING",
       "state": "fresh",
       "source_hashes": {
         "buildExportPayload": "sha256:6c6fabc0891cc19f61c5f5ac0ab3cf3cfbac436b99168fa138b3315c3d67fd1b",
-        "shareJson": "sha256:d0274c21f0440e22fe6ca0025625dd14ff9fe258b68d62fbd4a33406022e8f0c",
+        "shareJson": "sha256:cc6cf0bbedcad442f6eadb687e439ef1e1a11e6cc03186f77cd54ae71fcfb84f",
         "exportFileName": "sha256:e6002be4fa8453c5454f956b23c7e578850ee32bfcd0276d7b480d884998bf51"
       }
     },
@@ -389,14 +389,43 @@
     },
     "modules/tooling/quality-pipeline.md": {
       "id": "tooling.quality-pipeline",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "F6-PENDING",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:ffd6d93766e8971a0c1d0d56b06f171d12150832c4fd929d7dffcd3bfc535a45",
         "eslint.config.js": "sha256:ce6522ab08964ca7fcd43c8f070e8da55b3d85284b8e1bcaa7d288ea5c3b2cad",
-        ".github/workflows/ci.yml": "sha256:928bd237963a63890ee5b7e0da1f12eaf3135511ab5c70189b21e5371863bcd0",
-        "scripts/ai-docs/build-index.mjs": "sha256:ec97d67f2954aed7a4c7934dea3dca78905896b2109f3aac904d8a377c842d0a",
+        ".github/workflows/ci.yml": "sha256:11fbe6ff9f839ea6473b84092d3956f1ea761bdfebadd763952fe445b00c66cb",
+        "scripts/ai-docs/build-index.mjs": "sha256:9e4000c5c2a5d4059c49f4dc80ede342aac81afcbb2e336704378b97b09e9bd6",
         "supabase/tests/run-plain.sh": "sha256:404177ecd17a0846fd5ac6d3ead730b4179b02bf0c07cd422ab6a4e4f3ed3f53"
+      }
+    },
+    "operations/runbook.md": {
+      "id": "operations.runbook",
+      "last_verified_commit": "F6-PENDING",
+      "state": "fresh",
+      "source_hashes": {
+        "eas.json": "sha256:067f738eec35e1e2c470d7def3c181862ab60548a026c2b12e414841d7bd9d96",
+        "app.json": "sha256:49e41e74097395540979a70fe18c82e8315237e764b81eb99888817366a047ac",
+        "supabase/migrations/20261001000000_init.sql": "sha256:fbdafc4a64ab9b114512823451cffbb232b603310e616466c5bb811fe0ce93af",
+        "docs/operations/metrics.sql": "sha256:2c78ad7035f9191701ec6a0179d8caccd5d0468a82ec0c8185b883cc1ef66e58"
+      }
+    },
+    "quality/manual-qa.md": {
+      "id": "quality.manual-qa",
+      "last_verified_commit": "F6-PENDING",
+      "state": "fresh",
+      "source_hashes": {
+        "src/navigation/AppNavigator.tsx": "sha256:aa6b7b4bbadcaaed57ad6f1e0d70551e5904b370eecd5ca4c24d2f4d8f56706a"
+      }
+    },
+    "quality/security-report.md": {
+      "id": "quality.security-report",
+      "last_verified_commit": "F6-PENDING",
+      "state": "fresh",
+      "source_hashes": {
+        "supabase/migrations/20261001000000_init.sql": "sha256:fbdafc4a64ab9b114512823451cffbb232b603310e616466c5bb811fe0ce93af",
+        "src/infrastructure/supabase/session-storage.ts": "sha256:d9c6c59deb2636a97b43ab99c523ebfb130d5b19c1a006c7143cf74f4f5edc73",
+        "src/infrastructure/export/share-json.ts": "sha256:44d26ed419fd2984845e409c4a032a558907a895b93a4207e48b1d3f6a05620a"
       }
     }
   }

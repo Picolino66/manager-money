@@ -25,9 +25,14 @@ export async function shareJson(fileName: string, content: string): Promise<void
   file.create({ overwrite: true });
   file.write(content);
 
-  if (!(await Sharing.isAvailableAsync())) {
-    throw new Error('O compartilhamento não está disponível neste aparelho.');
-  }
+  try {
+    if (!(await Sharing.isAvailableAsync())) {
+      throw new Error('O compartilhamento não está disponível neste aparelho.');
+    }
 
-  await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: 'Exportar dados' });
+    await Sharing.shareAsync(file.uri, { mimeType: 'application/json', dialogTitle: 'Exportar dados' });
+  } finally {
+    // O arquivo contém dados financeiros: não fica no cache depois do compartilhamento.
+    file.delete();
+  }
 }

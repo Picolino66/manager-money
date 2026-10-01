@@ -1,0 +1,20 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-10-01T00:00:00Z",
+  "source_commit": "06f7782",
+  "generator": "manual (F6 audit)",
+  "repository_id": "manager-money",
+  "questions": [
+    { "id": "RT-001", "question": "Como é calculado o limite diário?", "key": "business_rule", "expected_entry_point": "cycle.dashboard", "expected_artifacts": [".ai/features.json", "business/business-rules.md"], "must_answer_without_code": true },
+    { "id": "RT-002", "question": "Por que o botão 'Já recebi' não aparece?", "key": "feature", "expected_entry_point": "cycle.receive-early", "expected_artifacts": ["modules/cycle/receive-early.md"], "must_answer_without_code": true },
+    { "id": "RT-003", "question": "Onde os dados ficam salvos no aparelho e como é a migração do MVP?", "key": "feature", "expected_entry_point": "storage.local-document", "expected_artifacts": ["modules/storage/local-document.md", "architecture/contracts.md"], "must_answer_without_code": true },
+    { "id": "RT-004", "question": "Como o sync resolve dois ciclos ativos em aparelhos diferentes?", "key": "integration", "expected_entry_point": "sync.engine", "expected_artifacts": ["modules/sync/engine.md", "../adr/ADR-004-sincronizacao.md"], "must_answer_without_code": true },
+    { "id": "RT-005", "question": "Qual tabela guarda os parcelamentos e quais constraints ela tem?", "key": "entity", "expected_entry_point": "architecture.contracts", "expected_artifacts": ["architecture/contracts.md"], "must_answer_without_code": true },
+    { "id": "RT-006", "question": "Como excluir a conta e o que acontece com os dados?", "key": "feature", "expected_entry_point": "account.delete", "expected_artifacts": ["modules/account/delete.md"], "must_answer_without_code": true },
+    { "id": "RT-007", "question": "Onde a sessão é armazenada e como é protegida?", "key": "symbol", "expected_entry_point": "account.auth", "expected_artifacts": ["modules/account/auth.md", "../adr/ADR-006-modelo-de-seguranca.md"], "must_answer_without_code": true },
+    { "id": "RT-008", "question": "Quais campos podem ir para o crash reporter?", "key": "symbol", "expected_entry_point": "monitoring.logging", "expected_artifacts": ["modules/monitoring/logging.md"], "must_answer_without_code": true },
+    { "id": "RT-009", "question": "Qual o fluxo completo do primeiro uso?", "key": "flow", "expected_entry_point": "FLOW-primeiro-uso", "expected_artifacts": ["flows/journeys.md"], "must_answer_without_code": true },
+    { "id": "RT-010", "question": "Como configurar o Supabase para o login por código funcionar?", "key": "operations", "expected_entry_point": "operations.runbook", "expected_artifacts": ["operations/runbook.md"], "must_answer_without_code": true },
+    { "id": "RT-011", "question": "Qual função implementa o avanço de parcelas?", "key": "symbol", "expected_entry_point": "cycle.open", "expected_artifacts": [".ai/features.json"], "must_answer_without_code": true }
+  ]
+}

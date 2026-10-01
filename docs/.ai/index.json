@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-01T14:49:19.599Z",
-  "source_commit": "359de21",
+  "generated_at": "2026-10-01T14:55:09.489Z",
+  "source_commit": "06f7782",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "stack": [
@@ -16,13 +16,18 @@
   "artifacts": {
     "features": {
       "path": ".ai/features.json",
-      "count": 41,
-      "hash": "sha256:538c2c11ca4bb7585dae66632084345822a6c9286b845aa0846d3fbcb13fe08b"
+      "count": 44,
+      "hash": "sha256:24c9d57861f11314fb29f4d354fe6e0c1c230faaebd0b36662e8d7a8e235bb74"
     },
     "freshness": {
       "path": ".ai/freshness.json",
-      "count": 41,
-      "hash": "sha256:3ad4890f7e1e4ae07325fcd489edaaa46259750f1976abc5ebd59d59a263c9cb"
+      "count": 44,
+      "hash": "sha256:75b7549bab539be93cf1486e32c0796e365f7dfc327da1c6b2bec78b3dff15fd"
+    },
+    "retrieval_tests": {
+      "path": ".ai/retrieval-tests.json",
+      "count": 11,
+      "hash": "sha256:20e3faca10d4a64c60d6acbf4394b200959403d7f672c4e56812dda37a339066"
     }
   },
   "entry_points": {
@@ -110,7 +115,7 @@
     }
   ],
   "health": {
-    "fresh": 41,
+    "fresh": 44,
     "stale": 0,
     "stale_critical": 0,
     "planned": 0,

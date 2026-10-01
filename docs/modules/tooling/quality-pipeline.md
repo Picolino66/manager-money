@@ -14,7 +14,7 @@ code:
   - scripts/ai-docs/build-index.mjs
   - supabase/tests/run-plain.sh
 adrs: [ADR-009, ADR-010]
-last_verified_commit: 359de21
+last_verified_commit: F6-PENDING
 ---
 
 # Pipeline de qualidade
@@ -26,4 +26,4 @@ Spec: [SPEC-010](../../../specs/SPEC-010-pipeline-de-qualidade.md).
 | `npm run verify` | lint (0 avisos) + typecheck + Jest com cobertura + docs:check |
 | `npm run test:db` | migrations + RLS em Postgres 15 descartável (Docker) |
 | `npm run docs:index` | regenera `docs/.ai` |
-| CI | verify + audit (não bloqueante até triagem F6) + RLS + gitleaks |
+| CI | verify + `npm audit` bloqueando crítica (triagem em [security-report](../../quality/security-report.md)) + RLS + gitleaks |
