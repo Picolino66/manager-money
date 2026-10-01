@@ -1,0 +1,139 @@
+{
+  "orchestration_id": "8c1f6a2e-4b7d-4e2a-9f3c-manager-money-v1",
+  "created_at": "2026-10-01T00:00:00-03:00",
+  "mode": "full-pipeline",
+  "current_phase": "F3",
+  "snapshot_version": "O2",
+  "baseline_commit": "5de5c5b",
+  "product": {
+    "name": "Manager Money",
+    "domain": "finanças pessoais — orçamento diário por ciclo de renda",
+    "subdomains": [
+      "ciclo-financeiro",
+      "gastos",
+      "planejamento-fixo",
+      "categorias",
+      "conta-e-sync"
+    ],
+    "personas": [
+      "P1-ana-assalariada",
+      "P2-bruno-multiaparelho"
+    ],
+    "business_rules": "docs/business/business-rules.md (BR-FIN-001..017, BR-ACC-001..006, BR-SYNC-001..003)",
+    "mvp_hypothesis": "H1 pré-validada (limite diário gera registro frequente e ciclos ≥0); H2 declarada (sync aumenta D30)",
+    "metrics": [
+      "M1 ativação ≥50%",
+      "M2 ≥5 gastos/semana",
+      "M3 ≥60% ciclos ≥0",
+      "M4 D30 ≥25%",
+      "M5 crash-free ≥99,5%",
+      "M6 sync ≥99%"
+    ],
+    "constraints": {
+      "distribution": [
+        "google-play",
+        "app-store"
+      ],
+      "backend": "sync em nuvem exigido",
+      "deploy_authority": "eas build preview autorizado; submit não autorizado",
+      "git": "um commit por fase em master",
+      "language": "pt-BR"
+    }
+  },
+  "scope": {
+    "included": "RF-01..RF-18, DEF-001..DEF-009, publicação Play/App Store",
+    "excluded": [
+      "renda variável",
+      "orçamento compartilhado",
+      "open finance",
+      "multimoeda",
+      "push",
+      "web",
+      "editar ciclos fechados",
+      "tema escuro",
+      "monetização"
+    ]
+  },
+  "feasibility": {
+    "verdict": "VIÁVEL_COM_RISCOS",
+    "top_risks": [
+      "sync offline-first",
+      "revisão das lojas",
+      "dev solo"
+    ]
+  },
+  "architecture": {
+    "pattern": "modular-monolith (client) + BaaS",
+    "layer_map": "docs/architecture/overview.md#2",
+    "tech_stack": {
+      "app": "Expo SDK 54 / RN 0.81 / TS strict",
+      "state": "zustand 5",
+      "forms": "react-hook-form + zod 4",
+      "backend": "Supabase sa-east-1 (Auth OTP, Postgres+RLS, PostgREST)",
+      "session": "expo-secure-store + aes-js",
+      "monitoring": "@sentry/react-native",
+      "tests": "jest-expo + @testing-library/react-native",
+      "ci": "github-actions"
+    },
+    "security_model": "adr/ADR-006-modelo-de-seguranca.md",
+    "integration_contracts": [
+      "supabase-auth",
+      "supabase-postgrest",
+      "supabase-rpc delete_my_account",
+      "sentry",
+      "eas"
+    ],
+    "infrastructure_strategy": "docs/architecture/overview.md#4",
+    "adrs": [
+      "ADR-001",
+      "ADR-002",
+      "ADR-003",
+      "ADR-004",
+      "ADR-005",
+      "ADR-006",
+      "ADR-007"
+    ],
+    "overrides": [
+      {
+        "adr": "ADR-005",
+        "section": "requirements.RF-13",
+        "change": "login social adiado para v1.1"
+      }
+    ]
+  },
+  "contracts": {},
+  "engineering": {
+    "backlog": [],
+    "module_map": {},
+    "test_coverage_threshold": 80
+  },
+  "agentic": {
+    "knowledge_layer": {
+      "path": "docs/.ai",
+      "schema_version": "1",
+      "repository_id": "manager-money"
+    }
+  },
+  "quality": {
+    "gates_passed": [
+      "F1",
+      "F2"
+    ],
+    "gates_failed": [],
+    "last_stable_snapshot": "O2"
+  },
+  "operations": {
+    "slos": [],
+    "alerts": [],
+    "incidents": []
+  },
+  "orchestration": {
+    "external_skills_activated": [
+      {
+        "skill": "react-native-expo-architect",
+        "mode": "complementar",
+        "phase": "F2"
+      }
+    ]
+  }
+}

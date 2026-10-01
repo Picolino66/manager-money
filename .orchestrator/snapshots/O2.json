@@ -1,0 +1,20 @@
+{
+  "snapshot_id": "O2",
+  "phase_completed": "F2",
+  "timestamp": "2026-10-01T00:00:00-03:00",
+  "frozen_sections": [
+    "architecture"
+  ],
+  "context_hash": "sha256:7ac727953918a99942e5dc4669807515c9794f0c1b62fde478e88c7326a197af",
+  "quality_gate_approval": {
+    "approved_by": "QualityGateEngine",
+    "criteria_met": [
+      "padrão arquitetural com ADR-001",
+      "stack locked ADR-002",
+      "modelo de segurança + threat model ADR-006",
+      "infra definida overview §4",
+      "integrações catalogadas overview §3",
+      "sem contradição: override RF-13 via ADR-005"
+    ]
+  }
+}
