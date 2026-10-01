@@ -156,16 +156,23 @@
       "path": "docs/.ai",
       "schema_version": "1",
       "repository_id": "manager-money",
-      "source_commit": "359de21",
+      "source_commit": "b49a9e8",
       "counts": {
-        "entries": 41,
-        "implemented": 41,
-        "planned": 0
+        "entries": 44
       },
       "health": {
-        "fresh": 41,
+        "fresh": 44,
         "stale": 0,
         "stale_critical": 0
+      },
+      "retrieval_tests": {
+        "total": 11,
+        "success_rate": 1.0,
+        "docs_only_rate": 1.0,
+        "fallback_to_code_rate": 0.0,
+        "stale_answer_rate": 0.0,
+        "broken_reference_rate": 0.0,
+        "mode": "semiautomático"
       }
     }
   },
@@ -180,14 +187,22 @@
     "gates_failed": [],
     "last_stable_snapshot": "O5",
     "open_findings": [
-      "npm audit: vulnerabilidades transitivas (tooling Expo/RN) — triagem F6",
-      "CI não executada no GitHub (sem remote)"
-    ]
+      "CI não executada no GitHub (sem remote)",
+      "build preview pendente de eas login"
+    ],
+    "f6_status": "pré-deploy concluído; aguardando eas login para build preview",
+    "security": "docs/quality/security-report.md — 0 críticas; 2 altas aceitas (tooling de build)",
+    "tests": {
+      "total": 110,
+      "coverage_lines": 97.36
+    },
+    "manual_qa": "docs/quality/manual-qa.md (planejada, não executada)"
   },
   "operations": {
     "slos": [],
     "alerts": [],
-    "incidents": []
+    "incidents": [],
+    "runbook": "docs/operations/runbook.md"
   },
   "orchestration": {
     "external_skills_activated": [
