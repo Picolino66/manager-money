@@ -11,7 +11,7 @@ code:
   - app.json
   - supabase/migrations/20261001000000_init.sql
   - docs/operations/metrics.sql
-last_verified_commit: F6-PENDING
+last_verified_commit: 27a0bd2
 ---
 
 # Runbook de operação

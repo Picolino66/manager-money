@@ -14,7 +14,7 @@ code:
   - scripts/ai-docs/build-index.mjs
   - supabase/tests/run-plain.sh
 adrs: [ADR-009, ADR-010]
-last_verified_commit: F6-PENDING
+last_verified_commit: 27a0bd2
 ---
 
 # Pipeline de qualidade

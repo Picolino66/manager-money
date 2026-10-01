@@ -12,7 +12,7 @@ code:
 symbols: [buildExportPayload, shareJson, exportFileName]
 business_rules: [BR-ACC-004]
 tests: [src/infrastructure/export/share-json.test.ts]
-last_verified_commit: F6-PENDING
+last_verified_commit: 27a0bd2
 ---
 
 # Exportar dados
