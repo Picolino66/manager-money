@@ -14,7 +14,7 @@ code:
 symbols: [saveConfig, calculateFixedExpensesTotal, calculateBaseAvailableAmount, calculateFixedExpenseAmount]
 tests: [src/application/cycle.use-cases.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-010, BR-FIN-014, BR-FIN-015]
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Configurar base financeira

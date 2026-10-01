@@ -15,7 +15,7 @@ code:
 symbols: [migrateV1ToV2, normalizeLegacyMonth, parseLocalState, LoadErrorScreen]
 adrs: [ADR-003]
 tests: [src/infrastructure/storage/local-store.test.ts]
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Documento local versionado

@@ -7,7 +7,7 @@ summary: >
   Login opcional por código de e-mail, exportação de dados e exclusão de conta.
 code:
   - src/store/session.store.ts
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Módulo: conta

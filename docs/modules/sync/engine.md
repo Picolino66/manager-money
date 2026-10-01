@@ -17,7 +17,7 @@ symbols: [runSync, collectDirty, acknowledge, applyRemoteRows, adoptRemoteActive
 business_rules: [BR-SYNC-001, BR-SYNC-002, BR-SYNC-003, BR-FIN-013]
 adrs: [ADR-004, ADR-008]
 tests: [src/infrastructure/sync/sync-engine.test.ts, src/infrastructure/sync/supabase-remote.test.ts, src/infrastructure/sync/mappers.test.ts]
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Motor de sincronização

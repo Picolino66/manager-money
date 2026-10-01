@@ -12,7 +12,7 @@ code:
   - src/infrastructure/sync/supabase-remote.ts
   - src/infrastructure/sync/mappers.ts
 adrs: [ADR-003, ADR-004, ADR-008]
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Contratos de dados e API — v1

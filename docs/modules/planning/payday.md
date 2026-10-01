@@ -13,7 +13,7 @@ code:
 symbols: [calculateCycleEndDate, calculateDefaultCycleStartDate, canReceiveIncomeEarly]
 business_rules: [BR-FIN-002]
 tests: [src/domain/financial/financial.calculations.test.ts]
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Dia de pagamento configurável

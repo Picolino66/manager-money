@@ -10,7 +10,7 @@ keywords: [análise, gráfico, período, filtro, relatório]
 code:
   - src/screens/CategoriesScreen.tsx
 business_rules: [BR-FIN-012]
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Análise por categoria

@@ -2,8 +2,8 @@
   "orchestration_id": "8c1f6a2e-4b7d-4e2a-9f3c-manager-money-v1",
   "created_at": "2026-10-01T00:00:00-03:00",
   "mode": "full-pipeline",
-  "current_phase": "F5",
-  "snapshot_version": "O4",
+  "current_phase": "F6",
+  "snapshot_version": "O5",
   "baseline_commit": "5de5c5b",
   "product": {
     "name": "Manager Money",
@@ -118,7 +118,34 @@
   "engineering": {
     "backlog": "tasks/README.md",
     "module_map": "docs/architecture/overview.md#2",
-    "test_coverage_threshold": 80
+    "test_coverage_threshold": 80,
+    "implementation_commit": "359de21",
+    "coverage_report": {
+      "lines": 97.35,
+      "statements": 96.49,
+      "branches": 85.25,
+      "functions": 97.08,
+      "tests": 103
+    },
+    "tasks_done": [
+      "T-001",
+      "T-002",
+      "T-003",
+      "T-004",
+      "T-005",
+      "T-006",
+      "T-007",
+      "T-008",
+      "T-009",
+      "T-010",
+      "T-011",
+      "T-012",
+      "T-014",
+      "T-015"
+    ],
+    "tasks_blocked": [
+      "T-013 (conta Sentry)"
+    ]
   },
   "agentic": {
     "specs_map": "specs/README.md",
@@ -129,13 +156,14 @@
       "path": "docs/.ai",
       "schema_version": "1",
       "repository_id": "manager-money",
-      "source_commit": "bb7364f",
+      "source_commit": "359de21",
       "counts": {
-        "implemented": 17,
-        "planned": 16
+        "entries": 41,
+        "implemented": 41,
+        "planned": 0
       },
       "health": {
-        "fresh": 17,
+        "fresh": 41,
         "stale": 0,
         "stale_critical": 0
       }
@@ -146,10 +174,15 @@
       "F1",
       "F2",
       "F3",
-      "F4"
+      "F4",
+      "F5"
     ],
     "gates_failed": [],
-    "last_stable_snapshot": "O4"
+    "last_stable_snapshot": "O5",
+    "open_findings": [
+      "npm audit: vulnerabilidades transitivas (tooling Expo/RN) — triagem F6",
+      "CI não executada no GitHub (sem remote)"
+    ]
   },
   "operations": {
     "slos": [],
@@ -162,6 +195,16 @@
         "skill": "react-native-expo-architect",
         "mode": "complementar",
         "phase": "F2"
+      },
+      {
+        "skill": "react-native-expo-architect",
+        "mode": "complementar",
+        "phase": "F5"
+      },
+      {
+        "skill": "ai-docs-self-healing",
+        "mode": "incremental",
+        "phase": "F5"
       }
     ]
   },

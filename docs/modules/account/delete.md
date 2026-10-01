@@ -15,7 +15,7 @@ symbols: [deleteAccount]
 business_rules: [BR-ACC-003]
 adrs: [ADR-005, ADR-006]
 tests: [src/store/session.store.test.ts]
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Excluir conta

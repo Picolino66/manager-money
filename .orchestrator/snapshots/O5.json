@@ -1,0 +1,23 @@
+{
+  "snapshot_id": "O5",
+  "phase_completed": "F5",
+  "commit": "359de21",
+  "frozen_sections": [
+    "engineering",
+    "quality.coverage_report"
+  ],
+  "quality_gate_approval": {
+    "approved_by": "QualityGateEngine",
+    "criteria_met": [
+      "bundle Android gerado sem erros (expo export)",
+      "cobertura 97,35% ≥ 80%",
+      "lint 0 erros/0 avisos",
+      "contratos: mappers ida-e-volta + RLS 12/12",
+      "sem segredos hardcoded",
+      "41/41 docs frescos, 0 stale-critical"
+    ],
+    "criteria_partial": [
+      "CI verde em branch principal: validada localmente; repositório sem remote GitHub"
+    ]
+  }
+}

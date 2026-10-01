@@ -1,13 +1,13 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-01T14:48:38.089Z",
-  "source_commit": "bb7364f",
+  "generated_at": "2026-10-01T14:49:19.599Z",
+  "source_commit": "359de21",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
     "architecture/contracts.md": {
       "id": "architecture.contracts",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "supabase/migrations/20261001000000_init.sql": "sha256:fbdafc4a64ab9b114512823451cffbb232b603310e616466c5bb811fe0ce93af",
@@ -18,7 +18,7 @@
     },
     "architecture/overview.md": {
       "id": "architecture.overview",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/domain/financial/financial.calculations.ts": "sha256:025c37f45f5efc11632137f36c2d122a59227f465dbbdc534b1f2d9fc12a458a",
@@ -30,7 +30,7 @@
     },
     "business/business-rules.md": {
       "id": "business.rules",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/domain/financial/financial.calculations.ts": "sha256:025c37f45f5efc11632137f36c2d122a59227f465dbbdc534b1f2d9fc12a458a",
@@ -40,7 +40,7 @@
     },
     "business/product.md": {
       "id": "business.product",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/domain/financial/financial.calculations.ts": "sha256:025c37f45f5efc11632137f36c2d122a59227f465dbbdc534b1f2d9fc12a458a"
@@ -48,7 +48,7 @@
     },
     "business/requirements.md": {
       "id": "business.requirements",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/store/financial.store.ts": "sha256:15afe61c18add1bfd6f153a8d02c7a2459acaa010bb8a532e5e3137f1755b097"
@@ -56,7 +56,7 @@
     },
     "design/design-system.md": {
       "id": "design.system",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/design/theme.ts": "sha256:9e5ab49c86d245ba891a6aea32eb9385b9b367c1264e15906924d6bcab25fc76",
@@ -65,7 +65,7 @@
     },
     "flows/journeys.md": {
       "id": "flows.journeys",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/navigation/AppNavigator.tsx": "sha256:aa6b7b4bbadcaaed57ad6f1e0d70551e5904b370eecd5ca4c24d2f4d8f56706a"
@@ -73,7 +73,7 @@
     },
     "modules/account/auth.md": {
       "id": "account.auth",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "sendCode": "sha256:2ba32d846d8e550a84b8141982b1702662c648526e6c6c3e55e7e8783eecb68c",
@@ -85,7 +85,7 @@
     },
     "modules/account/delete.md": {
       "id": "account.delete",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "deleteAccount": "sha256:5ed3413b53fa177c6a87b830672e1de2925878b674bb8295ca735daeba1e7eb2"
@@ -93,7 +93,7 @@
     },
     "modules/account/export.md": {
       "id": "account.export",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "buildExportPayload": "sha256:6c6fabc0891cc19f61c5f5ac0ab3cf3cfbac436b99168fa138b3315c3d67fd1b",
@@ -103,7 +103,7 @@
     },
     "modules/account/index.md": {
       "id": "account",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/store/session.store.ts": "sha256:d96370181e698e0d60ec31e4c312872b982caf109be5a3f61ce56ddbfaac4955"
@@ -111,7 +111,7 @@
     },
     "modules/application/index.md": {
       "id": "application",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/application/cycle.use-cases.ts": "sha256:183ef90e7fd81ea7adbd6b74a102f6cf7df4cc8aae0116a36689e7fd84efc335"
@@ -119,7 +119,7 @@
     },
     "modules/application/use-cases.md": {
       "id": "application.use-cases",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "saveConfig": "sha256:de51957fe7e65e6f3584db24194dd9d77cf3d13c4d5db029675ba27d8317ba6e",
@@ -134,7 +134,7 @@
     },
     "modules/category/analysis.md": {
       "id": "category.analysis",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/screens/CategoriesScreen.tsx": "sha256:5c84c6e54d26d595a562f77509f0fabda2a35b2cd288dce03553bce66b136eb6"
@@ -142,7 +142,7 @@
     },
     "modules/category/index.md": {
       "id": "category",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/screens/CategoriesScreen.tsx": "sha256:5c84c6e54d26d595a562f77509f0fabda2a35b2cd288dce03553bce66b136eb6"
@@ -150,7 +150,7 @@
     },
     "modules/category/manage.md": {
       "id": "category.manage",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "addCategory": "sha256:f7ca77dae4a0e2db18f32c4b66490a2274a8d980ae104435e2ae76769649e75a",
@@ -161,7 +161,7 @@
     },
     "modules/cycle/close.md": {
       "id": "cycle.close",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "closeCycle": "sha256:067216cc3016280061764505d0aee5485abbf6daab87218ebb87eb2f39f95fa9",
@@ -172,7 +172,7 @@
     },
     "modules/cycle/dashboard.md": {
       "id": "cycle.dashboard",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "buildDashboardSummary": "sha256:328f415c9254721051cfb2f595d040d20e196b43493ad148d819470cfc54c41f",
@@ -192,7 +192,7 @@
     },
     "modules/cycle/index.md": {
       "id": "cycle",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/domain/financial/financial.calculations.ts": "sha256:025c37f45f5efc11632137f36c2d122a59227f465dbbdc534b1f2d9fc12a458a"
@@ -200,7 +200,7 @@
     },
     "modules/cycle/open.md": {
       "id": "cycle.open",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "openCycle": "sha256:008554f5bdd6b19957dff090e259aba34b6fc1ba7590bb674cc165e2c975915f",
@@ -211,7 +211,7 @@
     },
     "modules/cycle/receive-early.md": {
       "id": "cycle.receive-early",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "receiveIncomeEarly": "sha256:a1b5c7c8629143a6893ddb3ae09f869abb0e32acf10642c07f7caa0e2d4189b2",
@@ -221,7 +221,7 @@
     },
     "modules/expense/delete.md": {
       "id": "expense.delete",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "deleteExpense": "sha256:29d78437693f3921bf02b5189020b84e2c1abaf364444c322d9e14f3e26eef78",
@@ -230,7 +230,7 @@
     },
     "modules/expense/index.md": {
       "id": "expense",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/screens/AddExpenseScreen.tsx": "sha256:c2b4fce00e32ea8982a435dcecaa2e1c3690c2fcdd7c72910c9112a426bda3d0"
@@ -238,7 +238,7 @@
     },
     "modules/expense/register.md": {
       "id": "expense.register",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "addExpense": "sha256:2e35563d5c9701da20a9e3a08c9294c6c9c82d5e0462a436ed17d7e584386d07",
@@ -249,7 +249,7 @@
     },
     "modules/legal/index.md": {
       "id": "legal",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/legal/privacy-policy.ts": "sha256:0ceb1b60258e843de721341c53fee3c47e3d110748e97f865ee3f1cbcdf4189b"
@@ -257,7 +257,7 @@
     },
     "modules/legal/privacy-policy.md": {
       "id": "legal.privacy-policy",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "PRIVACY_POLICY_SECTIONS": "sha256:b5a55e567b4244a611756080dd7ea40624d96a44916623cd1d1343e970d11a1a"
@@ -265,7 +265,7 @@
     },
     "modules/monitoring/index.md": {
       "id": "monitoring",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/infrastructure/monitoring/logger.ts": "sha256:24b25c1b043886f0a9e9ec5c1ea951371f75d12fbafac45a7782f51931b9e9a0"
@@ -273,7 +273,7 @@
     },
     "modules/monitoring/logging.md": {
       "id": "monitoring.logging",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "sanitizeFields": "sha256:a3cb41ff0aa761d1ec9fee915fdb2981b131531d4f37dc52292360dc5b86f44f",
@@ -282,7 +282,7 @@
     },
     "modules/planning/configure.md": {
       "id": "planning.configure",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "saveConfig": "sha256:de51957fe7e65e6f3584db24194dd9d77cf3d13c4d5db029675ba27d8317ba6e",
@@ -293,7 +293,7 @@
     },
     "modules/planning/index.md": {
       "id": "planning",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/screens/ConfigScreen.tsx": "sha256:24b27c6c1f02f222647dab12187c8a3dcc40c382db3bc68b27e3717fb90e708b"
@@ -301,7 +301,7 @@
     },
     "modules/planning/payday.md": {
       "id": "planning.payday",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "calculateCycleEndDate": "sha256:d86cb08998e7d77d8a8fd8915a0a9af2d3f44985fd6b3ef74f1d9bac51cbc536",
@@ -311,7 +311,7 @@
     },
     "modules/settings/hub.md": {
       "id": "settings.hub",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "describeSyncStatus": "sha256:7c8e875d883d3109ccaa86ff98c949fe27190afb01acd602d9d2b22b9f40c8e1",
@@ -320,7 +320,7 @@
     },
     "modules/settings/index.md": {
       "id": "settings",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/screens/SettingsScreen.tsx": "sha256:d989c8ee7c31c856fc1bfbe5435dcb36884469f1d2b244d8a5b062f66bd6de1e"
@@ -328,7 +328,7 @@
     },
     "modules/storage/index.md": {
       "id": "storage",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/infrastructure/storage/local-store.ts": "sha256:5eb61015dee7cca4dd9296d1e266fe8a0ae3317de086ad1e313b3af2fb3ba451"
@@ -336,7 +336,7 @@
     },
     "modules/storage/local-document.md": {
       "id": "storage.local-document",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "migrateV1ToV2": "sha256:125ae8b9b83a24242cf28b3db72dce36b85216fab2ed16deee47eb0203c2f057",
@@ -347,7 +347,7 @@
     },
     "modules/sync/engine.md": {
       "id": "sync.engine",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "runSync": "sha256:0833efbfb6cc4dd3597a5a2afb088e687fb4c86ede3cfe2a4e84f190e29c6ff9",
@@ -361,7 +361,7 @@
     },
     "modules/sync/first-login.md": {
       "id": "sync.first-login",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "planFirstLogin": "sha256:0e74cea7fd69046905f411ce3ce5fafe22d2e82dc013bc7e45dd8f7d90653663",
@@ -373,7 +373,7 @@
     },
     "modules/sync/index.md": {
       "id": "sync",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "src/infrastructure/sync/sync-engine.ts": "sha256:111cd9dc0a543cabcb9d358e41923186925d225e49662d6b4595ea7d60cdc150"
@@ -381,7 +381,7 @@
     },
     "modules/tooling/index.md": {
       "id": "tooling",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:ffd6d93766e8971a0c1d0d56b06f171d12150832c4fd929d7dffcd3bfc535a45"
@@ -389,7 +389,7 @@
     },
     "modules/tooling/quality-pipeline.md": {
       "id": "tooling.quality-pipeline",
-      "last_verified_commit": "F5-PENDING",
+      "last_verified_commit": "359de21",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:ffd6d93766e8971a0c1d0d56b06f171d12150832c4fd929d7dffcd3bfc535a45",

@@ -7,7 +7,7 @@ summary: >
   Ciclo de renda do usuário: abertura, painel do dia, recebimento antecipado, fechamento e histórico.
 code:
   - src/domain/financial/financial.calculations.ts
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Módulo: ciclo

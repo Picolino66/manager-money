@@ -7,7 +7,7 @@ summary: >
   Sync offline-first com outbox, pull incremental por cursor e last-write-wins.
 code:
   - src/infrastructure/sync/sync-engine.ts
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Módulo: sincronização

@@ -14,7 +14,7 @@ code:
 symbols: [planFirstLogin, linkKeepingLocal, linkUsingRemote, unlinkAccount, resolveFirstLogin]
 business_rules: [BR-ACC-002]
 tests: [src/infrastructure/sync/sync-engine.test.ts, src/store/session.store.test.ts]
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Primeiro login

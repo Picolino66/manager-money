@@ -12,7 +12,7 @@ code:
   - src/domain/financial/financial.calculations.ts
 symbols: [buildDashboardSummary, calculateDailyLimitForDate, calculateDayStatus, calculateRemainingDays]
 business_rules: [BR-FIN-007, BR-FIN-008, BR-FIN-009]
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Painel do dia

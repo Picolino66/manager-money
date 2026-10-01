@@ -14,7 +14,7 @@ code:
 symbols: [closeCycle, canCloseActiveCycle, canCloseCycle, describeCloseCycleBlock]
 business_rules: [BR-FIN-006, BR-FIN-017]
 tests: [src/application/cycle.use-cases.test.ts]
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Fechar ciclo

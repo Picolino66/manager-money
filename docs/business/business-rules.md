@@ -9,7 +9,7 @@ code:
   - src/domain/financial/financial.calculations.ts
   - src/application/cycle.use-cases.ts
   - src/infrastructure/sync/sync-engine.ts
-last_verified_commit: F5-PENDING
+last_verified_commit: 359de21
 ---
 
 # Regras de negócio
