@@ -1,0 +1,20 @@
+{
+  "snapshot_id": "O3",
+  "phase_completed": "F3",
+  "timestamp": "2026-10-01T00:00:00-03:00",
+  "frozen_sections": [
+    "contracts"
+  ],
+  "context_hash": "sha256:51fa595a37487d0c0adef0322421d9c2e119f8dae0ba2972af5a44909644ee41",
+  "quality_gate_approval": {
+    "approved_by": "QualityGateEngine",
+    "criteria_met": [
+      "schema versionado em migration",
+      "contrato de operações completo (PostgREST gera OpenAPI a partir do schema)",
+      "consistência com ADR-008",
+      "fronteiras transacionais mapeadas",
+      "DTOs tipados; validação Zod no cliente",
+      "RLS validado em Postgres 15 (12/12)"
+    ]
+  }
+}
