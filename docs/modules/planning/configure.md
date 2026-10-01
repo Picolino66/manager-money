@@ -1,0 +1,27 @@
+---
+id: planning.configure
+type: feature
+module: planning
+title: Configurar base financeira
+summary: >
+  Cadastro de renda mensal, meta de economia, despesas fixas permanentes e parcelamentos; calcula
+  o total de fixos e alerta quando o plano passa da renda.
+keywords: [configuração, renda, meta, despesas fixas, parcelamento, cartão]
+code:
+  - src/screens/ConfigScreen.tsx
+  - src/domain/financial/financial.calculations.ts
+symbols: [calculateFixedExpensesTotal, calculateBaseAvailableAmount, calculateFixedExpenseAmount]
+business_rules: [BR-FIN-004, BR-FIN-010, BR-FIN-014, BR-FIN-015]
+last_verified_commit: 52be7e8
+---
+
+# Configurar base financeira
+
+- **Tela:** `Config` (stack), acessível pelo Hoje e pela aba Ajustes.
+- **Formulário:** React Hook Form + Zod. Renda > 0; meta ≥ 0; fixos com nome, valor e categoria;
+  parcelamentos com valor da parcela > 0, total ≥ 1 e restantes ≤ total.
+- **Saldo base** = renda − fixos ativos − meta (BR-FIN-004). Parcelamento com 0 parcelas
+  restantes não conta (BR-FIN-010).
+- Se fixos + meta > renda, o app pede confirmação (BR-FIN-015).
+- Com ciclo ativo, salvar recalcula o saldo inicial do ciclo (BR-FIN-014) e ativa no ciclo atual
+  os parcelamentos ainda não iniciados.

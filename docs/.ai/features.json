@@ -1,0 +1,361 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-10-01T12:48:41.813Z",
+  "source_commit": "52be7e8",
+  "generator": "scripts/ai-docs/build-index.mjs",
+  "repository_id": "manager-money",
+  "features": [
+    {
+      "id": "account.auth",
+      "state": "planned",
+      "spec": "SPEC-005",
+      "spec_doc": "specs/SPEC-005-conta.md"
+    },
+    {
+      "id": "account.delete",
+      "state": "planned",
+      "spec": "SPEC-005",
+      "spec_doc": "specs/SPEC-005-conta.md"
+    },
+    {
+      "id": "account.export",
+      "state": "planned",
+      "spec": "SPEC-005",
+      "spec_doc": "specs/SPEC-005-conta.md"
+    },
+    {
+      "id": "application.use-cases",
+      "state": "planned",
+      "spec": "SPEC-009",
+      "spec_doc": "specs/SPEC-009-camada-de-aplicacao.md"
+    },
+    {
+      "id": "architecture.contracts",
+      "type": "integration",
+      "module": "architecture",
+      "title": "Contratos de dados e API (v1)",
+      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 2).",
+      "doc": "architecture/contracts.md",
+      "state": "implemented",
+      "adrs": [
+        "ADR-003",
+        "ADR-004",
+        "ADR-008"
+      ]
+    },
+    {
+      "id": "architecture.overview",
+      "type": "module",
+      "module": "architecture",
+      "title": "Visão de arquitetura",
+      "summary": "Padrão arquitetural, mapa de camadas, integrações externas e estratégia de infraestrutura do Manager Money v1.0.",
+      "doc": "architecture/overview.md",
+      "state": "implemented",
+      "adrs": [
+        "ADR-001",
+        "ADR-002",
+        "ADR-003",
+        "ADR-004",
+        "ADR-005",
+        "ADR-006",
+        "ADR-007"
+      ]
+    },
+    {
+      "id": "business.product",
+      "type": "module",
+      "module": "business",
+      "title": "Visão de produto",
+      "summary": "Visão, mercado, modelo de negócio, personas e hipótese de MVP do Manager Money.",
+      "doc": "business/product.md",
+      "state": "implemented"
+    },
+    {
+      "id": "business.requirements",
+      "type": "module",
+      "module": "business",
+      "title": "Requisitos, escopo, viabilidade e métricas",
+      "summary": "Requisitos funcionais e não funcionais da v1.0, limites de escopo, defeitos herdados do MVP, análise de viabilidade e métricas de sucesso.",
+      "doc": "business/requirements.md",
+      "state": "implemented"
+    },
+    {
+      "id": "business.rules",
+      "type": "rule",
+      "module": "business",
+      "title": "Regras de negócio",
+      "summary": "Catálogo canônico das regras de negócio BR-FIN-* do domínio financeiro, com origem no código.",
+      "doc": "business/business-rules.md",
+      "state": "implemented"
+    },
+    {
+      "id": "category",
+      "type": "module",
+      "module": "category",
+      "title": "Categorias",
+      "summary": "Categorias padrão e personalizadas e análise de gastos por categoria e período.",
+      "doc": "modules/category/index.md",
+      "state": "implemented"
+    },
+    {
+      "id": "category.analysis",
+      "type": "feature",
+      "module": "category",
+      "title": "Análise por categoria",
+      "summary": "Filtra gastos, fixos e parcelamentos por período, categoria e tipo, e mostra o total, o gráfico de barras por categoria e a lista de itens.",
+      "doc": "modules/category/analysis.md",
+      "state": "implemented",
+      "keywords": [
+        "análise",
+        "gráfico",
+        "período",
+        "filtro",
+        "relatório"
+      ],
+      "business_rules": [
+        "BR-FIN-012"
+      ]
+    },
+    {
+      "id": "category.manage",
+      "type": "feature",
+      "module": "category",
+      "title": "Gerenciar categorias",
+      "summary": "Categorias padrão (Moradia, Alimentação etc.) mais as categorias personalizadas criadas pelo usuário, sem duplicatas.",
+      "doc": "modules/category/manage.md",
+      "state": "implemented",
+      "keywords": [
+        "categoria",
+        "criar categoria",
+        "personalizada"
+      ],
+      "symbols": [
+        "normalizeCategory",
+        "getAvailableCategories",
+        "getSortedCategories"
+      ],
+      "business_rules": [
+        "BR-FIN-012"
+      ]
+    },
+    {
+      "id": "cycle",
+      "type": "module",
+      "module": "cycle",
+      "title": "Ciclo financeiro",
+      "summary": "Ciclo de renda do usuário: abertura, painel do dia, recebimento antecipado, fechamento e histórico.",
+      "doc": "modules/cycle/index.md",
+      "state": "implemented"
+    },
+    {
+      "id": "cycle.close",
+      "state": "planned",
+      "spec": "SPEC-002",
+      "spec_doc": "specs/SPEC-002-ciclo-de-vida.md"
+    },
+    {
+      "id": "cycle.dashboard",
+      "type": "feature",
+      "module": "cycle",
+      "title": "Painel do dia (limite diário)",
+      "summary": "Tela inicial que mostra quanto ainda pode ser gasto hoje, o limite diário, o gasto do dia, o status e o resumo do ciclo ativo.",
+      "doc": "modules/cycle/dashboard.md",
+      "state": "implemented",
+      "keywords": [
+        "limite diário",
+        "hoje",
+        "saldo do dia",
+        "status",
+        "dashboard"
+      ],
+      "symbols": [
+        "buildDashboardSummary",
+        "calculateDailyLimitForDate",
+        "calculateDayStatus",
+        "calculateRemainingDays"
+      ],
+      "business_rules": [
+        "BR-FIN-007",
+        "BR-FIN-008",
+        "BR-FIN-009"
+      ]
+    },
+    {
+      "id": "cycle.history",
+      "type": "feature",
+      "module": "cycle",
+      "title": "Histórico diário e ciclos anteriores",
+      "summary": "Lista de gastos do ciclo ativo agrupados por dia, com o saldo de cada dia, e lista de ciclos fechados com o resultado final.",
+      "doc": "modules/cycle/history.md",
+      "state": "implemented",
+      "keywords": [
+        "histórico",
+        "dias",
+        "ciclos anteriores",
+        "resultado"
+      ],
+      "symbols": [
+        "calculateDayBalance",
+        "calculateFinalBalance"
+      ],
+      "business_rules": [
+        "BR-FIN-006",
+        "BR-FIN-008"
+      ]
+    },
+    {
+      "id": "cycle.open",
+      "state": "planned",
+      "spec": "SPEC-002",
+      "spec_doc": "specs/SPEC-002-ciclo-de-vida.md"
+    },
+    {
+      "id": "cycle.receive-early",
+      "state": "planned",
+      "spec": "SPEC-002",
+      "spec_doc": "specs/SPEC-002-ciclo-de-vida.md"
+    },
+    {
+      "id": "design.system",
+      "type": "module",
+      "module": "design",
+      "title": "Design system",
+      "summary": "Tokens de cor, espaçamento, raio e tipografia e o catálogo de componentes reutilizáveis do app.",
+      "doc": "design/design-system.md",
+      "state": "implemented"
+    },
+    {
+      "id": "expense",
+      "type": "module",
+      "module": "expense",
+      "title": "Gastos",
+      "summary": "Registro, edição e exclusão de gastos variáveis do ciclo ativo.",
+      "doc": "modules/expense/index.md",
+      "state": "implemented"
+    },
+    {
+      "id": "expense.delete",
+      "state": "planned",
+      "spec": "SPEC-003",
+      "spec_doc": "specs/SPEC-003-exclusao-de-gasto.md"
+    },
+    {
+      "id": "expense.register",
+      "type": "feature",
+      "module": "expense",
+      "title": "Registrar e editar gasto",
+      "summary": "Formulário de valor, categoria, descrição e data para criar ou editar um gasto do ciclo ativo.",
+      "doc": "modules/expense/register.md",
+      "state": "implemented",
+      "keywords": [
+        "gasto",
+        "registrar",
+        "lançamento",
+        "editar",
+        "despesa"
+      ],
+      "symbols": [
+        "parseBRDateInput"
+      ],
+      "business_rules": [
+        "BR-FIN-001",
+        "BR-FIN-011",
+        "BR-FIN-012"
+      ]
+    },
+    {
+      "id": "flows.journeys",
+      "type": "flow",
+      "module": "flows",
+      "title": "Jornadas, wireframes e avaliação de usabilidade",
+      "summary": "Jornadas críticas por persona, wireframes dos fluxos novos da v1.0 (conta, sync, exclusão, exportação, dia de pagamento) e avaliação heurística das telas existentes.",
+      "doc": "flows/journeys.md",
+      "state": "implemented"
+    },
+    {
+      "id": "legal.privacy-policy",
+      "state": "planned",
+      "spec": "SPEC-007",
+      "spec_doc": "specs/SPEC-007-ajustes-e-textos.md"
+    },
+    {
+      "id": "monitoring.logging",
+      "state": "planned",
+      "spec": "SPEC-008",
+      "spec_doc": "specs/SPEC-008-observabilidade.md"
+    },
+    {
+      "id": "planning",
+      "type": "module",
+      "module": "planning",
+      "title": "Planejamento financeiro",
+      "summary": "Base financeira do usuário: renda mensal, meta de economia, dia de pagamento, despesas fixas e parcelamentos.",
+      "doc": "modules/planning/index.md",
+      "state": "implemented"
+    },
+    {
+      "id": "planning.configure",
+      "type": "feature",
+      "module": "planning",
+      "title": "Configurar base financeira",
+      "summary": "Cadastro de renda mensal, meta de economia, despesas fixas permanentes e parcelamentos; calcula o total de fixos e alerta quando o plano passa da renda.",
+      "doc": "modules/planning/configure.md",
+      "state": "implemented",
+      "keywords": [
+        "configuração",
+        "renda",
+        "meta",
+        "despesas fixas",
+        "parcelamento",
+        "cartão"
+      ],
+      "symbols": [
+        "calculateFixedExpensesTotal",
+        "calculateBaseAvailableAmount",
+        "calculateFixedExpenseAmount"
+      ],
+      "business_rules": [
+        "BR-FIN-004",
+        "BR-FIN-010",
+        "BR-FIN-014",
+        "BR-FIN-015"
+      ]
+    },
+    {
+      "id": "planning.payday",
+      "state": "planned",
+      "spec": "SPEC-001",
+      "spec_doc": "specs/SPEC-001-dia-de-pagamento.md"
+    },
+    {
+      "id": "settings.hub",
+      "state": "planned",
+      "spec": "SPEC-007",
+      "spec_doc": "specs/SPEC-007-ajustes-e-textos.md"
+    },
+    {
+      "id": "storage.local-document",
+      "state": "planned",
+      "spec": "SPEC-004",
+      "spec_doc": "specs/SPEC-004-documento-local.md"
+    },
+    {
+      "id": "sync.engine",
+      "state": "planned",
+      "spec": "SPEC-006",
+      "spec_doc": "specs/SPEC-006-sync.md"
+    },
+    {
+      "id": "sync.first-login",
+      "state": "planned",
+      "spec": "SPEC-006",
+      "spec_doc": "specs/SPEC-006-sync.md"
+    },
+    {
+      "id": "tooling.quality-pipeline",
+      "state": "planned",
+      "spec": "SPEC-010",
+      "spec_doc": "specs/SPEC-010-pipeline-de-qualidade.md"
+    }
+  ]
+}

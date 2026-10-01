@@ -1,0 +1,157 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-10-01T12:48:41.813Z",
+  "source_commit": "52be7e8",
+  "generator": "scripts/ai-docs/build-index.mjs",
+  "repository_id": "manager-money",
+  "documents": {
+    "architecture/contracts.md": {
+      "id": "architecture.contracts",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "supabase/migrations/20261001000000_init.sql": "sha256:fbdafc4a64ab9b114512823451cffbb232b603310e616466c5bb811fe0ce93af"
+      }
+    },
+    "architecture/overview.md": {
+      "id": "architecture.overview",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "src/domain/financial/financial.calculations.ts": "sha256:0a4f587c92f4ab9537b69f5781cf7f25e0b2a98fa000e602164a0c08d182c1a0",
+        "src/store/financial.store.ts": "sha256:a971200437d96fbc01328429600ede3f6fa98ff0d91e6997f9f2a6579d4de78a",
+        "src/storage/financial.storage.ts": "sha256:1142bc06b35571d67af81648fc8f7033e0bc466a6d4b76950e646a2c26f855c4"
+      }
+    },
+    "business/business-rules.md": {
+      "id": "business.rules",
+      "last_verified_commit": "5de5c5b",
+      "state": "fresh",
+      "source_hashes": {
+        "src/domain/financial/financial.calculations.ts": "sha256:0a4f587c92f4ab9537b69f5781cf7f25e0b2a98fa000e602164a0c08d182c1a0",
+        "src/store/financial.store.ts": "sha256:a971200437d96fbc01328429600ede3f6fa98ff0d91e6997f9f2a6579d4de78a"
+      }
+    },
+    "business/product.md": {
+      "id": "business.product",
+      "last_verified_commit": "5de5c5b",
+      "state": "fresh",
+      "source_hashes": {
+        "src/domain/financial/financial.calculations.ts": "sha256:0a4f587c92f4ab9537b69f5781cf7f25e0b2a98fa000e602164a0c08d182c1a0"
+      }
+    },
+    "business/requirements.md": {
+      "id": "business.requirements",
+      "last_verified_commit": "5de5c5b",
+      "state": "fresh",
+      "source_hashes": {
+        "src/store/financial.store.ts": "sha256:a971200437d96fbc01328429600ede3f6fa98ff0d91e6997f9f2a6579d4de78a"
+      }
+    },
+    "design/design-system.md": {
+      "id": "design.system",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "src/design/theme.ts": "sha256:9e5ab49c86d245ba891a6aea32eb9385b9b367c1264e15906924d6bcab25fc76",
+        "src/components/AppButton.tsx": "sha256:ecc1e8ddec9ad26faac79fd81e189928a6341ee2562699f7b7b0070e3762cd80"
+      }
+    },
+    "flows/journeys.md": {
+      "id": "flows.journeys",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "src/navigation/AppNavigator.tsx": "sha256:c460c68ce6beac04173664fc62ee15f06641aa429fd7eec3d88db51e37cb63df"
+      }
+    },
+    "modules/category/analysis.md": {
+      "id": "category.analysis",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "src/screens/CategoriesScreen.tsx": "sha256:d3a50d877bd85f8f3a7c3fc3e2b880f5cdacf609847cf0d10439332807a6fb03"
+      }
+    },
+    "modules/category/index.md": {
+      "id": "category",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "src/screens/CategoriesScreen.tsx": "sha256:d3a50d877bd85f8f3a7c3fc3e2b880f5cdacf609847cf0d10439332807a6fb03"
+      }
+    },
+    "modules/category/manage.md": {
+      "id": "category.manage",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "normalizeCategory": "sha256:9411e2b8aaadea001d6ede9e9c80b591a20234185f898553dab5dafb29b1c82a",
+        "getAvailableCategories": "sha256:6f5152c34277d7f4e52a678ec8eecb3c13b407bbe5addd7cbe7b6b515b598b49",
+        "getSortedCategories": "sha256:cbabbc30581887354ee7e540d8156bf1665fee66ac5371809f26d1cd9c62c777"
+      }
+    },
+    "modules/cycle/dashboard.md": {
+      "id": "cycle.dashboard",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "buildDashboardSummary": "sha256:328f415c9254721051cfb2f595d040d20e196b43493ad148d819470cfc54c41f",
+        "calculateDailyLimitForDate": "sha256:5026e9b9b93e9b77848641e69ff812b7116d9a1e8b379a0a6c3987c1261e9b2a",
+        "calculateDayStatus": "sha256:7f1d736235f6e8befa455dd3e88c23175815c18c21c2cec026cb5240598c9856",
+        "calculateRemainingDays": "sha256:717ed6b680ef46cb8fca29e70d1dcac15d9b7edcdc7e696688f23b1feed1d1e9"
+      }
+    },
+    "modules/cycle/history.md": {
+      "id": "cycle.history",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "calculateDayBalance": "sha256:fb42174e932181cea938be6113183edf45901abc8f7d10f68d2aac8abb581179",
+        "calculateFinalBalance": "sha256:08e27d475c050f0048b26cd3923d5077be41593ef96cd26a5e5f4bef6892a049"
+      }
+    },
+    "modules/cycle/index.md": {
+      "id": "cycle",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "src/domain/financial/financial.calculations.ts": "sha256:0a4f587c92f4ab9537b69f5781cf7f25e0b2a98fa000e602164a0c08d182c1a0"
+      }
+    },
+    "modules/expense/index.md": {
+      "id": "expense",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "src/screens/AddExpenseScreen.tsx": "sha256:19a0d90a4fa00473799bb59ffb75d87015a2ec5dd036987673d127ea9ebf373d"
+      }
+    },
+    "modules/expense/register.md": {
+      "id": "expense.register",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "parseBRDateInput": "sha256:872956f1697922fe191008736b67278da9820e5994dbf0b99f6b7cf779a4bf48"
+      }
+    },
+    "modules/planning/configure.md": {
+      "id": "planning.configure",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "calculateFixedExpensesTotal": "sha256:8379aa4dc05a9da70c23a73e21c357bdf3b81f7d2b4fed53fd3c21d1fd739810",
+        "calculateBaseAvailableAmount": "sha256:63670b9697d48107b00884f779c99a78388115f824ce50cef2d3f10b9b22655c",
+        "calculateFixedExpenseAmount": "sha256:28122a0880cd390d1e51a1ca80605927521fe52f0fead2d23b117760f6dd8eb7"
+      }
+    },
+    "modules/planning/index.md": {
+      "id": "planning",
+      "last_verified_commit": "52be7e8",
+      "state": "fresh",
+      "source_hashes": {
+        "src/screens/ConfigScreen.tsx": "sha256:7b5ac7ad1ac03ded5112746f7a8d531095e3490002ac78089411ac0e4bdb120a"
+      }
+    }
+  }
+}

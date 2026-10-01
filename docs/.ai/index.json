@@ -1,0 +1,81 @@
+{
+  "schema_version": "1",
+  "generated_at": "2026-10-01T12:48:41.813Z",
+  "source_commit": "52be7e8",
+  "generator": "scripts/ai-docs/build-index.mjs",
+  "repository_id": "manager-money",
+  "stack": [
+    "typescript",
+    "react-native",
+    "expo",
+    "zustand",
+    "supabase",
+    "postgres"
+  ],
+  "retrieval": "INDEX FIRST → DOCS SECOND → CODE LAST",
+  "artifacts": {
+    "features": {
+      "path": ".ai/features.json",
+      "count": 33,
+      "hash": "sha256:220dbdd6f1f8bbfc5d1f487929b05b775e971f3247bc61f6b0d6a08ccce5b0c5"
+    },
+    "freshness": {
+      "path": ".ai/freshness.json",
+      "count": 17,
+      "hash": "sha256:e1eb252238bae0ebd6f0f7ffded14e78e0dd0877ec5d5238bbc9f05dbda97bb3"
+    }
+  },
+  "entry_points": {
+    "business_rules": "business/business-rules.md",
+    "requirements": "business/requirements.md",
+    "architecture": "architecture/overview.md",
+    "contracts": "architecture/contracts.md",
+    "journeys": "flows/journeys.md",
+    "adrs": "../adr/README.md",
+    "specs": "../specs/README.md",
+    "tasks": "../tasks/README.md"
+  },
+  "modules": [
+    {
+      "id": "category",
+      "title": "Categorias",
+      "doc": "modules/category/index.md",
+      "features": 2
+    },
+    {
+      "id": "cycle",
+      "title": "Ciclo financeiro",
+      "doc": "modules/cycle/index.md",
+      "features": 2
+    },
+    {
+      "id": "expense",
+      "title": "Gastos",
+      "doc": "modules/expense/index.md",
+      "features": 1
+    },
+    {
+      "id": "planning",
+      "title": "Planejamento financeiro",
+      "doc": "modules/planning/index.md",
+      "features": 1
+    }
+  ],
+  "health": {
+    "fresh": 17,
+    "stale": 0,
+    "stale_critical": 0,
+    "planned": 16,
+    "broken_references": 0
+  },
+  "coverage_exceptions": [
+    {
+      "scope": "src/screens",
+      "reason": "telas descritas por feature; símbolos de UI não indexados individualmente"
+    },
+    {
+      "scope": "code-graph",
+      "reason": "repositório pequeno; análise de impacto por símbolos do frontmatter (sob demanda)"
+    }
+  ]
+}
