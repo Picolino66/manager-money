@@ -8,7 +8,7 @@ summary: >
 code:
   - src/design/theme.ts
   - src/components/AppButton.tsx
-last_verified_commit: 52be7e8
+last_verified_commit: F5-PENDING
 ---
 
 # Design system

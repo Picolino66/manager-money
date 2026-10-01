@@ -8,8 +8,11 @@ summary: >
   local versionado (schemaVersion 2).
 code:
   - supabase/migrations/20261001000000_init.sql
+  - src/infrastructure/storage/schema.ts
+  - src/infrastructure/sync/supabase-remote.ts
+  - src/infrastructure/sync/mappers.ts
 adrs: [ADR-003, ADR-004, ADR-008]
-last_verified_commit: 52be7e8
+last_verified_commit: F5-PENDING
 ---
 
 # Contratos de dados e API — v1

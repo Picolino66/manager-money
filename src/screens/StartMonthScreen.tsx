@@ -1,4 +1,4 @@
-import { StyleSheet, Text } from 'react-native';
+import { Alert, StyleSheet, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../navigation/types';
@@ -7,6 +7,7 @@ import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
 import { MetricRow } from '../components/MetricRow';
 import { Screen } from '../components/Screen';
+import { calculateNextCycleStartDate } from '../application/cycle.use-cases';
 import {
   buildFinancialCycleDates,
   calculateDailyLimit,
@@ -28,7 +29,7 @@ export function StartMonthScreen({ navigation }: Props) {
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const months = useFinancialStore((state) => state.months);
   const startFinancialCycle = useFinancialStore((state) => state.startFinancialCycle);
-  const cycleDates = buildFinancialCycleDates();
+  const doc = useFinancialStore((state) => state.doc);
 
   if (!config) {
     return (
@@ -38,7 +39,7 @@ export function StartMonthScreen({ navigation }: Props) {
           iconName="settings-outline"
           message="Defina a base financeira antes de abrir um ciclo mensal."
           onActionPress={() => navigation.navigate('Config')}
-          title="Configuracao pendente"
+          title="Configuração pendente"
         />
       </Screen>
     );
@@ -52,15 +53,14 @@ export function StartMonthScreen({ navigation }: Props) {
           iconName="checkmark-circle-outline"
           message="Existe um ciclo mensal ativo em andamento."
           onActionPress={() => navigation.navigate('MainTabs', { screen: 'Dashboard' })}
-          title="Ciclo ja iniciado"
+          title="Ciclo já iniciado"
         />
       </Screen>
     );
   }
 
-  const previousClosedMonth = [...months]
-    .filter((item) => item.status === 'closed')
-    .sort((left, right) => right.endDate.localeCompare(left.endDate))[0];
+  const cycleDates = buildFinancialCycleDates(calculateNextCycleStartDate(doc, new Date()), config.payday);
+  const previousClosedMonth = months[0];
   const previousMonthDebt = calculatePreviousMonthDebt(previousClosedMonth);
   const fixedExpensesTotal = calculateFixedExpensesTotal(config);
   const initialAvailableAmount = calculateInitialAvailableAmount(config, previousMonthDebt);
@@ -79,8 +79,15 @@ export function StartMonthScreen({ navigation }: Props) {
   const dailyLimit = calculateDailyLimit(initialAvailableAmount, remainingDays);
 
   async function handleStartMonth() {
-    await startFinancialCycle();
-    navigation.navigate('MainTabs', { screen: 'Dashboard' });
+    try {
+      await startFinancialCycle();
+      navigation.navigate('MainTabs', { screen: 'Dashboard' });
+    } catch (error) {
+      Alert.alert(
+        'Não foi possível iniciar o ciclo',
+        error instanceof Error ? error.message : 'Tente novamente.',
+      );
+    }
   }
 
   return (
@@ -102,17 +109,17 @@ export function StartMonthScreen({ navigation }: Props) {
         ))}
         <MetricRow label="Meta de economia" value={formatCurrency(config.savingGoal)} />
         <MetricRow
-          label="Divida herdada"
+          label="Dívida herdada"
           tone={previousMonthDebt > 0 ? 'negative' : 'default'}
           value={formatCurrency(previousMonthDebt)}
         />
-        <MetricRow label="Saldo disponivel" value={formatCurrency(initialAvailableAmount)} />
+        <MetricRow label="Saldo disponível" value={formatCurrency(initialAvailableAmount)} />
         <MetricRow
-          label="Periodo"
+          label="Período"
           value={formatCycleLabel(cycleDates.startDate, cycleDates.endDate)}
         />
         <MetricRow label="Dias do ciclo" value={String(remainingDays)} />
-        <MetricRow label="Limite diario inicial" value={formatCurrency(dailyLimit)} />
+        <MetricRow label="Limite diário inicial" value={formatCurrency(dailyLimit)} />
       </Card>
       <AppButton iconName="play-circle-outline" onPress={() => void handleStartMonth()} title="Iniciar ciclo" />
     </Screen>

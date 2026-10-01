@@ -20,7 +20,10 @@ import {
 } from '../domain/financial/financial.calculations';
 import {
   DEFAULT_EXPENSE_CATEGORY,
+  DEFAULT_PAYDAY,
   InstallmentFixedExpense,
+  MAX_PAYDAY,
+  MIN_PAYDAY,
   PermanentFixedExpense,
 } from '../domain/financial/financial.types';
 import { colors, spacing, typography } from '../design/theme';
@@ -37,7 +40,7 @@ const configSchema = z.object({
       type: z.literal('permanent'),
       name: z.string().trim().min(1, 'Informe o nome da despesa.'),
       category: z.string().trim().min(1),
-      amount: z.number().int().min(0, 'Valor nao pode ser negativo.'),
+      amount: z.number().int().min(0, 'Valor não pode ser negativo.'),
     }),
   ),
   installmentExpenses: z.array(
@@ -52,7 +55,12 @@ const configSchema = z.object({
       startedAtCycleId: z.string().optional(),
     }),
   ),
-  savingGoal: z.number().int().min(0, 'Meta nao pode ser negativa.'),
+  savingGoal: z.number().int().min(0, 'Meta não pode ser negativa.'),
+  payday: z
+    .number()
+    .int()
+    .min(MIN_PAYDAY, 'Informe um dia entre 1 e 28.')
+    .max(MAX_PAYDAY, 'Informe um dia entre 1 e 28.'),
 });
 
 type ConfigForm = z.infer<typeof configSchema>;
@@ -79,6 +87,7 @@ export function ConfigScreen({ navigation }: Props) {
       installmentExpenses:
         config?.fixedExpenses.filter((expense) => expense.type === 'installment') ?? [],
       savingGoal: config?.savingGoal ?? 0,
+      payday: config?.payday ?? DEFAULT_PAYDAY,
     },
   });
   const {
@@ -106,13 +115,7 @@ export function ConfigScreen({ navigation }: Props) {
     [installmentExpenses, permanentExpenses],
   );
   const fixedExpensesTotal = useMemo(
-    () => calculateFixedExpensesTotal({
-      monthlyIncome: 0,
-      fixedExpenses,
-      customCategories: config?.customCategories ?? [],
-      savingGoal: 0,
-      updatedAt: '',
-    }),
+    () => calculateFixedExpensesTotal({ fixedExpenses }),
     [fixedExpenses],
   );
 
@@ -149,9 +152,21 @@ export function ConfigScreen({ navigation }: Props) {
   }
 
   async function persist(values: ConfigForm) {
+    try {
+      await save(values);
+    } catch (error) {
+      Alert.alert(
+        'Não foi possível salvar',
+        error instanceof Error ? error.message : 'Tente novamente.',
+      );
+    }
+  }
+
+  async function save(values: ConfigForm) {
     await saveConfig({
       monthlyIncome: values.monthlyIncome,
       savingGoal: values.savingGoal,
+      payday: values.payday,
       customCategories: config?.customCategories ?? [],
       fixedExpenses: [
         ...values.permanentExpenses.map((expense) => ({
@@ -174,13 +189,10 @@ export function ConfigScreen({ navigation }: Props) {
   }
 
   function onSubmit(values: ConfigForm) {
-    const plannedOutflow = calculateFixedExpensesTotal({
-      monthlyIncome: values.monthlyIncome,
-      fixedExpenses: [...values.permanentExpenses, ...values.installmentExpenses],
-      customCategories: config?.customCategories ?? [],
-      savingGoal: values.savingGoal,
-      updatedAt: '',
-    }) + values.savingGoal;
+    const plannedOutflow =
+      calculateFixedExpensesTotal({
+        fixedExpenses: [...values.permanentExpenses, ...values.installmentExpenses],
+      }) + values.savingGoal;
 
     if (plannedOutflow > values.monthlyIncome) {
       Alert.alert(
@@ -210,11 +222,11 @@ export function ConfigScreen({ navigation }: Props) {
           iconName="save-outline"
           isLoading={isSubmitting}
           onPress={handleSubmit(onSubmit)}
-          title="Salvar configuracao"
+          title="Salvar configuração"
         />
       }
     >
-      <Text style={styles.title}>Configuracao financeira</Text>
+      <Text style={styles.title}>Configuração financeira</Text>
       <Card>
         <Controller
           control={control}
@@ -239,6 +251,21 @@ export function ConfigScreen({ navigation }: Props) {
               onBlur={field.onBlur}
               onChangeValue={field.onChange}
               value={field.value}
+            />
+          )}
+        />
+        <Controller
+          control={control}
+          name="payday"
+          render={({ field }) => (
+            <TextInputField
+              error={errors.payday?.message}
+              keyboardType="number-pad"
+              label="Dia do pagamento (1 a 28)"
+              maxLength={2}
+              onBlur={field.onBlur}
+              onChangeText={(value) => field.onChange(Number(value.replace(/\D/g, '')) || 0)}
+              value={field.value ? String(field.value) : ''}
             />
           )}
         />
@@ -348,7 +375,7 @@ export function ConfigScreen({ navigation }: Props) {
           </Pressable>
           <View style={styles.sectionMetaRow}>
             <Text numberOfLines={1} style={styles.sectionSubtitle}>
-              Cartao de credito por ciclo
+              Cartão de crédito por ciclo
             </Text>
             <AppButton
               iconName="card-outline"

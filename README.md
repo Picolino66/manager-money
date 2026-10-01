@@ -1,43 +1,51 @@
 # Manager Money
 
-MVP mobile local-first para transformar renda mensal em limite diario de gastos por ciclo financeiro.
+App mobile (Android e iOS) que transforma a renda mensal em um **limite diário de gastos**, recalculado
+a cada gasto dentro do ciclo do seu dia de pagamento. Funciona offline; o login por código de e-mail
+é opcional e habilita a sincronização entre aparelhos.
 
-O ciclo padrao comeca no dia 7 e termina no dia 6 do mes seguinte. Se a renda cair antes do dia 7, marque "Ja recebi" para fechar o ciclo atual e recalcular o limite diario a partir do novo recebimento.
+## Funcionalidades
 
-Compras parceladas no cartao podem ser cadastradas como parcelamentos: cada parcela reduz o saldo disponivel do ciclo ate terminar.
-
-Gastos, despesas fixas e parcelamentos podem ser classificados por categoria. A aba Categorias mostra gastos por periodo, filtro por categoria e grafico por total gasto.
+- Ciclo financeiro alinhado ao **dia de pagamento configurável** (1–28)
+- Limite diário dinâmico, status do dia e histórico por dia
+- Despesas fixas, **parcelamentos** no cartão e meta de economia
+- "Já recebi": abre o próximo ciclo quando a renda cai antes do dia
+- Gastos por categoria e período, com gráfico
+- Conta opcional (código por e-mail), **sync offline-first**, exportação JSON e exclusão de conta
 
 ## Stack
 
-- Expo + React Native + TypeScript
-- Zustand para estado global
-- AsyncStorage para persistencia local
-- date-fns para datas
-- React Hook Form + Zod para formularios
-- Valores monetarios em centavos
+Expo SDK 54 · React Native 0.81 · TypeScript estrito · Zustand · React Hook Form + Zod · date-fns ·
+Supabase (Auth + Postgres com RLS) · Jest. Valores monetários sempre em centavos.
 
 ## Como rodar
 
 ```bash
 npm install
+cp .env.example .env.local   # opcional: preencha para habilitar o sync
 npx expo start
 ```
 
-Use o Expo Go no celular para abrir o QR Code.
+Sem as variáveis `EXPO_PUBLIC_SUPABASE_*`, o app roda em **modo local** (tudo funciona, sem sync).
 
-## Scripts
+## Qualidade
 
 ```bash
-npm run typecheck
-npm test
+npm run verify      # lint + typecheck + testes com cobertura (≥ 80%) + knowledge layer
+npm run test:db     # migrations + RLS em Postgres descartável (requer Docker)
+npm run docs:index  # regenera docs/.ai após mudar documentação
 ```
 
-## Estrutura
+## Documentação
 
-- `src/domain/financial`: tipos e calculos puros do dominio financeiro.
-- `src/store`: store Zustand e acoes do app.
-- `src/storage`: persistencia local com AsyncStorage.
-- `src/navigation`: Tabs + Stack.
-- `src/screens`: telas do MVP.
-- `src/components`: componentes reutilizaveis.
+Comece por [docs/index.md](docs/index.md). Decisões em [adr/](adr/README.md), comportamento em
+[specs/](specs/README.md), execução em [tasks/](tasks/README.md).
+
+```
+src/domain          regras financeiras puras
+src/application     casos de uso puros sobre o documento local
+src/infrastructure  storage local, sync, Supabase, exportação, monitoramento
+src/store           Zustand (composição)
+src/screens|components|navigation|design   interface
+supabase/           migrations SQL e testes de RLS
+```

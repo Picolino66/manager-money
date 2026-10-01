@@ -8,7 +8,7 @@ summary: >
   análise de viabilidade e métricas de sucesso.
 code:
   - src/store/financial.store.ts
-last_verified_commit: 5de5c5b
+last_verified_commit: F5-PENDING
 ---
 
 # Requisitos, escopo, viabilidade e métricas — v1.0 (lojas)
@@ -64,6 +64,14 @@ last_verified_commit: 5de5c5b
 | DEF-007 | "Iniciar ciclo" não trata erro: a exceção é rejeitada sem feedback ao usuário. | Baixa | — |
 | DEF-008 | Testes cobrem só o domínio, com um runner ad hoc e sem medição de cobertura. | Média | RNF-09 |
 | DEF-009 | Dia 7 fixo no código impede o uso por quem recebe em outra data. Bloqueia o lançamento público. | Alta | BR-FIN-002 |
+
+### Status de entrega (F5)
+
+| Item | Status |
+|---|---|
+| RF-01 a RF-12, RF-17 | Entregues e cobertos por testes automatizados |
+| RF-13 a RF-16, RF-18 | Entregues e testados com servidor em memória; **ativação depende das variáveis do Supabase** (sem elas o app roda em modo local) |
+| DEF-001 a DEF-009 | Corrigidos, com teste de regressão (ver `src/application/cycle.use-cases.test.ts`, `src/infrastructure/storage/local-store.test.ts`) |
 
 ## 4. Escopo
 

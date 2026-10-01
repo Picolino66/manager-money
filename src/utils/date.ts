@@ -41,6 +41,10 @@ export function formatMonthLabel(year: number, month: number): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
+export function formatShortDate(date: string): string {
+  return format(parseISO(date), 'dd/MM', { locale: ptBR });
+}
+
 export function formatCycleLabel(startDate: string, endDate: string): string {
   return `${format(parseISO(startDate), 'dd/MM', { locale: ptBR })} a ${format(parseISO(endDate), 'dd/MM', { locale: ptBR })}`;
 }

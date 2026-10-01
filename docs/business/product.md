@@ -7,7 +7,7 @@ summary: >
   Visão, mercado, modelo de negócio, personas e hipótese de MVP do Manager Money.
 code:
   - src/domain/financial/financial.calculations.ts
-last_verified_commit: 5de5c5b
+last_verified_commit: F5-PENDING
 ---
 
 # Visão de produto — Manager Money

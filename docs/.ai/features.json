@@ -1,33 +1,156 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-01T12:48:41.813Z",
-  "source_commit": "52be7e8",
+  "generated_at": "2026-10-01T14:48:38.089Z",
+  "source_commit": "bb7364f",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
     {
+      "id": "account",
+      "type": "module",
+      "module": "account",
+      "title": "Conta",
+      "summary": "Login opcional por código de e-mail, exportação de dados e exclusão de conta.",
+      "doc": "modules/account/index.md",
+      "state": "implemented"
+    },
+    {
       "id": "account.auth",
-      "state": "planned",
-      "spec": "SPEC-005",
-      "spec_doc": "specs/SPEC-005-conta.md"
+      "type": "feature",
+      "module": "account",
+      "title": "Entrar e sair (OTP por e-mail)",
+      "summary": "Login sem senha com código de 6 dígitos enviado por e-mail via Supabase Auth; sessão criptografada no aparelho; sair mantendo ou apagando os dados locais.",
+      "doc": "modules/account/auth.md",
+      "state": "implemented",
+      "keywords": [
+        "login",
+        "entrar",
+        "código",
+        "otp",
+        "e-mail",
+        "sair",
+        "sessão"
+      ],
+      "symbols": [
+        "sendCode",
+        "verifyCode",
+        "signOut",
+        "friendlyAuthError",
+        "encryptedSessionStorage"
+      ],
+      "business_rules": [
+        "BR-ACC-001"
+      ],
+      "adrs": [
+        "ADR-005",
+        "ADR-006"
+      ],
+      "tests": [
+        "src/store/session.store.test.ts",
+        "src/infrastructure/supabase/session-storage.test.ts"
+      ],
+      "spec": "SPEC-005"
     },
     {
       "id": "account.delete",
-      "state": "planned",
-      "spec": "SPEC-005",
-      "spec_doc": "specs/SPEC-005-conta.md"
+      "type": "feature",
+      "module": "account",
+      "title": "Excluir conta",
+      "summary": "Exclusão definitiva da conta e de todos os dados na nuvem via RPC, com dupla confirmação; dados do aparelho continuam no modo local.",
+      "doc": "modules/account/delete.md",
+      "state": "implemented",
+      "keywords": [
+        "excluir conta",
+        "apagar conta",
+        "lgpd",
+        "direito ao esquecimento"
+      ],
+      "symbols": [
+        "deleteAccount"
+      ],
+      "business_rules": [
+        "BR-ACC-003"
+      ],
+      "adrs": [
+        "ADR-005",
+        "ADR-006"
+      ],
+      "tests": [
+        "src/store/session.store.test.ts"
+      ],
+      "spec": "SPEC-005"
     },
     {
       "id": "account.export",
-      "state": "planned",
-      "spec": "SPEC-005",
-      "spec_doc": "specs/SPEC-005-conta.md"
+      "type": "feature",
+      "module": "account",
+      "title": "Exportar dados",
+      "summary": "Gera um JSON com todos os dados (sem identificadores de sessão) e abre o compartilhamento nativo.",
+      "doc": "modules/account/export.md",
+      "state": "implemented",
+      "keywords": [
+        "exportar",
+        "backup",
+        "json",
+        "lgpd",
+        "portabilidade"
+      ],
+      "symbols": [
+        "buildExportPayload",
+        "shareJson",
+        "exportFileName"
+      ],
+      "business_rules": [
+        "BR-ACC-004"
+      ],
+      "tests": [
+        "src/infrastructure/export/share-json.test.ts"
+      ],
+      "spec": "SPEC-005"
+    },
+    {
+      "id": "application",
+      "type": "module",
+      "module": "application",
+      "title": "Camada de aplicação",
+      "summary": "Casos de uso puros sobre o documento local, seletores para os tipos de domínio e erros de regra.",
+      "doc": "modules/application/index.md",
+      "state": "implemented"
     },
     {
       "id": "application.use-cases",
-      "state": "planned",
-      "spec": "SPEC-009",
-      "spec_doc": "specs/SPEC-009-camada-de-aplicacao.md"
+      "type": "feature",
+      "module": "application",
+      "title": "Casos de uso e seletores",
+      "summary": "Funções (estado, entrada, contexto) → estado para toda escrita; seletores que montam config, ciclo ativo e ciclos fechados ignorando registros excluídos.",
+      "doc": "modules/application/use-cases.md",
+      "state": "implemented",
+      "keywords": [
+        "caso de uso",
+        "store",
+        "zustand",
+        "seletor",
+        "DomainError"
+      ],
+      "symbols": [
+        "saveConfig",
+        "addCategory",
+        "addExpense",
+        "updateExpense",
+        "selectActiveMonth",
+        "selectClosedMonths",
+        "touch",
+        "commit"
+      ],
+      "adrs": [
+        "ADR-001",
+        "ADR-008"
+      ],
+      "tests": [
+        "src/application/cycle.use-cases.test.ts",
+        "src/store/financial.store.test.ts"
+      ],
+      "spec": "SPEC-009"
     },
     {
       "id": "architecture.contracts",
@@ -130,6 +253,7 @@
         "personalizada"
       ],
       "symbols": [
+        "addCategory",
         "normalizeCategory",
         "getAvailableCategories",
         "getSortedCategories"
@@ -149,9 +273,31 @@
     },
     {
       "id": "cycle.close",
-      "state": "planned",
-      "spec": "SPEC-002",
-      "spec_doc": "specs/SPEC-002-ciclo-de-vida.md"
+      "type": "feature",
+      "module": "cycle",
+      "title": "Fechar ciclo",
+      "summary": "Fecha o ciclo ativo após o fim do período, gravando o saldo final que gera dívida herdada quando negativo.",
+      "doc": "modules/cycle/close.md",
+      "state": "implemented",
+      "keywords": [
+        "fechar ciclo",
+        "encerrar mês",
+        "saldo final"
+      ],
+      "symbols": [
+        "closeCycle",
+        "canCloseActiveCycle",
+        "canCloseCycle",
+        "describeCloseCycleBlock"
+      ],
+      "business_rules": [
+        "BR-FIN-006",
+        "BR-FIN-017"
+      ],
+      "tests": [
+        "src/application/cycle.use-cases.test.ts"
+      ],
+      "spec": "SPEC-002"
     },
     {
       "id": "cycle.dashboard",
@@ -205,15 +351,61 @@
     },
     {
       "id": "cycle.open",
-      "state": "planned",
-      "spec": "SPEC-002",
-      "spec_doc": "specs/SPEC-002-ciclo-de-vida.md"
+      "type": "feature",
+      "module": "cycle",
+      "title": "Abrir ciclo",
+      "summary": "Abre o ciclo do período atual com prévia de saldo, dias e limite; avança parcelas e herda dívida do último ciclo fechado, sem sobrepor períodos.",
+      "doc": "modules/cycle/open.md",
+      "state": "implemented",
+      "keywords": [
+        "abrir ciclo",
+        "iniciar ciclo",
+        "novo mês"
+      ],
+      "symbols": [
+        "openCycle",
+        "calculateNextCycleStartDate",
+        "advanceInstallments",
+        "startPendingInstallments"
+      ],
+      "business_rules": [
+        "BR-FIN-005",
+        "BR-FIN-006",
+        "BR-FIN-010",
+        "BR-FIN-013",
+        "BR-FIN-017"
+      ],
+      "tests": [
+        "src/application/cycle.use-cases.test.ts"
+      ],
+      "spec": "SPEC-002"
     },
     {
       "id": "cycle.receive-early",
-      "state": "planned",
-      "spec": "SPEC-002",
-      "spec_doc": "specs/SPEC-002-ciclo-de-vida.md"
+      "type": "feature",
+      "module": "cycle",
+      "title": "Recebimento antecipado (\"Já recebi\")",
+      "summary": "Quando a renda cai antes do dia de pagamento, fecha o ciclo ativo na véspera e abre um novo a partir de hoje, movendo os gastos do novo período.",
+      "doc": "modules/cycle/receive-early.md",
+      "state": "implemented",
+      "keywords": [
+        "já recebi",
+        "antecipado",
+        "salário adiantado"
+      ],
+      "symbols": [
+        "receiveIncomeEarly",
+        "canReceiveIncomeEarlyNow",
+        "canReceiveIncomeEarlyForCycle"
+      ],
+      "business_rules": [
+        "BR-FIN-003",
+        "BR-FIN-016"
+      ],
+      "tests": [
+        "src/application/cycle.use-cases.test.ts"
+      ],
+      "spec": "SPEC-002"
     },
     {
       "id": "design.system",
@@ -235,9 +427,29 @@
     },
     {
       "id": "expense.delete",
-      "state": "planned",
-      "spec": "SPEC-003",
-      "spec_doc": "specs/SPEC-003-exclusao-de-gasto.md"
+      "type": "feature",
+      "module": "expense",
+      "title": "Excluir gasto",
+      "summary": "Exclusão lógica de um gasto do ciclo ativo, com confirmação, propagada no sync.",
+      "doc": "modules/expense/delete.md",
+      "state": "implemented",
+      "keywords": [
+        "excluir gasto",
+        "apagar lançamento",
+        "remover"
+      ],
+      "symbols": [
+        "deleteExpense",
+        "findEditableExpense"
+      ],
+      "business_rules": [
+        "BR-FIN-011",
+        "BR-SYNC-002"
+      ],
+      "tests": [
+        "src/application/cycle.use-cases.test.ts"
+      ],
+      "spec": "SPEC-003"
     },
     {
       "id": "expense.register",
@@ -255,12 +467,18 @@
         "despesa"
       ],
       "symbols": [
+        "addExpense",
+        "updateExpense",
+        "assertDateWithinCycle",
         "parseBRDateInput"
       ],
       "business_rules": [
         "BR-FIN-001",
         "BR-FIN-011",
         "BR-FIN-012"
+      ],
+      "tests": [
+        "src/application/cycle.use-cases.test.ts"
       ]
     },
     {
@@ -273,16 +491,74 @@
       "state": "implemented"
     },
     {
+      "id": "legal",
+      "type": "module",
+      "module": "legal",
+      "title": "Legal",
+      "summary": "Textos legais exigidos pelas lojas e pela LGPD.",
+      "doc": "modules/legal/index.md",
+      "state": "implemented"
+    },
+    {
       "id": "legal.privacy-policy",
-      "state": "planned",
-      "spec": "SPEC-007",
-      "spec_doc": "specs/SPEC-007-ajustes-e-textos.md"
+      "type": "feature",
+      "module": "legal",
+      "title": "Política de privacidade",
+      "summary": "Política LGPD exibida no app e espelhada em docs/legal para publicação na URL exigida pelas lojas.",
+      "doc": "modules/legal/privacy-policy.md",
+      "state": "implemented",
+      "keywords": [
+        "privacidade",
+        "lgpd",
+        "política",
+        "termos"
+      ],
+      "symbols": [
+        "PRIVACY_POLICY_SECTIONS"
+      ],
+      "business_rules": [
+        "BR-ACC-006"
+      ],
+      "spec": "SPEC-007"
+    },
+    {
+      "id": "monitoring",
+      "type": "module",
+      "module": "monitoring",
+      "title": "Observabilidade",
+      "summary": "Eventos estruturados e captura de erros sem dados financeiros.",
+      "doc": "modules/monitoring/index.md",
+      "state": "implemented"
     },
     {
       "id": "monitoring.logging",
-      "state": "planned",
-      "spec": "SPEC-008",
-      "spec_doc": "specs/SPEC-008-observabilidade.md"
+      "type": "feature",
+      "module": "monitoring",
+      "title": "Logger estruturado e porta CrashReporter",
+      "summary": "Eventos nomeados com campos permitidos (ok, durationMs, code, count, table); qualquer outro campo é descartado antes do reporter.",
+      "doc": "modules/monitoring/logging.md",
+      "state": "implemented",
+      "keywords": [
+        "log",
+        "evento",
+        "sentry",
+        "crash",
+        "métrica"
+      ],
+      "symbols": [
+        "sanitizeFields",
+        "logger"
+      ],
+      "business_rules": [
+        "BR-ACC-006"
+      ],
+      "adrs": [
+        "ADR-007"
+      ],
+      "tests": [
+        "src/infrastructure/monitoring/logger.test.ts"
+      ],
+      "spec": "SPEC-008"
     },
     {
       "id": "planning",
@@ -310,6 +586,7 @@
         "cartão"
       ],
       "symbols": [
+        "saveConfig",
         "calculateFixedExpensesTotal",
         "calculateBaseAvailableAmount",
         "calculateFixedExpenseAmount"
@@ -319,43 +596,219 @@
         "BR-FIN-010",
         "BR-FIN-014",
         "BR-FIN-015"
+      ],
+      "tests": [
+        "src/application/cycle.use-cases.test.ts"
       ]
     },
     {
       "id": "planning.payday",
-      "state": "planned",
-      "spec": "SPEC-001",
-      "spec_doc": "specs/SPEC-001-dia-de-pagamento.md"
+      "type": "feature",
+      "module": "planning",
+      "title": "Dia de pagamento configurável",
+      "summary": "Dia do mês (1–28) em que a renda cai; define início, fim e janela de recebimento antecipado de cada ciclo.",
+      "doc": "modules/planning/payday.md",
+      "state": "implemented",
+      "keywords": [
+        "dia do pagamento",
+        "payday",
+        "salário",
+        "início do ciclo"
+      ],
+      "symbols": [
+        "calculateCycleEndDate",
+        "calculateDefaultCycleStartDate",
+        "canReceiveIncomeEarly"
+      ],
+      "business_rules": [
+        "BR-FIN-002"
+      ],
+      "tests": [
+        "src/domain/financial/financial.calculations.test.ts"
+      ],
+      "spec": "SPEC-001"
+    },
+    {
+      "id": "settings",
+      "type": "module",
+      "module": "settings",
+      "title": "Ajustes",
+      "summary": "Aba que centraliza configuração financeira, conta, exportação e política de privacidade.",
+      "doc": "modules/settings/index.md",
+      "state": "implemented"
     },
     {
       "id": "settings.hub",
-      "state": "planned",
-      "spec": "SPEC-007",
-      "spec_doc": "specs/SPEC-007-ajustes-e-textos.md"
+      "type": "feature",
+      "module": "settings",
+      "title": "Aba Ajustes e status de sincronização",
+      "summary": "Quinta aba com atalhos para configuração, conta (com status de sync), exportação, política de privacidade e versão do app.",
+      "doc": "modules/settings/hub.md",
+      "state": "implemented",
+      "keywords": [
+        "ajustes",
+        "configurações",
+        "status",
+        "versão"
+      ],
+      "symbols": [
+        "describeSyncStatus",
+        "SettingsRow"
+      ],
+      "tests": [
+        "src/screens/syncStatus.test.ts"
+      ],
+      "spec": "SPEC-007"
+    },
+    {
+      "id": "storage",
+      "type": "module",
+      "module": "storage",
+      "title": "Persistência local",
+      "summary": "Documento local único versionado (schemaVersion 2) com migração do formato do MVP.",
+      "doc": "modules/storage/index.md",
+      "state": "implemented"
     },
     {
       "id": "storage.local-document",
-      "state": "planned",
-      "spec": "SPEC-004",
-      "spec_doc": "specs/SPEC-004-documento-local.md"
+      "type": "feature",
+      "module": "storage",
+      "title": "Documento local versionado",
+      "summary": "Estado inteiro em uma chave do AsyncStorage, gravado atomicamente, validado por Zod, migrado do v1 e protegido contra sobrescrita quando corrompido.",
+      "doc": "modules/storage/local-document.md",
+      "state": "implemented",
+      "keywords": [
+        "asyncstorage",
+        "persistência",
+        "migração",
+        "schema",
+        "offline"
+      ],
+      "symbols": [
+        "migrateV1ToV2",
+        "normalizeLegacyMonth",
+        "parseLocalState",
+        "LoadErrorScreen"
+      ],
+      "adrs": [
+        "ADR-003"
+      ],
+      "tests": [
+        "src/infrastructure/storage/local-store.test.ts"
+      ],
+      "spec": "SPEC-004"
+    },
+    {
+      "id": "sync",
+      "type": "module",
+      "module": "sync",
+      "title": "Sincronização",
+      "summary": "Sync offline-first com outbox, pull incremental por cursor e last-write-wins.",
+      "doc": "modules/sync/index.md",
+      "state": "implemented"
     },
     {
       "id": "sync.engine",
-      "state": "planned",
-      "spec": "SPEC-006",
-      "spec_doc": "specs/SPEC-006-sync.md"
+      "type": "integration",
+      "module": "sync",
+      "title": "Motor de sincronização",
+      "summary": "Push de registros sujos em ordem de dependência, pull incremental com janela de 5 s, LWW por registro e resolução de conflito de ciclo ativo concorrente.",
+      "doc": "modules/sync/engine.md",
+      "state": "implemented",
+      "keywords": [
+        "sync",
+        "sincronizar",
+        "offline",
+        "conflito",
+        "outbox",
+        "supabase"
+      ],
+      "symbols": [
+        "runSync",
+        "collectDirty",
+        "acknowledge",
+        "applyRemoteRows",
+        "adoptRemoteActiveCycle",
+        "mapSupabaseError",
+        "scheduleSync"
+      ],
+      "business_rules": [
+        "BR-SYNC-001",
+        "BR-SYNC-002",
+        "BR-SYNC-003",
+        "BR-FIN-013"
+      ],
+      "adrs": [
+        "ADR-004",
+        "ADR-008"
+      ],
+      "tests": [
+        "src/infrastructure/sync/sync-engine.test.ts",
+        "src/infrastructure/sync/supabase-remote.test.ts",
+        "src/infrastructure/sync/mappers.test.ts"
+      ],
+      "spec": "SPEC-006"
     },
     {
       "id": "sync.first-login",
-      "state": "planned",
-      "spec": "SPEC-006",
-      "spec_doc": "specs/SPEC-006-sync.md"
+      "type": "feature",
+      "module": "sync",
+      "title": "Primeiro login e vínculo de dados",
+      "summary": "Decide entre enviar os dados locais, baixar os da nuvem ou perguntar ao usuário quando os dois lados têm dados.",
+      "doc": "modules/sync/first-login.md",
+      "state": "implemented",
+      "keywords": [
+        "primeiro login",
+        "migrar dados",
+        "vincular conta",
+        "mesclar"
+      ],
+      "symbols": [
+        "planFirstLogin",
+        "linkKeepingLocal",
+        "linkUsingRemote",
+        "unlinkAccount",
+        "resolveFirstLogin"
+      ],
+      "business_rules": [
+        "BR-ACC-002"
+      ],
+      "tests": [
+        "src/infrastructure/sync/sync-engine.test.ts",
+        "src/store/session.store.test.ts"
+      ],
+      "spec": "SPEC-006"
+    },
+    {
+      "id": "tooling",
+      "type": "module",
+      "module": "tooling",
+      "title": "Ferramentas de engenharia",
+      "summary": "Pipeline de qualidade: lint, tipos, testes, cobertura, knowledge layer, testes SQL e CI.",
+      "doc": "modules/tooling/index.md",
+      "state": "implemented"
     },
     {
       "id": "tooling.quality-pipeline",
-      "state": "planned",
-      "spec": "SPEC-010",
-      "spec_doc": "specs/SPEC-010-pipeline-de-qualidade.md"
+      "type": "feature",
+      "module": "tooling",
+      "title": "Pipeline de qualidade",
+      "summary": "Scripts npm e workflow de CI que aplicam os gates de lint, typecheck, testes com cobertura ≥ 80%, knowledge layer, RLS e varredura de segredos.",
+      "doc": "modules/tooling/quality-pipeline.md",
+      "state": "implemented",
+      "keywords": [
+        "ci",
+        "lint",
+        "jest",
+        "cobertura",
+        "github actions",
+        "verify"
+      ],
+      "adrs": [
+        "ADR-009",
+        "ADR-010"
+      ],
+      "spec": "SPEC-010"
     }
   ]
 }

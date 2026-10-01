@@ -64,7 +64,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
         <EmptyState
           actionLabel="Iniciar ciclo"
           iconName="calendar-outline"
-          message="O historico diario aparece depois que um ciclo mensal e iniciado."
+          message="O histórico diário aparece depois que um ciclo mensal é iniciado."
           onActionPress={() => navigation.navigate('StartMonth')}
           title="Sem ciclo ativo"
         />
@@ -75,13 +75,13 @@ export function DailyHistoryScreen({ navigation }: Props) {
   if (groups.length === 0) {
     return (
       <Screen>
-        <Text style={styles.title}>Historico diario</Text>
+        <Text style={styles.title}>Histórico diário</Text>
         <EmptyState
           actionLabel="Registrar gasto"
           iconName="receipt-outline"
           message="Nenhum gasto registrado neste ciclo."
           onActionPress={() => navigation.navigate('AddExpense')}
-          title="Historico vazio"
+          title="Histórico vazio"
         />
       </Screen>
     );
@@ -89,7 +89,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
 
   return (
     <Screen>
-      <Text style={styles.title}>Historico diario</Text>
+      <Text style={styles.title}>Histórico diário</Text>
       {groups.map((group) => {
         const date = parseISO(group.date);
         const total = calculateTodaySpent(group.expenses, date);

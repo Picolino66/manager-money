@@ -1,5 +1,10 @@
 export type MoneyCents = number;
 
+/** Dia de pagamento padrão (compatível com o MVP). Ver BR-FIN-002. */
+export const DEFAULT_PAYDAY = 7;
+export const MIN_PAYDAY = 1;
+export const MAX_PAYDAY = 28;
+
 export const DEFAULT_EXPENSE_CATEGORY = 'Outros';
 
 export const DEFAULT_EXPENSE_CATEGORIES = [
@@ -54,6 +59,8 @@ export type FixedExpense = PermanentFixedExpense | InstallmentFixedExpense;
 
 export type FinancialConfig = {
   monthlyIncome: MoneyCents;
+  /** Dia do mês em que a renda cai (1–28). Define início e fim do ciclo. */
+  payday: number;
   fixedExpenses: FixedExpense[];
   customCategories: ExpenseCategory[];
   savingGoal: MoneyCents;

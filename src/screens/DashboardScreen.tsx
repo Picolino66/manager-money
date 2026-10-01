@@ -13,10 +13,14 @@ import { StatusBadge } from '../components/StatusBadge';
 import { RootStackParamList } from '../navigation/types';
 import { colors, spacing, typography } from '../design/theme';
 import {
+  canCloseActiveCycle,
+  canReceiveIncomeEarlyNow,
+} from '../application/cycle.use-cases';
+import {
   buildDashboardSummary,
-  canReceiveIncomeEarly,
   calculateFixedExpenseAmount,
   calculateFixedExpensesTotal,
+  describeCloseCycleBlock,
 } from '../domain/financial/financial.calculations';
 import { DayStatus } from '../domain/financial/financial.types';
 import { useFinancialStore } from '../store/financial.store';
@@ -37,6 +41,10 @@ export function DashboardScreen() {
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const closeActiveMonth = useFinancialStore((state) => state.closeActiveMonth);
   const receiveIncomeEarly = useFinancialStore((state) => state.receiveIncomeEarly);
+  const doc = useFinancialStore((state) => state.doc);
+  const today = new Date();
+  const showReceiveEarly = canReceiveIncomeEarlyNow(doc, today);
+  const canClose = canCloseActiveCycle(doc, today);
   const [fixedExpensesExpanded, setFixedExpensesExpanded] = useState(false);
 
   const summary = useMemo(() => {
@@ -72,13 +80,18 @@ export function DashboardScreen() {
   }, [config]);
 
   function handleCloseMonth() {
-    Alert.alert('Fechar ciclo', 'O ciclo ativo sera movido para o historico.', [
+    Alert.alert('Fechar ciclo', 'O ciclo ativo será movido para o histórico.', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Fechar',
         style: 'destructive',
         onPress: () => {
-          void closeActiveMonth();
+          void closeActiveMonth().catch((error) => {
+            Alert.alert(
+              'Não foi possível fechar o ciclo',
+              error instanceof Error ? error.message : 'Tente novamente.',
+            );
+          });
         },
       },
     ]);
@@ -86,8 +99,8 @@ export function DashboardScreen() {
 
   function handleReceiveIncomeEarly() {
     Alert.alert(
-      'Ja recebi',
-      'O ciclo atual sera fechado e um novo ciclo sera aberto a partir de hoje.',
+      'Já recebi',
+      'O ciclo atual será fechado e um novo ciclo será aberto a partir de hoje.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -95,7 +108,7 @@ export function DashboardScreen() {
           onPress: () => {
             void receiveIncomeEarly().catch((error) => {
               Alert.alert(
-                'Nao foi possivel abrir o ciclo',
+                'Não foi possível abrir o ciclo',
                 error instanceof Error ? error.message : 'Tente novamente.',
               );
             });
@@ -114,7 +127,7 @@ export function DashboardScreen() {
           iconName="settings-outline"
           message="Informe renda, despesas fixas e meta mensal."
           onActionPress={() => navigation.navigate('Config')}
-          title="Configuracao inicial"
+          title="Configuração inicial"
         />
       </Screen>
     );
@@ -133,14 +146,14 @@ export function DashboardScreen() {
         <EmptyState
           actionLabel="Iniciar ciclo"
           iconName="play-circle-outline"
-          message="Crie o ciclo mensal para liberar o limite diario."
+          message="Crie o ciclo mensal para liberar o limite diário."
           onActionPress={() => navigation.navigate('StartMonth')}
           title="Nenhum ciclo ativo"
         />
         <AppButton
           iconName="settings-outline"
           onPress={() => navigation.navigate('Config')}
-          title="Editar configuracao"
+          title="Editar configuração"
           variant="secondary"
         />
       </Screen>
@@ -163,11 +176,11 @@ export function DashboardScreen() {
         </Text>
         <View style={styles.heroMetrics}>
           <View style={styles.heroMetric}>
-            <Text style={styles.heroMetricLabel}>Voce ja gastou</Text>
+            <Text style={styles.heroMetricLabel}>Você já gastou</Text>
             <Text style={styles.heroMetricValue}>{formatCurrency(summary.todaySpent)}</Text>
           </View>
           <View style={styles.heroMetric}>
-            <Text style={styles.heroMetricLabel}>Hoje voce pode gastar</Text>
+            <Text style={styles.heroMetricLabel}>Hoje você pode gastar</Text>
             <Text style={styles.heroMetricValue}>{formatCurrency(summary.currentDailyLimit)}</Text>
           </View>
         </View>
@@ -189,11 +202,11 @@ export function DashboardScreen() {
         />
       </View>
 
-      {canReceiveIncomeEarly() ? (
+      {showReceiveEarly ? (
         <AppButton
           iconName="cash-outline"
           onPress={handleReceiveIncomeEarly}
-          title="Ja recebi"
+          title="Já recebi"
           variant="secondary"
         />
       ) : null}
@@ -210,6 +223,8 @@ export function DashboardScreen() {
         <Text style={styles.sectionTitle}>Plano do ciclo</Text>
         <MetricRow label="Renda mensal" value={fixedMetrics?.[0][1] ?? ''} />
         <TouchableOpacity
+          accessibilityLabel="Mostrar ou ocultar despesas fixas"
+          accessibilityRole="button"
           onPress={() => setFixedExpensesExpanded((prev) => !prev)}
           style={styles.collapsibleRow}
         >
@@ -237,10 +252,18 @@ export function DashboardScreen() {
             />
           ))}
         <MetricRow label="Meta de economia" value={fixedMetrics?.[2][1] ?? ''} />
-        <MetricRow label="Divida herdada" value={formatCurrency(activeMonth.previousMonthDebt)} />
+        <MetricRow label="Dívida herdada" value={formatCurrency(activeMonth.previousMonthDebt)} />
       </Card>
 
+      {canClose ? (
+        <Text style={styles.cycleEndedText}>
+          O período deste ciclo terminou. Feche-o para começar o próximo.
+        </Text>
+      ) : (
+        <Text style={styles.closeHint}>{describeCloseCycleBlock(activeMonth)}</Text>
+      )}
       <AppButton
+        disabled={!canClose}
         iconName="checkmark-done-outline"
         onPress={handleCloseMonth}
         title="Fechar ciclo"
@@ -254,7 +277,7 @@ function Header({ cycleLabel }: { cycleLabel?: string }) {
   return (
     <View style={styles.header}>
       <Text style={styles.eyebrow}>{cycleLabel ?? 'Manager Money'}</Text>
-      <Text style={styles.title}>Limite diario</Text>
+      <Text style={styles.title}>Limite diário</Text>
     </View>
   );
 }
@@ -320,6 +343,17 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: typography.sectionTitle,
     fontWeight: '900',
+  },
+  closeHint: {
+    color: colors.muted,
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  cycleEndedText: {
+    color: colors.warning,
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   collapsibleRow: {
     alignItems: 'center',

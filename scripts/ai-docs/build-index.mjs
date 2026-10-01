@@ -96,6 +96,7 @@ function extractSymbol(source, symbol) {
     new RegExp(`^(?:async\\s+)?function\\s+${name}\\b`, 'm'),
     new RegExp(`^const\\s+${name}\\b`, 'm'),
     new RegExp(`^\\s+(?:async\\s+)?${name}\\s*\\(`, 'm'),
+    new RegExp(`^\\s+(?:async\\s+)?function\\s+${name}\\b`, 'm'),
     new RegExp(`^export\\s+(?:type|class)\\s+${name}\\b`, 'm'),
   ];
   for (const pattern of patterns) {

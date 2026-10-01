@@ -12,7 +12,7 @@ code:
   - src/domain/financial/financial.calculations.ts
 symbols: [buildDashboardSummary, calculateDailyLimitForDate, calculateDayStatus, calculateRemainingDays]
 business_rules: [BR-FIN-007, BR-FIN-008, BR-FIN-009]
-last_verified_commit: 52be7e8
+last_verified_commit: F5-PENDING
 ---
 
 # Painel do dia
@@ -21,5 +21,6 @@ last_verified_commit: 52be7e8
   abaixo, "Você já gastou" e "Hoje você pode gastar" (limite, BR-FIN-007).
 - **Resumo do ciclo:** saldo inicial, saldo restante, total gasto, dias restantes.
 - **Plano do ciclo:** renda, despesas fixas (recolhíveis, ordenadas por valor), meta, dívida herdada.
+- **Ações:** "Já recebi" ([receive-early.md](receive-early.md)) e "Fechar ciclo" ([close.md](close.md)) seguem BR-FIN-016/017.
 - **Estados:** sem configuração → "Configuração inicial"; sem ciclo ativo → base financeira +
   "Iniciar ciclo".

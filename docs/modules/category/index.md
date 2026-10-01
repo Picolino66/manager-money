@@ -7,7 +7,7 @@ summary: >
   Categorias padrão e personalizadas e análise de gastos por categoria e período.
 code:
   - src/screens/CategoriesScreen.tsx
-last_verified_commit: 52be7e8
+last_verified_commit: F5-PENDING
 ---
 
 # Módulo: categorias

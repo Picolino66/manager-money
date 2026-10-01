@@ -5,17 +5,17 @@ import { DayStatus } from '../domain/financial/financial.types';
 
 const statusContent: Record<DayStatus, { label: string; backgroundColor: string; color: string }> = {
   healthy: {
-    label: 'Saudavel',
+    label: 'Saudável',
     backgroundColor: colors.healthySoft,
     color: colors.healthy,
   },
   warning: {
-    label: 'Atencao',
+    label: 'Atenção',
     backgroundColor: colors.warningSoft,
     color: colors.warning,
   },
   critical: {
-    label: 'Critico',
+    label: 'Crítico',
     backgroundColor: colors.criticalSoft,
     color: colors.critical,
   },

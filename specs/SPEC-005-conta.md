@@ -30,7 +30,7 @@ FLOW-ativar-sync, FLOW-sair-e-excluir
 ## Critérios de aceite
 - [ ] Login com código válido leva ao status "Sincronizado".
 - [ ] Código inválido mostra "Código inválido ou expirado."
-- [ ] O JSON exportado é validado pelo schema v2 e não contém token.
+- [ ] O JSON exportado contém os dados do documento v2 e nenhum token ou identificador de usuário.
 - [ ] A exclusão de conta chama o RPC e, no sucesso, encerra a sessão.
 
 ## Tasks derivadas

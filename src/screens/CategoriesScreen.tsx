@@ -49,7 +49,7 @@ const itemTypeLabels: Record<CategorizedItemType, string> = {
   installment: 'Parcelamento',
 };
 
-const itemTypeFilterOptions: Array<{ label: string; type: CategorizedItemType }> = [
+const itemTypeFilterOptions: { label: string; type: CategorizedItemType }[] = [
   { label: 'Gasto', type: 'expense' },
   { label: 'Parcelado', type: 'installment' },
   { label: 'Fixo', type: 'fixed' },
@@ -172,12 +172,12 @@ export function CategoriesScreen({ navigation }: Props) {
     const normalizedCategory = normalizeCategory(newCategoryName);
 
     if (normalizedCategory === DEFAULT_EXPENSE_CATEGORY) {
-      Alert.alert('Categoria invalida', 'Informe um nome diferente de Outros.');
+      Alert.alert('Categoria inválida', 'Informe um nome diferente de Outros.');
       return;
     }
 
     if (categories.includes(normalizedCategory)) {
-      Alert.alert('Categoria existente', 'Essa categoria ja esta cadastrada.');
+      Alert.alert('Categoria existente', 'Essa categoria já está cadastrada.');
       return;
     }
 
@@ -201,7 +201,7 @@ export function CategoriesScreen({ navigation }: Props) {
           iconName="settings-outline"
           message="Configure a base financeira antes de analisar categorias."
           onActionPress={() => navigation.navigate('Dashboard')}
-          title="Configuracao pendente"
+          title="Configuração pendente"
         />
       </Screen>
     );
@@ -211,7 +211,7 @@ export function CategoriesScreen({ navigation }: Props) {
     <Screen>
       <View style={styles.header}>
         <Text style={styles.title}>Categorias</Text>
-        <Text style={styles.subtitle}>Gastos por periodo e categoria</Text>
+        <Text style={styles.subtitle}>Gastos por período e categoria</Text>
       </View>
 
       <Card>
@@ -235,7 +235,7 @@ export function CategoriesScreen({ navigation }: Props) {
         <Text style={styles.sectionTitle}>Filtros</Text>
         <View style={styles.dateGrid}>
           <TextInputField
-            label="Inicio"
+            label="Início"
             onChangeText={setStartDate}
             placeholder="07/04/2026"
             value={startDate}
@@ -284,7 +284,7 @@ export function CategoriesScreen({ navigation }: Props) {
       </Card>
 
       <Card>
-        <Text style={styles.sectionTitle}>Grafico</Text>
+        <Text style={styles.sectionTitle}>Gráfico</Text>
         {categoryTotals.length === 0 ? (
           <Text style={styles.emptyText}>Nenhum item encontrado para os filtros.</Text>
         ) : null}
@@ -309,7 +309,7 @@ export function CategoriesScreen({ navigation }: Props) {
       <Card>
         <Text style={styles.sectionTitle}>Itens</Text>
         {filteredItems.length === 0 ? (
-          <Text style={styles.emptyText}>Nenhum item no periodo.</Text>
+          <Text style={styles.emptyText}>Nenhum item no período.</Text>
         ) : null}
         {filteredItems
           .slice()

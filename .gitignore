@@ -6,3 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 coverage/
 *.tsbuildinfo
+
+# ambiente
+.env
+.env.*
+!.env.example

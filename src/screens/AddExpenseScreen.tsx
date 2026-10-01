@@ -28,7 +28,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
 const expenseSchema = z.object({
   amount: z.number().int().positive('Informe um valor maior que zero.'),
   category: z.string().trim().min(1),
-  description: z.string().trim().min(1, 'Informe uma descricao.'),
+  description: z.string().trim().min(1, 'Informe uma descrição.'),
   date: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Use o formato DD/MM/AAAA.'),
 });
 
@@ -39,6 +39,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const addExpense = useFinancialStore((state) => state.addExpense);
   const updateExpense = useFinancialStore((state) => state.updateExpense);
+  const deleteExpense = useFinancialStore((state) => state.deleteExpense);
   const categories = getSortedCategories(config);
   const categoryOptions = categories.map((category) => ({ label: category, value: category }));
   const expenseId = route.params?.expenseId;
@@ -93,9 +94,9 @@ export function AddExpenseScreen({ navigation, route }: Props) {
         <EmptyState
           actionLabel="Voltar"
           iconName="alert-circle-outline"
-          message="Nao encontramos o lancamento selecionado para edicao."
+          message="Não encontramos o lançamento selecionado para edição."
           onActionPress={() => navigation.goBack()}
-          title="Lancamento nao encontrado"
+          title="Lançamento não encontrado"
         />
       </Screen>
     );
@@ -109,7 +110,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
     const parsedExpenseDate = parseBRDateInput(values.date);
 
     if (!parsedExpenseDate) {
-      Alert.alert('Data invalida', 'Use uma data no formato DD/MM/AAAA.');
+      Alert.alert('Data inválida', 'Use uma data no formato DD/MM/AAAA.');
       return;
     }
 
@@ -141,10 +142,34 @@ export function AddExpenseScreen({ navigation, route }: Props) {
       navigation.goBack();
     } catch (error) {
       Alert.alert(
-        isEditing ? 'Nao foi possivel atualizar' : 'Nao foi possivel salvar',
+        isEditing ? 'Não foi possível atualizar' : 'Não foi possível salvar',
         error instanceof Error ? error.message : 'Tente novamente.',
       );
     }
+  }
+
+  function handleDelete() {
+    if (!expenseId) {
+      return;
+    }
+
+    Alert.alert('Excluir gasto?', 'Esta ação não pode ser desfeita.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: () => {
+          deleteExpense(expenseId)
+            .then(() => navigation.goBack())
+            .catch((error: unknown) => {
+              Alert.alert(
+                'Não foi possível excluir',
+                error instanceof Error ? error.message : 'Tente novamente.',
+              );
+            });
+        },
+      },
+    ]);
   }
 
   return (
@@ -183,10 +208,10 @@ export function AddExpenseScreen({ navigation, route }: Props) {
             <TextInputField
               autoCapitalize="sentences"
               error={errors.description?.message}
-              label="Descricao"
+              label="Descrição"
               onBlur={field.onBlur}
               onChangeText={field.onChange}
-              placeholder="Almoco"
+              placeholder="Almoço"
               value={field.value}
             />
           )}
@@ -210,8 +235,16 @@ export function AddExpenseScreen({ navigation, route }: Props) {
         iconName={isEditing ? 'save-outline' : 'add-circle-outline'}
         isLoading={isSubmitting}
         onPress={handleSubmit(onSubmit)}
-        title={isEditing ? 'Salvar alteracoes' : 'Salvar gasto'}
+        title={isEditing ? 'Salvar alterações' : 'Salvar gasto'}
       />
+      {isEditing ? (
+        <AppButton
+          iconName="trash-outline"
+          onPress={handleDelete}
+          title="Excluir gasto"
+          variant="danger"
+        />
+      ) : null}
     </Screen>
   );
 }

@@ -1,330 +1,187 @@
-import { isAfter, isBefore, parseISO, startOfDay } from 'date-fns';
 import { create } from 'zustand';
 
+import * as useCases from '../application/cycle.use-cases';
+import { selectActiveMonth, selectClosedMonths, selectConfig } from '../application/selectors';
 import {
-  advanceInstallmentExpenses,
-  buildFinancialCycleDates,
-  canReceiveIncomeEarly,
-  calculateFinalBalance,
-  calculateInitialAvailableAmount,
-  calculatePreviousMonthDebt,
-  getAvailableCategories,
-  normalizeCategory,
-  startPendingInstallmentExpenses,
-} from '../domain/financial/financial.calculations';
+  countPendingChanges,
+  createDefaultContext,
+  createEmptyState,
+  LocalState,
+  UseCaseContext,
+} from '../application/state';
 import {
-  Expense,
   ExpenseInput,
   FinancialConfig,
   FinancialConfigInput,
   FinancialMonth,
 } from '../domain/financial/financial.types';
-import { financialStorage } from '../storage/financial.storage';
+import { buildExportPayload, exportFileName, shareJson } from '../infrastructure/export/share-json';
+import { logger } from '../infrastructure/monitoring/logger';
+import { localStore } from '../infrastructure/storage/local-store';
+import { runSync, SyncOutcome } from '../infrastructure/sync/sync-engine';
+import { SyncRemote } from '../infrastructure/sync/types';
 
 type FinancialState = {
+  doc: LocalState;
   config: FinancialConfig | null;
   activeMonth: FinancialMonth | null;
   months: FinancialMonth[];
+  pendingChanges: number;
   isLoading: boolean;
-  error: string | null;
+  loadError: string | null;
+  isSyncing: boolean;
   loadAppData: () => Promise<void>;
   saveConfig: (config: FinancialConfigInput) => Promise<void>;
   addCategory: (category: string) => Promise<void>;
-  startFinancialCycle: (receivedAt?: Date) => Promise<void>;
-  receiveIncomeEarly: (receivedAt?: Date) => Promise<void>;
+  startFinancialCycle: () => Promise<void>;
+  receiveIncomeEarly: () => Promise<void>;
   addExpense: (expense: ExpenseInput) => Promise<void>;
   updateExpense: (expenseId: string, expense: ExpenseInput) => Promise<void>;
+  deleteExpense: (expenseId: string) => Promise<void>;
   closeActiveMonth: () => Promise<void>;
+  exportData: () => Promise<void>;
+  exportRawData: () => Promise<void>;
+  /** Substitui o documento inteiro (vínculo/desvínculo de conta). */
+  replaceDocument: (update: (doc: LocalState) => LocalState) => Promise<void>;
+  setSyncRemote: (remote: SyncRemote | null) => void;
+  syncNow: () => Promise<SyncOutcome>;
+  scheduleSync: (delayMs?: number) => void;
 };
 
-function getLatestClosedMonth(months: FinancialMonth[]): FinancialMonth | undefined {
-  return [...months]
-    .filter((month) => month.status === 'closed')
-    .sort((left, right) => right.endDate.localeCompare(left.endDate))[0];
+const SYNC_DEBOUNCE_MS = 2_000;
+const MAX_BACKOFF_MS = 60_000;
+
+let contextFactory: () => UseCaseContext = createDefaultContext;
+let writeQueue: Promise<unknown> = Promise.resolve();
+let syncRemote: SyncRemote | null = null;
+let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let backoffMs = 0;
+
+/** Permite relógio e IDs determinísticos em testes. */
+export function setUseCaseContextFactory(factory: () => UseCaseContext) {
+  contextFactory = factory;
 }
 
-function createFinancialCycle(
-  config: FinancialConfig,
-  previousMonthDebt: number,
-  receivedAt?: Date,
-  expenses: Expense[] = [],
-): FinancialMonth {
-  const cycleDates = buildFinancialCycleDates(receivedAt);
-  const initialAvailableAmount = calculateInitialAvailableAmount(config, previousMonthDebt);
-
+function derive(doc: LocalState) {
   return {
-    id: `${cycleDates.startDate}-${Date.now()}`,
-    ...cycleDates,
-    startedAt: new Date().toISOString(),
-    status: 'active',
-    initialAvailableAmount,
-    previousMonthDebt,
-    expenses,
+    doc,
+    config: selectConfig(doc),
+    activeMonth: selectActiveMonth(doc),
+    months: selectClosedMonths(doc),
+    pendingChanges: countPendingChanges(doc),
   };
 }
 
-function splitExpensesByDate(expenses: Expense[], date: Date) {
-  const cycleStart = startOfDay(date);
+export const useFinancialStore = create<FinancialState>((set, get) => {
+  /**
+   * Aplica uma atualização sobre o documento mais recente, grava (1 setItem, ADR-003) e
+   * publica o novo estado. Escritas são serializadas para não perder atualizações.
+   */
+  function commit(update: (doc: LocalState) => LocalState, options = { sync: true }): Promise<void> {
+    const task = writeQueue.then(async () => {
+      const next = update(get().doc);
 
-  return expenses.reduce(
-    (result, expense) => {
-      if (isBefore(startOfDay(parseISO(expense.date)), cycleStart)) {
-        result.previousCycleExpenses.push(expense);
-      } else {
-        result.nextCycleExpenses.push(expense);
+      if (next === get().doc) return;
+
+      await localStore.save(next);
+      set(derive(next));
+
+      if (options.sync) get().scheduleSync();
+    });
+
+    writeQueue = task.catch(() => undefined);
+
+    return task;
+  }
+
+  function run(useCase: (doc: LocalState, ctx: UseCaseContext) => LocalState) {
+    return commit((doc) => useCase(doc, contextFactory()));
+  }
+
+  return {
+    ...derive(createEmptyState()),
+    isLoading: true,
+    loadError: null,
+    isSyncing: false,
+
+    async loadAppData() {
+      set({ isLoading: true, loadError: null });
+      const startedAt = Date.now();
+
+      try {
+        const result = await localStore.load();
+
+        if (result.status === 'corrupted') {
+          set({ isLoading: false, loadError: 'Não foi possível ler os dados salvos neste aparelho.' });
+          return;
+        }
+
+        set({ ...derive(result.state), isLoading: false });
+        logger.event('app.load', { ok: true, durationMs: Date.now() - startedAt });
+        get().scheduleSync(0);
+      } catch (error) {
+        logger.error(error);
+        set({ isLoading: false, loadError: 'Não foi possível ler os dados salvos neste aparelho.' });
+      }
+    },
+
+    saveConfig: (input) => run((doc, ctx) => useCases.saveConfig(doc, input, ctx)),
+    addCategory: (name) => run((doc, ctx) => useCases.addCategory(doc, name, ctx)),
+    startFinancialCycle: () => run((doc, ctx) => useCases.openCycle(doc, ctx)),
+    receiveIncomeEarly: () => run((doc, ctx) => useCases.receiveIncomeEarly(doc, ctx)),
+    addExpense: (input) => run((doc, ctx) => useCases.addExpense(doc, input, ctx)),
+    updateExpense: (id, input) => run((doc, ctx) => useCases.updateExpense(doc, id, input, ctx)),
+    deleteExpense: (id) => run((doc, ctx) => useCases.deleteExpense(doc, id, ctx)),
+    closeActiveMonth: () => run((doc, ctx) => useCases.closeCycle(doc, ctx)),
+
+    async exportData() {
+      const now = new Date();
+      await shareJson(exportFileName(now), buildExportPayload(get().doc, now));
+      logger.event('account.export', { ok: true });
+    },
+
+    async exportRawData() {
+      const raw = (await localStore.readRaw()) ?? '{}';
+      await shareJson(`manager-money-recuperacao-${Date.now()}.json`, raw);
+    },
+
+    replaceDocument: (update) => commit(update),
+
+    setSyncRemote(remote) {
+      syncRemote = remote;
+      backoffMs = 0;
+      if (remote) get().scheduleSync(0);
+    },
+
+    scheduleSync(delayMs = SYNC_DEBOUNCE_MS) {
+      if (!syncRemote || !get().doc.sync.userId) return;
+      if (syncTimer) clearTimeout(syncTimer);
+      syncTimer = setTimeout(() => {
+        syncTimer = null;
+        void get().syncNow();
+      }, delayMs);
+    },
+
+    async syncNow() {
+      if (!syncRemote) return { ok: false, code: 'disabled' };
+      if (get().isSyncing) return { ok: false, code: 'busy' };
+
+      set({ isSyncing: true });
+      const outcome = await runSync(
+        { get: () => get().doc, commit: (update) => commit(update, { sync: false }) },
+        syncRemote,
+      );
+      set({ isSyncing: false });
+
+      if (outcome.ok) {
+        backoffMs = 0;
+        if (get().pendingChanges > 0) get().scheduleSync();
+      } else if (outcome.code === 'network' || outcome.code === 'unknown') {
+        backoffMs = Math.min(MAX_BACKOFF_MS, backoffMs ? backoffMs * 2 : SYNC_DEBOUNCE_MS);
+        get().scheduleSync(backoffMs);
       }
 
-      return result;
+      return outcome;
     },
-    {
-      previousCycleExpenses: [] as Expense[],
-      nextCycleExpenses: [] as Expense[],
-    },
-  );
-}
-
-function validateExpenseDateWithinActiveMonth(activeMonth: FinancialMonth, date: string) {
-  const expenseDate = startOfDay(parseISO(date));
-  const cycleStart = startOfDay(parseISO(activeMonth.startDate));
-  const cycleEnd = startOfDay(parseISO(activeMonth.endDate));
-
-  if (isBefore(expenseDate, cycleStart) || isAfter(expenseDate, cycleEnd)) {
-    throw new Error('A data do gasto precisa estar dentro do ciclo ativo.');
-  }
-}
-
-function buildExpenseRecord(input: ExpenseInput, existingExpense?: Expense): Expense {
-  return {
-    id: existingExpense?.id ?? `expense-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    amount: input.amount,
-    category: normalizeCategory(input.category),
-    description: input.description.trim(),
-    date: input.date,
-    createdAt: existingExpense?.createdAt ?? new Date().toISOString(),
   };
-}
-
-export const useFinancialStore = create<FinancialState>((set, get) => ({
-  config: null,
-  activeMonth: null,
-  months: [],
-  isLoading: true,
-  error: null,
-
-  async loadAppData() {
-    set({ isLoading: true, error: null });
-
-    try {
-      const [config, activeMonth, months] = await Promise.all([
-        financialStorage.getConfig(),
-        financialStorage.getActiveMonth(),
-        financialStorage.getMonths(),
-      ]);
-
-      set({ config, activeMonth, months, isLoading: false });
-    } catch {
-      set({ error: 'Nao foi possivel carregar os dados locais.', isLoading: false });
-    }
-  },
-
-  async saveConfig(input) {
-    const { activeMonth } = get();
-    let config: FinancialConfig = {
-      ...input,
-      customCategories: input.customCategories.map(normalizeCategory),
-      updatedAt: new Date().toISOString(),
-    };
-
-    if (!activeMonth) {
-      await financialStorage.saveConfig(config);
-      set({ config });
-      return;
-    }
-
-    config = startPendingInstallmentExpenses(config, activeMonth.id);
-
-    const updatedActiveMonth: FinancialMonth = {
-      ...activeMonth,
-      initialAvailableAmount: calculateInitialAvailableAmount(
-        config,
-        activeMonth.previousMonthDebt,
-      ),
-    };
-
-    await Promise.all([
-      financialStorage.saveConfig(config),
-      financialStorage.saveActiveMonth(updatedActiveMonth),
-    ]);
-
-    set({ config, activeMonth: updatedActiveMonth });
-  },
-
-  async addCategory(category) {
-    const { config } = get();
-    const normalizedCategory = normalizeCategory(category);
-
-    if (!config || getAvailableCategories(config).includes(normalizedCategory)) {
-      return;
-    }
-
-    const nextConfig: FinancialConfig = {
-      ...config,
-      customCategories: [...config.customCategories, normalizedCategory],
-      updatedAt: new Date().toISOString(),
-    };
-
-    await financialStorage.saveConfig(nextConfig);
-    set({ config: nextConfig });
-  },
-
-  async startFinancialCycle(receivedAt) {
-    const { config, months, activeMonth } = get();
-
-    if (!config) {
-      throw new Error('Configure renda, fixos e meta antes de iniciar o ciclo.');
-    }
-
-    if (activeMonth?.status === 'active') {
-      throw new Error('Ja existe um ciclo ativo.');
-    }
-
-    const previousMonthDebt = calculatePreviousMonthDebt(getLatestClosedMonth(months));
-    const advancedConfig = advanceInstallmentExpenses(config);
-    const nextMonth = createFinancialCycle(advancedConfig, previousMonthDebt, receivedAt);
-    const nextConfig = startPendingInstallmentExpenses(
-      {
-        ...advancedConfig,
-        updatedAt: new Date().toISOString(),
-      },
-      nextMonth.id,
-    );
-
-    await Promise.all([
-      financialStorage.saveConfig(nextConfig),
-      financialStorage.saveActiveMonth(nextMonth),
-    ]);
-    set({ config: nextConfig, activeMonth: nextMonth });
-  },
-
-  async receiveIncomeEarly(receivedAt = new Date()) {
-    const { config, activeMonth, months } = get();
-
-    if (!config) {
-      throw new Error('Configure renda, fixos e meta antes de receber.');
-    }
-
-    if (!activeMonth) {
-      throw new Error('Nenhum ciclo ativo para antecipar.');
-    }
-
-    if (!canReceiveIncomeEarly(receivedAt)) {
-      throw new Error('Recebimento antecipado so fica disponivel antes do dia 7.');
-    }
-
-    const { previousCycleExpenses, nextCycleExpenses } = splitExpensesByDate(
-      activeMonth.expenses,
-      receivedAt,
-    );
-    const closedMonth: FinancialMonth = {
-      ...activeMonth,
-      expenses: previousCycleExpenses,
-      status: 'closed',
-      closedAt: new Date().toISOString(),
-      finalBalance: calculateFinalBalance({ ...activeMonth, expenses: previousCycleExpenses }),
-    };
-    const nextMonths = [...months, closedMonth];
-    const previousMonthDebt = calculatePreviousMonthDebt(closedMonth);
-    const advancedConfig = advanceInstallmentExpenses(config);
-    const nextMonth = createFinancialCycle(
-      advancedConfig,
-      previousMonthDebt,
-      receivedAt,
-      nextCycleExpenses,
-    );
-    const nextConfig = startPendingInstallmentExpenses(
-      {
-        ...advancedConfig,
-        updatedAt: new Date().toISOString(),
-      },
-      nextMonth.id,
-    );
-
-    await Promise.all([
-      financialStorage.saveConfig(nextConfig),
-      financialStorage.saveMonths(nextMonths),
-      financialStorage.saveActiveMonth(nextMonth),
-    ]);
-
-    set({ config: nextConfig, months: nextMonths, activeMonth: nextMonth });
-  },
-
-  async addExpense(input) {
-    const { activeMonth } = get();
-
-    if (!activeMonth) {
-      throw new Error('Nenhum ciclo ativo para receber gastos.');
-    }
-
-    validateExpenseDateWithinActiveMonth(activeMonth, input.date);
-
-    const expense = buildExpenseRecord(input);
-
-    const updatedMonth: FinancialMonth = {
-      ...activeMonth,
-      expenses: [...activeMonth.expenses, expense],
-    };
-
-    await financialStorage.saveActiveMonth(updatedMonth);
-    set({ activeMonth: updatedMonth });
-  },
-
-  async updateExpense(expenseId, input) {
-    const { activeMonth } = get();
-
-    if (!activeMonth) {
-      throw new Error('Nenhum ciclo ativo para atualizar gastos.');
-    }
-
-    const existingExpense = activeMonth.expenses.find((expense) => expense.id === expenseId);
-
-    if (!existingExpense) {
-      throw new Error('Gasto nao encontrado.');
-    }
-
-    validateExpenseDateWithinActiveMonth(activeMonth, input.date);
-
-    const updatedExpense = buildExpenseRecord(input, existingExpense);
-    const updatedMonth: FinancialMonth = {
-      ...activeMonth,
-      expenses: activeMonth.expenses.map((expense) =>
-        expense.id === expenseId ? updatedExpense : expense,
-      ),
-    };
-
-    await financialStorage.saveActiveMonth(updatedMonth);
-    set({ activeMonth: updatedMonth });
-  },
-
-  async closeActiveMonth() {
-    const { activeMonth, months } = get();
-
-    if (!activeMonth) {
-      throw new Error('Nenhum ciclo ativo para fechar.');
-    }
-
-    const closedMonth: FinancialMonth = {
-      ...activeMonth,
-      status: 'closed',
-      closedAt: new Date().toISOString(),
-      finalBalance: calculateFinalBalance(activeMonth),
-    };
-
-    const nextMonths = [...months, closedMonth];
-    await Promise.all([
-      financialStorage.saveMonths(nextMonths),
-      financialStorage.saveActiveMonth(null),
-    ]);
-
-    set({ months: nextMonths, activeMonth: null });
-  },
-}));
+});

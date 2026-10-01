@@ -8,7 +8,7 @@ summary: >
   parcelamentos.
 code:
   - src/screens/ConfigScreen.tsx
-last_verified_commit: 52be7e8
+last_verified_commit: F5-PENDING
 ---
 
 # Módulo: planejamento
@@ -16,4 +16,4 @@ last_verified_commit: 52be7e8
 | Feature | Doc |
 |---|---|
 | `planning.configure` | [configure.md](configure.md) |
-| `planning.payday` | planejada, [SPEC-001](../../../specs/SPEC-001-dia-de-pagamento.md) |
+| `planning.payday` | [payday.md](payday.md) |

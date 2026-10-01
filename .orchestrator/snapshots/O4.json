@@ -1,0 +1,22 @@
+{
+  "snapshot_id": "O4",
+  "phase_completed": "F4",
+  "commit": "bb7364f",
+  "frozen_sections": [
+    "ux",
+    "engineering.backlog",
+    "engineering.module_map",
+    "agentic (exceto knowledge_layer)"
+  ],
+  "quality_gate_approval": {
+    "approved_by": "QualityGateEngine",
+    "criteria_met": [
+      "jornadas validadas",
+      "backlog com 2 sprints",
+      "specs para 16 features planejadas",
+      "rastreabilidade ADR-009",
+      "AI-DOC aprovado (0 erros)",
+      "cobertura 80%"
+    ]
+  }
+}

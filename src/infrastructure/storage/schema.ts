@@ -1,0 +1,89 @@
+import { z } from 'zod';
+
+import { MAX_PAYDAY, MIN_PAYDAY } from '../../domain/financial/financial.types';
+import { LocalState, STATE_SCHEMA_VERSION } from '../../application/state';
+
+const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const cents = z.number().int();
+
+const syncMeta = {
+  updatedAt: z.string(),
+  deletedAt: z.string().nullable(),
+  dirty: z.boolean(),
+};
+
+const settingsSchema = z.object({
+  ...syncMeta,
+  monthlyIncome: cents.min(0),
+  savingGoal: cents.min(0),
+  payday: z.number().int().min(MIN_PAYDAY).max(MAX_PAYDAY),
+  customCategories: z.array(z.string()),
+});
+
+const fixedExpenseSchema = z.discriminatedUnion('type', [
+  z.object({
+    ...syncMeta,
+    id: z.string().min(1),
+    type: z.literal('permanent'),
+    name: z.string(),
+    category: z.string(),
+    amount: cents.min(0),
+  }),
+  z.object({
+    ...syncMeta,
+    id: z.string().min(1),
+    type: z.literal('installment'),
+    name: z.string(),
+    category: z.string(),
+    installmentAmount: cents.min(0),
+    totalInstallments: z.number().int().min(1),
+    remainingInstallments: z.number().int().min(0),
+    startedAtCycleId: z.string().optional(),
+  }),
+]);
+
+const cycleSchema = z.object({
+  ...syncMeta,
+  id: z.string().min(1),
+  startDate: isoDate,
+  endDate: isoDate,
+  receivedAt: z.string(),
+  startedAt: z.string(),
+  closedAt: z.string().optional(),
+  status: z.enum(['active', 'closed']),
+  initialAvailableAmount: cents,
+  previousMonthDebt: cents.min(0),
+  finalBalance: cents.optional(),
+});
+
+const expenseSchema = z.object({
+  ...syncMeta,
+  id: z.string().min(1),
+  cycleId: z.string().min(1),
+  amount: cents,
+  category: z.string(),
+  description: z.string(),
+  date: isoDate,
+  createdAt: z.string(),
+});
+
+const cursor = z.string().nullable();
+
+/** Validação do documento local v2 (contracts.md §4). */
+export const localStateSchema = z.object({
+  schemaVersion: z.literal(STATE_SCHEMA_VERSION),
+  settings: settingsSchema.nullable(),
+  fixedExpenses: z.array(fixedExpenseSchema),
+  cycles: z.array(cycleSchema),
+  expenses: z.array(expenseSchema),
+  sync: z.object({
+    userId: z.string().nullable(),
+    cursors: z.object({ settings: cursor, fixed_expenses: cursor, cycles: cursor, expenses: cursor }),
+    lastSyncAt: z.string().nullable(),
+    lastError: z.string().nullable(),
+  }),
+}) satisfies z.ZodType<LocalState>;
+
+export function parseLocalState(value: unknown): LocalState {
+  return localStateSchema.parse(value) as LocalState;
+}

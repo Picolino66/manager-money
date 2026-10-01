@@ -7,6 +7,8 @@ export type RootStackParamList = {
   AddExpense: {
     expenseId?: string;
   } | undefined;
+  Account: undefined;
+  PrivacyPolicy: undefined;
 };
 
 export type MainTabParamList = {
@@ -14,4 +16,5 @@ export type MainTabParamList = {
   DailyHistory: undefined;
   PreviousMonths: undefined;
   Categories: undefined;
+  Settings: undefined;
 };

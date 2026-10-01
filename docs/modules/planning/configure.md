@@ -9,19 +9,22 @@ summary: >
 keywords: [configuração, renda, meta, despesas fixas, parcelamento, cartão]
 code:
   - src/screens/ConfigScreen.tsx
+  - src/application/cycle.use-cases.ts
   - src/domain/financial/financial.calculations.ts
-symbols: [calculateFixedExpensesTotal, calculateBaseAvailableAmount, calculateFixedExpenseAmount]
+symbols: [saveConfig, calculateFixedExpensesTotal, calculateBaseAvailableAmount, calculateFixedExpenseAmount]
+tests: [src/application/cycle.use-cases.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-010, BR-FIN-014, BR-FIN-015]
-last_verified_commit: 52be7e8
+last_verified_commit: F5-PENDING
 ---
 
 # Configurar base financeira
 
-- **Tela:** `Config` (stack), acessível pelo Hoje e pela aba Ajustes.
+- **Tela:** `Config` (stack), acessível pelo Hoje e pela aba Ajustes. Inclui o dia de pagamento ([payday.md](payday.md)).
 - **Formulário:** React Hook Form + Zod. Renda > 0; meta ≥ 0; fixos com nome, valor e categoria;
   parcelamentos com valor da parcela > 0, total ≥ 1 e restantes ≤ total.
 - **Saldo base** = renda − fixos ativos − meta (BR-FIN-004). Parcelamento com 0 parcelas
   restantes não conta (BR-FIN-010).
 - Se fixos + meta > renda, o app pede confirmação (BR-FIN-015).
+- Fixos removidos viram exclusão lógica (propagada no sync); salvar sem mudanças não gera pendências.
 - Com ciclo ativo, salvar recalcula o saldo inicial do ciclo (BR-FIN-014) e ativa no ciclo atual
   os parcelamentos ainda não iniciados.

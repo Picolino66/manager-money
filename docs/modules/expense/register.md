@@ -8,10 +8,12 @@ summary: >
 keywords: [gasto, registrar, lançamento, editar, despesa]
 code:
   - src/screens/AddExpenseScreen.tsx
+  - src/application/cycle.use-cases.ts
   - src/utils/date.ts
-symbols: [parseBRDateInput]
+symbols: [addExpense, updateExpense, assertDateWithinCycle, parseBRDateInput]
+tests: [src/application/cycle.use-cases.test.ts]
 business_rules: [BR-FIN-001, BR-FIN-011, BR-FIN-012]
-last_verified_commit: 52be7e8
+last_verified_commit: F5-PENDING
 ---
 
 # Registrar e editar gasto

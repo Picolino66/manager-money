@@ -1,4 +1,5 @@
 import {
+  addDays,
   differenceInCalendarDays,
   addMonths,
   isAfter,
@@ -11,6 +12,7 @@ import {
 import {
   DashboardSummary,
   DayStatus,
+  DEFAULT_PAYDAY,
   DEFAULT_EXPENSE_CATEGORIES,
   DEFAULT_EXPENSE_CATEGORY,
   Expense,
@@ -20,10 +22,8 @@ import {
   FinancialMonth,
   MoneyCents,
 } from './financial.types';
-import { formatCycleLabel, toISODate } from '../../utils/date';
+import { formatCycleLabel, formatShortDate, toISODate } from '../../utils/date';
 
-export const FINANCIAL_CYCLE_START_DAY = 7;
-export const FINANCIAL_CYCLE_END_DAY = 6;
 
 export function normalizeCategory(category?: string): ExpenseCategory {
   const normalized = category?.trim();
@@ -63,7 +63,9 @@ export function calculateFixedExpenseAmount(expense: FixedExpense): MoneyCents {
   return expense.amount;
 }
 
-export function calculateFixedExpensesTotal(config: FinancialConfig): MoneyCents {
+export function calculateFixedExpensesTotal(
+  config: Pick<FinancialConfig, 'fixedExpenses'>,
+): MoneyCents {
   return config.fixedExpenses.reduce(
     (total, expense) => total + calculateFixedExpenseAmount(expense),
     0,
@@ -125,73 +127,76 @@ export function calculatePreviousMonthDebt(previousMonth?: FinancialMonth): Mone
   return Math.abs(previousMonth.finalBalance);
 }
 
-export function advanceInstallmentExpenses(config: FinancialConfig): FinancialConfig {
-  return {
-    ...config,
-    fixedExpenses: config.fixedExpenses.map((expense) => {
-      if (
-        expense.type !== 'installment' ||
-        !expense.startedAtCycleId ||
-        expense.remainingInstallments <= 0
-      ) {
-        return expense;
-      }
-
-      return {
-        ...expense,
-        remainingInstallments: Math.max(0, expense.remainingInstallments - 1),
-      };
-    }),
-  };
-}
-
-export function startPendingInstallmentExpenses(
-  config: FinancialConfig,
-  cycleId: string,
-): FinancialConfig {
-  return {
-    ...config,
-    fixedExpenses: config.fixedExpenses.map((expense) => {
-      if (expense.type !== 'installment' || expense.startedAtCycleId) {
-        return expense;
-      }
-
-      return {
-        ...expense,
-        startedAtCycleId: cycleId,
-      };
-    }),
-  };
-}
-
-export function calculateCycleEndDate(startDate: Date): Date {
+/** Fim do ciclo que começa em `startDate`: véspera do pagamento do mês seguinte (BR-FIN-002). */
+export function calculateCycleEndDate(startDate: Date, payday: number = DEFAULT_PAYDAY): Date {
   const cycleStart = startOfDay(startDate);
-  const nextMonth = addMonths(new Date(cycleStart.getFullYear(), cycleStart.getMonth(), 1), 1);
 
-  return new Date(nextMonth.getFullYear(), nextMonth.getMonth(), FINANCIAL_CYCLE_END_DAY);
+  return addDays(new Date(cycleStart.getFullYear(), cycleStart.getMonth() + 1, payday), -1);
 }
 
-export function calculateDefaultCycleStartDate(referenceDate: Date = new Date()): Date {
+/** Início padrão do ciclo que contém `referenceDate` (BR-FIN-002). */
+export function calculateDefaultCycleStartDate(
+  referenceDate: Date = new Date(),
+  payday: number = DEFAULT_PAYDAY,
+): Date {
   const today = startOfDay(referenceDate);
 
-  if (today.getDate() >= FINANCIAL_CYCLE_START_DAY) {
-    return new Date(today.getFullYear(), today.getMonth(), FINANCIAL_CYCLE_START_DAY);
+  if (today.getDate() >= payday) {
+    return new Date(today.getFullYear(), today.getMonth(), payday);
   }
 
   const previousMonth = addMonths(new Date(today.getFullYear(), today.getMonth(), 1), -1);
 
-  return new Date(previousMonth.getFullYear(), previousMonth.getMonth(), FINANCIAL_CYCLE_START_DAY);
+  return new Date(previousMonth.getFullYear(), previousMonth.getMonth(), payday);
 }
 
-export function canReceiveIncomeEarly(referenceDate: Date = new Date()): boolean {
+/** Janela de recebimento antecipado: dias anteriores ao pagamento no mês corrente. */
+export function canReceiveIncomeEarly(
+  referenceDate: Date = new Date(),
+  payday: number = DEFAULT_PAYDAY,
+): boolean {
   const today = startOfDay(referenceDate);
 
-  return today.getDate() < FINANCIAL_CYCLE_START_DAY;
+  return today.getDate() < payday;
 }
 
-export function buildFinancialCycleDates(receivedAt: Date = calculateDefaultCycleStartDate()) {
-  const startDate = startOfDay(receivedAt);
-  const endDate = calculateCycleEndDate(startDate);
+/**
+ * BR-FIN-016: o recebimento antecipado só vale dentro da janela, para um ciclo ativo que
+ * termina antes do pagamento deste mês e que começou antes de hoje (uma vez por ciclo).
+ */
+export function canReceiveIncomeEarlyForCycle(
+  activeMonth: Pick<FinancialMonth, 'startDate' | 'endDate'>,
+  referenceDate: Date = new Date(),
+  payday: number = DEFAULT_PAYDAY,
+): boolean {
+  const today = startOfDay(referenceDate);
+  const upcomingPayday = new Date(today.getFullYear(), today.getMonth(), payday);
+
+  return (
+    canReceiveIncomeEarly(today, payday) &&
+    isBefore(startOfDay(parseISO(activeMonth.endDate)), upcomingPayday) &&
+    isBefore(startOfDay(parseISO(activeMonth.startDate)), today)
+  );
+}
+
+/** BR-FIN-017: fechamento manual só depois do último dia do ciclo. */
+export function canCloseCycle(
+  month: Pick<FinancialMonth, 'endDate'>,
+  referenceDate: Date = new Date(),
+): boolean {
+  return isAfter(startOfDay(referenceDate), startOfDay(parseISO(month.endDate)));
+}
+
+export function describeCloseCycleBlock(month: Pick<FinancialMonth, 'endDate'>): string {
+  return `O ciclo termina em ${formatShortDate(month.endDate)}. Se o pagamento cair antes, use "Já recebi".`;
+}
+
+export function buildFinancialCycleDates(
+  receivedAt?: Date,
+  payday: number = DEFAULT_PAYDAY,
+) {
+  const startDate = startOfDay(receivedAt ?? calculateDefaultCycleStartDate(new Date(), payday));
+  const endDate = calculateCycleEndDate(startDate, payday);
 
   return {
     startDate: toISODate(startDate),
@@ -201,7 +206,7 @@ export function buildFinancialCycleDates(receivedAt: Date = calculateDefaultCycl
 }
 
 export function buildLegacyFinancialCycleDates(year: number, month: number) {
-  return buildFinancialCycleDates(new Date(year, month - 1, FINANCIAL_CYCLE_START_DAY));
+  return buildFinancialCycleDates(new Date(year, month - 1, DEFAULT_PAYDAY), DEFAULT_PAYDAY);
 }
 
 export function calculateRemainingDays(month: FinancialMonth, referenceDate: Date): number {

@@ -2,8 +2,8 @@
   "orchestration_id": "8c1f6a2e-4b7d-4e2a-9f3c-manager-money-v1",
   "created_at": "2026-10-01T00:00:00-03:00",
   "mode": "full-pipeline",
-  "current_phase": "F4",
-  "snapshot_version": "O3",
+  "current_phase": "F5",
+  "snapshot_version": "O4",
   "baseline_commit": "5de5c5b",
   "product": {
     "name": "Manager Money",
@@ -92,7 +92,9 @@
       "ADR-005",
       "ADR-006",
       "ADR-007",
-      "ADR-008"
+      "ADR-008",
+      "ADR-009",
+      "ADR-010"
     ],
     "overrides": [
       {
@@ -114,25 +116,40 @@
     "validation": "supabase/tests/run-plain.sh — 12/12 asserções RLS/constraints"
   },
   "engineering": {
-    "backlog": [],
-    "module_map": {},
+    "backlog": "tasks/README.md",
+    "module_map": "docs/architecture/overview.md#2",
     "test_coverage_threshold": 80
   },
   "agentic": {
+    "specs_map": "specs/README.md",
+    "agents_map": "agents/README.md",
+    "skills_map": "skills/README.md",
+    "traceability_rules": "adr/ADR-009-estrutura-agentic.md",
     "knowledge_layer": {
       "path": "docs/.ai",
       "schema_version": "1",
-      "repository_id": "manager-money"
+      "repository_id": "manager-money",
+      "source_commit": "bb7364f",
+      "counts": {
+        "implemented": 17,
+        "planned": 16
+      },
+      "health": {
+        "fresh": 17,
+        "stale": 0,
+        "stale_critical": 0
+      }
     }
   },
   "quality": {
     "gates_passed": [
       "F1",
       "F2",
-      "F3"
+      "F3",
+      "F4"
     ],
     "gates_failed": [],
-    "last_stable_snapshot": "O3"
+    "last_stable_snapshot": "O4"
   },
   "operations": {
     "slos": [],
@@ -147,5 +164,9 @@
         "phase": "F2"
       }
     ]
+  },
+  "ux": {
+    "journeys": "docs/flows/journeys.md",
+    "design_system": "docs/design/design-system.md"
   }
 }
