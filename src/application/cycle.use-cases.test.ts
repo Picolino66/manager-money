@@ -24,9 +24,8 @@ const at = (year: number, month: number, day: number): UseCaseContext => ({
 });
 
 const baseConfig: FinancialConfigInput = {
-  incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000 }],
+  incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 7 }],
   savingGoal: 50000,
-  payday: 7,
   customCategories: [],
   fixedExpenses: [
     { id: 'aluguel', type: 'permanent', name: 'Aluguel', category: 'Moradia', amount: 150000 },
@@ -70,8 +69,8 @@ describe('saveConfig (RF-01, BR-FIN-014)', () => {
       {
         ...baseConfig,
         incomeSources: [
-          { id: 'salario', name: ' Salário ', amount: 400000 },
-          { id: 'freela', name: 'Freela', amount: 150000 },
+          { id: 'salario', name: ' Salário ', amount: 400000, payday: 7 },
+          { id: 'freela', name: 'Freela', amount: 150000, payday: 7 },
         ],
       },
       at(2026, 10, 10),
@@ -84,6 +83,32 @@ describe('saveConfig (RF-01, BR-FIN-014)', () => {
     ).toThrow('ao menos uma fonte de renda');
   });
 
+  it('BR-FIN-024: o dia de pagamento do ciclo é o da fonte de maior valor', () => {
+    const sources = [
+      { id: 'freela', name: 'Freela', amount: 80000, payday: 20 },
+      { id: 'salario', name: 'Salário', amount: 500000, payday: 5 },
+    ];
+    const state = saveConfig(createEmptyState(), { ...baseConfig, incomeSources: sources }, at(2026, 10, 10));
+    expect(state.settings?.payday).toBe(5);
+    expect(selectConfig(state)?.payday).toBe(5);
+    expect(selectActiveMonth(openCycle(state, at(2026, 10, 10)))).toMatchObject({
+      startDate: '2026-10-05',
+      endDate: '2026-11-04',
+    });
+
+    // Se o freela passa a ser a maior fonte, o ciclo (do próximo em diante) segue o dia dele.
+    const swapped = saveConfig(state, { ...baseConfig, incomeSources: [{ ...sources[0]!, amount: 900000 }, sources[1]!] }, at(2026, 10, 11));
+    expect(swapped.settings?.payday).toBe(20);
+  });
+
+  it('BR-FIN-024: rejeita dia de pagamento fora de 1–28 em qualquer fonte', () => {
+    for (const payday of [0, 29, 1.5]) {
+      expect(() =>
+        saveConfig(createEmptyState(), { ...baseConfig, incomeSources: [{ id: 'a', name: 'A', amount: 100, payday }] }, at(2026, 10, 10)),
+      ).toThrow('dia de pagamento');
+    }
+  });
+
   it('BR-FIN-018: alterar só as fontes marca settings como sujo', () => {
     const state = configured();
     const clean: LocalState = {
@@ -92,7 +117,7 @@ describe('saveConfig (RF-01, BR-FIN-014)', () => {
     };
     const changed = saveConfig(
       clean,
-      { ...baseConfig, incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000 }, { id: 'x', name: 'Extra', amount: 1000 }] },
+      { ...baseConfig, incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 7 }, { id: 'x', name: 'Extra', amount: 1000, payday: 7 }] },
       at(2026, 10, 11),
     );
     expect(changed.settings).toMatchObject({ dirty: true, monthlyIncome: 501000 });
@@ -168,7 +193,7 @@ describe('openCycle (RF-03, BR-FIN-013, BR-FIN-017)', () => {
   });
 
   it('respeita payday configurado', () => {
-    const state = saveConfig(createEmptyState(), { ...baseConfig, payday: 20 }, at(2026, 10, 10));
+    const state = saveConfig(createEmptyState(), { ...baseConfig, incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 20 }] }, at(2026, 10, 10));
     expect(selectActiveMonth(openCycle(state, at(2026, 10, 10)))).toMatchObject({
       startDate: '2026-09-20',
       endDate: '2026-10-19',

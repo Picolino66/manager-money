@@ -24,7 +24,7 @@ jest.mock('@react-navigation/native', () => ({
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 jest.mock('../infrastructure/supabase/client', () => ({ supabase: null, isSupabaseConfigured: false }));
 
-const config = { incomeSources: [{ id: 'renda', name: 'Salário', amount: 310000 }], savingGoal: 0, payday: 7, customCategories: [], fixedExpenses: [] };
+const config = { incomeSources: [{ id: 'renda', name: 'Salário', amount: 310000, payday: 7 }], savingGoal: 0, customCategories: [], fixedExpenses: [] };
 
 function seed(doc: LocalState) {
   return useFinancialStore.getState().replaceDocument(() => doc);
@@ -82,6 +82,35 @@ describe('ConfigScreen (BR-FIN-018: várias fontes de renda)', () => {
         expect.objectContaining({ name: 'Freela', amount: 50000 }),
       ],
     });
+  });
+
+  it('não tem mais o dia global; cada fonte tem o seu e o ciclo usa o da maior', async () => {
+    render(<ConfigScreen navigation={navigation} route={{ key: 'k', name: 'Config', params: undefined }} />);
+    expect(screen.getAllByLabelText('Dia do pagamento (1 a 28)')).toHaveLength(1);
+
+    fireEvent.changeText(screen.getByLabelText('Valor'), '300000');
+    fireEvent.changeText(screen.getByLabelText('Dia do pagamento (1 a 28)'), '5');
+    fireEvent.press(screen.getAllByText('Adicionar')[0]!);
+    expect(screen.getAllByLabelText('Dia do pagamento (1 a 28)')).toHaveLength(2);
+    fireEvent.changeText(screen.getAllByLabelText('Nome da fonte')[1]!, 'Freela');
+    fireEvent.changeText(screen.getAllByLabelText('Valor')[1]!, '50000');
+    fireEvent.changeText(screen.getAllByLabelText('Dia do pagamento (1 a 28)')[1]!, '20');
+    expect(screen.getByText(/O ciclo usa o dia 5 \(Salário, a fonte de maior valor\)/)).toBeTruthy();
+
+    fireEvent.press(screen.getByText('Salvar configuração'));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('StartMonth'));
+    expect(useFinancialStore.getState().config).toMatchObject({
+      payday: 5,
+      incomeSources: [expect.objectContaining({ payday: 5 }), expect.objectContaining({ payday: 20 })],
+    });
+  });
+
+  it('valida o dia de pagamento de cada fonte', async () => {
+    render(<ConfigScreen navigation={navigation} route={{ key: 'k', name: 'Config', params: undefined }} />);
+    fireEvent.changeText(screen.getByLabelText('Valor'), '1000');
+    fireEvent.changeText(screen.getByLabelText('Dia do pagamento (1 a 28)'), '29');
+    fireEvent.press(screen.getByText('Salvar configuração'));
+    expect(await screen.findByText('Informe um dia entre 1 e 28.')).toBeTruthy();
   });
 
   it('exige nome e valor em cada fonte', async () => {

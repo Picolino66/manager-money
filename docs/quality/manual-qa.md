@@ -8,7 +8,7 @@ summary: >
   críticos antes da publicação nas lojas.
 code:
   - src/navigation/AppNavigator.tsx
-last_verified_commit: a16e575+T-020
+last_verified_commit: 6fd4838+T-021
 ---
 
 # Campanha de QA manual — v1.0
@@ -21,9 +21,9 @@ last_verified_commit: a16e575+T-020
 |---|---|---|---|
 | **Dia 1 — instalação, primeiro uso e migração** ||||
 | D01.01 | Alta | Instalar o APK limpo e abrir | Hoje mostra "Configuração inicial"; nenhum erro |
-| D01.02 | Alta | Configurar renda 3.000, meta 300, dia de pagamento 10, 1 fixo de 1.000 e 1 parcelamento 100 × 3 | Total de fixos R$ 1.100,00; vai para "Abrir ciclo" |
+| D01.02 | Alta | Configurar renda 3.000 (fonte com dia de pagamento 10), meta 300, 1 fixo de 1.000 e 1 parcelamento 100 × 3 | Total de fixos R$ 1.100,00; vai para "Abrir ciclo" |
 | D01.03 | Alta | Conferir a prévia e iniciar o ciclo | Período começa no dia 10; limite = saldo ÷ dias |
-| D01.04 | Alta | Informar dia de pagamento 0 e depois 29 | Erro "Informe um dia entre 1 e 28." |
+| D01.04 | Alta | Informar dia de pagamento 0 e depois 29 em uma fonte de renda | Erro "Informe um dia entre 1 e 28." |
 | D01.05 | Alta | Instalar a versão nova **por cima** de uma instalação do MVP com dados | Dados preservados; ciclo e gastos iguais aos de antes; dia de pagamento = 7 |
 | D01.06 | Média | Fechar e reabrir o app em modo avião | Tudo carrega; sem mensagem de erro |
 | **Dia 2 — gastos e ciclo** ||||
@@ -69,3 +69,4 @@ last_verified_commit: a16e575+T-020
 | D06.08 | Média | Excluir a renda avulsa | Saldo volta ao valor anterior |
 | D06.09 | Alta | Fechar o ciclo e abrir o próximo | Fixas voltam a Pendente; o ciclo fechado manteve o resultado com os pagamentos |
 | D06.10 | Alta | Atualizar o app por cima de uma versão com ciclo ativo | "Saldo inicial" volta a refletir a renda sem as fixas; confirme os pagamentos para descontá-las |
+| D05.07 | Alta | Duas fontes: Salário R$ 5.000 (dia 5) e Freela R$ 800 (dia 20) | Tela mostra "O ciclo usa o dia 5 (Salário…)"; o próximo ciclo começa no dia 5; não existe campo global de dia |

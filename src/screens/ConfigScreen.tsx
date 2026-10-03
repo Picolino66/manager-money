@@ -16,6 +16,7 @@ import { TextInputField } from '../components/TextInputField';
 import {
   calculateFixedExpensesTotal,
   calculateIncomeTotal,
+  calculatePrimaryIncomeSource,
   getSortedCategories,
   normalizeCategory,
 } from '../domain/financial/financial.calculations';
@@ -41,6 +42,11 @@ const configSchema = z.object({
         id: z.string().min(1),
         name: z.string().trim().min(1, 'Informe o nome da fonte.'),
         amount: z.number().int().positive('Informe um valor maior que zero.'),
+        payday: z
+          .number()
+          .int()
+          .min(MIN_PAYDAY, 'Informe um dia entre 1 e 28.')
+          .max(MAX_PAYDAY, 'Informe um dia entre 1 e 28.'),
       }),
     )
     .min(1, 'Informe ao menos uma fonte de renda.'),
@@ -66,20 +72,16 @@ const configSchema = z.object({
     }),
   ),
   savingGoal: z.number().int().min(0, 'Meta não pode ser negativa.'),
-  payday: z
-    .number()
-    .int()
-    .min(MIN_PAYDAY, 'Informe um dia entre 1 e 28.')
-    .max(MAX_PAYDAY, 'Informe um dia entre 1 e 28.'),
 });
 
 type ConfigForm = z.infer<typeof configSchema>;
 
-function createIncomeSource(name = ''): IncomeSource {
+function createIncomeSource(name = '', payday: number = DEFAULT_PAYDAY): IncomeSource {
   return {
     id: `income-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     name,
     amount: 0,
+    payday,
   };
 }
 
@@ -98,13 +100,12 @@ export function ConfigScreen({ navigation }: Props) {
   } = useForm<ConfigForm>({
     resolver: zodResolver(configSchema),
     defaultValues: {
-      incomeSources: config?.incomeSources ?? [createIncomeSource('Salário')],
+      incomeSources: config?.incomeSources ?? [createIncomeSource('Salário', config?.payday)],
       permanentExpenses:
         config?.fixedExpenses.filter((expense) => expense.type === 'permanent') ?? [],
       installmentExpenses:
         config?.fixedExpenses.filter((expense) => expense.type === 'installment') ?? [],
       savingGoal: config?.savingGoal ?? 0,
-      payday: config?.payday ?? DEFAULT_PAYDAY,
     },
   });
   const {
@@ -137,6 +138,7 @@ export function ConfigScreen({ navigation }: Props) {
   // useWatch é seguro para o React Compiler (watch() não pode ser memoizado).
   const incomeSources = useWatch({ control, name: 'incomeSources' });
   const incomeTotal = useMemo(() => calculateIncomeTotal(incomeSources), [incomeSources]);
+  const primarySource = calculatePrimaryIncomeSource(incomeSources);
   const permanentExpenses = useWatch({ control, name: 'permanentExpenses' });
   const installmentExpenses = useWatch({ control, name: 'installmentExpenses' });
   const fixedExpenses = useMemo(
@@ -198,7 +200,6 @@ export function ConfigScreen({ navigation }: Props) {
         name: source.name.trim(),
       })),
       savingGoal: values.savingGoal,
-      payday: values.payday,
       customCategories: config?.customCategories ?? [],
       fixedExpenses: [
         ...values.permanentExpenses.map((expense) => ({
@@ -268,13 +269,19 @@ export function ConfigScreen({ navigation }: Props) {
             </Text>
             <AppButton
               iconName="add-outline"
-              onPress={() => appendIncomeSource(createIncomeSource())}
+              onPress={() => appendIncomeSource(createIncomeSource('', primarySource?.payday))}
               style={styles.addButton}
               title="Adicionar"
               variant="secondary"
             />
           </View>
         </View>
+        {primarySource && primarySource.payday >= MIN_PAYDAY ? (
+          <Text style={styles.hint}>
+            O ciclo usa o dia {primarySource.payday}
+            {primarySource.name.trim() ? ` (${primarySource.name.trim()}, a fonte de maior valor)` : ''}.
+          </Text>
+        ) : null}
         {errors.incomeSources?.message ? (
           <Text style={styles.errorText}>{errors.incomeSources.message}</Text>
         ) : null}
@@ -308,6 +315,21 @@ export function ConfigScreen({ navigation }: Props) {
                 />
               )}
             />
+            <Controller
+              control={control}
+              name={`incomeSources.${index}.payday`}
+              render={({ field: itemField }) => (
+                <TextInputField
+                  error={errors.incomeSources?.[index]?.payday?.message}
+                  keyboardType="number-pad"
+                  label="Dia do pagamento (1 a 28)"
+                  maxLength={2}
+                  onBlur={itemField.onBlur}
+                  onChangeText={(value) => itemField.onChange(Number(value.replace(/\D/g, '')) || 0)}
+                  value={itemField.value ? String(itemField.value) : ''}
+                />
+              )}
+            />
             {incomeSourceFields.length > 1 ? (
               <AppButton
                 iconName="trash-outline"
@@ -331,21 +353,6 @@ export function ConfigScreen({ navigation }: Props) {
               onBlur={field.onBlur}
               onChangeValue={field.onChange}
               value={field.value}
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="payday"
-          render={({ field }) => (
-            <TextInputField
-              error={errors.payday?.message}
-              keyboardType="number-pad"
-              label="Dia do pagamento (1 a 28)"
-              maxLength={2}
-              onBlur={field.onBlur}
-              onChangeText={(value) => field.onChange(Number(value.replace(/\D/g, '')) || 0)}
-              value={field.value ? String(field.value) : ''}
             />
           )}
         />
@@ -609,6 +616,11 @@ const styles = StyleSheet.create({
   },
   fixedExpenseItem: {
     gap: spacing.md,
+  },
+  hint: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: '700',
   },
   errorText: {
     color: colors.critical,

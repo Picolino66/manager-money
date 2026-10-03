@@ -12,9 +12,8 @@ const at = (year: number, month: number, day: number): UseCaseContext => ({
 });
 
 const config: FinancialConfigInput = {
-  incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000 }],
+  incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 7 }],
   savingGoal: 50000,
-  payday: 7,
   customCategories: [],
   fixedExpenses: [
     { id: 'aluguel', type: 'permanent', name: 'Aluguel', category: 'Moradia', amount: 150000 },
@@ -122,7 +121,7 @@ describe('payFixedExpense à vista (BR-FIN-021)', () => {
     const paid = payFixedExpense(opened(), { fixedExpenseId: 'aluguel', method: 'pix' }, at(2026, 10, 11));
     const resaved = saveConfig(
       paid,
-      { ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 600000 }] },
+      { ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 600000, payday: 7 }] },
       at(2026, 10, 12),
     );
     expect(initialOf(resaved)).toBe(600000 - 50000 - 150000);

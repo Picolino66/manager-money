@@ -54,8 +54,11 @@ export type LegacySnapshot = {
 };
 
 /** Renda única (v1/v2) vira a primeira fonte de renda (BR-FIN-018). */
-export function legacyIncomeSources(monthlyIncome: number): IncomeSource[] {
-  return [{ id: 'income-legacy', name: 'Renda', amount: Math.max(0, monthlyIncome) }];
+export function legacyIncomeSources(
+  monthlyIncome: number,
+  payday: number = DEFAULT_PAYDAY,
+): IncomeSource[] {
+  return [{ id: 'income-legacy', name: 'Renda', amount: Math.max(0, monthlyIncome), payday }];
 }
 
 function normalizeFixedExpenses(value: LegacyConfig['fixedExpenses']): FixedExpense[] {
@@ -210,7 +213,10 @@ export function migrateV2ToV3(raw: unknown, now: Date): unknown {
     schemaVersion: 3,
     settings: {
       ...settings,
-      incomeSources: legacyIncomeSources(Number(settings.monthlyIncome) || 0),
+      incomeSources: legacyIncomeSources(
+        Number(settings.monthlyIncome) || 0,
+        Number(settings.payday) || DEFAULT_PAYDAY,
+      ),
       updatedAt: now.toISOString(),
       dirty: true,
     },
@@ -279,6 +285,33 @@ export function migrateV4ToV5(raw: unknown, now: Date): unknown {
   };
 }
 
+/**
+ * Migração v5 → v6 (documento bruto, ADR-016): cada fonte de renda ganha o dia de pagamento,
+ * herdando o dia global atual, então nenhum ciclo muda. `settings` fica pendente de envio.
+ */
+export function migrateV5ToV6(raw: unknown, now: Date): unknown {
+  const document = raw as { settings?: Record<string, unknown> | null };
+  const { settings } = document;
+
+  if (!settings || typeof settings !== 'object') {
+    return { ...document, schemaVersion: 6 };
+  }
+
+  const payday = Number(settings.payday) || DEFAULT_PAYDAY;
+  const sources = Array.isArray(settings.incomeSources) ? settings.incomeSources : [];
+
+  return {
+    ...document,
+    schemaVersion: 6,
+    settings: {
+      ...settings,
+      incomeSources: sources.map((source: Record<string, unknown>) => ({ ...source, payday })),
+      updatedAt: now.toISOString(),
+      dirty: true,
+    },
+  };
+}
+
 /** Encadeia as migrações do documento bruto até a versão atual; `null` se já está atual. */
 export function migrateDocument(raw: unknown, now: Date): unknown | null {
   let document = raw;
@@ -297,6 +330,11 @@ export function migrateDocument(raw: unknown, now: Date): unknown | null {
   if (version === 4) {
     document = migrateV4ToV5(document, now);
     version = 5;
+  }
+
+  if (version === 5) {
+    document = migrateV5ToV6(document, now);
+    version = 6;
   }
 
   return document === raw ? null : document;

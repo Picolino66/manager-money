@@ -11,9 +11,8 @@ const at = (year: number, month: number, day: number): UseCaseContext => ({
 });
 
 const config: FinancialConfigInput = {
-  incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000 }],
+  incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 7 }],
   savingGoal: 0,
-  payday: 7,
   customCategories: [],
   fixedExpenses: [],
 };
@@ -111,7 +110,7 @@ describe('addCardPurchase (BR-FIN-019/020)', () => {
     const state = addCardPurchase(withCard(), purchaseInput, at(2026, 10, 20));
     const resaved = saveConfig(
       state,
-      { ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 600000 }] },
+      { ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 600000, payday: 7 }] },
       at(2026, 10, 21),
     );
     expect(initialOf(resaved)).toBe(600000 - 10000);

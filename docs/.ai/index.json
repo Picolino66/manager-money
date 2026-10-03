@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T20:44:43.598Z",
-  "source_commit": "a16e575",
+  "generated_at": "2026-10-03T21:28:19.856Z",
+  "source_commit": "6fd4838",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "stack": [
@@ -17,12 +17,12 @@
     "features": {
       "path": ".ai/features.json",
       "count": 51,
-      "hash": "sha256:2a663f351ee9f7dae37e804e750b4070602b51297f070ed6db5420583eebd9db"
+      "hash": "sha256:05390795e485a717d83ada5f91dcede1a02e330b0525de848d7143a87af9f140"
     },
     "freshness": {
       "path": ".ai/freshness.json",
       "count": 51,
-      "hash": "sha256:cc9441728b20c6bcc7cbc69a3b1a16fdec19d46dc58675b58ba9e0a0520a1162"
+      "hash": "sha256:54901b3b96d4a927e35aeeb26e71bb47ca77869af34e560008b5a6d2ea9d7571"
     },
     "retrieval_tests": {
       "path": ".ai/retrieval-tests.json",

@@ -5,7 +5,7 @@ module: architecture
 title: Contratos de dados e API (v1)
 summary: >
   Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento
-  local versionado (schemaVersion 5).
+  local versionado (schemaVersion 6).
 code:
   - supabase/migrations/20261001000000_init.sql
   - supabase/migrations/20261003000000_income_sources.sql
@@ -15,7 +15,7 @@ code:
   - src/infrastructure/sync/supabase-remote.ts
   - src/infrastructure/sync/mappers.ts
 adrs: [ADR-003, ADR-004, ADR-008]
-last_verified_commit: a16e575+T-020
+last_verified_commit: 6fd4838+T-021
 ---
 
 # Contratos de dados e API — v1
@@ -58,9 +58,9 @@ Valores monetários são `bigint` em centavos no banco e `number` inteiro no cli
 | Remoto (snake_case) | Local (camelCase) | Tipo |
 |---|---|---|
 | `settings.monthly_income` | `settings.monthlyIncome` | centavos; **soma de `incomeSources`** (derivado) |
-| `settings.income_sources` | `settings.incomeSources` | `{ id, name, amount }[]` (jsonb, até 20; BR-FIN-018). Linha sem fontes (`[]`) vira uma fonte "Renda" com `monthly_income` |
+| `settings.income_sources` | `settings.incomeSources` | `{ id, name, amount, payday }[]` (jsonb, até 20; BR-FIN-018/024). Linha sem fontes (`[]`) vira uma fonte "Renda" com `monthly_income`; fonte sem `payday` herda `settings.payday` |
 | `settings.saving_goal` | `settings.savingGoal` | centavos |
-| `settings.payday` | `settings.payday` | 1–28 |
+| `settings.payday` | `settings.payday` | 1–28; **derivado**: dia da fonte de maior valor (BR-FIN-024) |
 | `settings.custom_categories` | `settings.customCategories` | `string[]` |
 | `fixed_expenses.kind` | `fixedExpense.type` | `'permanent' \| 'installment'` |
 | `fixed_expenses.amount` | `fixedExpense.amount` (permanent) | centavos |
@@ -99,13 +99,13 @@ O mapeamento é implementado e testado em `src/infrastructure/sync/mappers.ts`.
 | `42501` / JWT expirado | Sessão inválida | Tenta refresh; se falhar, marca `sync.lastError = 'auth'` e pede novo login |
 | rede / 5xx | Indisponível | Mantém o outbox; backoff exponencial de 2 s a 60 s |
 
-## 4. Documento local — `@manager-money/state` (schemaVersion 5)
+## 4. Documento local — `@manager-money/state` (schemaVersion 6)
 
 ```ts
 type SyncMeta = { updatedAt: string; deletedAt: string | null; dirty: boolean };
 
-type LocalStateV5 = {
-  schemaVersion: 5;
+type LocalStateV6 = {
+  schemaVersion: 6;
   settings: (Settings & SyncMeta) | null;          // monthlyIncome, incomeSources, savingGoal, payday, customCategories
   fixedExpenses: Array<FixedExpense & SyncMeta>;
   creditCards: Array<CreditCard & SyncMeta>;
@@ -134,5 +134,7 @@ type LocalStateV5 = {
 - **Migração v4 → v5 (ADR-015):** acrescenta `fixedPayments: []`, `extraIncomes: []` e os cursores
   `fixed_payments` e `extra_incomes`; devolve ao `initialAvailableAmount` do ciclo ativo o total das
   despesas fixas ativas que a v4 já havia descontado (ciclo marcado `dirty`). `migrateDocument` encadeia v2 → v3 → v4 → v5.
+- **Migração v5 → v6 (ADR-016):** cada fonte de renda recebe `payday` = `settings.payday` atual e `settings`
+  fica `dirty`. `migrateDocument` encadeia v2 → … → v6.
 - Um documento que falha na validação **não é sobrescrito**: o app mostra um erro de carregamento
   com a opção de exportar o conteúdo bruto (DEF-004).

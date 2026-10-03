@@ -32,7 +32,7 @@ const meta = { updatedAt: '2026-10-10T12:00:00.000Z', deletedAt: null, dirty: fa
 
 describe('mappers (contracts.md §2): ida e volta sem perda', () => {
   it('settings', () => {
-    const record: SettingsRecord = { ...meta, monthlyIncome: 100, incomeSources: [{ id: 'i1', name: 'Salário', amount: 100 }], savingGoal: 5, payday: 10, customCategories: ['Viagem'] };
+    const record: SettingsRecord = { ...meta, monthlyIncome: 100, incomeSources: [{ id: 'i1', name: 'Salário', amount: 100, payday: 7 }], savingGoal: 5, payday: 10, customCategories: ['Viagem'] };
     const row = settingsToRow(record, 'u');
     expect(row).toMatchObject({ user_id: 'u', monthly_income: 100, payday: 10, client_updated_at: meta.updatedAt });
     expect(settingsFromRow(row)).toEqual(record);
@@ -49,9 +49,20 @@ describe('mappers (contracts.md §2): ida e volta sem perda', () => {
       deleted_at: null,
     };
     expect(settingsFromRow(row).incomeSources).toEqual([
-      { id: 'income-legacy', name: 'Renda', amount: 880000 },
+      { id: 'income-legacy', name: 'Renda', amount: 880000, payday: 7 },
     ]);
     expect(settingsFromRow({ ...row, income_sources: [] }).incomeSources).toHaveLength(1);
+    // BR-FIN-024: fonte sem dia herda o dia da linha; com dia, mantém o próprio.
+    expect(
+      settingsFromRow({
+        ...row,
+        payday: 9,
+        income_sources: [
+          { id: 'a', name: 'A', amount: 1 },
+          { id: 'b', name: 'B', amount: 2, payday: 20 },
+        ],
+      }).incomeSources.map((source) => source.payday),
+    ).toEqual([9, 20]);
   });
 
   it('cartão de crédito e compra no cartão (BR-FIN-019)', () => {

@@ -15,7 +15,7 @@ code:
 symbols: [migrateV1ToV2, migrateV2ToV3, legacyIncomeSources, normalizeLegacyMonth, parseLocalState, LoadErrorScreen]
 adrs: [ADR-003, ADR-013]
 tests: [src/infrastructure/storage/local-store.test.ts]
-last_verified_commit: a16e575+T-020
+last_verified_commit: 6fd4838+T-021
 ---
 
 # Documento local versionado

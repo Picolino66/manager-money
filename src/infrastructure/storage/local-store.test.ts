@@ -51,7 +51,7 @@ describe('localStore (SPEC-004)', () => {
     expect(result).toEqual({ status: 'ok', state: createEmptyState(), migrated: false });
   });
 
-  it('migra v1 → v5 sem perda, incluindo formatos legados', async () => {
+  it('migra v1 → v6 sem perda, incluindo formatos legados', async () => {
     await AsyncStorage.multiSet([
       [LEGACY_STORAGE_KEYS.config, JSON.stringify(legacyConfig)],
       [LEGACY_STORAGE_KEYS.months, JSON.stringify([legacyCalendarMonth])],
@@ -75,7 +75,7 @@ describe('localStore (SPEC-004)', () => {
 
     // Chaves v1 removidas somente após gravar a v2.
     expect(await AsyncStorage.getItem(LEGACY_STORAGE_KEYS.config)).toBeNull();
-    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(5);
+    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(6);
 
     const reloaded = await localStore.load();
     expect(reloaded).toMatchObject({ status: 'ok', migrated: false });
@@ -100,7 +100,7 @@ describe('localStore (SPEC-004)', () => {
     ]);
   });
 
-  it('migra documento v2 → v5: renda vira fonte e settings fica pendente de envio', async () => {
+  it('migra documento v2 → v6: renda vira fonte e settings fica pendente de envio', async () => {
     const v2 = {
       ...createEmptyState(),
       schemaVersion: 2,
@@ -120,16 +120,16 @@ describe('localStore (SPEC-004)', () => {
     if (result.status !== 'ok') throw new Error('falhou');
 
     expect(result.migrated).toBe(true);
-    expect(result.state.schemaVersion).toBe(5);
+    expect(result.state.schemaVersion).toBe(6);
     expect(result.state.settings).toMatchObject({
       monthlyIncome: 880000,
-      incomeSources: [{ id: 'income-legacy', name: 'Renda', amount: 880000 }],
+      incomeSources: [{ id: 'income-legacy', name: 'Renda', amount: 880000, payday: 7 }],
       dirty: true,
     });
-    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(5);
+    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(6);
   });
 
-  it('migra v3 → v5: acrescenta cartões, compras, pagamentos e rendas vazios e os cursores', async () => {
+  it('migra v3 → v6: acrescenta cartões, compras, pagamentos e rendas vazios e os cursores', async () => {
     const { creditCards, cardPurchases, ...rest } = createEmptyState();
     const { credit_cards, card_purchases, ...cursors } = rest.sync.cursors;
     void creditCards;
@@ -146,7 +146,7 @@ describe('localStore (SPEC-004)', () => {
 
     expect(result.migrated).toBe(true);
     expect(result.state).toMatchObject({
-      schemaVersion: 5,
+      schemaVersion: 6,
       creditCards: [],
       cardPurchases: [],
       fixedPayments: [],
@@ -157,10 +157,10 @@ describe('localStore (SPEC-004)', () => {
     });
   });
 
-  it('migra v4 → v5: o ciclo ativo recupera o que as fixas já haviam descontado (BR-FIN-021)', async () => {
+  it('migra v4 → v6: o ciclo ativo recupera o que as fixas já haviam descontado (BR-FIN-021)', async () => {
     const ctx = { now: new Date(2026, 9, 10, 12), newId: (prefix: string) => `${prefix}-1` };
     const config = {
-      incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000 }],
+      incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 7 }],
       savingGoal: 50000,
       payday: 7,
       customCategories: [],
@@ -194,7 +194,7 @@ describe('localStore (SPEC-004)', () => {
 
     expect(result.migrated).toBe(true);
     expect(result.state).toMatchObject({
-      schemaVersion: 5,
+      schemaVersion: 6,
       fixedPayments: [],
       extraIncomes: [],
       sync: { cursors: { fixed_payments: null, extra_incomes: null } },
@@ -211,6 +211,38 @@ describe('localStore (SPEC-004)', () => {
     const result = await localStore.load();
     expect(result).toMatchObject({ status: 'ok', migrated: true });
     if (result.status === 'ok') expect(result.state.cycles).toEqual([]);
+  });
+
+  it('migra v5 → v6: cada fonte herda o dia de pagamento global e settings fica pendente (BR-FIN-024)', async () => {
+    const v5 = {
+      ...createEmptyState(),
+      schemaVersion: 5,
+      settings: {
+        monthlyIncome: 600000,
+        incomeSources: [
+          { id: 'a', name: 'Salário', amount: 500000 },
+          { id: 'b', name: 'Freela', amount: 100000 },
+        ],
+        savingGoal: 0,
+        payday: 15,
+        customCategories: [],
+        updatedAt: '2026-04-01T00:00:00.000Z',
+        deletedAt: null,
+        dirty: false,
+      },
+    };
+    await AsyncStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(v5));
+
+    const result = await localStore.load(new Date('2026-10-03T12:00:00Z'));
+    if (result.status !== 'ok') throw new Error('falhou');
+
+    expect(result.migrated).toBe(true);
+    expect(result.state.schemaVersion).toBe(6);
+    expect(result.state.settings).toMatchObject({
+      payday: 15,
+      incomeSources: [expect.objectContaining({ id: 'a', payday: 15 }), expect.objectContaining({ id: 'b', payday: 15 })],
+      dirty: true,
+    });
   });
 
   it('migra documento v2 sem settings', async () => {

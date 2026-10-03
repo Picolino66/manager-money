@@ -62,13 +62,15 @@ export type IncomeSource = {
   id: string;
   name: string;
   amount: MoneyCents;
+  /** Dia do mês em que a fonte paga (1–28). O ciclo usa o da fonte de maior valor (BR-FIN-024). */
+  payday: number;
 };
 
 export type FinancialConfig = {
   /** Soma das fontes de renda (derivado de `incomeSources`). */
   monthlyIncome: MoneyCents;
   incomeSources: IncomeSource[];
-  /** Dia do mês em que a renda cai (1–28). Define início e fim do ciclo. */
+  /** Dia do mês em que a renda cai (1–28). Derivado: dia da fonte de maior valor (BR-FIN-024). */
   payday: number;
   fixedExpenses: FixedExpense[];
   customCategories: ExpenseCategory[];
@@ -103,6 +105,6 @@ export type DashboardSummary = {
   remainingDays: number;
 };
 
-export type FinancialConfigInput = Omit<FinancialConfig, 'updatedAt' | 'monthlyIncome'>;
+export type FinancialConfigInput = Omit<FinancialConfig, 'updatedAt' | 'monthlyIncome' | 'payday'>;
 
 export type ExpenseInput = Pick<Expense, 'amount' | 'category' | 'description' | 'date'>;

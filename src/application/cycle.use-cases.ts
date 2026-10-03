@@ -5,6 +5,7 @@ import {
   calculateDefaultCycleStartDate,
   calculateFinalBalance,
   calculateIncomeTotal,
+  calculatePrimaryPayday,
   calculateInitialAvailableAmount,
   calculatePreviousMonthDebt,
   canCloseCycle,
@@ -18,6 +19,8 @@ import {
   FinancialConfig,
   FinancialConfigInput,
   FixedExpense,
+  MAX_PAYDAY,
+  MIN_PAYDAY,
 } from '../domain/financial/financial.types';
 import { toISODate } from '../utils/date';
 import { DomainError } from './errors';
@@ -192,17 +195,27 @@ export function saveConfig(
     id: source.id,
     name: source.name.trim(),
     amount: source.amount,
+    payday: source.payday,
   }));
 
   if (incomeSources.length === 0) {
     throw new DomainError('Informe ao menos uma fonte de renda.');
   }
 
+  if (
+    incomeSources.some(
+      (source) =>
+        !Number.isInteger(source.payday) || source.payday < MIN_PAYDAY || source.payday > MAX_PAYDAY,
+    )
+  ) {
+    throw new DomainError(`O dia de pagamento de cada fonte deve ficar entre ${MIN_PAYDAY} e ${MAX_PAYDAY}.`);
+  }
+
   const nextSettingsFields = {
     monthlyIncome: calculateIncomeTotal(incomeSources),
     incomeSources,
     savingGoal: input.savingGoal,
-    payday: input.payday,
+    payday: calculatePrimaryPayday(incomeSources),
     customCategories: input.customCategories.map(normalizeCategory),
   };
   const currentSettings = state.settings;

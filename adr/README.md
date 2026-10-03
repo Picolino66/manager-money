@@ -20,3 +20,4 @@ Fonte primária das decisões arquiteturais. ADRs nunca são apagadas: só passa
 | [ADR-013](ADR-013-fontes-de-renda.md) | Múltiplas fontes de renda e documento local v3 | F3 (evolução) | ACCEPTED |
 | [ADR-014](ADR-014-cartoes-de-credito.md) | Cartões de crédito e compras parceladas | F3 (evolução) | ACCEPTED |
 | [ADR-015](ADR-015-pagamento-de-fixas-e-renda-avulsa.md) | Pagamento de despesas fixas e renda avulsa | F3 (evolução) | ACCEPTED |
+| [ADR-016](ADR-016-dia-de-pagamento-por-fonte.md) | Dia de pagamento por fonte de renda | F3 (evolução) | ACCEPTED |

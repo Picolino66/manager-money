@@ -8,7 +8,7 @@ summary: >
   exportação, dia de pagamento) e avaliação heurística das telas existentes.
 code:
   - src/navigation/AppNavigator.tsx
-last_verified_commit: a16e575+T-020
+last_verified_commit: 6fd4838+T-021
 ---
 
 # Jornadas, wireframes e usabilidade
@@ -37,7 +37,7 @@ Stack raiz
 ### FLOW-primeiro-uso (P1)
 
 1. Abre o app → Hoje mostra "Configuração inicial" → **Configurar**
-2. Informa as **fontes de renda** (nome e valor, uma ou mais), meta e **dia de pagamento** (novo, padrão 7) → adiciona fixos e parcelamentos → **Salvar**. Depois, em Hoje, confirma cada fixa com **Pagar** (Pix, dinheiro, débito ou crédito)
+2. Informa as **fontes de renda** (nome, valor e **dia de pagamento** de cada uma; o ciclo usa o da maior) e meta → adiciona fixos e parcelamentos → **Salvar**. Depois, em Hoje, confirma cada fixa com **Pagar** (Pix, dinheiro, débito ou crédito)
 3. É levada a **Abrir ciclo** → vê a prévia (saldo, período, dias, limite inicial) → **Iniciar ciclo**
 4. Volta a Hoje e vê "Ainda pode gastar R$ X"
 
@@ -107,7 +107,7 @@ padrão, o que já reduz a carga.
 ┌ Configuração financeira ─────┐   ┌ Erro ao carregar ────────────┐
 │ Renda mensal   [R$ 8.800,00] │   │  ⚠ Não foi possível ler os   │
 │ Meta mensal    [R$ 1.500,00] │   │  dados salvos.               │
-│ Dia do pagamento [ 7 ]  (1–28)│  │  [ Tentar novamente ]        │
+│ Fonte: dia pagto [ 7 ] (1–28)│  │  [ Tentar novamente ]        │
 │ ...                          │   │  [ Exportar dados brutos ]   │
 └──────────────────────────────┘   └──────────────────────────────┘
 ```

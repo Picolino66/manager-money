@@ -26,9 +26,8 @@ function ctx(year: number, month: number, day: number, device = 'x'): UseCaseCon
 }
 
 const config: FinancialConfigInput = {
-  incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000 }],
+  incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 7 }],
   savingGoal: 0,
-  payday: 7,
   customCategories: [],
   fixedExpenses: [
     { id: 'tv', type: 'installment', name: 'TV', category: 'Lazer', installmentAmount: 10000, totalInstallments: 5, remainingInstallments: 5 },
@@ -175,8 +174,8 @@ describe('runSync (SPEC-006)', () => {
     await a.sync();
     const b = new Device(linkUsingRemote(USER), server.clientFor(USER));
     await b.sync();
-    b.apply((s) => saveConfig(s, { ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 600000 }] }, ctx(2026, 10, 11, 'b')));
-    a.apply((s) => saveConfig(s, { ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 700000 }] }, ctx(2026, 10, 11, 'a')));
+    b.apply((s) => saveConfig(s, { ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 600000, payday: 7 }] }, ctx(2026, 10, 11, 'b')));
+    a.apply((s) => saveConfig(s, { ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 700000, payday: 7 }] }, ctx(2026, 10, 11, 'a')));
     await b.sync();
     await a.sync();
     await b.sync();
@@ -275,7 +274,7 @@ describe('primeiro login (BR-ACC-002)', () => {
     const a = linkedDevice(server, openCycle(saveConfig(createEmptyState(), config, ctx(2026, 10, 10, 'a')), ctx(2026, 10, 10, 'a')));
     await a.sync();
 
-    const localOnly = openCycle(saveConfig(createEmptyState(), { ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 1 }] }, ctx(2026, 10, 10, 'b')), ctx(2026, 10, 10, 'b'));
+    const localOnly = openCycle(saveConfig(createEmptyState(), { ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 1, payday: 7 }] }, ctx(2026, 10, 10, 'b')), ctx(2026, 10, 10, 'b'));
     const remote = server.clientFor(USER);
     await remote.markAllDeleted('2026-10-10T00:00:00.000Z');
     const b = new Device(linkKeepingLocal(localOnly, USER), remote);

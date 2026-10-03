@@ -34,10 +34,12 @@ function incomeSourcesFromRow(row: SettingsRow): IncomeSource[] {
       id: source.id,
       name: source.name,
       amount: Number(source.amount),
+      // Linhas gravadas antes do dia por fonte herdam o dia global da linha.
+      payday: source.payday ?? row.payday,
     }));
   }
 
-  return legacyIncomeSources(Number(row.monthly_income));
+  return legacyIncomeSources(Number(row.monthly_income), row.payday);
 }
 
 export function settingsFromRow(row: SettingsRow): SettingsRecord {

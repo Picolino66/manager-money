@@ -14,7 +14,7 @@ type RowMeta = {
 export type SettingsRow = RowMeta & {
   monthly_income: number;
   /** Fontes de renda (contrato v1, aditivo). Ausente em linhas antigas. */
-  income_sources?: { id: string; name: string; amount: number }[];
+  income_sources?: { id: string; name: string; amount: number; payday?: number }[];
   saving_goal: number;
   payday: number;
   custom_categories: string[];

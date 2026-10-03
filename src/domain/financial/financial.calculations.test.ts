@@ -13,6 +13,8 @@ import {
   calculateFixedExpenseAmount,
   calculateFixedExpensesTotal,
   calculateInitialAvailableAmount,
+  calculatePrimaryIncomeSource,
+  calculatePrimaryPayday,
   calculatePercentageRemaining,
   calculatePreviousMonthDebt,
   calculateRemainingDays,
@@ -30,7 +32,7 @@ import { toISODate } from '../../utils/date';
 
 const config: FinancialConfig = {
   monthlyIncome: 880000,
-  incomeSources: [{ id: 'renda', name: 'Salário', amount: 880000 }],
+  incomeSources: [{ id: 'renda', name: 'Salário', amount: 880000, payday: 7 }],
   payday: 7,
   fixedExpenses: [
     { id: 'fixed-1', type: 'permanent', name: 'Aluguel', category: 'Moradia', amount: 300000 },
@@ -235,5 +237,19 @@ describe('categorias (BR-FIN-012)', () => {
     expect(
       calculateExpensesByCategory([expense('a', 100, '2026-04-08', 'Lazer'), expense('b', 50, '2026-04-08', 'Lazer')]),
     ).toEqual({ Lazer: 150 });
+  });
+});
+
+describe('dia de pagamento do ciclo por fonte de renda (BR-FIN-024)', () => {
+  it('usa o dia da fonte de maior valor; empate fica com a primeira; sem fontes, o padrão', () => {
+    const sources = [
+      { amount: 80000, payday: 20 },
+      { amount: 500000, payday: 5 },
+      { amount: 500000, payday: 12 },
+    ];
+    expect(calculatePrimaryIncomeSource(sources)).toEqual({ amount: 500000, payday: 5 });
+    expect(calculatePrimaryPayday(sources)).toBe(5);
+    expect(calculatePrimaryPayday([{ amount: 10, payday: 15 }])).toBe(15);
+    expect(calculatePrimaryPayday([])).toBe(7);
   });
 });

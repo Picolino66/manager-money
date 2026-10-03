@@ -4,11 +4,11 @@ type: module
 module: planning
 title: Planejamento financeiro
 summary: >
-  Base financeira do usuário: renda mensal, meta de economia, dia de pagamento, despesas fixas e
+  Base financeira do usuário: renda mensal (fontes com dia de pagamento), meta de economia, despesas fixas e
   parcelamentos.
 code:
   - src/screens/ConfigScreen.tsx
-last_verified_commit: a16e575+T-020
+last_verified_commit: 6fd4838+T-021
 ---
 
 # Módulo: planejamento

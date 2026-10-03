@@ -68,6 +68,20 @@ export function calculateIncomeTotal(sources: Pick<IncomeSource, 'amount'>[]): M
   return sources.reduce((total, source) => total + source.amount, 0);
 }
 
+/** BR-FIN-024: o ciclo usa o dia de pagamento da fonte de maior valor (empate: a primeira). */
+export function calculatePrimaryIncomeSource<T extends Pick<IncomeSource, 'amount'>>(
+  sources: T[],
+): T | undefined {
+  return sources.reduce<T | undefined>(
+    (primary, source) => (!primary || source.amount > primary.amount ? source : primary),
+    undefined,
+  );
+}
+
+export function calculatePrimaryPayday(sources: Pick<IncomeSource, 'amount' | 'payday'>[]): number {
+  return calculatePrimaryIncomeSource(sources)?.payday ?? DEFAULT_PAYDAY;
+}
+
 export function calculateFixedExpensesTotal(
   config: Pick<FinancialConfig, 'fixedExpenses'>,
 ): MoneyCents {

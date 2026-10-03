@@ -9,7 +9,7 @@ code:
   - src/domain/financial/financial.calculations.ts
   - src/application/cycle.use-cases.ts
   - src/infrastructure/sync/sync-engine.ts
-last_verified_commit: a16e575+T-020
+last_verified_commit: 6fd4838+T-021
 ---
 
 # Regras de negócio
@@ -22,7 +22,7 @@ aponta o símbolo que implementa cada regra.
 | ID | Regra | Status | Origem |
 |---|---|---|---|
 | BR-FIN-001 | Todo valor monetário é armazenado e calculado em **centavos inteiros** (BRL). Não há ponto flutuante em cálculos de domínio. | vigente | `MoneyCents` em `financial.types.ts` |
-| BR-FIN-002 | O ciclo financeiro começa no **dia de pagamento** (configurável, 1–28; padrão 7) e termina no dia anterior ao dia de pagamento do mês seguinte. | vigente | `calculateDefaultCycleStartDate`, `calculateCycleEndDate` |
+| BR-FIN-002 | O ciclo financeiro começa no **dia de pagamento** (1–28; padrão 7; da fonte de maior valor, BR-FIN-024) e termina no dia anterior ao dia de pagamento do mês seguinte. | vigente | `calculateDefaultCycleStartDate`, `calculateCycleEndDate` |
 | BR-FIN-003 | **Recebimento antecipado:** antes do dia de pagamento, o usuário pode declarar "Já recebi". O ciclo ativo é fechado na véspera com os gastos anteriores; os demais migram para um novo ciclo que começa na data de recebimento e termina na data de fim padrão do mês seguinte. | vigente | `receiveIncomeEarly` |
 | BR-FIN-004 | **Saldo base** = renda mensal (soma das fontes, BR-FIN-018) + rendas avulsas do ciclo (BR-FIN-023) − despesas fixas **pagas à vista** no ciclo (BR-FIN-021) − meta de economia. Despesa fixa pendente **não desconta**. | vigente (altera a v1.0, SPEC-014) | `calculateBaseAvailableAmount` |
 | BR-FIN-005 | **Saldo inicial do ciclo** = saldo base − dívida herdada − parcelas de cartão do ciclo (BR-FIN-019); é recalculado ao pagar fixas, lançar rendas ou mudar compras no cartão. | vigente | `calculateInitialAvailableAmount` |
@@ -38,12 +38,13 @@ aponta o símbolo que implementa cada regra.
 | BR-FIN-015 | Plano (fixos + meta) acima da renda é permitido somente após **confirmação explícita** do usuário. | vigente | `ConfigScreen.onSubmit` |
 | BR-FIN-016 | O recebimento antecipado só é permitido **uma vez por ciclo** e com data **posterior ao início** do ciclo ativo. Isso impede ciclo vazio e avanço duplo de parcelas. | vigente (corrige DEF-001) | `canReceiveIncomeEarlyForCycle` |
 | BR-FIN-017 | Um ciclo novo **nunca se sobrepõe** ao período de um ciclo fechado. O fechamento manual só é permitido **depois do fim do período**; antes disso, o caminho é o recebimento antecipado. Se o início padrão cair dentro de um ciclo fechado (dados legados), o novo ciclo começa no dia seguinte ao fim dele. | vigente (corrige DEF-006) | `canCloseCycle`, `calculateNextCycleStartDate` |
-| BR-FIN-018 | A renda mensal é a **soma de uma ou mais fontes de renda** (nome + valor > 0). É obrigatória ao menos uma fonte. Documentos e linhas remotas antigos viram uma fonte "Renda". | vigente (SPEC-012) | `saveConfig`, `calculateIncomeTotal`, `legacyIncomeSources` |
+| BR-FIN-018 | A renda mensal é a **soma de uma ou mais fontes de renda** (nome + valor > 0). É obrigatória ao menos uma fonte, cada uma com seu dia de pagamento (BR-FIN-024). Documentos e linhas remotas antigos viram uma fonte "Renda". | vigente (SPEC-012) | `saveConfig`, `calculateIncomeTotal`, `legacyIncomeSources` |
 | BR-FIN-019 | **Compra no crédito:** a fatura que recebe a compra é a do primeiro **fechamento do cartão em ou depois da data da compra** (até o dia de fechamento = fatura do mês; depois = do mês seguinte). A 1ª parcela cai no **ciclo que contém esse fechamento** (nunca antes do ciclo ativo); as demais, uma por ciclo seguinte. O vencimento do cartão é informativo. As parcelas do ciclo **reduzem o saldo inicial** (BR-FIN-005). | vigente (SPEC-013) | `calculateFirstCycleKey`, `calculateCardChargesForCycle`, `addCardPurchase` |
 | BR-FIN-020 | **Valor da compra no crédito:** o valor informado é o **total já com juros**, dividido em parcelas iguais de centavos inteiros (os centavos que sobram vão para as primeiras parcelas). Cartão com compras vigentes não pode ser excluído; compra com parcelas em ciclo fechado não pode ser excluída (histórico imutável). | vigente (SPEC-013) | `splitInstallments`, `deleteCreditCard`, `canDeleteCardPurchase` |
 | BR-FIN-021 | **Pagamento de despesa fixa:** todo ciclo lista as despesas fixas (e a parcela do mês dos parcelamentos) como pendentes. Ao pagar, escolhe-se Pix, dinheiro, débito ou crédito. À vista, o valor **sai da renda do ciclo** no ato. Cada despesa tem no máximo **um pagamento vigente por ciclo**; o pagamento pode ser desfeito enquanto o ciclo está ativo. | vigente (SPEC-014) | `payFixedExpense`, `undoFixedPayment`, `calculatePaidFixedAmount` |
 | BR-FIN-022 | **Fixa paga no crédito:** o app pede cartão, parcelas e os **juros cobrados em R$**; vira uma compra no cartão de `valor + juros` (BR-FIN-019/020). O crédito **não desconta à vista**: quem desconta são as parcelas nos ciclos das faturas. Desfazer remove também a compra. | vigente (SPEC-014) | `payFixedExpense`, `buildCardPurchase` |
 | BR-FIN-023 | **Renda avulsa:** entrada extra lançada no ciclo ativo (nome, valor > 0, data dentro do ciclo) que **soma ao saldo disponível** do ciclo; pode ser excluída enquanto o ciclo está ativo. | vigente (SPEC-014) | `addExtraIncome`, `deleteExtraIncome`, `calculateExtraIncomeTotal` |
+| BR-FIN-024 | **Dia de pagamento por fonte:** cada fonte de renda tem o seu dia (1–28). O ciclo financeiro (BR-FIN-002) usa o dia da **fonte de maior valor** (empate: a primeira da lista); `settings.payday` é derivado disso. Os dias das demais fontes são informativos. Mudar fontes vale a partir do próximo ciclo. | vigente (SPEC-015) | `calculatePrimaryPayday`, `saveConfig` |
 
 ## Conta, dados e privacidade (`BR-ACC`)
 

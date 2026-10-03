@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T20:44:43.598Z",
-  "source_commit": "a16e575",
+  "generated_at": "2026-10-03T21:28:19.856Z",
+  "source_commit": "6fd4838",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -159,7 +159,7 @@
       "type": "integration",
       "module": "architecture",
       "title": "Contratos de dados e API (v1)",
-      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 5).",
+      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 6).",
       "doc": "architecture/contracts.md",
       "state": "implemented",
       "adrs": [
@@ -746,7 +746,7 @@
       "type": "module",
       "module": "planning",
       "title": "Planejamento financeiro",
-      "summary": "Base financeira do usuário: renda mensal, meta de economia, dia de pagamento, despesas fixas e parcelamentos.",
+      "summary": "Base financeira do usuário: renda mensal (fontes com dia de pagamento), meta de economia, despesas fixas e parcelamentos.",
       "doc": "modules/planning/index.md",
       "state": "implemented"
     },
@@ -801,15 +801,18 @@
         "migração"
       ],
       "symbols": [
+        "calculatePrimaryPayday",
         "saveConfig",
         "calculateIncomeTotal",
         "legacyIncomeSources",
         "migrateV2ToV3",
+        "migrateV5ToV6",
         "settingsFromRow"
       ],
       "business_rules": [
         "BR-FIN-004",
-        "BR-FIN-018"
+        "BR-FIN-018",
+        "BR-FIN-024"
       ],
       "adrs": [
         "ADR-013"
@@ -820,14 +823,14 @@
         "src/infrastructure/sync/mappers.test.ts",
         "src/screens/screens.test.tsx"
       ],
-      "spec": "SPEC-012"
+      "spec": "SPEC-015"
     },
     {
       "id": "planning.payday",
       "type": "feature",
       "module": "planning",
       "title": "Dia de pagamento configurável",
-      "summary": "Dia do mês (1–28) em que a renda cai; define início, fim e janela de recebimento antecipado de cada ciclo.",
+      "summary": "Dia do mês (1–28) em que cada fonte de renda cai (o ciclo usa o da maior); define início, fim e janela de recebimento antecipado de cada ciclo.",
       "doc": "modules/planning/payday.md",
       "state": "implemented",
       "keywords": [
@@ -837,17 +840,19 @@
         "início do ciclo"
       ],
       "symbols": [
+        "calculatePrimaryPayday",
         "calculateCycleEndDate",
         "calculateDefaultCycleStartDate",
         "canReceiveIncomeEarly"
       ],
       "business_rules": [
-        "BR-FIN-002"
+        "BR-FIN-002",
+        "BR-FIN-024"
       ],
       "tests": [
         "src/domain/financial/financial.calculations.test.ts"
       ],
-      "spec": "SPEC-001"
+      "spec": "SPEC-015"
     },
     {
       "id": "quality.manual-qa",
