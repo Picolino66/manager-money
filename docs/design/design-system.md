@@ -8,7 +8,7 @@ summary: >
 code:
   - src/design/theme.ts
   - src/components/AppButton.tsx
-last_verified_commit: a16e575+T-020
+last_verified_commit: f9eaa87+T-023
 ---
 
 # Design system
@@ -40,8 +40,8 @@ em telas novas: usar sempre os tokens.
 | `EmptyState` | Estado vazio com ação |
 | `CurrencyInput` | Entrada em centavos (BR-FIN-001) |
 | `TextInputField`, `SelectField`, `CategoryPicker` | Formulários |
-| `FixedExpensesCard` | Despesas fixas do ciclo com status (Pendente/Pago) e Pagar/Desfazer |
-| `PayFixedExpenseModal` | Modal de forma de pagamento (Pix, Dinheiro, Débito, Crédito) com cartão, parcelas e juros; opções em *chips*, sem `Modal` aninhado |
+| `FixedExpensesCard` | Cartão expansível (nasce encolhido) de despesas fixas com status (Pendente/Pago) e Pagar/Desfazer |
+| `PayFixedExpenseModal` | Modal de pagamento: À vista (Pix, dinheiro ou débito) ou Cartão de crédito com cartão, parcelas e juros; opções em *chips*, sem `Modal` aninhado |
 
 ## Diretrizes
 - O status nunca é comunicado só pela cor.

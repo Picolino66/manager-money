@@ -238,23 +238,7 @@ export function DashboardScreen() {
           title="Renda"
           variant="secondary"
         />
-        <AppButton
-          iconName="settings-outline"
-          onPress={() => navigation.navigate('Config')}
-          style={styles.gridButton}
-          title="Config"
-          variant="secondary"
-        />
       </View>
-
-      {showReceiveEarly ? (
-        <AppButton
-          iconName="cash-outline"
-          onPress={handleReceiveIncomeEarly}
-          title="Já recebi"
-          variant="secondary"
-        />
-      ) : null}
 
       <Card>
         <Text style={styles.sectionTitle}>Resumo do ciclo</Text>
@@ -281,6 +265,15 @@ export function DashboardScreen() {
         <MetricRow label="Faturas de cartão" value={formatCurrency(adjustments?.cardCharges ?? 0)} />
         <MetricRow label="Dívida herdada" value={formatCurrency(activeMonth.previousMonthDebt)} />
       </Card>
+
+      {showReceiveEarly ? (
+        <AppButton
+          iconName="cash-outline"
+          onPress={handleReceiveIncomeEarly}
+          title="Já recebi"
+          variant="secondary"
+        />
+      ) : null}
 
       {canClose ? (
         <Text style={styles.cycleEndedText}>

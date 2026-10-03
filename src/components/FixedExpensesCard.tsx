@@ -1,4 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { FixedPaymentRecord } from '../application/state';
 import { colors, radius, spacing, typography } from '../design/theme';
@@ -46,19 +48,35 @@ export function FixedExpensesCard({
       (left, right) =>
         Number(Boolean(left.payment)) - Number(Boolean(right.payment)) || right.amount - left.amount,
     );
+  const [isExpanded, setIsExpanded] = useState(false);
   const pending = rows.filter((row) => !row.payment).reduce((total, row) => total + row.amount, 0);
   const paid = rows.filter((row) => row.payment).reduce((total, row) => total + row.amount, 0);
 
   return (
     <Card>
-      <Text style={styles.title}>Despesas fixas do ciclo</Text>
-      {rows.length === 0 ? (
-        <Text style={styles.empty}>Nenhuma despesa fixa neste ciclo.</Text>
-      ) : (
-        <>
+      <Pressable
+        accessibilityLabel="Mostrar ou ocultar despesas fixas do ciclo"
+        accessibilityRole="button"
+        accessibilityState={{ expanded: isExpanded }}
+        onPress={() => setIsExpanded((value) => !value)}
+        style={styles.header}
+      >
+        <View style={styles.headerText}>
+          <Text style={styles.title}>Despesas fixas do ciclo</Text>
           <Text style={styles.summary}>
-            Pagas {formatCurrency(paid)} · Pendentes {formatCurrency(pending)}
+            {rows.length === 0
+              ? 'Nenhuma despesa fixa neste ciclo.'
+              : `Pagas ${formatCurrency(paid)} · Pendentes ${formatCurrency(pending)}`}
           </Text>
+        </View>
+        <Ionicons
+          color={colors.muted}
+          name={isExpanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+          size={22}
+        />
+      </Pressable>
+      {isExpanded ? (
+        <>
           {rows.map(({ expense, amount, payment }) => (
             <View key={expense.id} style={styles.row}>
               <View style={styles.rowText}>
@@ -99,7 +117,7 @@ export function FixedExpensesCard({
             </View>
           ))}
         </>
-      )}
+      ) : null}
     </Card>
   );
 }
@@ -110,14 +128,18 @@ const styles = StyleSheet.create({
     fontSize: typography.sectionTitle,
     fontWeight: '900',
   },
+  header: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  headerText: {
+    flex: 1,
+    gap: 2,
+  },
   summary: {
     color: colors.muted,
     fontSize: 13,
-    fontWeight: '700',
-  },
-  empty: {
-    color: colors.muted,
-    fontSize: 14,
     fontWeight: '700',
   },
   row: {

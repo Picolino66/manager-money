@@ -1,14 +1,17 @@
 import { ExpenseCategory, MoneyCents } from './financial.types';
 
-/** Forma de pagamento de uma despesa fixa (BR-FIN-021). */
+/**
+ * Forma de pagamento de uma despesa fixa (BR-FIN-021). A interface oferece só "À vista" (gravado
+ * como `cash`) e "Crédito"; `pix` e `debit` seguem válidos por compatibilidade com dados e banco.
+ */
 export type PaymentMethod = 'pix' | 'cash' | 'debit' | 'credit';
 
 export const PAYMENT_METHODS: readonly PaymentMethod[] = ['pix', 'cash', 'debit', 'credit'];
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  pix: 'Pix',
-  cash: 'Dinheiro',
-  debit: 'Débito',
+  pix: 'À vista',
+  cash: 'À vista',
+  debit: 'À vista',
   credit: 'Crédito',
 };
 

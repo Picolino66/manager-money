@@ -8,7 +8,7 @@ summary: >
   avulsas do ciclo.
 code:
   - src/components/FixedExpensesCard.tsx
-last_verified_commit: a16e575+T-020
+last_verified_commit: f9eaa87+T-022
 ---
 
 # Módulo: pagamentos e rendas

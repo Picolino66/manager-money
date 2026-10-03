@@ -19,17 +19,18 @@ symbols: [payFixedExpense, undoFixedPayment, calculatePaidFixedAmount, calculate
 adrs: [ADR-015, ADR-014]
 tests: [src/application/payment.use-cases.test.ts, src/screens/screens.test.tsx, src/infrastructure/sync/sync-engine.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-021, BR-FIN-022]
-last_verified_commit: a16e575+T-020
+last_verified_commit: f9eaa87+T-023
 ---
 
 # Pagar despesas fixas do ciclo
 
 Spec: [SPEC-014](../../../specs/SPEC-014-pagamento-de-fixas-e-renda-avulsa.md).
 
-- **Lista:** "Despesas fixas do ciclo" no Hoje, sempre visível. Cada linha: nome (e parcela `n/N` dos
+- **Lista:** "Despesas fixas do ciclo" no Hoje, **encolhida por padrão** (só o título, "Pagas … · Pendentes …" e a seta); ao tocar, expande. Cada linha: nome (e parcela `n/N` dos
   parcelamentos), categoria, valor, **Pendente** ou **Pago · forma**, e **Pagar**/**Desfazer**.
   Resumo "Pagas … · Pendentes …". Pendente **não desconta** o saldo (BR-FIN-004).
-- **Pagar (à vista):** Pix, Dinheiro ou Débito desconta o valor da renda do ciclo agora
+- **Pagar:** duas formas, como em Registrar gasto: **À vista (Pix, dinheiro ou débito)** e **Cartão de crédito**. À vista não abre outro menu e é gravada como `cash` (`pix`/`debit` seguem válidos em dados antigos); a lista mostra "Pago · À vista".
+- **Pagar (à vista):** desconta o valor da renda do ciclo agora
   (`paidFixedExpenses` em `calculateInitialAvailableAmount`).
 - **Pagar (crédito):** escolhe cartão, parcelas e juros (R$). Cria compra no cartão de `valor +
   juros` (BR-FIN-019/020); só as parcelas descontam, no ciclo do fechamento da fatura. A prévia

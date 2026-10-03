@@ -11,11 +11,6 @@ import {
   MAX_CARD_INSTALLMENTS,
   splitInstallments,
 } from '../domain/financial/credit-card';
-import {
-  PAYMENT_METHOD_LABELS,
-  PAYMENT_METHODS,
-  PaymentMethod,
-} from '../domain/financial/payments';
 import { describeFirstInstallment } from '../screens/cardText';
 import { formatCurrency } from '../utils/currency';
 import { parseISO } from 'date-fns';
@@ -49,12 +44,12 @@ export function PayFixedExpenseModal({
   onClose,
   onRegisterCard,
 }: PayFixedExpenseModalProps) {
-  const [method, setMethod] = useState<PaymentMethod>('pix');
+  const [kind, setKind] = useState<'cash' | 'credit'>('cash');
   const [cardId, setCardId] = useState<string | null>(null);
   const [installmentsText, setInstallmentsText] = useState('1');
   const [interest, setInterest] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
-  const isCredit = method === 'credit';
+  const isCredit = kind === 'credit';
   const card = cards.find((item) => item.id === cardId) ?? cards[0] ?? null;
   const installments = Number(installmentsText.replace(/\D/g, '')) || 0;
   const hasValidInstallments = installments >= 1 && installments <= MAX_CARD_INSTALLMENTS;
@@ -79,8 +74,8 @@ export function PayFixedExpenseModal({
     try {
       await onConfirm(
         isCredit
-          ? { method, cardId: card?.id, installments, interest }
-          : { method },
+          ? { method: 'credit', cardId: card?.id, installments, interest }
+          : { method: 'cash' },
       );
     } finally {
       setIsSaving(false);
@@ -97,14 +92,8 @@ export function PayFixedExpenseModal({
 
             <Text style={styles.label}>Forma de pagamento</Text>
             <View style={styles.chips}>
-              {PAYMENT_METHODS.map((option) => (
-                <Chip
-                  key={option}
-                  label={PAYMENT_METHOD_LABELS[option]}
-                  onPress={() => setMethod(option)}
-                  selected={method === option}
-                />
-              ))}
+              <Chip label="À vista (Pix, dinheiro ou débito)" onPress={() => setKind('cash')} selected={!isCredit} />
+              <Chip label="Cartão de crédito" onPress={() => setKind('credit')} selected={isCredit} />
             </View>
 
             {isCredit && cards.length === 0 ? (

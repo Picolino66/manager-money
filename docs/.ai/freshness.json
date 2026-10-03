@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T21:28:19.856Z",
-  "source_commit": "6fd4838",
+  "generated_at": "2026-10-03T23:44:37.635Z",
+  "source_commit": "f9eaa87",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -59,7 +59,7 @@
     },
     "design/design-system.md": {
       "id": "design.system",
-      "last_verified_commit": "a16e575+T-020",
+      "last_verified_commit": "f9eaa87+T-023",
       "state": "fresh",
       "source_hashes": {
         "src/design/theme.ts": "sha256:9e5ab49c86d245ba891a6aea32eb9385b9b367c1264e15906924d6bcab25fc76",
@@ -210,7 +210,7 @@
     },
     "modules/cycle/dashboard.md": {
       "id": "cycle.dashboard",
-      "last_verified_commit": "a16e575+T-020",
+      "last_verified_commit": "f9eaa87+T-022",
       "state": "fresh",
       "source_hashes": {
         "buildDashboardSummary": "sha256:328f415c9254721051cfb2f595d040d20e196b43493ad148d819470cfc54c41f",
@@ -330,7 +330,7 @@
     },
     "modules/payment/fixed-expense.md": {
       "id": "payment.fixed-expense",
-      "last_verified_commit": "a16e575+T-020",
+      "last_verified_commit": "f9eaa87+T-023",
       "state": "fresh",
       "source_hashes": {
         "payFixedExpense": "sha256:b3d37b70681bd70d85488fd288eeadb0cf2c228061534a4616f34d3a4272dbf6",
@@ -342,10 +342,10 @@
     },
     "modules/payment/index.md": {
       "id": "payment",
-      "last_verified_commit": "a16e575+T-020",
+      "last_verified_commit": "f9eaa87+T-022",
       "state": "fresh",
       "source_hashes": {
-        "src/components/FixedExpensesCard.tsx": "sha256:660d075f30326afd4783ec81f8d994aef6a0b265b68fbfc7d8e3f948fb9c1f6d"
+        "src/components/FixedExpensesCard.tsx": "sha256:d95e033b7ec64374a5be4bb35b783e7f70bfe9cc9011c02a13d807815e24b256"
       }
     },
     "modules/planning/configure.md": {
@@ -498,7 +498,7 @@
     },
     "quality/manual-qa.md": {
       "id": "quality.manual-qa",
-      "last_verified_commit": "6fd4838+T-021",
+      "last_verified_commit": "f9eaa87+T-023",
       "state": "fresh",
       "source_hashes": {
         "src/navigation/AppNavigator.tsx": "sha256:68e2179d630cd103bd784f4d66f3105dc681903da2b24d665b7c1f769bf74173"
