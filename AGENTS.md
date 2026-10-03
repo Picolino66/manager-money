@@ -6,7 +6,7 @@
 - Antes de alterar arquivos, apresente plano objetivo: escopo, resultado esperado e impacto; aguarde aprovação explícita.
 - Atualize `CLAUDE.md`, `AGENTS.md` e `README.md` quando a mudança exigir; `CLAUDE.md` e `AGENTS.md` têm o mesmo conteúdo.
 - `CLAUDE.md`, `AGENTS.md` e `README.md` devem ter até 300 linhas; compacte se necessário.
-- Nunca versionar segredos; use `.env.local` (não versionado) e `.env.example`. Sem `EXPO_PUBLIC_SUPABASE_*` o app roda em modo local.
+- Nunca versionar segredos; use `.env` (não versionado) e `.env.example`. Sem `EXPO_PUBLIC_SUPABASE_*` o app roda em modo local.
 
 ## Skills Obrigatórias
 - **Toda tarefa de desenvolvimento ou evolução do sistema deve usar `autonomous-software-orchestrator`.** Ela orquestra o ciclo em 7 fases (F1 Discovery → F2 Arquitetura → F3 Contratos → F4 UX/Planejamento → F5 Engenharia → F6 Qualidade/Deploy → F7 Operação) com quality gates, ADRs e snapshots de estado (O1–O7, em `.orchestrator/`). Modos: `full-pipeline`, `phase-resume`, `feature-evolution` (novas features, F4–F7), `architecture-review`, `incident-response`. O contexto compartilhado fica em `.orchestrator/context.json`; seções congeladas por snapshot só mudam via ADR de override. Aciona as demais skills como sub-skills.

@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T18:37:11.260Z",
-  "source_commit": "114b089",
+  "generated_at": "2026-10-03T18:52:29.154Z",
+  "source_commit": "38bc5eb",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -402,10 +402,10 @@
     },
     "operations/runbook.md": {
       "id": "operations.runbook",
-      "last_verified_commit": "114b089",
+      "last_verified_commit": "ENV-VERIFIED",
       "state": "fresh",
       "source_hashes": {
-        "eas.json": "sha256:067f738eec35e1e2c470d7def3c181862ab60548a026c2b12e414841d7bd9d96",
+        "eas.json": "sha256:6ae16fa238b4a43cc16d1d5a3fdcde66f2fa70eb6bc16cc9b2e4c80f3f6842aa",
         "app.json": "sha256:49e41e74097395540979a70fe18c82e8315237e764b81eb99888817366a047ac",
         "supabase/migrations/20261001000000_init.sql": "sha256:fbdafc4a64ab9b114512823451cffbb232b603310e616466c5bb811fe0ce93af",
         "docs/operations/metrics.sql": "sha256:2c78ad7035f9191701ec6a0179d8caccd5d0468a82ec0c8185b883cc1ef66e58"

@@ -11,7 +11,7 @@ code:
   - app.json
   - supabase/migrations/20261001000000_init.sql
   - docs/operations/metrics.sql
-last_verified_commit: 114b089
+last_verified_commit: ENV-VERIFIED
 ---
 
 # Runbook de operação
@@ -20,7 +20,7 @@ last_verified_commit: 114b089
 
 | Variável | Onde | Pública? |
 |---|---|---|
-| `EXPO_PUBLIC_SUPABASE_URL` | EAS env (`preview`, `production`) e `.env.local` em dev | Sim (vai no app) |
+| `EXPO_PUBLIC_SUPABASE_URL` | EAS env (`preview`, `production`) e `.env` em dev | Sim (vai no app) |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | idem | Sim (protegida por RLS) |
 | `EXPO_PUBLIC_SENTRY_DSN` | idem (quando T-013 for feita) | Sim |
 | `service_role` do Supabase | **Somente** no painel do Supabase. Nunca no app, no repositório nem no EAS | **Não** |
@@ -66,6 +66,9 @@ npx eas-cli build -p android --profile preview      # APK para instalar direto
 npx eas-cli build -p android --profile production   # AAB para a Play Store
 npx eas-cli build -p ios --profile production       # exige conta Apple Developer
 ```
+
+Cada perfil declara `environment` no `eas.json` e carrega as variáveis do ambiente EAS de mesmo nome
+(`preview` → preview, `production` → production).
 
 A versão exibida (`app.json → expo.version`) é alterada manualmente a cada release (semver). O
 número de build é controlado pelo EAS (`appVersionSource: remote`).

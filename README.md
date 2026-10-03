@@ -22,7 +22,7 @@ Supabase (Auth + Postgres com RLS) · Jest. Valores monetários sempre em centav
 
 ```bash
 npm install
-cp .env.example .env.local   # opcional: preencha para habilitar o sync
+cp .env.example .env   # opcional: preencha para habilitar o sync
 npx expo start
 ```
 
