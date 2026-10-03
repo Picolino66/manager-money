@@ -9,9 +9,10 @@ Fonte primária das decisões arquiteturais. ADRs nunca são apagadas: só passa
 | [ADR-002](ADR-002-stack-tecnologica.md) | Stack: Expo SDK 54 + Zustand + Supabase | F2 | ACCEPTED |
 | [ADR-003](ADR-003-persistencia-local.md) | Persistência local em documento único versionado | F2 | ACCEPTED |
 | [ADR-004](ADR-004-sincronizacao.md) | Sync offline-first com outbox e last-write-wins | F2 | ACCEPTED |
-| [ADR-005](ADR-005-autenticacao.md) | Autenticação por OTP de e-mail; login opcional | F2 | ACCEPTED |
+| [ADR-005](ADR-005-autenticacao.md) | Autenticação por OTP de e-mail; login opcional | F2 | SUPERSEDED (ADR-011) |
 | [ADR-006](ADR-006-modelo-de-seguranca.md) | Modelo de segurança e threat model | F2 | ACCEPTED |
 | [ADR-007](ADR-007-observabilidade.md) | Observabilidade com Sentry e métricas no servidor | F2 | ACCEPTED |
 | [ADR-008](ADR-008-modelo-de-dados-e-consistencia.md) | Modelo de dados e consistência | F3 | ACCEPTED |
 | [ADR-009](ADR-009-estrutura-agentic.md) | Estrutura agentic e knowledge layer | F4 | ACCEPTED |
 | [ADR-010](ADR-010-testes-e-qualidade.md) | Testes, cobertura e quality gates | F4 | ACCEPTED |
+| [ADR-011](ADR-011-autenticacao-email-senha.md) | Autenticação por e-mail e senha, sem envio de e-mail | F2 (evolução) | ACCEPTED |

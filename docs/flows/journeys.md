@@ -8,7 +8,7 @@ summary: >
   exportação, dia de pagamento) e avaliação heurística das telas existentes.
 code:
   - src/navigation/AppNavigator.tsx
-last_verified_commit: 359de21
+last_verified_commit: F7-VERIFIED
 ---
 
 # Jornadas, wireframes e usabilidade
@@ -64,8 +64,8 @@ padrão, o que já reduz a carga.
 
 ### FLOW-ativar-sync (P2)
 
-1. Ajustes → **Conta e sincronização** → e-mail → **Enviar código**
-2. Digita o código de 6 dígitos → **Entrar**
+1. Ajustes → **Conta e sincronização** → e-mail e senha (mínimo 8 caracteres)
+2. **Criar conta** (primeira vez) ou **Entrar**. Nenhum e-mail é enviado (ADR-011)
 3. Se houver dados locais **e** na nuvem: escolhe "Usar dados da nuvem" ou "Manter dados deste
    aparelho" (BR-ACC-002), com o resumo de cada lado
 4. Status: "Sincronizado agora" / "3 alterações pendentes" / "Sem conexão"
@@ -89,11 +89,10 @@ padrão, o que já reduz a carga.
 │ Conta e sincronização      › │   │  Sincronize entre aparelhos  │
 │   ana@email.com · em dia     │   │  e não perca seus dados.     │
 │ Exportar dados (JSON)      › │   │  E-mail [______________]     │
-│ Política de privacidade    › │   │  [   Enviar código   ]       │
-│                              │   │  ─────────────────────────   │
-│ Versão 1.0.0                 │   │  Código  [______]            │
-└──────────────────────────────┘   │  [      Entrar      ]        │
-                                   └──────────────────────────────┘
+│ Política de privacidade    › │   │  Senha  [______________]     │
+│                              │   │  [      Entrar      ]        │
+│ Versão 1.0.0                 │   │  [    Criar conta   ]        │
+└──────────────────────────────┘   └──────────────────────────────┘
 ┌ Conta e sincronização ───────┐   ┌ Editar gasto ────────────────┐
 │  (logado)                    │   │ Valor      [R$ 25,00]        │
 │  ana@email.com               │   │ Categoria  [Alimentação ▾]   │

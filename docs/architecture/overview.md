@@ -13,7 +13,7 @@ code:
   - src/infrastructure/sync/sync-engine.ts
   - src/store/financial.store.ts
 adrs: [ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007]
-last_verified_commit: 359de21
+last_verified_commit: F7-VERIFIED
 ---
 
 # Visão de arquitetura
@@ -40,7 +40,7 @@ o servidor garante isolamento (RLS) e integridade estrutural.
                                 │ HTTPS (PostgREST + GoTrue)
                     ┌───────────▼────────────┐        ┌────────────────┐
                     │ Supabase sa-east-1     │        │ Sentry         │
-                    │ Auth (OTP e-mail)      │        │ crash + health │
+                    │ Auth (e-mail + senha)  │        │ crash + health │
                     │ Postgres + RLS         │        └────────────────┘
                     └────────────────────────┘
 ```
@@ -62,7 +62,7 @@ React, React Native, AsyncStorage nem Supabase.
 
 | Integração | Uso | Contrato | Falha |
 |---|---|---|---|
-| Supabase Auth (GoTrue) | OTP por e-mail, sessão, refresh | `signInWithOtp`, `verifyOtp`, `signOut` | App segue em modo local; mensagem ao usuário |
+| Supabase Auth (GoTrue) | E-mail + senha, sessão, refresh (ADR-011) | `signInWithPassword`, `signUp`, `signOut` | App segue em modo local; mensagem ao usuário |
 | Supabase PostgREST | Push (upsert) e pull incremental | [contracts.md](contracts.md) | Outbox mantém pendências; retry com backoff |
 | Supabase RPC | `delete_my_account()` | [contracts.md](contracts.md) | Erro exibido; nada é apagado localmente |
 | Sentry | Crashes e release health | SDK | Silencioso (não afeta o uso) |

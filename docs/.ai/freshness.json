@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-01T14:55:32.938Z",
-  "source_commit": "27a0bd2",
+  "generated_at": "2026-10-03T18:36:34.971Z",
+  "source_commit": "81215b2",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -18,7 +18,7 @@
     },
     "architecture/overview.md": {
       "id": "architecture.overview",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
         "src/domain/financial/financial.calculations.ts": "sha256:025c37f45f5efc11632137f36c2d122a59227f465dbbdc534b1f2d9fc12a458a",
@@ -48,7 +48,7 @@
     },
     "business/requirements.md": {
       "id": "business.requirements",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
         "src/store/financial.store.ts": "sha256:15afe61c18add1bfd6f153a8d02c7a2459acaa010bb8a532e5e3137f1755b097"
@@ -65,7 +65,7 @@
     },
     "flows/journeys.md": {
       "id": "flows.journeys",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
         "src/navigation/AppNavigator.tsx": "sha256:aa6b7b4bbadcaaed57ad6f1e0d70551e5904b370eecd5ca4c24d2f4d8f56706a"
@@ -73,14 +73,15 @@
     },
     "modules/account/auth.md": {
       "id": "account.auth",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
-        "sendCode": "sha256:2ba32d846d8e550a84b8141982b1702662c648526e6c6c3e55e7e8783eecb68c",
-        "verifyCode": "sha256:6eca463a15d0217bf29dfe50b3c123f9beaa6941b0e8daaa13b987e7cd4ceba0",
+        "signIn": "sha256:971a683be2384f9602ed1733c55b59f21ea6fa8b8ba0bc1f12fcfcb3dcff28f7",
+        "signUp": "sha256:1f83802a13a67ad929337af4c94945445026c4fb5a4afd6382fe5b22cbb673a5",
         "signOut": "sha256:bc4d7835880c76cab6a7bb24473de2e8567d00cc8e40bef043095e07d6391e7b",
-        "friendlyAuthError": "sha256:a8449405957ac1fdf1d40c9d82c98f81e274c08ce2fd80c1ccb81f913b09b392",
-        "encryptedSessionStorage": "sha256:2153a2b14c9063fdeb886214772443f62886cd01f9282abdbdbd2b8dc83de8b5"
+        "friendlyAuthError": "sha256:4e29b5034097f6cadad72a5dea95d353aa58582a097a6c973e8fcde35c16746b",
+        "assertCredentials": "sha256:004b0a1acd31dcf5336d4dad848343912b2e907e2b3af0c953bfb5cae9a0fbf3",
+        "encryptedSessionStorage": "sha256:9475545ed74503cc216bee2f470208648defa66b144810db6d6c801d7efd5d78"
       }
     },
     "modules/account/delete.md": {
@@ -103,10 +104,10 @@
     },
     "modules/account/index.md": {
       "id": "account",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
-        "src/store/session.store.ts": "sha256:d96370181e698e0d60ec31e4c312872b982caf109be5a3f61ce56ddbfaac4955"
+        "src/store/session.store.ts": "sha256:7bf02e5a58fda89494ae20a4d405ee04cff2663c099e36c8e81b6f6414d799ba"
       }
     },
     "modules/application/index.md": {
@@ -249,18 +250,18 @@
     },
     "modules/legal/index.md": {
       "id": "legal",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
-        "src/legal/privacy-policy.ts": "sha256:0ceb1b60258e843de721341c53fee3c47e3d110748e97f865ee3f1cbcdf4189b"
+        "src/legal/privacy-policy.ts": "sha256:94e9a9b6fc1c230762b3aebd958685ba061fa7f1bbdefb208dbf9df4c97f7217"
       }
     },
     "modules/legal/privacy-policy.md": {
       "id": "legal.privacy-policy",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
-        "PRIVACY_POLICY_SECTIONS": "sha256:b5a55e567b4244a611756080dd7ea40624d96a44916623cd1d1343e970d11a1a"
+        "PRIVACY_POLICY_SECTIONS": "sha256:e6bcf226ced85af02ade232192be3355463d87b26b5e47244d895d5ceb3be69c"
       }
     },
     "modules/monitoring/index.md": {
@@ -273,11 +274,11 @@
     },
     "modules/monitoring/logging.md": {
       "id": "monitoring.logging",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
         "sanitizeFields": "sha256:a3cb41ff0aa761d1ec9fee915fdb2981b131531d4f37dc52292360dc5b86f44f",
-        "logger": "sha256:9f639cba6e7b640f9825908a222b11c1ac93ff0e30db7ef8cae1d77015ceee35"
+        "logger": "sha256:23ebfbde50cb22011426130e50aecee798e084c396cbfd6e4b5dbc81b26ec22c"
       }
     },
     "modules/planning/configure.md": {
@@ -389,19 +390,19 @@
     },
     "modules/tooling/quality-pipeline.md": {
       "id": "tooling.quality-pipeline",
-      "last_verified_commit": "27a0bd2",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:ffd6d93766e8971a0c1d0d56b06f171d12150832c4fd929d7dffcd3bfc535a45",
         "eslint.config.js": "sha256:ce6522ab08964ca7fcd43c8f070e8da55b3d85284b8e1bcaa7d288ea5c3b2cad",
         ".github/workflows/ci.yml": "sha256:11fbe6ff9f839ea6473b84092d3956f1ea761bdfebadd763952fe445b00c66cb",
-        "scripts/ai-docs/build-index.mjs": "sha256:9e4000c5c2a5d4059c49f4dc80ede342aac81afcbb2e336704378b97b09e9bd6",
+        "scripts/ai-docs/build-index.mjs": "sha256:9e659869c95f9efbfcbf672c84b1b94ad3662040bdbba48bbf30b91a4bc3df6b",
         "supabase/tests/run-plain.sh": "sha256:404177ecd17a0846fd5ac6d3ead730b4179b02bf0c07cd422ab6a4e4f3ed3f53"
       }
     },
     "operations/runbook.md": {
       "id": "operations.runbook",
-      "last_verified_commit": "27a0bd2",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
         "eas.json": "sha256:067f738eec35e1e2c470d7def3c181862ab60548a026c2b12e414841d7bd9d96",
@@ -412,7 +413,7 @@
     },
     "quality/manual-qa.md": {
       "id": "quality.manual-qa",
-      "last_verified_commit": "27a0bd2",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
         "src/navigation/AppNavigator.tsx": "sha256:aa6b7b4bbadcaaed57ad6f1e0d70551e5904b370eecd5ca4c24d2f4d8f56706a"
@@ -420,7 +421,7 @@
     },
     "quality/security-report.md": {
       "id": "quality.security-report",
-      "last_verified_commit": "27a0bd2",
+      "last_verified_commit": "F7-VERIFIED",
       "state": "fresh",
       "source_hashes": {
         "supabase/migrations/20261001000000_init.sql": "sha256:fbdafc4a64ab9b114512823451cffbb232b603310e616466c5bb811fe0ce93af",

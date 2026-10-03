@@ -13,7 +13,7 @@ symbols: [sanitizeFields, logger]
 business_rules: [BR-ACC-006]
 adrs: [ADR-007]
 tests: [src/infrastructure/monitoring/logger.test.ts]
-last_verified_commit: 359de21
+last_verified_commit: F7-VERIFIED
 ---
 
 # Logger

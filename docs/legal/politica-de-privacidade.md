@@ -10,7 +10,7 @@ O Manager Money é um aplicativo de planejamento financeiro pessoal. Esta polít
 
 ## Dados que tratamos
 
-Sem conta: renda, meta de economia, dia de pagamento, despesas fixas, parcelamentos, ciclos e gastos ficam somente no seu aparelho. Com conta: além desses dados, seu e-mail (para login por código) e um identificador de usuário, armazenados no nosso provedor de banco de dados.
+Sem conta: renda, meta de economia, dia de pagamento, despesas fixas, parcelamentos, ciclos e gastos ficam somente no seu aparelho. Com conta: além desses dados, seu e-mail (para login) e um identificador de usuário, armazenados no nosso provedor de banco de dados.
 
 ## Finalidade e base legal
 
@@ -22,7 +22,7 @@ Com conta, os dados são armazenados no Supabase (servidores na região de São 
 
 ## Segurança
 
-A comunicação usa HTTPS. Cada conta acessa somente os próprios dados (isolamento no banco). A sessão fica criptografada no aparelho, com a chave guardada no armazenamento seguro do sistema.
+A comunicação usa HTTPS. Cada conta acessa somente os próprios dados (isolamento no banco). A senha é armazenada pelo provedor apenas em forma de hash, nunca em texto. A sessão fica criptografada no aparelho, com a chave guardada no armazenamento seguro do sistema.
 
 ## Retenção
 

@@ -11,7 +11,7 @@ code:
   - app.json
   - supabase/migrations/20261001000000_init.sql
   - docs/operations/metrics.sql
-last_verified_commit: 27a0bd2
+last_verified_commit: F7-VERIFIED
 ---
 
 # Runbook de operação
@@ -42,13 +42,12 @@ Sem essas variáveis, o build sai em **modo local** (sem sync), que é o comport
    npx supabase link --project-ref <ref>
    npx supabase db push          # aplica supabase/migrations/*
    ```
-3. **Auth → Providers → Email:** habilitado; "Confirm email" ligado; **Email OTP length = 6**.
-4. **Auth → Email Templates → Magic Link:** o corpo deve conter `{{ .Token }}`, pois o app usa
-   código e não link. Exemplo: `Seu código do Manager Money é {{ .Token }}. Ele expira em 1 hora.`
-5. **Auth → SMTP:** configurar um SMTP próprio (Resend, SES ou outro) **antes do lançamento**. O
-   SMTP padrão tem limite baixo de envios por hora (achado S4).
-6. **Auth → Rate limits:** manter os padrões; avaliar CAPTCHA se houver abuso.
-7. **Backups:** o plano Free não oferece backup diário com restauração (PITR). Como os dados também
+3. **Authentication → Sign In / Providers → Email:** habilitado; **"Confirm email" desligado**;
+   **Minimum password length = 8** (ADR-011). Assim, nenhum e-mail é enviado.
+4. **SMTP e templates (opcional):** só são necessários para adicionar "Esqueci a senha" no futuro.
+   Sem SMTP próprio, o Supabase não permite editar templates e limita o envio a ~2 e-mails por hora.
+5. **Auth → Rate limits:** manter os padrões; avaliar CAPTCHA se houver abuso.
+6. **Backups:** o plano Free não oferece backup diário com restauração (PITR). Como os dados também
    ficam em cada aparelho e podem ser exportados, isso é aceitável no lançamento. Migrar para o
    plano Pro ao passar de ~500 usuários ativos.
 
@@ -115,10 +114,11 @@ número de build é controlado pelo EAS (`appVersionSource: remote`).
 
 ### Playbooks
 
-**Login: "não recebi o código"**
-1. Supabase → Auth → Logs: procurar erros de SMTP ou de rate limit.
-2. Conferir o template (§2.4) e a cota do SMTP.
-3. Contorno para o usuário: o app segue funcionando em modo local.
+**Login: "não consigo entrar" / "esqueci a senha"**
+1. Supabase → Auth → Logs: procurar `invalid_credentials` ou erros de rate limit.
+2. Sem SMTP não há recuperação de senha (ADR-011). Contorno: o usuário segue no modo local com
+   seus dados; um administrador pode redefinir a senha em Authentication → Users.
+3. Se aparecer "Confirme o cadastro", o "Confirm email" foi religado: desligar (§2.3).
 
 **Sync falhando para muitos usuários**
 1. Supabase → API Logs: erros 4xx/5xx por tabela.

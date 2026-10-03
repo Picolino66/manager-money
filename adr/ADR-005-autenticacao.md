@@ -1,6 +1,6 @@
 # ADR-005 — Autenticação por OTP de e-mail; login opcional
 
-- **Status:** ACCEPTED · **Fase:** F2 · **Data:** 2026-10-01
+- **Status:** SUPERSEDED por [ADR-011](ADR-011-autenticacao-email-senha.md) em 2026-10-03 · **Fase:** F2 · **Data:** 2026-10-01
 - **Ajusta:** RF-13 (snapshot O1). Login social (Apple/Google) sai da v1.0.
 
 ## Contexto

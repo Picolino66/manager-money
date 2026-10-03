@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-01T14:55:32.938Z",
-  "source_commit": "27a0bd2",
+  "generated_at": "2026-10-03T18:36:34.971Z",
+  "source_commit": "81215b2",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -18,31 +18,32 @@
       "id": "account.auth",
       "type": "feature",
       "module": "account",
-      "title": "Entrar e sair (OTP por e-mail)",
-      "summary": "Login sem senha com código de 6 dígitos enviado por e-mail via Supabase Auth; sessão criptografada no aparelho; sair mantendo ou apagando os dados locais.",
+      "title": "Entrar e sair (e-mail e senha)",
+      "summary": "Login e cadastro com e-mail e senha (mínimo 8) via Supabase Auth, sem envio de e-mail; sessão criptografada no aparelho; sair mantendo ou apagando os dados locais.",
       "doc": "modules/account/auth.md",
       "state": "implemented",
       "keywords": [
         "login",
         "entrar",
-        "código",
-        "otp",
+        "criar conta",
+        "senha",
         "e-mail",
         "sair",
         "sessão"
       ],
       "symbols": [
-        "sendCode",
-        "verifyCode",
+        "signIn",
+        "signUp",
         "signOut",
         "friendlyAuthError",
+        "assertCredentials",
         "encryptedSessionStorage"
       ],
       "business_rules": [
         "BR-ACC-001"
       ],
       "adrs": [
-        "ADR-005",
+        "ADR-011",
         "ADR-006"
       ],
       "tests": [

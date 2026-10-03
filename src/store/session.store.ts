@@ -24,8 +24,8 @@ type SessionState = {
   /** Primeiro login com dados locais e na nuvem: aguardando escolha (BR-ACC-002). */
   awaitingFirstLoginChoice: boolean;
   init: () => Promise<void>;
-  sendCode: (email: string) => Promise<void>;
-  verifyCode: (email: string, code: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
   resolveFirstLogin: (choice: 'keep-local' | 'use-remote') => Promise<void>;
   signOut: (eraseLocalData: boolean) => Promise<void>;
   deleteAccount: () => Promise<void>;
@@ -49,10 +49,30 @@ function requireClient(): SupabaseClient {
   return client;
 }
 
+/** ADR-011: mínimo exigido no app e configurado no Supabase. */
+export const MIN_PASSWORD_LENGTH = 8;
+
 function friendlyAuthError(message: string): string {
-  if (/expired|invalid|token/i.test(message)) return 'Código inválido ou expirado.';
+  if (/invalid login credentials/i.test(message)) return 'E-mail ou senha incorretos.';
+  if (/already registered|already exists/i.test(message)) {
+    return 'Já existe uma conta com este e-mail. Use Entrar.';
+  }
+  if (/password/i.test(message)) {
+    return `A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`;
+  }
+  if (/email not confirmed/i.test(message)) {
+    return 'Confirme o cadastro pelo e-mail recebido e depois entre.';
+  }
   if (/rate|too many|seconds/i.test(message)) return 'Muitas tentativas. Aguarde um minuto e tente novamente.';
   return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
+}
+
+function assertCredentials(email: string, password: string) {
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    throw new Error(`A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+  }
+
+  return { email: email.trim().toLowerCase(), password };
 }
 
 function installSyncTriggers() {
@@ -124,31 +144,40 @@ export const useSessionStore = create<SessionState>((set, get) => {
       await linkAfterLogin(user.id).catch((error) => logger.error(error));
     },
 
-    async sendCode(email) {
-      const { error } = await requireClient().auth.signInWithOtp({
-        email: email.trim().toLowerCase(),
-        options: { shouldCreateUser: true },
-      });
-
-      if (error) throw new Error(friendlyAuthError(error.message));
-    },
-
-    async verifyCode(email, code) {
-      const { data, error } = await requireClient().auth.verifyOtp({
-        email: email.trim().toLowerCase(),
-        token: code.trim(),
-        type: 'email',
-      });
+    async signIn(email, password) {
+      const { data, error } = await requireClient().auth.signInWithPassword(
+        assertCredentials(email, password),
+      );
       const user = data.user;
 
       if (error || !user) {
         logger.event('auth.login', { ok: false });
-        throw new Error(friendlyAuthError(error?.message ?? 'invalid'));
+        throw new Error(friendlyAuthError(error?.message ?? 'Invalid login credentials'));
       }
 
       logger.event('auth.login', { ok: true });
       set({ status: 'signed-in', userId: user.id, email: user.email ?? null });
       await linkAfterLogin(user.id);
+    },
+
+    async signUp(email, password) {
+      const { data, error } = await requireClient().auth.signUp(assertCredentials(email, password));
+      // Supabase responde sem erro e sem identidades quando o e-mail já existe (anti-enumeração).
+      const alreadyExists = data.user && data.user.identities?.length === 0;
+
+      if (error || !data.user || alreadyExists) {
+        logger.event('auth.login', { ok: false, code: 'signup' });
+        throw new Error(friendlyAuthError(error?.message ?? 'User already registered'));
+      }
+
+      if (!data.session) {
+        // Projeto exigindo confirmação de e-mail (ADR-011 pede a confirmação desligada).
+        throw new Error(friendlyAuthError('Email not confirmed'));
+      }
+
+      logger.event('auth.login', { ok: true, code: 'signup' });
+      set({ status: 'signed-in', userId: data.user.id, email: data.user.email ?? null });
+      await linkAfterLogin(data.user.id);
     },
 
     async resolveFirstLogin(choice) {

@@ -103,6 +103,11 @@ function extractSymbol(source, symbol) {
     const match = pattern.exec(source);
     if (!match) continue;
     const start = match.index;
+    if (/\bconst\s/.test(match[0])) {
+      // Constantes (inclusive com anotação de tipo): até a primeira linha que fecha na coluna 0.
+      const close = /^[\]})][^\n]*$/m.exec(source.slice(start));
+      if (close) return source.slice(start, start + close.index + close[0].length);
+    }
     const open = source.indexOf('{', start);
     if (open === -1) return source.slice(start, source.indexOf('\n', start));
     let depth = 0;

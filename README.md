@@ -1,7 +1,7 @@
 # Manager Money
 
 App mobile (Android e iOS) que transforma a renda mensal em um **limite diário de gastos**, recalculado
-a cada gasto dentro do ciclo do seu dia de pagamento. Funciona offline; o login por código de e-mail
+a cada gasto dentro do ciclo do seu dia de pagamento. Funciona offline; o login com e-mail e senha
 é opcional e habilita a sincronização entre aparelhos.
 
 ## Funcionalidades
@@ -11,7 +11,7 @@ a cada gasto dentro do ciclo do seu dia de pagamento. Funciona offline; o login 
 - Despesas fixas, **parcelamentos** no cartão e meta de economia
 - "Já recebi": abre o próximo ciclo quando a renda cai antes do dia
 - Gastos por categoria e período, com gráfico
-- Conta opcional (código por e-mail), **sync offline-first**, exportação JSON e exclusão de conta
+- Conta opcional (e-mail e senha), **sync offline-first**, exportação JSON e exclusão de conta
 
 ## Stack
 

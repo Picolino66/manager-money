@@ -8,7 +8,7 @@ summary: >
   críticos antes da publicação nas lojas.
 code:
   - src/navigation/AppNavigator.tsx
-last_verified_commit: 27a0bd2
+last_verified_commit: F7-VERIFIED
 ---
 
 # Campanha de QA manual — v1.0
@@ -36,9 +36,9 @@ last_verified_commit: 27a0bd2
 | D02.07 | Alta | Logo depois de D02.06 | Botão "Já recebi" **não** aparece |
 | D02.08 | Média | Categorias: criar "Viagem", filtrar por período e tipo | Gráfico e total coerentes |
 | **Dia 3 — conta e sync** (exige Supabase configurado) ||||
-| D03.01 | Alta | Ajustes → Conta → e-mail → Enviar código | E-mail chega com código de 6 dígitos |
-| D03.02 | Alta | Código errado | "Código inválido ou expirado." |
-| D03.03 | Alta | Código certo (aparelho com dados, nuvem vazia) | "Sincronizado às HH:mm" |
+| D03.01 | Alta | Ajustes → Conta → e-mail + senha de 7 caracteres → Criar conta | Alerta "Senha curta"; nada é enviado |
+| D03.02 | Alta | Entrar com senha errada | "E-mail ou senha incorretos." |
+| D03.03 | Alta | Criar conta válida (aparelho com dados, nuvem vazia) | Entra direto, sem e-mail; "Sincronizado às HH:mm" |
 | D03.04 | Alta | Segundo aparelho, mesmo e-mail, sem dados | Dados baixados iguais |
 | D03.05 | Alta | Aparelho A em modo avião: registrar gasto; reconectar | "1 alteração pendente" → sincroniza; aparece em B |
 | D03.06 | Alta | Aparelho com dados próprios entra em conta com dados | Pergunta "Usar dados da nuvem / Manter dados deste aparelho" |

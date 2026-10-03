@@ -37,7 +37,8 @@
       "backend": "sync em nuvem exigido",
       "deploy_authority": "eas build preview autorizado; submit não autorizado",
       "git": "um commit por fase em master",
-      "language": "pt-BR"
+      "language": "pt-BR",
+      "supabase_project": "gqnxafarguexhirvupkt (sa-east-1); confirm email OFF; min password 8"
     }
   },
   "scope": {
@@ -69,7 +70,7 @@
       "app": "Expo SDK 54 / RN 0.81 / TS strict",
       "state": "zustand 5",
       "forms": "react-hook-form + zod 4",
-      "backend": "Supabase sa-east-1 (Auth OTP, Postgres+RLS, PostgREST)",
+      "backend": "Supabase sa-east-1 (Auth e-mail+senha, Postgres+RLS, PostgREST)",
       "session": "expo-secure-store + aes-js",
       "monitoring": "@sentry/react-native",
       "tests": "jest-expo + @testing-library/react-native",
@@ -94,13 +95,20 @@
       "ADR-007",
       "ADR-008",
       "ADR-009",
-      "ADR-010"
+      "ADR-010",
+      "ADR-011"
     ],
     "overrides": [
       {
         "adr": "ADR-005",
         "section": "requirements.RF-13",
         "change": "login social adiado para v1.1"
+      },
+      {
+        "adr": "ADR-011",
+        "section": "architecture.tech_stack/auth",
+        "change": "OTP por e-mail (ADR-005) substituído por e-mail + senha sem envio de e-mail",
+        "date": "2026-10-03"
       }
     ]
   },
@@ -193,8 +201,8 @@
     "f6_status": "pré-deploy concluído; aguardando eas login para build preview",
     "security": "docs/quality/security-report.md — 0 críticas; 2 altas aceitas (tooling de build)",
     "tests": {
-      "total": 110,
-      "coverage_lines": 97.36
+      "total": 112,
+      "coverage_lines": 97.42
     },
     "manual_qa": "docs/quality/manual-qa.md (planejada, não executada)"
   },
@@ -221,7 +229,12 @@
         "mode": "incremental",
         "phase": "F5"
       }
-    ]
+    ],
+    "last_run": {
+      "mode": "feature-evolution",
+      "task": "T-016",
+      "date": "2026-10-03"
+    }
   },
   "ux": {
     "journeys": "docs/flows/journeys.md",

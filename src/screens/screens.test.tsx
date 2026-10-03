@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
 
 import { openCycle, saveConfig } from '../application/cycle.use-cases';
 import { createEmptyState, LocalState } from '../application/state';
@@ -96,9 +97,21 @@ describe('AccountScreen', () => {
     expect(screen.getByText('Modo local')).toBeTruthy();
   });
 
-  it('deslogado pede e-mail e valida', () => {
-    useSessionStore.setState({ status: 'signed-out' });
+  it('deslogado mostra e-mail e senha e valida antes de chamar o servidor', () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const signUp = jest.fn();
+    useSessionStore.setState({ status: 'signed-out', signUp });
     render(<AccountScreen />);
-    expect(screen.getByText('Enviar código')).toBeTruthy();
+    expect(screen.getByText('Entrar')).toBeTruthy();
+
+    fireEvent.changeText(screen.getByLabelText('E-mail'), 'ana@email.com');
+    fireEvent.changeText(screen.getByLabelText('Senha'), '123');
+    fireEvent.press(screen.getByText('Criar conta'));
+    expect(alert).toHaveBeenCalledWith('Senha curta', expect.stringContaining('8 caracteres'));
+
+    fireEvent.changeText(screen.getByLabelText('E-mail'), 'inválido');
+    fireEvent.press(screen.getByText('Entrar'));
+    expect(alert).toHaveBeenCalledWith('E-mail inválido', expect.any(String));
+    expect(signUp).not.toHaveBeenCalled();
   });
 });

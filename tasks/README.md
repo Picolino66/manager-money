@@ -31,3 +31,5 @@ P1 = importante para operar; P2 = melhoria.
 **S1 (23 pts):** fundação e correções de dados: T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-015.
 **S2 (21 pts):** conta, sync e lojas: T-008, T-009, T-010, T-011, T-012, T-014.
 **Bloqueada:** T-013 (depende da conta Sentry).
+
+**S3 (evolução):** T-016 — login por e-mail e senha (ADR-011), concluída.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, StyleSheet, Text } from 'react-native';
 import { z } from 'zod';
 
@@ -9,10 +9,9 @@ import { Screen } from '../components/Screen';
 import { TextInputField } from '../components/TextInputField';
 import { colors, typography } from '../design/theme';
 import { useFinancialStore } from '../store/financial.store';
-import { useSessionStore } from '../store/session.store';
+import { MIN_PASSWORD_LENGTH, useSessionStore } from '../store/session.store';
 import { describeSyncStatus } from './syncStatus';
 
-const RESEND_SECONDS = 60;
 const emailSchema = z.email();
 
 function errorMessage(error: unknown) {
@@ -26,16 +25,8 @@ export function AccountScreen() {
   const sync = useFinancialStore((state) => state.doc.sync);
   const syncNow = useFinancialStore((state) => state.syncNow);
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [codeSent, setCodeSent] = useState(false);
-  const [resendIn, setResendIn] = useState(0);
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (resendIn <= 0) return;
-    const timer = setTimeout(() => setResendIn((value) => value - 1), 1000);
-    return () => clearTimeout(timer);
-  }, [resendIn]);
 
   async function guarded(action: () => Promise<void>, title: string) {
     setBusy(true);
@@ -48,26 +39,29 @@ export function AccountScreen() {
     }
   }
 
-  function handleSendCode() {
+  /** Valida no app antes de chamar o servidor (SPEC-005). */
+  function validCredentials() {
     if (!emailSchema.safeParse(email.trim()).success) {
       Alert.alert('E-mail inválido', 'Confira o endereço digitado.');
-      return;
+      return false;
     }
 
-    void guarded(async () => {
-      await session.sendCode(email);
-      setCodeSent(true);
-      setResendIn(RESEND_SECONDS);
-    }, 'Não foi possível enviar o código');
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      Alert.alert('Senha curta', `A senha precisa ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres.`);
+      return false;
+    }
+
+    return true;
   }
 
-  function handleVerify() {
-    if (!/^\d{6}$/.test(code.trim())) {
-      Alert.alert('Código inválido', 'Digite os 6 dígitos recebidos por e-mail.');
-      return;
-    }
+  function handleSignIn() {
+    if (!validCredentials()) return;
+    void guarded(() => session.signIn(email, password), 'Não foi possível entrar');
+  }
 
-    void guarded(() => session.verifyCode(email, code), 'Não foi possível entrar');
+  function handleSignUp() {
+    if (!validCredentials()) return;
+    void guarded(() => session.signUp(email, password), 'Não foi possível criar a conta');
   }
 
   function handleFirstLogin(choice: 'keep-local' | 'use-remote') {
@@ -201,8 +195,8 @@ export function AccountScreen() {
       <Text style={styles.title}>Conta e sincronização</Text>
       <Card>
         <Text style={styles.body}>
-          Entre com seu e-mail para sincronizar entre aparelhos e não perder seus dados. Enviaremos
-          um código de 6 dígitos — sem senha.
+          Entre ou crie uma conta para sincronizar entre aparelhos e não perder seus dados. O app
+          continua funcionando sem conta.
         </Text>
         <TextInputField
           autoCapitalize="none"
@@ -213,29 +207,28 @@ export function AccountScreen() {
           placeholder="voce@email.com"
           value={email}
         />
-        <AppButton
-          disabled={resendIn > 0}
-          iconName="mail-outline"
-          isLoading={busy && !codeSent}
-          onPress={handleSendCode}
-          title={resendIn > 0 ? `Reenviar em ${resendIn}s` : codeSent ? 'Reenviar código' : 'Enviar código'}
-          variant={codeSent ? 'secondary' : 'primary'}
+        <TextInputField
+          autoCapitalize="none"
+          autoComplete="password"
+          label="Senha"
+          onChangeText={setPassword}
+          placeholder={`Mínimo de ${MIN_PASSWORD_LENGTH} caracteres`}
+          secureTextEntry
+          value={password}
         />
+        <AppButton iconName="log-in-outline" isLoading={busy} onPress={handleSignIn} title="Entrar" />
+        <AppButton
+          iconName="person-add-outline"
+          isLoading={busy}
+          onPress={handleSignUp}
+          title="Criar conta"
+          variant="secondary"
+        />
+        <Text style={styles.hint}>
+          Guarde sua senha: a recuperação por e-mail ainda não está disponível. Seus dados continuam
+          neste aparelho e podem ser exportados em Ajustes.
+        </Text>
       </Card>
-      {codeSent ? (
-        <Card>
-          <TextInputField
-            autoComplete="one-time-code"
-            keyboardType="number-pad"
-            label="Código"
-            maxLength={6}
-            onChangeText={(value) => setCode(value.replace(/\D/g, ''))}
-            placeholder="000000"
-            value={code}
-          />
-          <AppButton iconName="log-in-outline" isLoading={busy} onPress={handleVerify} title="Entrar" />
-        </Card>
-      ) : null}
     </Screen>
   );
 }

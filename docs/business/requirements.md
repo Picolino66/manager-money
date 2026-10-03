@@ -8,7 +8,7 @@ summary: >
   análise de viabilidade e métricas de sucesso.
 code:
   - src/store/financial.store.ts
-last_verified_commit: 359de21
+last_verified_commit: F7-VERIFIED
 ---
 
 # Requisitos, escopo, viabilidade e métricas — v1.0 (lojas)
@@ -29,7 +29,7 @@ last_verified_commit: 359de21
 | RF-10 | Recebimento antecipado ("Já recebi") | BR-FIN-003, 016 | existente → correção |
 | RF-11 | Fechar ciclo manualmente | BR-FIN-006, 017 | existente → correção |
 | RF-12 | **Dia de pagamento configurável** | BR-FIN-002 | **novo** |
-| RF-13 | **Criar conta e entrar** com código OTP enviado por e-mail (login social na v1.1, ver ADR-005) | BR-ACC-001 | **novo** |
+| RF-13 | **Criar conta e entrar** com e-mail e senha (ADR-011, substitui o OTP da ADR-005; login social na v1.1) | BR-ACC-001 | **novo** |
 | RF-14 | **Sincronizar dados entre aparelhos**, offline-first | BR-SYNC-* | **novo** |
 | RF-15 | **Migrar dados locais** no primeiro login | BR-ACC-002 | **novo** |
 | RF-16 | **Excluir conta** e dados na nuvem | BR-ACC-003 | **novo** |

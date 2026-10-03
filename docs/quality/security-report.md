@@ -11,7 +11,7 @@ code:
   - src/infrastructure/supabase/session-storage.ts
   - src/infrastructure/export/share-json.ts
 adrs: [ADR-006]
-last_verified_commit: 27a0bd2
+last_verified_commit: F7-VERIFIED
 ---
 
 # Relatório de segurança — F6
@@ -56,7 +56,7 @@ versionados: **0 achados**. `.env*` está no `.gitignore` (exceto `.env.example`
 | Escrita em nome de outro usuário | RLS `WITH CHECK` | RLS 12/12 |
 | Vazamento em logs | Lista permitida no logger | `logger.test.ts` |
 | Dados exportados residuais | Arquivo apagado após o compartilhamento | `share-json.test.ts` (corrigido na F6) |
-| Abuso de OTP | Rate limit do Supabase Auth | Configuração do projeto (runbook §2) |
+| Força bruta de senha (ADR-011) | Mínimo de 8 caracteres + rate limit do Supabase Auth | `session.store.test.ts` + runbook §2 |
 
 ## 5. Achados de revisão de código
 
@@ -65,6 +65,8 @@ versionados: **0 achados**. `.env*` está no `.gitignore` (exceto `.env.example`
 | S1 | JSON exportado permanecia no cache após o compartilhamento | Baixa | **Corrigido** |
 | S2 | Campos de formulário sem rótulo acessível (descoberto pelos testes de UI) | Baixa (a11y) | **Corrigido** |
 | S3 | AES-CTR sem MAC: um atacante com acesso de escrita ao armazenamento do app poderia corromper a sessão | Baixa | Aceito: o resultado é sessão inválida (novo login), nunca acesso indevido |
-| S4 | SMTP padrão do Supabase tem limite baixo de e-mails por hora | Média (disponibilidade) | Runbook: configurar SMTP próprio antes do lançamento |
+| S4 | SMTP padrão do Supabase tem limite baixo de e-mails por hora | Média (disponibilidade) | **Resolvido pela ADR-011**: o login não envia e-mail |
+| S5 | E-mail não verificado no cadastro (confirmação desligada) | Baixa | Aceito na ADR-011: a conta só contém dados de quem a criou |
+| S6 | Sem recuperação de senha | Média (usabilidade) | Aceito até haver SMTP; dados locais e exportação continuam disponíveis |
 
 **Veredito:** nenhuma vulnerabilidade crítica ou alta sem mitigação no app publicado.
