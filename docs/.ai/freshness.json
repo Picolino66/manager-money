@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T19:19:31.279Z",
-  "source_commit": "c2b1de1",
+  "generated_at": "2026-10-03T19:19:58.924Z",
+  "source_commit": "a88175c",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -48,7 +48,7 @@
     },
     "business/requirements.md": {
       "id": "business.requirements",
-      "last_verified_commit": "SDK57-VERIFIED",
+      "last_verified_commit": "a88175c",
       "state": "fresh",
       "source_hashes": {
         "src/store/financial.store.ts": "sha256:15afe61c18add1bfd6f153a8d02c7a2459acaa010bb8a532e5e3137f1755b097"
@@ -294,7 +294,7 @@
     },
     "modules/planning/index.md": {
       "id": "planning",
-      "last_verified_commit": "SDK57-VERIFIED",
+      "last_verified_commit": "a88175c",
       "state": "fresh",
       "source_hashes": {
         "src/screens/ConfigScreen.tsx": "sha256:64639905e26f60899ae94a98a8dce5c984ada47eaafa6aac3954b6a7f1c7b23d"
@@ -382,7 +382,7 @@
     },
     "modules/tooling/index.md": {
       "id": "tooling",
-      "last_verified_commit": "SDK57-VERIFIED",
+      "last_verified_commit": "a88175c",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:f62f7b23ed42cf5f65c0fa018646d75b727d1d1f2f9658eb0c78dd379b7fe665"
@@ -390,7 +390,7 @@
     },
     "modules/tooling/quality-pipeline.md": {
       "id": "tooling.quality-pipeline",
-      "last_verified_commit": "SDK57-VERIFIED",
+      "last_verified_commit": "a88175c",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:f62f7b23ed42cf5f65c0fa018646d75b727d1d1f2f9658eb0c78dd379b7fe665",
@@ -402,7 +402,7 @@
     },
     "operations/runbook.md": {
       "id": "operations.runbook",
-      "last_verified_commit": "SDK57-VERIFIED",
+      "last_verified_commit": "a88175c",
       "state": "fresh",
       "source_hashes": {
         "eas.json": "sha256:6ae16fa238b4a43cc16d1d5a3fdcde66f2fa70eb6bc16cc9b2e4c80f3f6842aa",
@@ -421,7 +421,7 @@
     },
     "quality/security-report.md": {
       "id": "quality.security-report",
-      "last_verified_commit": "SDK57-VERIFIED",
+      "last_verified_commit": "a88175c",
       "state": "fresh",
       "source_hashes": {
         "supabase/migrations/20261001000000_init.sql": "sha256:fbdafc4a64ab9b114512823451cffbb232b603310e616466c5bb811fe0ce93af",

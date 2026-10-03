@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T19:19:31.279Z",
-  "source_commit": "c2b1de1",
+  "generated_at": "2026-10-03T19:19:58.924Z",
+  "source_commit": "a88175c",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
