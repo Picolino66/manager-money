@@ -24,6 +24,11 @@ values ('e1','c1',1500,'Alimentação','Almoço','2026-10-08',now(),now());
 do $$ begin assert (select count(*) from public.cycles)=1, 'A vê próprio ciclo'; raise notice 'ok - A vê o próprio ciclo'; end $$;
 do $$ begin assert (select user_id from public.settings)='00000000-0000-0000-0000-00000000000a', 'default user_id'; raise notice 'ok - user_id default = auth.uid()'; end $$;
 
+do $$ begin assert (select income_sources from public.settings)='[]'::jsonb, 'income_sources padrão'; raise notice 'ok - BR-FIN-018 income_sources default []'; end $$;
+update public.settings set income_sources='[{"id":"i1","name":"Salário","amount":880000}]'::jsonb;
+do $$ begin assert (select jsonb_array_length(income_sources) from public.settings)=1; raise notice 'ok - BR-FIN-018 income_sources gravado'; end $$;
+select pg_temp.expect_error($q$update public.settings set income_sources='{"a":1}'::jsonb$q$,'23514','BR-FIN-018 income_sources não-array rejeitado');
+
 select pg_temp.expect_error($q$insert into public.cycles (id,start_date,end_date,received_at,started_at,status,initial_available_amount,previous_month_debt,client_updated_at) values ('c2','2026-10-07','2026-11-06',now(),now(),'active',1,0,now())$q$,'23505','BR-FIN-013 segundo ciclo ativo rejeitado');
 select pg_temp.expect_error($q$insert into public.expenses (user_id,id,cycle_id,amount,category,description,date,created_at,client_updated_at) values ('00000000-0000-0000-0000-00000000000b','e9','c1',100,'Outros','x','2026-10-08',now(),now())$q$,'42501','A não grava em nome de B');
 select pg_temp.expect_error($q$insert into public.expenses (id,cycle_id,amount,category,description,date,created_at,client_updated_at) values ('e2','c1',0,'Outros','x','2026-10-08',now(),now())$q$,'23514','gasto com valor 0 rejeitado');

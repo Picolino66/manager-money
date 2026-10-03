@@ -18,7 +18,7 @@ let now = new Date(2026, 9, 10, 12);
 const context = (): UseCaseContext => ({ now, newId: (prefix) => `${prefix}-${++sequence}` });
 
 const config = {
-  monthlyIncome: 300000,
+  incomeSources: [{ id: 'renda', name: 'Salário', amount: 300000 }],
   savingGoal: 0,
   payday: 7,
   customCategories: [],
@@ -91,7 +91,7 @@ describe('useFinancialStore', () => {
     await store().exportData();
     const payload = shareJson.mock.calls.at(-1)?.[1] as string;
     expect(payload).not.toContain('user-secreto');
-    expect(JSON.parse(payload)).toMatchObject({ app: 'manager-money', schemaVersion: 2 });
+    expect(JSON.parse(payload)).toMatchObject({ app: 'manager-money', schemaVersion: 3 });
   });
 
   it('sincroniza com debounce depois das escritas e faz backoff offline', async () => {
@@ -108,7 +108,7 @@ describe('useFinancialStore', () => {
     expect(server.store('u1').settings).toHaveLength(1);
 
     remote.offline = true;
-    await store().saveConfig({ ...config, monthlyIncome: 1 });
+    await store().saveConfig({ ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 1 }] });
     expect(await store().syncNow()).toEqual({ ok: false, code: 'network' });
     remote.offline = false;
     await jest.advanceTimersByTimeAsync(60_000);

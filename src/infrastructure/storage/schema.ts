@@ -15,6 +15,7 @@ const syncMeta = {
 const settingsSchema = z.object({
   ...syncMeta,
   monthlyIncome: cents.min(0),
+  incomeSources: z.array(z.object({ id: z.string().min(1), name: z.string(), amount: cents.min(0) })),
   savingGoal: cents.min(0),
   payday: z.number().int().min(MIN_PAYDAY).max(MAX_PAYDAY),
   customCategories: z.array(z.string()),

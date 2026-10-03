@@ -7,6 +7,7 @@ import { setUseCaseContextFactory, useFinancialStore } from '../store/financial.
 import { useSessionStore } from '../store/session.store';
 import { AccountScreen } from './AccountScreen';
 import { AddExpenseScreen } from './AddExpenseScreen';
+import { ConfigScreen } from './ConfigScreen';
 import { DashboardScreen } from './DashboardScreen';
 
 const mockNavigate = jest.fn();
@@ -20,7 +21,7 @@ jest.mock('@react-navigation/native', () => ({
 jest.mock('@expo/vector-icons', () => ({ Ionicons: () => null }));
 jest.mock('../infrastructure/supabase/client', () => ({ supabase: null, isSupabaseConfigured: false }));
 
-const config = { monthlyIncome: 310000, savingGoal: 0, payday: 7, customCategories: [], fixedExpenses: [] };
+const config = { incomeSources: [{ id: 'renda', name: 'Salário', amount: 310000 }], savingGoal: 0, payday: 7, customCategories: [], fixedExpenses: [] };
 
 function seed(doc: LocalState) {
   return useFinancialStore.getState().replaceDocument(() => doc);
@@ -55,6 +56,37 @@ describe('DashboardScreen (FLOW-primeiro-uso)', () => {
     expect(screen.getByText(/Se o pagamento cair antes, use "Já recebi"/)).toBeTruthy();
     fireEvent.press(screen.getByText('Registrar'));
     expect(mockNavigate).toHaveBeenCalledWith('AddExpense');
+  });
+});
+
+describe('ConfigScreen (BR-FIN-018: várias fontes de renda)', () => {
+  it('soma as fontes, permite adicionar e remover, e salva', async () => {
+    render(<ConfigScreen navigation={navigation} route={{ key: 'k', name: 'Config', params: undefined }} />);
+    fireEvent.changeText(screen.getByLabelText('Valor'), '300000');
+    fireEvent.press(screen.getAllByText('Adicionar')[0]!);
+    const names = screen.getAllByLabelText('Nome da fonte');
+    expect(names).toHaveLength(2);
+    fireEvent.changeText(names[1]!, 'Freela');
+    fireEvent.changeText(screen.getAllByLabelText('Valor')[1]!, '50000');
+    expect(screen.getByText('Total: R$ 3.500,00')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('Salvar configuração'));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('StartMonth'));
+    expect(useFinancialStore.getState().config).toMatchObject({
+      monthlyIncome: 350000,
+      incomeSources: [
+        expect.objectContaining({ name: 'Salário', amount: 300000 }),
+        expect.objectContaining({ name: 'Freela', amount: 50000 }),
+      ],
+    });
+  });
+
+  it('exige nome e valor em cada fonte', async () => {
+    render(<ConfigScreen navigation={navigation} route={{ key: 'k', name: 'Config', params: undefined }} />);
+    fireEvent.changeText(screen.getAllByLabelText('Nome da fonte')[0]!, '');
+    fireEvent.press(screen.getByText('Salvar configuração'));
+    expect(await screen.findByText('Informe o nome da fonte.')).toBeTruthy();
+    expect(screen.getByText('Informe um valor maior que zero.')).toBeTruthy();
   });
 });
 

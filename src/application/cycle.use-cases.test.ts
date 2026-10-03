@@ -24,7 +24,7 @@ const at = (year: number, month: number, day: number): UseCaseContext => ({
 });
 
 const baseConfig: FinancialConfigInput = {
-  monthlyIncome: 500000,
+  incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000 }],
   savingGoal: 50000,
   payday: 7,
   customCategories: [],
@@ -62,6 +62,40 @@ describe('saveConfig (RF-01, BR-FIN-014)', () => {
     expect(selectConfig(state)?.payday).toBe(7);
     expect(state.fixedExpenses.every((record) => record.dirty)).toBe(true);
     expect(hasLocalData(state)).toBe(true);
+  });
+
+  it('BR-FIN-018: renda mensal é a soma das fontes e exige ao menos uma', () => {
+    const state = saveConfig(
+      createEmptyState(),
+      {
+        ...baseConfig,
+        incomeSources: [
+          { id: 'salario', name: ' Salário ', amount: 400000 },
+          { id: 'freela', name: 'Freela', amount: 150000 },
+        ],
+      },
+      at(2026, 10, 10),
+    );
+    expect(state.settings?.monthlyIncome).toBe(550000);
+    expect(selectConfig(state)?.incomeSources[0]?.name).toBe('Salário');
+    expect(selectConfig(state)).toMatchObject({ monthlyIncome: 550000 });
+    expect(() =>
+      saveConfig(createEmptyState(), { ...baseConfig, incomeSources: [] }, at(2026, 10, 10)),
+    ).toThrow('ao menos uma fonte de renda');
+  });
+
+  it('BR-FIN-018: alterar só as fontes marca settings como sujo', () => {
+    const state = configured();
+    const clean: LocalState = {
+      ...state,
+      settings: state.settings && { ...state.settings, dirty: false },
+    };
+    const changed = saveConfig(
+      clean,
+      { ...baseConfig, incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000 }, { id: 'x', name: 'Extra', amount: 1000 }] },
+      at(2026, 10, 11),
+    );
+    expect(changed.settings).toMatchObject({ dirty: true, monthlyIncome: 501000 });
   });
 
   it('salvar sem mudanças não marca registros como sujos', () => {

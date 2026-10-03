@@ -57,8 +57,17 @@ export type InstallmentFixedExpense = {
 
 export type FixedExpense = PermanentFixedExpense | InstallmentFixedExpense;
 
+/** Fonte de renda mensal (ex.: salário, freela). Ver BR-FIN-018. */
+export type IncomeSource = {
+  id: string;
+  name: string;
+  amount: MoneyCents;
+};
+
 export type FinancialConfig = {
+  /** Soma das fontes de renda (derivado de `incomeSources`). */
   monthlyIncome: MoneyCents;
+  incomeSources: IncomeSource[];
   /** Dia do mês em que a renda cai (1–28). Define início e fim do ciclo. */
   payday: number;
   fixedExpenses: FixedExpense[];
@@ -94,6 +103,6 @@ export type DashboardSummary = {
   remainingDays: number;
 };
 
-export type FinancialConfigInput = Omit<FinancialConfig, 'updatedAt'>;
+export type FinancialConfigInput = Omit<FinancialConfig, 'updatedAt' | 'monthlyIncome'>;
 
 export type ExpenseInput = Pick<Expense, 'amount' | 'category' | 'description' | 'date'>;

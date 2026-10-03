@@ -7,7 +7,7 @@ summary: >
   Visão, mercado, modelo de negócio, personas e hipótese de MVP do Manager Money.
 code:
   - src/domain/financial/financial.calculations.ts
-last_verified_commit: 359de21
+last_verified_commit: c3d79fd
 ---
 
 # Visão de produto — Manager Money
@@ -79,7 +79,7 @@ nativo a parcelamento no cartão (hábito brasileiro) e funcionamento offline.
 
 ### Não-persona (fora do público v1.0)
 
-- **Autônomo com renda variável:** o modelo de cálculo assume renda mensal única e previsível.
+- **Autônomo com renda variável:** o modelo de cálculo assume renda mensal previsível (soma das fontes cadastradas).
 - **Família com orçamento compartilhado:** exige permissões multiusuário; está fora do escopo v1.0.
 
 ## 6. Hipótese de MVP

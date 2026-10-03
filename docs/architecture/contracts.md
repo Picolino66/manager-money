@@ -5,14 +5,15 @@ module: architecture
 title: Contratos de dados e API (v1)
 summary: >
   Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento
-  local versionado (schemaVersion 2).
+  local versionado (schemaVersion 3).
 code:
   - supabase/migrations/20261001000000_init.sql
+  - supabase/migrations/20261003000000_income_sources.sql
   - src/infrastructure/storage/schema.ts
   - src/infrastructure/sync/supabase-remote.ts
   - src/infrastructure/sync/mappers.ts
 adrs: [ADR-003, ADR-004, ADR-008]
-last_verified_commit: 359de21
+last_verified_commit: c3d79fd
 ---
 
 # Contratos de dados e API — v1
@@ -47,7 +48,8 @@ Valores monetários são `bigint` em centavos no banco e `number` inteiro no cli
 
 | Remoto (snake_case) | Local (camelCase) | Tipo |
 |---|---|---|
-| `settings.monthly_income` | `settings.monthlyIncome` | centavos |
+| `settings.monthly_income` | `settings.monthlyIncome` | centavos; **soma de `incomeSources`** (derivado) |
+| `settings.income_sources` | `settings.incomeSources` | `{ id, name, amount }[]` (jsonb, até 20; BR-FIN-018). Linha sem fontes (`[]`) vira uma fonte "Renda" com `monthly_income` |
 | `settings.saving_goal` | `settings.savingGoal` | centavos |
 | `settings.payday` | `settings.payday` | 1–28 |
 | `settings.custom_categories` | `settings.customCategories` | `string[]` |
@@ -82,14 +84,14 @@ O mapeamento é implementado e testado em `src/infrastructure/sync/mappers.ts`.
 | `42501` / JWT expirado | Sessão inválida | Tenta refresh; se falhar, marca `sync.lastError = 'auth'` e pede novo login |
 | rede / 5xx | Indisponível | Mantém o outbox; backoff exponencial de 2 s a 60 s |
 
-## 4. Documento local — `@manager-money/state` (schemaVersion 2)
+## 4. Documento local — `@manager-money/state` (schemaVersion 3)
 
 ```ts
 type SyncMeta = { updatedAt: string; deletedAt: string | null; dirty: boolean };
 
-type LocalStateV2 = {
-  schemaVersion: 2;
-  settings: (Settings & SyncMeta) | null;          // monthlyIncome, savingGoal, payday, customCategories
+type LocalStateV3 = {
+  schemaVersion: 3;
+  settings: (Settings & SyncMeta) | null;          // monthlyIncome, incomeSources, savingGoal, payday, customCategories
   fixedExpenses: Array<FixedExpense & SyncMeta>;
   cycles: Array<Cycle & SyncMeta>;                 // FinancialMonth sem expenses
   expenses: Array<Expense & { cycleId: string } & SyncMeta>;
@@ -106,5 +108,7 @@ type LocalStateV2 = {
 - **Migração v1 → v2:** lê as três chaves `@daily-budget/*`, aplica a normalização legada
   (fixos numéricos, ciclos por mês de calendário), atribui `cycleId` aos gastos, marca tudo como
   `dirty: true` e `payday: 7`, grava a v2 e só então remove as chaves v1.
+- **Migração v2 → v3:** `settings.monthlyIncome` vira a fonte `{ id: 'income-legacy', name: 'Renda' }`
+  e `settings` fica `dirty: true` para levar `income_sources` ao servidor (ADR-013).
 - Um documento que falha na validação **não é sobrescrito**: o app mostra um erro de carregamento
   com a opção de exportar o conteúdo bruto (DEF-004).

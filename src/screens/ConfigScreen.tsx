@@ -15,12 +15,14 @@ import { Screen } from '../components/Screen';
 import { TextInputField } from '../components/TextInputField';
 import {
   calculateFixedExpensesTotal,
+  calculateIncomeTotal,
   getSortedCategories,
   normalizeCategory,
 } from '../domain/financial/financial.calculations';
 import {
   DEFAULT_EXPENSE_CATEGORY,
   DEFAULT_PAYDAY,
+  IncomeSource,
   InstallmentFixedExpense,
   MAX_PAYDAY,
   MIN_PAYDAY,
@@ -33,7 +35,15 @@ import { formatCurrency } from '../utils/currency';
 type Props = NativeStackScreenProps<RootStackParamList, 'Config'>;
 
 const configSchema = z.object({
-  monthlyIncome: z.number().int().positive('Informe uma renda maior que zero.'),
+  incomeSources: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        name: z.string().trim().min(1, 'Informe o nome da fonte.'),
+        amount: z.number().int().positive('Informe um valor maior que zero.'),
+      }),
+    )
+    .min(1, 'Informe ao menos uma fonte de renda.'),
   permanentExpenses: z.array(
     z.object({
       id: z.string().min(1),
@@ -65,6 +75,14 @@ const configSchema = z.object({
 
 type ConfigForm = z.infer<typeof configSchema>;
 
+function createIncomeSource(name = ''): IncomeSource {
+  return {
+    id: `income-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    name,
+    amount: 0,
+  };
+}
+
 export function ConfigScreen({ navigation }: Props) {
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
@@ -80,7 +98,7 @@ export function ConfigScreen({ navigation }: Props) {
   } = useForm<ConfigForm>({
     resolver: zodResolver(configSchema),
     defaultValues: {
-      monthlyIncome: config?.monthlyIncome ?? 0,
+      incomeSources: config?.incomeSources ?? [createIncomeSource('Salário')],
       permanentExpenses:
         config?.fixedExpenses.filter((expense) => expense.type === 'permanent') ?? [],
       installmentExpenses:
@@ -88,6 +106,15 @@ export function ConfigScreen({ navigation }: Props) {
       savingGoal: config?.savingGoal ?? 0,
       payday: config?.payday ?? DEFAULT_PAYDAY,
     },
+  });
+  const {
+    fields: incomeSourceFields,
+    append: appendIncomeSource,
+    remove: removeIncomeSource,
+  } = useFieldArray<ConfigForm, 'incomeSources', 'fieldKey'>({
+    control,
+    keyName: 'fieldKey',
+    name: 'incomeSources',
   });
   const {
     fields: permanentExpenseFields,
@@ -108,6 +135,8 @@ export function ConfigScreen({ navigation }: Props) {
     name: 'installmentExpenses',
   });
   // useWatch é seguro para o React Compiler (watch() não pode ser memoizado).
+  const incomeSources = useWatch({ control, name: 'incomeSources' });
+  const incomeTotal = useMemo(() => calculateIncomeTotal(incomeSources), [incomeSources]);
   const permanentExpenses = useWatch({ control, name: 'permanentExpenses' });
   const installmentExpenses = useWatch({ control, name: 'installmentExpenses' });
   const fixedExpenses = useMemo(
@@ -164,7 +193,10 @@ export function ConfigScreen({ navigation }: Props) {
 
   async function save(values: ConfigForm) {
     await saveConfig({
-      monthlyIncome: values.monthlyIncome,
+      incomeSources: values.incomeSources.map((source) => ({
+        ...source,
+        name: source.name.trim(),
+      })),
       savingGoal: values.savingGoal,
       payday: values.payday,
       customCategories: config?.customCategories ?? [],
@@ -194,7 +226,7 @@ export function ConfigScreen({ navigation }: Props) {
         fixedExpenses: [...values.permanentExpenses, ...values.installmentExpenses],
       }) + values.savingGoal;
 
-    if (plannedOutflow > values.monthlyIncome) {
+    if (plannedOutflow > calculateIncomeTotal(values.incomeSources)) {
       Alert.alert(
         'Plano acima da renda',
         'Despesas fixas e meta passam da renda mensal.',
@@ -228,19 +260,67 @@ export function ConfigScreen({ navigation }: Props) {
     >
       <Text style={styles.title}>Configuração financeira</Text>
       <Card>
-        <Controller
-          control={control}
-          name="monthlyIncome"
-          render={({ field }) => (
-            <CurrencyInput
-              error={errors.monthlyIncome?.message}
-              label="Renda mensal"
-              onBlur={field.onBlur}
-              onChangeValue={field.onChange}
-              value={field.value}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Renda mensal</Text>
+          <View style={styles.sectionMetaRow}>
+            <Text numberOfLines={1} style={styles.sectionSubtitle}>
+              Total: {formatCurrency(incomeTotal)}
+            </Text>
+            <AppButton
+              iconName="add-outline"
+              onPress={() => appendIncomeSource(createIncomeSource())}
+              style={styles.addButton}
+              title="Adicionar"
+              variant="secondary"
             />
-          )}
-        />
+          </View>
+        </View>
+        {errors.incomeSources?.message ? (
+          <Text style={styles.errorText}>{errors.incomeSources.message}</Text>
+        ) : null}
+        {incomeSourceFields.map((field, index) => (
+          <View key={field.fieldKey} style={styles.fixedExpenseItem}>
+            <Controller
+              control={control}
+              name={`incomeSources.${index}.name`}
+              render={({ field: itemField }) => (
+                <TextInputField
+                  autoCapitalize="sentences"
+                  error={errors.incomeSources?.[index]?.name?.message}
+                  label="Nome da fonte"
+                  onBlur={itemField.onBlur}
+                  onChangeText={itemField.onChange}
+                  placeholder="Ex: salário"
+                  value={itemField.value}
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name={`incomeSources.${index}.amount`}
+              render={({ field: itemField }) => (
+                <CurrencyInput
+                  error={errors.incomeSources?.[index]?.amount?.message}
+                  label="Valor"
+                  onBlur={itemField.onBlur}
+                  onChangeValue={itemField.onChange}
+                  value={itemField.value}
+                />
+              )}
+            />
+            {incomeSourceFields.length > 1 ? (
+              <AppButton
+                iconName="trash-outline"
+                onPress={() => removeIncomeSource(index)}
+                title="Remover"
+                variant="ghost"
+              />
+            ) : null}
+          </View>
+        ))}
+      </Card>
+
+      <Card>
         <Controller
           control={control}
           name="savingGoal"
@@ -529,6 +609,11 @@ const styles = StyleSheet.create({
   },
   fixedExpenseItem: {
     gap: spacing.md,
+  },
+  errorText: {
+    color: colors.critical,
+    fontSize: 14,
+    fontWeight: '700',
   },
   emptyText: {
     color: colors.muted,

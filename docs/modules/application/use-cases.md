@@ -15,7 +15,7 @@ code:
 symbols: [saveConfig, addCategory, addExpense, updateExpense, selectActiveMonth, selectClosedMonths, touch, commit]
 adrs: [ADR-001, ADR-008]
 tests: [src/application/cycle.use-cases.test.ts, src/store/financial.store.test.ts]
-last_verified_commit: 359de21
+last_verified_commit: c3d79fd
 ---
 
 # Casos de uso

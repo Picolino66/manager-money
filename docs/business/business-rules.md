@@ -9,7 +9,7 @@ code:
   - src/domain/financial/financial.calculations.ts
   - src/application/cycle.use-cases.ts
   - src/infrastructure/sync/sync-engine.ts
-last_verified_commit: 359de21
+last_verified_commit: c3d79fd
 ---
 
 # Regras de negócio
@@ -24,7 +24,7 @@ aponta o símbolo que implementa cada regra.
 | BR-FIN-001 | Todo valor monetário é armazenado e calculado em **centavos inteiros** (BRL). Não há ponto flutuante em cálculos de domínio. | vigente | `MoneyCents` em `financial.types.ts` |
 | BR-FIN-002 | O ciclo financeiro começa no **dia de pagamento** (configurável, 1–28; padrão 7) e termina no dia anterior ao dia de pagamento do mês seguinte. | vigente | `calculateDefaultCycleStartDate`, `calculateCycleEndDate` |
 | BR-FIN-003 | **Recebimento antecipado:** antes do dia de pagamento, o usuário pode declarar "Já recebi". O ciclo ativo é fechado na véspera com os gastos anteriores; os demais migram para um novo ciclo que começa na data de recebimento e termina na data de fim padrão do mês seguinte. | vigente | `receiveIncomeEarly` |
-| BR-FIN-004 | **Saldo base** = renda mensal − despesas fixas ativas − meta de economia. | vigente | `calculateBaseAvailableAmount` |
+| BR-FIN-004 | **Saldo base** = renda mensal (soma das fontes, BR-FIN-018) − despesas fixas ativas − meta de economia. | vigente | `calculateBaseAvailableAmount` |
 | BR-FIN-005 | **Saldo inicial do ciclo** = saldo base − dívida herdada. | vigente | `calculateInitialAvailableAmount` |
 | BR-FIN-006 | **Dívida herdada** = valor absoluto do saldo final do último ciclo fechado, se negativo. **Superávit não é transferido** para o ciclo seguinte. | vigente | `calculatePreviousMonthDebt` |
 | BR-FIN-007 | **Limite diário do dia D** = trunc((saldo inicial − gastos com data anterior a D) ÷ dias restantes do ciclo, incluindo D). Se não restam dias, o limite é o próprio saldo restante. | vigente | `calculateDailyLimitForDate` |
@@ -38,6 +38,7 @@ aponta o símbolo que implementa cada regra.
 | BR-FIN-015 | Plano (fixos + meta) acima da renda é permitido somente após **confirmação explícita** do usuário. | vigente | `ConfigScreen.onSubmit` |
 | BR-FIN-016 | O recebimento antecipado só é permitido **uma vez por ciclo** e com data **posterior ao início** do ciclo ativo. Isso impede ciclo vazio e avanço duplo de parcelas. | vigente (corrige DEF-001) | `canReceiveIncomeEarlyForCycle` |
 | BR-FIN-017 | Um ciclo novo **nunca se sobrepõe** ao período de um ciclo fechado. O fechamento manual só é permitido **depois do fim do período**; antes disso, o caminho é o recebimento antecipado. Se o início padrão cair dentro de um ciclo fechado (dados legados), o novo ciclo começa no dia seguinte ao fim dele. | vigente (corrige DEF-006) | `canCloseCycle`, `calculateNextCycleStartDate` |
+| BR-FIN-018 | A renda mensal é a **soma de uma ou mais fontes de renda** (nome + valor > 0). É obrigatória ao menos uma fonte. Documentos e linhas remotas antigos viram uma fonte "Renda". | vigente (SPEC-012) | `saveConfig`, `calculateIncomeTotal`, `legacyIncomeSources` |
 
 ## Conta, dados e privacidade (`BR-ACC`)
 

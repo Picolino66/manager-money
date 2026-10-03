@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T19:19:58.924Z",
-  "source_commit": "a88175c",
+  "generated_at": "2026-10-03T20:13:03.308Z",
+  "source_commit": "c3d79fd",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -158,7 +158,7 @@
       "type": "integration",
       "module": "architecture",
       "title": "Contratos de dados e API (v1)",
-      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 2).",
+      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 3).",
       "doc": "architecture/contracts.md",
       "state": "implemented",
       "adrs": [
@@ -590,6 +590,7 @@
       "keywords": [
         "configuração",
         "renda",
+        "fontes de renda",
         "meta",
         "despesas fixas",
         "parcelamento",
@@ -597,6 +598,7 @@
       ],
       "symbols": [
         "saveConfig",
+        "calculateIncomeTotal",
         "calculateFixedExpensesTotal",
         "calculateBaseAvailableAmount",
         "calculateFixedExpenseAmount"
@@ -605,11 +607,18 @@
         "BR-FIN-004",
         "BR-FIN-010",
         "BR-FIN-014",
-        "BR-FIN-015"
+        "BR-FIN-015",
+        "BR-FIN-018"
       ],
       "tests": [
         "src/application/cycle.use-cases.test.ts"
       ]
+    },
+    {
+      "id": "planning.income-sources",
+      "state": "planned",
+      "spec": "SPEC-012",
+      "spec_doc": "specs/SPEC-012-fontes-de-renda.md"
     },
     {
       "id": "planning.payday",
@@ -696,7 +705,7 @@
       "type": "module",
       "module": "storage",
       "title": "Persistência local",
-      "summary": "Documento local único versionado (schemaVersion 2) com migração do formato do MVP.",
+      "summary": "Documento local único versionado (schemaVersion 3) com migração do formato do MVP.",
       "doc": "modules/storage/index.md",
       "state": "implemented"
     },
@@ -717,12 +726,15 @@
       ],
       "symbols": [
         "migrateV1ToV2",
+        "migrateV2ToV3",
+        "legacyIncomeSources",
         "normalizeLegacyMonth",
         "parseLocalState",
         "LoadErrorScreen"
       ],
       "adrs": [
-        "ADR-003"
+        "ADR-003",
+        "ADR-013"
       ],
       "tests": [
         "src/infrastructure/storage/local-store.test.ts"

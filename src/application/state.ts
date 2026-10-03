@@ -2,10 +2,11 @@ import {
   Expense,
   FinancialMonth,
   FixedExpense,
+  IncomeSource,
   MoneyCents,
 } from '../domain/financial/financial.types';
 
-export const STATE_SCHEMA_VERSION = 2;
+export const STATE_SCHEMA_VERSION = 3;
 
 /** Metadados de sincronização presentes em todo registro persistido (ADR-004). */
 export type SyncMeta = {
@@ -15,7 +16,9 @@ export type SyncMeta = {
 };
 
 export type SettingsRecord = SyncMeta & {
+  /** Soma de `incomeSources`; mantido para compatibilidade com o contrato remoto v1. */
   monthlyIncome: MoneyCents;
+  incomeSources: IncomeSource[];
   savingGoal: MoneyCents;
   payday: number;
   customCategories: string[];

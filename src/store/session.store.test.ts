@@ -28,7 +28,7 @@ function fakeClient(user = { id: 'u1', email: 'ana@email.com' }) {
   return { auth } as unknown as SupabaseClient & { auth: typeof auth };
 }
 
-const config = { monthlyIncome: 1000, savingGoal: 0, payday: 7, customCategories: [], fixedExpenses: [] };
+const config = { incomeSources: [{ id: 'renda', name: 'Salário', amount: 1000 }], savingGoal: 0, payday: 7, customCategories: [], fixedExpenses: [] };
 const ctx = { now: new Date(2026, 9, 10), newId: (p: string) => `${p}-1` };
 const session = () => useSessionStore.getState();
 const financial = () => useFinancialStore.getState();

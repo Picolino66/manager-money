@@ -4,6 +4,8 @@ import {
   FixedExpenseRecord,
   SettingsRecord,
 } from '../../application/state';
+import { IncomeSource } from '../../domain/financial/financial.types';
+import { legacyIncomeSources } from '../storage/migrations';
 import { CycleRow, ExpenseRow, FixedExpenseRow, SettingsRow } from './types';
 
 /** Mapeamento registro local ↔ linha remota (contracts.md §2). */
@@ -12,6 +14,7 @@ export function settingsToRow(record: SettingsRecord, userId: string): SettingsR
   return {
     user_id: userId,
     monthly_income: record.monthlyIncome,
+    income_sources: record.incomeSources,
     saving_goal: record.savingGoal,
     payday: record.payday,
     custom_categories: record.customCategories,
@@ -20,9 +23,23 @@ export function settingsToRow(record: SettingsRecord, userId: string): SettingsR
   };
 }
 
+/** Linhas antigas (sem `income_sources`) viram uma única fonte com o `monthly_income`. */
+function incomeSourcesFromRow(row: SettingsRow): IncomeSource[] {
+  if (row.income_sources && row.income_sources.length > 0) {
+    return row.income_sources.map((source) => ({
+      id: source.id,
+      name: source.name,
+      amount: Number(source.amount),
+    }));
+  }
+
+  return legacyIncomeSources(Number(row.monthly_income));
+}
+
 export function settingsFromRow(row: SettingsRow): SettingsRecord {
   return {
     monthlyIncome: Number(row.monthly_income),
+    incomeSources: incomeSourcesFromRow(row),
     savingGoal: Number(row.saving_goal),
     payday: row.payday,
     customCategories: row.custom_categories ?? [],

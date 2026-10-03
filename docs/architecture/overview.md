@@ -13,7 +13,7 @@ code:
   - src/infrastructure/sync/sync-engine.ts
   - src/store/financial.store.ts
 adrs: [ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007]
-last_verified_commit: 114b089
+last_verified_commit: c3d79fd
 ---
 
 # Visão de arquitetura
@@ -34,7 +34,7 @@ o servidor garante isolamento (RLS) e integridade estrutural.
 │        │ usa                                                                  │
 │  domain         financial.calculations.ts · financial.types.ts   (puro)       │
 │                                                                               │
-│  infrastructure storage/ (documento único v2) · sync/ (outbox + pull)         │
+│  infrastructure storage/ (documento único v3) · sync/ (outbox + pull)         │
 │                 supabase/ (cliente + sessão criptografada) · monitoring/      │
 └───────────────────────────────┬───────────────────────────────────────────────┘
                                 │ HTTPS (PostgREST + GoTrue)

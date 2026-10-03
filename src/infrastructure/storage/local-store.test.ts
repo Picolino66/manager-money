@@ -50,7 +50,7 @@ describe('localStore (SPEC-004)', () => {
     expect(result).toEqual({ status: 'ok', state: createEmptyState(), migrated: false });
   });
 
-  it('migra v1 → v2 sem perda, incluindo formatos legados', async () => {
+  it('migra v1 → v3 sem perda, incluindo formatos legados', async () => {
     await AsyncStorage.multiSet([
       [LEGACY_STORAGE_KEYS.config, JSON.stringify(legacyConfig)],
       [LEGACY_STORAGE_KEYS.months, JSON.stringify([legacyCalendarMonth])],
@@ -74,7 +74,7 @@ describe('localStore (SPEC-004)', () => {
 
     // Chaves v1 removidas somente após gravar a v2.
     expect(await AsyncStorage.getItem(LEGACY_STORAGE_KEYS.config)).toBeNull();
-    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(2);
+    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(3);
 
     const reloaded = await localStore.load();
     expect(reloaded).toMatchObject({ status: 'ok', migrated: false });
@@ -97,6 +97,44 @@ describe('localStore (SPEC-004)', () => {
       expect.objectContaining({ id: 'a', name: 'Aluguel', amount: 0, category: 'Outros' }),
       expect.objectContaining({ id: 'b', totalInstallments: 1, remainingInstallments: 0 }),
     ]);
+  });
+
+  it('migra documento v2 → v3: renda vira fonte e settings fica pendente de envio', async () => {
+    const v2 = {
+      ...createEmptyState(),
+      schemaVersion: 2,
+      settings: {
+        monthlyIncome: 880000,
+        savingGoal: 0,
+        payday: 7,
+        customCategories: [],
+        updatedAt: '2026-04-01T00:00:00.000Z',
+        deletedAt: null,
+        dirty: false,
+      },
+    };
+    await AsyncStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(v2));
+
+    const result = await localStore.load(new Date('2026-10-03T12:00:00Z'));
+    if (result.status !== 'ok') throw new Error('falhou');
+
+    expect(result.migrated).toBe(true);
+    expect(result.state.schemaVersion).toBe(3);
+    expect(result.state.settings).toMatchObject({
+      monthlyIncome: 880000,
+      incomeSources: [{ id: 'income-legacy', name: 'Renda', amount: 880000 }],
+      dirty: true,
+    });
+    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(3);
+  });
+
+  it('migra documento v2 sem settings', async () => {
+    await AsyncStorage.setItem(
+      STATE_STORAGE_KEY,
+      JSON.stringify({ ...createEmptyState(), schemaVersion: 2 }),
+    );
+    const result = await localStore.load();
+    expect(result).toMatchObject({ status: 'ok', migrated: true });
   });
 
   it('cada save é um único setItem (DEF-002)', async () => {

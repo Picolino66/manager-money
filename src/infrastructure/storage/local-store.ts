@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { createEmptyState, LocalState } from '../../application/state';
 import { logger } from '../monitoring/logger';
-import { LEGACY_STORAGE_KEYS, LegacySnapshot, migrateV1ToV2 } from './migrations';
+import { LEGACY_STORAGE_KEYS, LegacySnapshot, migrateV1ToV2, migrateV2ToV3 } from './migrations';
 import { parseLocalState } from './schema';
 
 export const STATE_STORAGE_KEY = '@manager-money/state';
@@ -34,7 +34,16 @@ export const localStore = {
 
     if (raw) {
       try {
-        return { status: 'ok', state: parseLocalState(JSON.parse(raw)), migrated: false };
+        const document = JSON.parse(raw);
+
+        if (document?.schemaVersion === 2) {
+          const state = parseLocalState(migrateV2ToV3(document, now));
+          await localStore.save(state);
+          logger.event('storage.migrate', { ok: true, count: state.expenses.length });
+          return { status: 'ok', state, migrated: true };
+        }
+
+        return { status: 'ok', state: parseLocalState(document), migrated: false };
       } catch (error) {
         // DEF-004: documento inválido nunca é sobrescrito automaticamente.
         logger.event('storage.load', { ok: false, code: 'invalid-document' });

@@ -6,10 +6,11 @@ export function selectConfig(state: LocalState): FinancialConfig | null {
     return null;
   }
 
-  const { monthlyIncome, savingGoal, payday, customCategories, updatedAt } = state.settings;
+  const { monthlyIncome, incomeSources, savingGoal, payday, customCategories, updatedAt } = state.settings;
 
   return {
     monthlyIncome,
+    incomeSources,
     savingGoal,
     payday,
     customCategories,

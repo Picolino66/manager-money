@@ -17,7 +17,7 @@ last_verified_commit: a88175c
 
 | ID | Requisito | Regras | Status |
 |---|---|---|---|
-| RF-01 | Configurar renda mensal, meta de economia e despesas fixas | BR-FIN-004, BR-FIN-015 | existente |
+| RF-01 | Configurar renda mensal (várias fontes), meta de economia e despesas fixas | BR-FIN-004, BR-FIN-015, BR-FIN-018 | existente |
 | RF-02 | Cadastrar parcelamentos com total e restantes | BR-FIN-010 | existente |
 | RF-03 | Abrir ciclo com prévia (saldo, dias, limite inicial) | BR-FIN-002, 005, 013, 017 | existente → ajuste |
 | RF-04 | Ver o limite de hoje, o gasto de hoje e o status no dashboard | BR-FIN-007, 008, 009 | existente |

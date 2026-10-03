@@ -4,6 +4,7 @@ import {
   buildFinancialCycleDates,
   calculateDefaultCycleStartDate,
   calculateFinalBalance,
+  calculateIncomeTotal,
   calculateInitialAvailableAmount,
   calculatePreviousMonthDebt,
   canCloseCycle,
@@ -175,8 +176,19 @@ export function saveConfig(
   ctx: UseCaseContext,
 ): LocalState {
   const nowIso = ctx.now.toISOString();
+  const incomeSources = input.incomeSources.map((source) => ({
+    id: source.id,
+    name: source.name.trim(),
+    amount: source.amount,
+  }));
+
+  if (incomeSources.length === 0) {
+    throw new DomainError('Informe ao menos uma fonte de renda.');
+  }
+
   const nextSettingsFields = {
-    monthlyIncome: input.monthlyIncome,
+    monthlyIncome: calculateIncomeTotal(incomeSources),
+    incomeSources,
     savingGoal: input.savingGoal,
     payday: input.payday,
     customCategories: input.customCategories.map(normalizeCategory),
@@ -187,6 +199,7 @@ export function saveConfig(
     isLive(currentSettings) &&
     JSON.stringify([
       currentSettings.monthlyIncome,
+      currentSettings.incomeSources,
       currentSettings.savingGoal,
       currentSettings.payday,
       currentSettings.customCategories,

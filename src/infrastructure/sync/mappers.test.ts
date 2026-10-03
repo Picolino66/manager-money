@@ -15,10 +15,26 @@ const meta = { updatedAt: '2026-10-10T12:00:00.000Z', deletedAt: null, dirty: fa
 
 describe('mappers (contracts.md §2): ida e volta sem perda', () => {
   it('settings', () => {
-    const record: SettingsRecord = { ...meta, monthlyIncome: 100, savingGoal: 5, payday: 10, customCategories: ['Viagem'] };
+    const record: SettingsRecord = { ...meta, monthlyIncome: 100, incomeSources: [{ id: 'i1', name: 'Salário', amount: 100 }], savingGoal: 5, payday: 10, customCategories: ['Viagem'] };
     const row = settingsToRow(record, 'u');
     expect(row).toMatchObject({ user_id: 'u', monthly_income: 100, payday: 10, client_updated_at: meta.updatedAt });
     expect(settingsFromRow(row)).toEqual(record);
+  });
+
+  it('settings de linha antiga (sem income_sources) vira uma fonte "Renda" (BR-FIN-018)', () => {
+    const row = {
+      user_id: 'u',
+      monthly_income: 880000,
+      saving_goal: 0,
+      payday: 7,
+      custom_categories: [],
+      client_updated_at: meta.updatedAt,
+      deleted_at: null,
+    };
+    expect(settingsFromRow(row).incomeSources).toEqual([
+      { id: 'income-legacy', name: 'Renda', amount: 880000 },
+    ]);
+    expect(settingsFromRow({ ...row, income_sources: [] }).incomeSources).toHaveLength(1);
   });
 
   it('despesa fixa permanente e parcelamento', () => {

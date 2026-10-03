@@ -5,6 +5,7 @@ import {
   Expense,
   FinancialMonth,
   FixedExpense,
+  IncomeSource,
   InstallmentFixedExpense,
   PermanentFixedExpense,
 } from '../../domain/financial/financial.types';
@@ -48,6 +49,11 @@ export type LegacySnapshot = {
   months: LegacyMonth[] | null;
   activeMonth: LegacyMonth | null;
 };
+
+/** Renda única (v1/v2) vira a primeira fonte de renda (BR-FIN-018). */
+export function legacyIncomeSources(monthlyIncome: number): IncomeSource[] {
+  return [{ id: 'income-legacy', name: 'Renda', amount: Math.max(0, monthlyIncome) }];
+}
 
 function normalizeFixedExpenses(value: LegacyConfig['fixedExpenses']): FixedExpense[] {
   if (Array.isArray(value)) {
@@ -157,6 +163,7 @@ export function migrateV1ToV2(snapshot: LegacySnapshot, now: Date): LocalState {
     state.settings = {
       ...meta,
       monthlyIncome: config.monthlyIncome,
+      incomeSources: legacyIncomeSources(config.monthlyIncome),
       savingGoal: config.savingGoal,
       payday: DEFAULT_PAYDAY,
       customCategories:
@@ -181,4 +188,28 @@ export function migrateV1ToV2(snapshot: LegacySnapshot, now: Date): LocalState {
   }
 
   return state;
+}
+
+/**
+ * Migração v2 → v3 (documento bruto): `settings.monthlyIncome` vira uma fonte de renda e o
+ * registro fica pendente de envio para levar `income_sources` ao servidor.
+ */
+export function migrateV2ToV3(raw: unknown, now: Date): unknown {
+  const document = raw as { settings?: Record<string, unknown> | null };
+  const { settings } = document;
+
+  if (!settings || typeof settings !== 'object') {
+    return { ...document, schemaVersion: 3 };
+  }
+
+  return {
+    ...document,
+    schemaVersion: 3,
+    settings: {
+      ...settings,
+      incomeSources: legacyIncomeSources(Number(settings.monthlyIncome) || 0),
+      updatedAt: now.toISOString(),
+      dirty: true,
+    },
+  };
 }

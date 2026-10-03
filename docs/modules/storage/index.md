@@ -4,10 +4,10 @@ type: module
 module: storage
 title: Persistência local
 summary: >
-  Documento local único versionado (schemaVersion 2) com migração do formato do MVP.
+  Documento local único versionado (schemaVersion 3) com migração do formato do MVP.
 code:
   - src/infrastructure/storage/local-store.ts
-last_verified_commit: 359de21
+last_verified_commit: c3d79fd
 ---
 
 # Módulo: persistência local

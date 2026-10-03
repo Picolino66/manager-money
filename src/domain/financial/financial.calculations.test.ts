@@ -30,6 +30,7 @@ import { toISODate } from '../../utils/date';
 
 const config: FinancialConfig = {
   monthlyIncome: 880000,
+  incomeSources: [{ id: 'renda', name: 'Salário', amount: 880000 }],
   payday: 7,
   fixedExpenses: [
     { id: 'fixed-1', type: 'permanent', name: 'Aluguel', category: 'Moradia', amount: 300000 },

@@ -20,6 +20,7 @@ import {
   FixedExpense,
   FinancialConfig,
   FinancialMonth,
+  IncomeSource,
   MoneyCents,
 } from './financial.types';
 import { formatCycleLabel, formatShortDate, toISODate } from '../../utils/date';
@@ -61,6 +62,10 @@ export function calculateFixedExpenseAmount(expense: FixedExpense): MoneyCents {
   }
 
   return expense.amount;
+}
+
+export function calculateIncomeTotal(sources: Pick<IncomeSource, 'amount'>[]): MoneyCents {
+  return sources.reduce((total, source) => total + source.amount, 0);
 }
 
 export function calculateFixedExpensesTotal(
