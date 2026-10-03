@@ -195,10 +195,11 @@
     "gates_failed": [],
     "last_stable_snapshot": "O5",
     "open_findings": [
+      "QA manual em aparelho não executada",
       "CI não executada no GitHub (sem remote)",
-      "build preview pendente de eas login"
+      "iOS bloqueado (sem conta Apple)"
     ],
-    "f6_status": "pré-deploy concluído; aguardando eas login para build preview",
+    "f6_status": "build preview Android gerado; aguardando QA manual em aparelho para fechar o gate F6",
     "security": "docs/quality/security-report.md — 0 críticas; 2 altas aceitas (tooling de build)",
     "tests": {
       "total": 112,
@@ -210,7 +211,17 @@
     "slos": [],
     "alerts": [],
     "incidents": [],
-    "runbook": "docs/operations/runbook.md"
+    "runbook": "docs/operations/runbook.md",
+    "deployment_record": {
+      "date": "2026-10-03",
+      "profile": "preview",
+      "platform": "android",
+      "build_id": "0134dc1f-0891-414f-8236-ff0a47b43c51",
+      "commit": "38bc5eb",
+      "status": "FINISHED",
+      "env": "preview (Supabase gqnxafarguexhirvupkt)"
+    },
+    "smoke_test_results": "pendente: campanha manual D01–D04 no aparelho"
   },
   "orchestration": {
     "external_skills_activated": [
