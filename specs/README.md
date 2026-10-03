@@ -17,3 +17,4 @@ O frontmatter `features:` declara os IDs estáveis cobertos; o gerador da knowle
 | [SPEC-008](SPEC-008-observabilidade.md) | monitoring.logging | RNF-06, M5, M6 |
 | [SPEC-009](SPEC-009-camada-de-aplicacao.md) | application.use-cases | ADR-001, ADR-008 |
 | [SPEC-010](SPEC-010-pipeline-de-qualidade.md) | tooling.quality-pipeline | RNF-09, DEF-008 |
+| [SPEC-011](SPEC-011-upgrade-expo-sdk-57.md) | — (técnica) | RNF-09, RNF-10 |

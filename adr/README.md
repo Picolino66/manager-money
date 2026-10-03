@@ -16,3 +16,4 @@ Fonte primária das decisões arquiteturais. ADRs nunca são apagadas: só passa
 | [ADR-009](ADR-009-estrutura-agentic.md) | Estrutura agentic e knowledge layer | F4 | ACCEPTED |
 | [ADR-010](ADR-010-testes-e-qualidade.md) | Testes, cobertura e quality gates | F4 | ACCEPTED |
 | [ADR-011](ADR-011-autenticacao-email-senha.md) | Autenticação por e-mail e senha, sem envio de e-mail | F2 (evolução) | ACCEPTED |
+| [ADR-012](ADR-012-upgrade-expo-sdk-57.md) | Upgrade do Expo SDK 54 para 57 | F2 (evolução) | ACCEPTED |
