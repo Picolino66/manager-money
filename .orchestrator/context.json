@@ -67,7 +67,7 @@
     "pattern": "modular-monolith (client) + BaaS",
     "layer_map": "docs/architecture/overview.md#2",
     "tech_stack": {
-      "app": "Expo SDK 54 / RN 0.81 / TS strict",
+      "app": "Expo SDK 57 / RN 0.86 / React 19.2 / TS 6 strict",
       "state": "zustand 5",
       "forms": "react-hook-form + zod 4",
       "backend": "Supabase sa-east-1 (Auth e-mail+senha, Postgres+RLS, PostgREST)",
@@ -96,7 +96,8 @@
       "ADR-008",
       "ADR-009",
       "ADR-010",
-      "ADR-011"
+      "ADR-011",
+      "ADR-012"
     ],
     "overrides": [
       {
@@ -108,6 +109,12 @@
         "adr": "ADR-011",
         "section": "architecture.tech_stack/auth",
         "change": "OTP por e-mail (ADR-005) substituído por e-mail + senha sem envio de e-mail",
+        "date": "2026-10-03"
+      },
+      {
+        "adr": "ADR-012",
+        "section": "architecture.tech_stack",
+        "change": "Expo SDK 54 → 57",
         "date": "2026-10-03"
       }
     ]
@@ -216,10 +223,10 @@
       "date": "2026-10-03",
       "profile": "preview",
       "platform": "android",
-      "build_id": "0134dc1f-0891-414f-8236-ff0a47b43c51",
-      "commit": "38bc5eb",
-      "status": "FINISHED",
-      "env": "preview (Supabase gqnxafarguexhirvupkt)"
+      "sdk": 57,
+      "build_id": "0bd994f1-b97a-4387-9a4e-571d1b83a282",
+      "commit": "e7f576b",
+      "status": "FINISHED"
     },
     "smoke_test_results": "pendente: campanha manual D01–D04 no aparelho"
   },
@@ -243,8 +250,9 @@
     ],
     "last_run": {
       "mode": "feature-evolution",
-      "task": "T-016",
-      "date": "2026-10-03"
+      "task": "T-017",
+      "date": "2026-10-03",
+      "status": "aguardando validação no Expo Go"
     }
   },
   "ux": {
