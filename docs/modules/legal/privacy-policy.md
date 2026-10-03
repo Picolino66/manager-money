@@ -11,7 +11,7 @@ code:
   - src/screens/PrivacyPolicyScreen.tsx
 symbols: [PRIVACY_POLICY_SECTIONS]
 business_rules: [BR-ACC-006]
-last_verified_commit: F7-VERIFIED
+last_verified_commit: 114b089
 ---
 
 # Política de privacidade

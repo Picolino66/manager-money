@@ -11,7 +11,7 @@ code:
   - src/infrastructure/supabase/session-storage.ts
   - src/infrastructure/export/share-json.ts
 adrs: [ADR-006]
-last_verified_commit: F7-VERIFIED
+last_verified_commit: 114b089
 ---
 
 # Relatório de segurança — F6

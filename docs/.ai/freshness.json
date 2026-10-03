@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T18:36:34.971Z",
-  "source_commit": "81215b2",
+  "generated_at": "2026-10-03T18:37:11.260Z",
+  "source_commit": "114b089",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -18,7 +18,7 @@
     },
     "architecture/overview.md": {
       "id": "architecture.overview",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "src/domain/financial/financial.calculations.ts": "sha256:025c37f45f5efc11632137f36c2d122a59227f465dbbdc534b1f2d9fc12a458a",
@@ -48,7 +48,7 @@
     },
     "business/requirements.md": {
       "id": "business.requirements",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "src/store/financial.store.ts": "sha256:15afe61c18add1bfd6f153a8d02c7a2459acaa010bb8a532e5e3137f1755b097"
@@ -65,7 +65,7 @@
     },
     "flows/journeys.md": {
       "id": "flows.journeys",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "src/navigation/AppNavigator.tsx": "sha256:aa6b7b4bbadcaaed57ad6f1e0d70551e5904b370eecd5ca4c24d2f4d8f56706a"
@@ -73,7 +73,7 @@
     },
     "modules/account/auth.md": {
       "id": "account.auth",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "signIn": "sha256:971a683be2384f9602ed1733c55b59f21ea6fa8b8ba0bc1f12fcfcb3dcff28f7",
@@ -104,7 +104,7 @@
     },
     "modules/account/index.md": {
       "id": "account",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "src/store/session.store.ts": "sha256:7bf02e5a58fda89494ae20a4d405ee04cff2663c099e36c8e81b6f6414d799ba"
@@ -250,7 +250,7 @@
     },
     "modules/legal/index.md": {
       "id": "legal",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "src/legal/privacy-policy.ts": "sha256:94e9a9b6fc1c230762b3aebd958685ba061fa7f1bbdefb208dbf9df4c97f7217"
@@ -258,7 +258,7 @@
     },
     "modules/legal/privacy-policy.md": {
       "id": "legal.privacy-policy",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "PRIVACY_POLICY_SECTIONS": "sha256:e6bcf226ced85af02ade232192be3355463d87b26b5e47244d895d5ceb3be69c"
@@ -274,7 +274,7 @@
     },
     "modules/monitoring/logging.md": {
       "id": "monitoring.logging",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "sanitizeFields": "sha256:a3cb41ff0aa761d1ec9fee915fdb2981b131531d4f37dc52292360dc5b86f44f",
@@ -390,7 +390,7 @@
     },
     "modules/tooling/quality-pipeline.md": {
       "id": "tooling.quality-pipeline",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:ffd6d93766e8971a0c1d0d56b06f171d12150832c4fd929d7dffcd3bfc535a45",
@@ -402,7 +402,7 @@
     },
     "operations/runbook.md": {
       "id": "operations.runbook",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "eas.json": "sha256:067f738eec35e1e2c470d7def3c181862ab60548a026c2b12e414841d7bd9d96",
@@ -413,7 +413,7 @@
     },
     "quality/manual-qa.md": {
       "id": "quality.manual-qa",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "src/navigation/AppNavigator.tsx": "sha256:aa6b7b4bbadcaaed57ad6f1e0d70551e5904b370eecd5ca4c24d2f4d8f56706a"
@@ -421,7 +421,7 @@
     },
     "quality/security-report.md": {
       "id": "quality.security-report",
-      "last_verified_commit": "F7-VERIFIED",
+      "last_verified_commit": "114b089",
       "state": "fresh",
       "source_hashes": {
         "supabase/migrations/20261001000000_init.sql": "sha256:fbdafc4a64ab9b114512823451cffbb232b603310e616466c5bb811fe0ce93af",

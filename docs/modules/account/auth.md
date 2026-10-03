@@ -16,7 +16,7 @@ symbols: [signIn, signUp, signOut, friendlyAuthError, assertCredentials, encrypt
 business_rules: [BR-ACC-001]
 adrs: [ADR-011, ADR-006]
 tests: [src/store/session.store.test.ts, src/infrastructure/supabase/session-storage.test.ts]
-last_verified_commit: F7-VERIFIED
+last_verified_commit: 114b089
 ---
 
 # Entrar e sair

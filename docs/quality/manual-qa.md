@@ -8,7 +8,7 @@ summary: >
   críticos antes da publicação nas lojas.
 code:
   - src/navigation/AppNavigator.tsx
-last_verified_commit: F7-VERIFIED
+last_verified_commit: 114b089
 ---
 
 # Campanha de QA manual — v1.0
