@@ -1,0 +1,19 @@
+---
+id: payment
+type: module
+module: payment
+title: Pagamentos e rendas
+summary: >
+  Confirmação mensal do pagamento das despesas fixas (Pix, dinheiro, débito, crédito) e rendas
+  avulsas do ciclo.
+code:
+  - src/components/FixedExpensesCard.tsx
+last_verified_commit: a16e575+T-020
+---
+
+# Módulo: pagamentos e rendas
+
+| Feature | Doc |
+|---|---|
+| `payment.fixed-expense` | [fixed-expense.md](fixed-expense.md) |
+| `payment.extra-income` | [extra-income.md](extra-income.md) |

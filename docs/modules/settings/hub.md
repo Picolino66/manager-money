@@ -13,7 +13,7 @@ code:
   - src/navigation/AppNavigator.tsx
 symbols: [describeSyncStatus, SettingsRow]
 tests: [src/screens/syncStatus.test.ts]
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Aba Ajustes

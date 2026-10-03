@@ -1,4 +1,5 @@
 import { addCardPurchase, deleteCardPurchase, saveCreditCard } from '../../application/card.use-cases';
+import { addExtraIncome, payFixedExpense, undoFixedPayment } from '../../application/payment.use-cases';
 import { addExpense, deleteExpense, openCycle, receiveIncomeEarly, saveConfig } from '../../application/cycle.use-cases';
 import { selectActiveMonth } from '../../application/selectors';
 import { countPendingChanges, createEmptyState, LocalState, UseCaseContext } from '../../application/state';
@@ -115,15 +116,42 @@ describe('runSync (SPEC-006)', () => {
     await b.sync();
     expect(b.state.creditCards.map((card) => card.name)).toEqual(['Nubank']);
     expect(b.state.cardPurchases.map((purchase) => purchase.description)).toEqual(['TV']);
-    // Base 490.000 (renda − parcelamento de TV) menos a 1ª parcela da compra (10.000).
-    expect(selectActiveMonth(a.state)?.initialAvailableAmount).toBe(480000);
-    expect(selectActiveMonth(b.state)?.initialAvailableAmount).toBe(480000);
+    // Renda 500.000 menos a 1ª parcela da compra (10.000); fixas pendentes não descontam.
+    expect(selectActiveMonth(a.state)?.initialAvailableAmount).toBe(490000);
+    expect(selectActiveMonth(b.state)?.initialAvailableAmount).toBe(490000);
 
     b.apply((s) => deleteCardPurchase(s, s.cardPurchases[0]!.id, ctx(2026, 10, 13, 'b')));
     await b.sync();
     await a.sync();
     expect(a.state.cardPurchases[0]?.deletedAt).not.toBeNull();
-    expect(selectActiveMonth(a.state)?.initialAvailableAmount).toBe(490000);
+    expect(selectActiveMonth(a.state)?.initialAvailableAmount).toBe(500000);
+  });
+
+  it('pagamentos de fixas e rendas avulsas convergem entre aparelhos (BR-FIN-021..023)', async () => {
+    const server = new MemoryServer();
+    const a = linkedDevice(server);
+    a.apply((s) => openCycle(saveConfig(s, config, ctx(2026, 10, 10, 'a')), ctx(2026, 10, 10, 'a')));
+    a.apply((s) => saveCreditCard(s, { name: 'Nubank', closingDay: 25, dueDay: 5 }, ctx(2026, 10, 11, 'a')));
+    a.apply((s) => payFixedExpense(s, { fixedExpenseId: 'tv', method: 'pix' }, ctx(2026, 10, 12, 'a')));
+    a.apply((s) => addExtraIncome(s, { name: 'Freela', amount: 20000, date: '2026-10-13' }, ctx(2026, 10, 13, 'a')));
+    expect(await a.sync()).toEqual({ ok: true });
+    expect(countPendingChanges(a.state)).toBe(0);
+    expect(server.store(USER).fixed_payments[0]).toMatchObject({ fixed_expense_id: 'tv', method: 'pix', amount: 10000 });
+    expect(server.store(USER).extra_incomes[0]).toMatchObject({ name: 'Freela', amount: 20000 });
+
+    const b = new Device(linkUsingRemote(USER), server.clientFor(USER));
+    await b.sync();
+    expect(b.state.fixedPayments.map((payment) => payment.name)).toEqual(['TV']);
+    expect(b.state.extraIncomes.map((income) => income.name)).toEqual(['Freela']);
+    // 500.000 + 20.000 de renda avulsa − 10.000 da TV paga.
+    expect(selectActiveMonth(b.state)?.initialAvailableAmount).toBe(510000);
+    expect(selectActiveMonth(a.state)?.initialAvailableAmount).toBe(510000);
+
+    b.apply((s) => undoFixedPayment(s, s.fixedPayments[0]!.id, ctx(2026, 10, 14, 'b')));
+    await b.sync();
+    await a.sync();
+    expect(a.state.fixedPayments[0]?.deletedAt).not.toBeNull();
+    expect(selectActiveMonth(a.state)?.initialAvailableAmount).toBe(520000);
   });
 
   it('registro sujo local não é sobrescrito pelo pull; limpo é atualizado', () => {

@@ -94,6 +94,29 @@ const cardPurchaseSchema = z.object({
   createdAt: z.string(),
 });
 
+const fixedPaymentSchema = z.object({
+  ...syncMeta,
+  id: z.string().min(1),
+  cycleId: z.string().min(1),
+  fixedExpenseId: z.string().min(1),
+  name: z.string(),
+  category: z.string(),
+  method: z.enum(['pix', 'cash', 'debit', 'credit']),
+  amount: cents.min(0),
+  interest: cents.min(0),
+  paidAt: isoDate,
+  cardPurchaseId: z.string().optional(),
+});
+
+const extraIncomeSchema = z.object({
+  ...syncMeta,
+  id: z.string().min(1),
+  cycleId: z.string().min(1),
+  name: z.string().min(1),
+  amount: cents.positive(),
+  date: isoDate,
+});
+
 const cursor = z.string().nullable();
 
 /** Validação do documento local v2 (contracts.md §4). */
@@ -105,6 +128,8 @@ export const localStateSchema = z.object({
   cycles: z.array(cycleSchema),
   expenses: z.array(expenseSchema),
   cardPurchases: z.array(cardPurchaseSchema),
+  fixedPayments: z.array(fixedPaymentSchema),
+  extraIncomes: z.array(extraIncomeSchema),
   sync: z.object({
     userId: z.string().nullable(),
     cursors: z.object({
@@ -114,6 +139,8 @@ export const localStateSchema = z.object({
       cycles: cursor,
       expenses: cursor,
       card_purchases: cursor,
+      fixed_payments: cursor,
+      extra_incomes: cursor,
     }),
     lastSyncAt: z.string().nullable(),
     lastError: z.string().nullable(),

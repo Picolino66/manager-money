@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { createEmptyState } from '../../application/state';
 import { localStore, STATE_STORAGE_KEY } from './local-store';
+import { openCycle, saveConfig } from '../../application/cycle.use-cases';
 import { LEGACY_STORAGE_KEYS } from './migrations';
 
 const legacyConfig = {
@@ -50,7 +51,7 @@ describe('localStore (SPEC-004)', () => {
     expect(result).toEqual({ status: 'ok', state: createEmptyState(), migrated: false });
   });
 
-  it('migra v1 → v3 sem perda, incluindo formatos legados', async () => {
+  it('migra v1 → v5 sem perda, incluindo formatos legados', async () => {
     await AsyncStorage.multiSet([
       [LEGACY_STORAGE_KEYS.config, JSON.stringify(legacyConfig)],
       [LEGACY_STORAGE_KEYS.months, JSON.stringify([legacyCalendarMonth])],
@@ -74,7 +75,7 @@ describe('localStore (SPEC-004)', () => {
 
     // Chaves v1 removidas somente após gravar a v2.
     expect(await AsyncStorage.getItem(LEGACY_STORAGE_KEYS.config)).toBeNull();
-    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(4);
+    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(5);
 
     const reloaded = await localStore.load();
     expect(reloaded).toMatchObject({ status: 'ok', migrated: false });
@@ -99,7 +100,7 @@ describe('localStore (SPEC-004)', () => {
     ]);
   });
 
-  it('migra documento v2 → v3: renda vira fonte e settings fica pendente de envio', async () => {
+  it('migra documento v2 → v5: renda vira fonte e settings fica pendente de envio', async () => {
     const v2 = {
       ...createEmptyState(),
       schemaVersion: 2,
@@ -119,16 +120,16 @@ describe('localStore (SPEC-004)', () => {
     if (result.status !== 'ok') throw new Error('falhou');
 
     expect(result.migrated).toBe(true);
-    expect(result.state.schemaVersion).toBe(4);
+    expect(result.state.schemaVersion).toBe(5);
     expect(result.state.settings).toMatchObject({
       monthlyIncome: 880000,
       incomeSources: [{ id: 'income-legacy', name: 'Renda', amount: 880000 }],
       dirty: true,
     });
-    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(4);
+    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(5);
   });
 
-  it('migra v2 → v4: acrescenta cartões e compras vazios e os cursores de sync', async () => {
+  it('migra v3 → v5: acrescenta cartões, compras, pagamentos e rendas vazios e os cursores', async () => {
     const { creditCards, cardPurchases, ...rest } = createEmptyState();
     const { credit_cards, card_purchases, ...cursors } = rest.sync.cursors;
     void creditCards;
@@ -145,11 +146,71 @@ describe('localStore (SPEC-004)', () => {
 
     expect(result.migrated).toBe(true);
     expect(result.state).toMatchObject({
-      schemaVersion: 4,
+      schemaVersion: 5,
       creditCards: [],
       cardPurchases: [],
-      sync: { cursors: { settings: 'c1', credit_cards: null, card_purchases: null } },
+      fixedPayments: [],
+      extraIncomes: [],
+      sync: {
+        cursors: { settings: 'c1', credit_cards: null, card_purchases: null, fixed_payments: null, extra_incomes: null },
+      },
     });
+  });
+
+  it('migra v4 → v5: o ciclo ativo recupera o que as fixas já haviam descontado (BR-FIN-021)', async () => {
+    const ctx = { now: new Date(2026, 9, 10, 12), newId: (prefix: string) => `${prefix}-1` };
+    const config = {
+      incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000 }],
+      savingGoal: 50000,
+      payday: 7,
+      customCategories: [],
+      fixedExpenses: [
+        { id: 'aluguel', type: 'permanent' as const, name: 'Aluguel', category: 'Moradia', amount: 150000 },
+        { id: 'tv', type: 'installment' as const, name: 'TV', category: 'Lazer', installmentAmount: 10000, totalInstallments: 3, remainingInstallments: 3 },
+      ],
+    };
+    const current = openCycle(saveConfig(createEmptyState(), config, ctx), ctx);
+    // Documento como a v4 gravava: fixas já descontadas do saldo inicial do ciclo.
+    const { fixedPayments, extraIncomes, ...rest } = current;
+    const { fixed_payments, extra_incomes, ...cursors } = rest.sync.cursors;
+    void fixedPayments;
+    void extraIncomes;
+    void fixed_payments;
+    void extra_incomes;
+    const v4 = {
+      ...rest,
+      schemaVersion: 4,
+      cycles: rest.cycles.map((cycle) => ({ ...cycle, initialAvailableAmount: 290000, dirty: false })),
+      fixedExpenses: [
+        ...rest.fixedExpenses,
+        { ...rest.fixedExpenses[0]!, id: 'antiga', amount: 999999, deletedAt: '2026-10-01T00:00:00.000Z' },
+      ],
+      sync: { ...rest.sync, cursors },
+    };
+    await AsyncStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(v4));
+
+    const result = await localStore.load(new Date('2026-10-11T12:00:00Z'));
+    if (result.status !== 'ok') throw new Error('falhou');
+
+    expect(result.migrated).toBe(true);
+    expect(result.state).toMatchObject({
+      schemaVersion: 5,
+      fixedPayments: [],
+      extraIncomes: [],
+      sync: { cursors: { fixed_payments: null, extra_incomes: null } },
+    });
+    // 290.000 + 150.000 (aluguel) + 10.000 (parcela da TV); a fixa excluída não conta.
+    expect(result.state.cycles[0]).toMatchObject({ initialAvailableAmount: 450000, dirty: true });
+  });
+
+  it('migra v4 sem fixas nem ciclo ativo sem alterar os ciclos', async () => {
+    const { fixedPayments, extraIncomes, ...rest } = createEmptyState();
+    void fixedPayments;
+    void extraIncomes;
+    await AsyncStorage.setItem(STATE_STORAGE_KEY, JSON.stringify({ ...rest, schemaVersion: 4 }));
+    const result = await localStore.load();
+    expect(result).toMatchObject({ status: 'ok', migrated: true });
+    if (result.status === 'ok') expect(result.state.cycles).toEqual([]);
   });
 
   it('migra documento v2 sem settings', async () => {

@@ -17,14 +17,14 @@ symbols: [runSync, collectDirty, acknowledge, applyRemoteRows, adoptRemoteActive
 business_rules: [BR-SYNC-001, BR-SYNC-002, BR-SYNC-003, BR-FIN-013]
 adrs: [ADR-004, ADR-008]
 tests: [src/infrastructure/sync/sync-engine.test.ts, src/infrastructure/sync/supabase-remote.test.ts, src/infrastructure/sync/mappers.test.ts]
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Motor de sincronização
 
 Spec: [SPEC-006](../../../specs/SPEC-006-sync.md) · contrato: [contracts](../../architecture/contracts.md).
 
-- **Push:** settings → fixed_expenses → credit_cards → cycles (fechados antes de ativos) → expenses → card_purchases; ack só limpa
+- **Push:** settings → fixed_expenses → credit_cards → cycles (fechados antes de ativos) → expenses → card_purchases → fixed_payments → extra_incomes; ack só limpa
   registros que não mudaram durante o envio.
 - **Pull:** por tabela, `server_updated_at > cursor − 5 s`, paginado (500); registro local sujo não é
   sobrescrito; linha excluída desconhecida não é inserida.

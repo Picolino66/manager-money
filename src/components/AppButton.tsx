@@ -20,6 +20,7 @@ type AppButtonProps = {
   iconName?: IconName;
   disabled?: boolean;
   isLoading?: boolean;
+  accessibilityLabel?: string;
   style?: ViewStyle;
 };
 
@@ -30,6 +31,7 @@ export function AppButton({
   iconName,
   disabled = false,
   isLoading = false,
+  accessibilityLabel,
   style,
 }: AppButtonProps) {
   const isDisabled = disabled || isLoading;
@@ -38,6 +40,7 @@ export function AppButton({
 
   return (
     <Pressable
+      accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
       disabled={isDisabled}
       onPress={onPress}

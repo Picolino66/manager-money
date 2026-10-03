@@ -8,7 +8,7 @@ summary: >
   análise de viabilidade e métricas de sucesso.
 code:
   - src/store/financial.store.ts
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Requisitos, escopo, viabilidade e métricas — v1.0 (lojas)
@@ -17,7 +17,7 @@ last_verified_commit: 1e8ade5+T-019
 
 | ID | Requisito | Regras | Status |
 |---|---|---|---|
-| RF-01 | Configurar renda mensal (várias fontes), meta de economia e despesas fixas | BR-FIN-004, BR-FIN-015, BR-FIN-018 | existente |
+| RF-01 | Configurar renda mensal (várias fontes), meta de economia e despesas fixas (a pagar a cada ciclo, RF-20) | BR-FIN-004, BR-FIN-015, BR-FIN-018 | existente |
 | RF-02 | Cadastrar parcelamentos com total e restantes | BR-FIN-010 | existente |
 | RF-03 | Abrir ciclo com prévia (saldo, dias, limite inicial) | BR-FIN-002, 005, 013, 017 | existente → ajuste |
 | RF-04 | Ver o limite de hoje, o gasto de hoje e o status no dashboard | BR-FIN-007, 008, 009 | existente |
@@ -36,6 +36,8 @@ last_verified_commit: 1e8ade5+T-019
 | RF-17 | **Exportar dados** em JSON | BR-ACC-004 | **novo** |
 | RF-18 | **Sair da conta** mantendo ou apagando os dados locais | BR-ACC-001 | **novo** |
 | RF-19 | Cadastrar cartões de crédito (nome, fechamento, vencimento) e registrar compras parceladas no crédito | BR-FIN-019, BR-FIN-020 | **novo** |
+| RF-20 | **Pagar despesas fixas** do ciclo escolhendo Pix, dinheiro, débito ou crédito (com cartão, parcelas e juros) | BR-FIN-004, BR-FIN-021, BR-FIN-022 | **novo** |
+| RF-21 | **Lançar rendas avulsas** no ciclo ativo | BR-FIN-023 | **novo** |
 
 ## 2. Requisitos não funcionais
 

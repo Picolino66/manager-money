@@ -16,7 +16,7 @@ symbols: [saveCreditCard, deleteCreditCard, deleteCardPurchase, canDeleteCardPur
 adrs: [ADR-014]
 tests: [src/application/card.use-cases.test.ts, src/screens/screens.test.tsx]
 business_rules: [BR-FIN-019, BR-FIN-020]
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Cadastrar cartões e ver faturas

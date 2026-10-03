@@ -8,7 +8,7 @@ summary: >
   críticos antes da publicação nas lojas.
 code:
   - src/navigation/AppNavigator.tsx
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Campanha de QA manual — v1.0
@@ -58,3 +58,14 @@ last_verified_commit: 1e8ade5+T-019
 | D05.04 | Alta | Registrar gasto → Cartão de crédito, R$ 300,00 em 3x, data antes do fechamento | Mostra "3x de R$ 100,00 · a 1ª parcela entra neste ciclo"; "Saldo inicial" cai R$ 100,00 |
 | D05.05 | Alta | Mesma compra com data depois do fechamento | Mostra que a 1ª parcela entra no próximo ciclo; saldo atual não muda |
 | D05.06 | Média | Cartões → tocar no cartão → excluir a compra | Saldo inicial volta ao valor anterior; cartão com compras não pode ser excluído |
+| **Dia 6 — pagar despesas fixas e rendas avulsas** ||||
+| D06.01 | Alta | Hoje → "Despesas fixas do ciclo" com 1 fixa de R$ 1.000,00 | Aparece como Pendente; "Saldo inicial" ainda não desconta a fixa |
+| D06.02 | Alta | Pagar → Pix → Confirmar pagamento | Mostra "Pago · Pix"; "Saldo inicial" cai R$ 1.000,00; resumo Pagas/Pendentes atualiza |
+| D06.03 | Alta | Desfazer o pagamento | Volta a Pendente e o saldo volta |
+| D06.04 | Alta | Pagar → Dinheiro e depois Débito (desfazendo entre uma e outra) | Mesmo desconto da renda nas duas formas |
+| D06.05 | Alta | Pagar → Crédito, cartão Nubank, 3x, juros R$ 50,00 | Prévia "Total R$ 1.050,00 em 3x de R$ 350,00"; só a 1ª parcela (se cair neste ciclo) reduz o saldo |
+| D06.06 | Alta | Pagar → Crédito sem cartão cadastrado | Mostra "Cadastre um cartão…" com atalho para Cartões |
+| D06.07 | Alta | Hoje → Renda → Adicionar renda "Freela" R$ 500,00 | Soma ao saldo inicial; aparece em "Rendas avulsas"; nome/valor vazios mostram erro |
+| D06.08 | Média | Excluir a renda avulsa | Saldo volta ao valor anterior |
+| D06.09 | Alta | Fechar o ciclo e abrir o próximo | Fixas voltam a Pendente; o ciclo fechado manteve o resultado com os pagamentos |
+| D06.10 | Alta | Atualizar o app por cima de uma versão com ciclo ativo | "Saldo inicial" volta a refletir a renda sem as fixas; confirme os pagamentos para descontá-las |

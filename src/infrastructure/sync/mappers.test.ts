@@ -3,10 +3,16 @@ import {
   CreditCardRecord,
   CycleRecord,
   ExpenseRecord,
+  ExtraIncomeRecord,
   FixedExpenseRecord,
+  FixedPaymentRecord,
   SettingsRecord,
 } from '../../application/state';
 import {
+  extraIncomeFromRow,
+  extraIncomeToRow,
+  fixedPaymentFromRow,
+  fixedPaymentToRow,
   cardPurchaseFromRow,
   cardPurchaseToRow,
   creditCardFromRow,
@@ -69,6 +75,31 @@ describe('mappers (contracts.md §2): ida e volta sem perda', () => {
     const purchaseRow = cardPurchaseToRow(purchase, 'u');
     expect(purchaseRow).toMatchObject({ card_id: 'k1', total_amount: 300000, first_cycle_key: '2026-10' });
     expect(cardPurchaseFromRow(purchaseRow)).toEqual(purchase);
+  });
+
+  it('pagamento de despesa fixa (à vista e no crédito) e renda avulsa (BR-FIN-021..023)', () => {
+    const cash: FixedPaymentRecord = {
+      ...meta,
+      id: 'pay1',
+      cycleId: 'c1',
+      fixedExpenseId: 'aluguel',
+      name: 'Aluguel',
+      category: 'Moradia',
+      method: 'pix',
+      amount: 150000,
+      interest: 0,
+      paidAt: '2026-10-11',
+    };
+    const cashRow = fixedPaymentToRow(cash, 'u');
+    expect(cashRow).toMatchObject({ method: 'pix', card_purchase_id: null, paid_at: '2026-10-11' });
+    expect(fixedPaymentFromRow(cashRow)).toEqual(cash);
+
+    const credit: FixedPaymentRecord = { ...cash, id: 'pay2', method: 'credit', interest: 5000, cardPurchaseId: 'p1' };
+    expect(fixedPaymentToRow(credit, 'u')).toMatchObject({ method: 'credit', interest: 5000, card_purchase_id: 'p1' });
+    expect(fixedPaymentFromRow(fixedPaymentToRow(credit, 'u'))).toEqual(credit);
+
+    const income: ExtraIncomeRecord = { ...meta, id: 'inc1', cycleId: 'c1', name: 'Freela', amount: 50000, date: '2026-10-15' };
+    expect(extraIncomeFromRow(extraIncomeToRow(income, 'u'))).toEqual(income);
   });
 
   it('despesa fixa permanente e parcelamento', () => {

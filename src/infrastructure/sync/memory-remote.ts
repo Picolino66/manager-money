@@ -25,6 +25,8 @@ export class MemoryServer {
       cycles: [],
       expenses: [],
       card_purchases: [],
+      fixed_payments: [],
+      extra_incomes: [],
     };
     return this.data[userId];
   }

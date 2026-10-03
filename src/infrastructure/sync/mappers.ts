@@ -3,12 +3,14 @@ import {
   CreditCardRecord,
   CycleRecord,
   ExpenseRecord,
+  ExtraIncomeRecord,
   FixedExpenseRecord,
+  FixedPaymentRecord,
   SettingsRecord,
 } from '../../application/state';
 import { IncomeSource } from '../../domain/financial/financial.types';
 import { legacyIncomeSources } from '../storage/migrations';
-import { CardPurchaseRow, CreditCardRow, CycleRow, ExpenseRow, FixedExpenseRow, SettingsRow } from './types';
+import { CardPurchaseRow, CreditCardRow, ExtraIncomeRow, FixedPaymentRow, CycleRow, ExpenseRow, FixedExpenseRow, SettingsRow } from './types';
 
 /** Mapeamento registro local ↔ linha remota (contracts.md §2). */
 
@@ -228,6 +230,68 @@ export function cardPurchaseFromRow(row: CardPurchaseRow): CardPurchaseRecord {
     purchaseDate: row.purchase_date,
     firstCycleKey: row.first_cycle_key,
     createdAt: row.created_at,
+    updatedAt: row.client_updated_at,
+    deletedAt: row.deleted_at,
+    dirty: false,
+  };
+}
+
+export function fixedPaymentToRow(record: FixedPaymentRecord, userId: string): FixedPaymentRow {
+  return {
+    user_id: userId,
+    id: record.id,
+    cycle_id: record.cycleId,
+    fixed_expense_id: record.fixedExpenseId,
+    name: record.name,
+    category: record.category,
+    method: record.method,
+    amount: record.amount,
+    interest: record.interest,
+    paid_at: record.paidAt,
+    card_purchase_id: record.cardPurchaseId ?? null,
+    client_updated_at: record.updatedAt,
+    deleted_at: record.deletedAt,
+  };
+}
+
+export function fixedPaymentFromRow(row: FixedPaymentRow): FixedPaymentRecord {
+  return {
+    id: row.id,
+    cycleId: row.cycle_id,
+    fixedExpenseId: row.fixed_expense_id,
+    name: row.name,
+    category: row.category,
+    method: row.method,
+    amount: Number(row.amount),
+    interest: Number(row.interest),
+    paidAt: row.paid_at,
+    ...(row.card_purchase_id ? { cardPurchaseId: row.card_purchase_id } : {}),
+    updatedAt: row.client_updated_at,
+    deletedAt: row.deleted_at,
+    dirty: false,
+  };
+}
+
+export function extraIncomeToRow(record: ExtraIncomeRecord, userId: string): ExtraIncomeRow {
+  return {
+    user_id: userId,
+    id: record.id,
+    cycle_id: record.cycleId,
+    name: record.name,
+    amount: record.amount,
+    date: record.date,
+    client_updated_at: record.updatedAt,
+    deleted_at: record.deletedAt,
+  };
+}
+
+export function extraIncomeFromRow(row: ExtraIncomeRow): ExtraIncomeRecord {
+  return {
+    id: row.id,
+    cycleId: row.cycle_id,
+    name: row.name,
+    amount: Number(row.amount),
+    date: row.date,
     updatedAt: row.client_updated_at,
     deletedAt: row.deleted_at,
     dirty: false,

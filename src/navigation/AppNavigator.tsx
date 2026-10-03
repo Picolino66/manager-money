@@ -12,6 +12,7 @@ import { CategoriesScreen } from '../screens/CategoriesScreen';
 import { ConfigScreen } from '../screens/ConfigScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { DailyHistoryScreen } from '../screens/DailyHistoryScreen';
+import { IncomesScreen } from '../screens/IncomesScreen';
 import { PreviousMonthsScreen } from '../screens/PreviousMonthsScreen';
 import { PrivacyPolicyScreen } from '../screens/PrivacyPolicyScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
@@ -79,6 +80,7 @@ export function AppNavigator() {
         <Stack.Screen component={ConfigScreen} name="Config" options={{ title: 'Configuração' }} />
         <Stack.Screen component={StartMonthScreen} name="StartMonth" options={{ title: 'Iniciar ciclo' }} />
         <Stack.Screen component={AddExpenseScreen} name="AddExpense" options={{ title: 'Registrar gasto' }} />
+        <Stack.Screen component={IncomesScreen} name="Incomes" options={{ title: 'Rendas do ciclo' }} />
         <Stack.Screen component={CardsScreen} name="Cards" options={{ title: 'Cartões' }} />
         <Stack.Screen component={AccountScreen} name="Account" options={{ title: 'Conta' }} />
         <Stack.Screen

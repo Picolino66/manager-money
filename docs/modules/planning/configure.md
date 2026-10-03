@@ -14,7 +14,7 @@ code:
 symbols: [saveConfig, calculateIncomeTotal, calculateFixedExpensesTotal, calculateBaseAvailableAmount, calculateFixedExpenseAmount]
 tests: [src/application/cycle.use-cases.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-010, BR-FIN-014, BR-FIN-015, BR-FIN-018]
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Configurar base financeira
@@ -24,9 +24,10 @@ last_verified_commit: 1e8ade5+T-019
   uma fonte (BR-FIN-018). A renda mensal é a soma das fontes ([SPEC-012](../../../specs/SPEC-012-fontes-de-renda.md)).
 - **Formulário:** React Hook Form + Zod. Fontes de renda ≥ 1; meta ≥ 0; fixos com nome, valor e categoria;
   parcelamentos com valor da parcela > 0, total ≥ 1 e restantes ≤ total.
-- **Saldo base** = renda − fixos ativos − meta (BR-FIN-004). Parcelamento com 0 parcelas
-  restantes não conta (BR-FIN-010).
+- **Saldo base** = renda + rendas avulsas − fixos **pagos à vista** − meta (BR-FIN-004); fixos pendentes
+  não descontam e são pagos no Hoje ([payment.fixed-expense](../payment/fixed-expense.md)). Parcelamento
+  com 0 parcelas restantes não conta (BR-FIN-010).
 - Se fixos + meta > renda, o app pede confirmação (BR-FIN-015).
 - Fixos removidos viram exclusão lógica (propagada no sync); salvar sem mudanças não gera pendências.
-- Com ciclo ativo, salvar recalcula o saldo inicial do ciclo (BR-FIN-014) e ativa no ciclo atual
+- Com ciclo ativo, salvar recalcula o saldo inicial do ciclo (BR-FIN-014; mantém pagamentos, rendas avulsas e faturas) e ativa no ciclo atual
   os parcelamentos ainda não iniciados.

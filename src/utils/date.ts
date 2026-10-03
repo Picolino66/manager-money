@@ -55,3 +55,11 @@ export function getTodayMonthYear(date: Date = new Date()) {
     year: date.getFullYear(),
   };
 }
+
+/** Limita uma data ISO (yyyy-MM-dd) ao intervalo [start, end]. */
+export function clampIsoDate(date: string, start: string, end: string): string {
+  if (date < start) return start;
+  if (date > end) return end;
+
+  return date;
+}

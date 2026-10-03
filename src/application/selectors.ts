@@ -1,10 +1,16 @@
 import {
+  cycleKeyFromStartDate,
   calculateCardChargesForCycle,
   calculateCardInstallmentsForCycle,
   CardInstallment,
 } from '../domain/financial/credit-card';
+import { CycleAdjustments } from '../domain/financial/financial.calculations';
 import { FinancialConfig, FinancialMonth, MoneyCents } from '../domain/financial/financial.types';
-import { CycleRecord, isLive, LocalState } from './state';
+import {
+  calculateExtraIncomeTotal,
+  calculatePaidFixedAmount,
+} from '../domain/financial/payments';
+import { CycleRecord, ExtraIncomeRecord, FixedPaymentRecord, isLive, LocalState } from './state';
 
 export function selectConfig(state: LocalState): FinancialConfig | null {
   if (!state.settings || !isLive(state.settings)) {
@@ -60,4 +66,24 @@ export function selectCardInstallments(state: LocalState, cycleKey: string): Car
 
 export function selectCardCharges(state: LocalState, cycleKey: string): MoneyCents {
   return calculateCardChargesForCycle(state.cardPurchases.filter(isLive), cycleKey);
+}
+
+export function selectCyclePayments(state: LocalState, cycleId: string): FixedPaymentRecord[] {
+  return state.fixedPayments.filter((payment) => isLive(payment) && payment.cycleId === cycleId);
+}
+
+export function selectCycleExtraIncomes(state: LocalState, cycleId: string): ExtraIncomeRecord[] {
+  return state.extraIncomes.filter((income) => isLive(income) && income.cycleId === cycleId);
+}
+
+/** Ajustes do saldo do ciclo: parcelas de cartão, rendas avulsas e fixas pagas à vista. */
+export function selectCycleAdjustments(
+  state: LocalState,
+  cycle: Pick<CycleRecord, 'id' | 'startDate'>,
+): Required<CycleAdjustments> {
+  return {
+    cardCharges: selectCardCharges(state, cycleKeyFromStartDate(cycle.startDate)),
+    extraIncome: calculateExtraIncomeTotal(selectCycleExtraIncomes(state, cycle.id)),
+    paidFixedExpenses: calculatePaidFixedAmount(selectCyclePayments(state, cycle.id)),
+  };
 }

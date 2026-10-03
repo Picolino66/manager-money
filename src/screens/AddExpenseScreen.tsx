@@ -17,6 +17,7 @@ import { TextInputField } from '../components/TextInputField';
 import {
   calculateFirstCycleKey,
   cycleKeyFromStartDate,
+  cycleKeyOffset,
   MAX_CARD_INSTALLMENTS,
   splitInstallments,
 } from '../domain/financial/credit-card';
@@ -29,6 +30,7 @@ import { DEFAULT_EXPENSE_CATEGORY } from '../domain/financial/financial.types';
 import { colors, spacing, typography } from '../design/theme';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '../utils/currency';
+import { describeFirstInstallment } from './cardText';
 import { formatCycleLabel, formatDateInput, parseBRDateInput, toISODate } from '../utils/date';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
@@ -234,9 +236,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
         )
       : null;
   const cyclesAhead = firstCycleKey
-    ? (Number(firstCycleKey.slice(0, 4)) - Number(cycleKeyFromStartDate(activeMonth.startDate).slice(0, 4))) *
-        12 +
-      (Number(firstCycleKey.slice(5)) - Number(cycleKeyFromStartDate(activeMonth.startDate).slice(5)))
+    ? cycleKeyOffset(cycleKeyFromStartDate(activeMonth.startDate), firstCycleKey)
     : 0;
   const installmentValues =
     isCredit && watchedAmount > 0 && installments >= 1 && installments <= MAX_CARD_INSTALLMENTS
@@ -343,12 +343,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
         {isCredit && installmentValues.length > 0 ? (
           <Text style={styles.hint}>
             {installments}x de {formatCurrency(installmentValues[0] ?? 0)} ·{' '}
-            {cyclesAhead === 0
-              ? 'a 1ª parcela entra neste ciclo'
-              : cyclesAhead === 1
-                ? 'a 1ª parcela entra no próximo ciclo'
-                : `a 1ª parcela entra daqui a ${cyclesAhead} ciclos`}
-            . O valor informado já deve incluir os juros.
+            {describeFirstInstallment(cyclesAhead)}. O valor informado já deve incluir os juros.
           </Text>
         ) : null}
       </Card>

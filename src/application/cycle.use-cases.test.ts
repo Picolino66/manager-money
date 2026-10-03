@@ -137,7 +137,8 @@ describe('saveConfig (RF-01, BR-FIN-014)', () => {
       },
       at(2026, 10, 12),
     );
-    expect(selectActiveMonth(updated)?.initialAvailableAmount).toBe((before ?? 0) - 20000);
+    // Fixa nova pendente não muda o saldo; só o pagamento desconta (BR-FIN-021).
+    expect(selectActiveMonth(updated)?.initialAvailableAmount).toBe(before);
     const celular = updated.fixedExpenses.find((record) => record.id === 'celular');
     expect(celular?.type === 'installment' && celular.startedAtCycleId).toBe(
       selectActiveMonth(updated)?.id,
@@ -162,8 +163,8 @@ describe('openCycle (RF-03, BR-FIN-013, BR-FIN-017)', () => {
   it('abre com o período do dia de pagamento e saldo correto', () => {
     const month = selectActiveMonth(openCycle(configured(), at(2026, 10, 10)));
     expect(month).toMatchObject({ startDate: '2026-10-07', endDate: '2026-11-06' });
-    // 500000 - 150000 - 10000 (1ª parcela) - 50000
-    expect(month?.initialAvailableAmount).toBe(290000);
+    // BR-FIN-004: fixas pendentes não descontam. 500000 − 50000 (meta)
+    expect(month?.initialAvailableAmount).toBe(450000);
   });
 
   it('respeita payday configurado', () => {
@@ -191,12 +192,12 @@ describe('openCycle (RF-03, BR-FIN-013, BR-FIN-017)', () => {
   it('parcelas avançam uma vez por ciclo e herdam dívida', () => {
     let state = openCycle(configured(), at(2026, 10, 10));
     expect(installment(state).remainingInstallments).toBe(3);
-    state = addExpense(state, { amount: 400000, category: 'Lazer', description: 'Viagem', date: '2026-10-11' }, at(2026, 10, 11));
+    state = addExpense(state, { amount: 600000, category: 'Lazer', description: 'Viagem', date: '2026-10-11' }, at(2026, 10, 11));
     state = closeCycle(state, at(2026, 11, 7));
-    expect(selectClosedMonths(state)[0]?.finalBalance).toBe(-110000);
+    expect(selectClosedMonths(state)[0]?.finalBalance).toBe(-150000);
     state = openCycle(state, at(2026, 11, 7));
     expect(installment(state).remainingInstallments).toBe(2);
-    expect(selectActiveMonth(state)?.previousMonthDebt).toBe(110000);
+    expect(selectActiveMonth(state)?.previousMonthDebt).toBe(150000);
   });
 });
 
@@ -241,7 +242,7 @@ describe('closeCycle (RF-11, BR-FIN-017)', () => {
     expect(() => closeCycle(state, at(2026, 11, 6))).toThrow('O ciclo termina em 06/11.');
     const closed = closeCycle(state, at(2026, 11, 7));
     expect(selectActiveMonth(closed)).toBeNull();
-    expect(selectClosedMonths(closed)[0]?.finalBalance).toBe(290000);
+    expect(selectClosedMonths(closed)[0]?.finalBalance).toBe(450000);
     expect(() => closeCycle(closed, at(2026, 11, 7))).toThrow('Nenhum ciclo ativo para fechar.');
   });
 });

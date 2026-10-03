@@ -7,7 +7,7 @@ summary: >
   Cartões (nome, fechamento, vencimento), compras parceladas no crédito e faturas por ciclo.
 code:
   - src/screens/CardsScreen.tsx
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Módulo: cartões de crédito

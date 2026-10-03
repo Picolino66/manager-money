@@ -7,7 +7,7 @@ summary: >
   Documento local único versionado (schemaVersion 3) com migração do formato do MVP.
 code:
   - src/infrastructure/storage/local-store.ts
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Módulo: persistência local

@@ -10,6 +10,7 @@ import { AccountScreen } from './AccountScreen';
 import { AddExpenseScreen } from './AddExpenseScreen';
 import { CardsScreen } from './CardsScreen';
 import { ConfigScreen } from './ConfigScreen';
+import { IncomesScreen } from './IncomesScreen';
 import { DashboardScreen } from './DashboardScreen';
 
 const mockNavigate = jest.fn();
@@ -89,6 +90,107 @@ describe('ConfigScreen (BR-FIN-018: várias fontes de renda)', () => {
     fireEvent.press(screen.getByText('Salvar configuração'));
     expect(await screen.findByText('Informe o nome da fonte.')).toBeTruthy();
     expect(screen.getByText('Informe um valor maior que zero.')).toBeTruthy();
+  });
+});
+
+function docWithFixed(withCard = false) {
+  const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+  const fixed = [{ id: 'aluguel', type: 'permanent' as const, name: 'Aluguel', category: 'Moradia', amount: 150000 }];
+  const doc = openCycle(saveConfig(createEmptyState(), { ...config, fixedExpenses: fixed }, ctx), ctx);
+
+  return withCard ? saveCreditCard(doc, { name: 'Nubank', closingDay: 28, dueDay: 5 }, ctx) : doc;
+}
+
+describe('Despesas fixas do ciclo (BR-FIN-021/022)', () => {
+  it('lista pendentes, paga à vista e descontar da renda do ciclo', async () => {
+    await seed(docWithFixed());
+    render(<DashboardScreen />);
+    expect(screen.getByText('Despesas fixas do ciclo')).toBeTruthy();
+    expect(screen.getByText('Pendente')).toBeTruthy();
+    expect(useFinancialStore.getState().activeMonth?.initialAvailableAmount).toBe(310000);
+
+    fireEvent.press(screen.getByLabelText('Pagar Aluguel'));
+    expect(await screen.findByText('Pagar Aluguel')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText('Débito'));
+    fireEvent.press(screen.getByText('Confirmar pagamento'));
+
+    expect(await screen.findByText('Pago · Débito')).toBeTruthy();
+    expect(useFinancialStore.getState().activeMonth?.initialAvailableAmount).toBe(160000);
+    expect(useFinancialStore.getState().doc.fixedPayments[0]).toMatchObject({ method: 'debit', amount: 150000 });
+  });
+
+  it('no crédito pede cartão, parcelas e juros e cria a compra no cartão', async () => {
+    await seed(docWithFixed(true));
+    render(<DashboardScreen />);
+    fireEvent.press(screen.getByLabelText('Pagar Aluguel'));
+    fireEvent.press(await screen.findByLabelText('Crédito'));
+    fireEvent.changeText(screen.getByLabelText('Parcelas'), '3');
+    fireEvent.changeText(screen.getByLabelText('Juros cobrados (R$)'), '5000');
+    expect(await screen.findByText(/Total R\$ 1\.550,00 em 3x de R\$ 516,67/)).toBeTruthy();
+    fireEvent.press(screen.getByText('Confirmar pagamento'));
+
+    await waitFor(() => expect(useFinancialStore.getState().doc.fixedPayments).toHaveLength(1));
+    const { doc } = useFinancialStore.getState();
+    expect(doc.fixedPayments[0]).toMatchObject({ method: 'credit', amount: 150000, interest: 5000 });
+    expect(doc.cardPurchases[0]).toMatchObject({ totalAmount: 155000, installments: 3, description: 'Aluguel' });
+  });
+
+  it('no crédito sem cartão oferece cadastrar um', async () => {
+    await seed(docWithFixed());
+    render(<DashboardScreen />);
+    fireEvent.press(screen.getByLabelText('Pagar Aluguel'));
+    fireEvent.press(await screen.findByLabelText('Crédito'));
+    expect(screen.getByText('Cadastre um cartão para pagar no crédito.')).toBeTruthy();
+    fireEvent.press(screen.getByText('Cadastrar cartão'));
+    expect(mockNavigate).toHaveBeenCalledWith('Cards');
+  });
+
+  it('desfazer volta a despesa para pendente', async () => {
+    await seed(docWithFixed());
+    render(<DashboardScreen />);
+    fireEvent.press(screen.getByLabelText('Pagar Aluguel'));
+    fireEvent.press(await screen.findByText('Confirmar pagamento'));
+    expect(await screen.findByText('Pago · Pix')).toBeTruthy();
+
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+      buttons?.find((button) => button.style === 'destructive')?.onPress?.();
+    });
+    fireEvent.press(screen.getByLabelText('Desfazer pagamento de Aluguel'));
+    expect(await screen.findByText('Pendente')).toBeTruthy();
+    expect(useFinancialStore.getState().activeMonth?.initialAvailableAmount).toBe(310000);
+    alertSpy.mockRestore();
+  });
+});
+
+describe('IncomesScreen (BR-FIN-023)', () => {
+  const route = { key: 'k', name: 'Incomes', params: undefined } as const;
+
+  it('sem ciclo ativo leva a iniciar o ciclo', () => {
+    render(<IncomesScreen navigation={navigation} route={route} />);
+    fireEvent.press(screen.getByText('Iniciar ciclo'));
+    expect(mockNavigate).toHaveBeenCalledWith('StartMonth');
+  });
+
+  it('valida, lança a renda avulsa que soma ao saldo e permite excluir', async () => {
+    await seed(activeDoc());
+    render(<IncomesScreen navigation={navigation} route={route} />);
+    fireEvent.press(screen.getByText('Adicionar renda'));
+    fireEvent.press(screen.getByText('Salvar renda'));
+    expect(await screen.findByText('Informe o nome da renda.')).toBeTruthy();
+    expect(screen.getByText('Informe um valor maior que zero.')).toBeTruthy();
+
+    fireEvent.changeText(screen.getByLabelText('Nome da renda'), 'Freela');
+    fireEvent.changeText(screen.getByLabelText('Valor'), '50000');
+    fireEvent.press(screen.getByText('Salvar renda'));
+    expect(await screen.findByText(/Freela/)).toBeTruthy();
+    expect(useFinancialStore.getState().activeMonth?.initialAvailableAmount).toBe(310000 + 50000);
+
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+      buttons?.find((button) => button.style === 'destructive')?.onPress?.();
+    });
+    fireEvent.press(screen.getByLabelText('Excluir renda Freela'));
+    await waitFor(() => expect(useFinancialStore.getState().activeMonth?.initialAvailableAmount).toBe(310000));
+    alertSpy.mockRestore();
   });
 });
 

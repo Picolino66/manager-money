@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
 import { AppButton } from '../components/AppButton';
 import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
+import { FixedExpensesCard } from '../components/FixedExpensesCard';
 import { MetricRow } from '../components/MetricRow';
+import { PayFixedExpenseModal } from '../components/PayFixedExpenseModal';
 import { Screen } from '../components/Screen';
 import { StatusBadge } from '../components/StatusBadge';
 import { RootStackParamList } from '../navigation/types';
@@ -22,11 +23,13 @@ import {
   calculateFixedExpensesTotal,
   describeCloseCycleBlock,
 } from '../domain/financial/financial.calculations';
-import { selectCardCharges } from '../application/selectors';
-import { cycleKeyFromStartDate } from '../domain/financial/credit-card';
-import { DayStatus } from '../domain/financial/financial.types';
+import { PayFixedExpenseInput } from '../application/payment.use-cases';
+import { selectCycleAdjustments, selectCyclePayments } from '../application/selectors';
+import { FixedPaymentRecord, isLive } from '../application/state';
+import { DayStatus, FixedExpense } from '../domain/financial/financial.types';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '../utils/currency';
+import { clampIsoDate, toISODate } from '../utils/date';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
@@ -43,12 +46,18 @@ export function DashboardScreen() {
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const closeActiveMonth = useFinancialStore((state) => state.closeActiveMonth);
   const receiveIncomeEarly = useFinancialStore((state) => state.receiveIncomeEarly);
+  const payFixedExpense = useFinancialStore((state) => state.payFixedExpense);
+  const undoFixedPayment = useFinancialStore((state) => state.undoFixedPayment);
   const doc = useFinancialStore((state) => state.doc);
   const today = new Date();
   const showReceiveEarly = canReceiveIncomeEarlyNow(doc, today);
   const canClose = canCloseActiveCycle(doc, today);
-  const [fixedExpensesExpanded, setFixedExpensesExpanded] = useState(false);
-  const cardCharges = activeMonth ? selectCardCharges(doc, cycleKeyFromStartDate(activeMonth.startDate)) : 0;
+  const [payingExpense, setPayingExpense] = useState<FixedExpense | null>(null);
+  const adjustments = activeMonth ? selectCycleAdjustments(doc, activeMonth) : null;
+  const cyclePayments = activeMonth ? selectCyclePayments(doc, activeMonth.id) : [];
+  const installmentsByPurchaseId = Object.fromEntries(
+    doc.cardPurchases.filter(isLive).map((purchase) => [purchase.id, purchase.installments]),
+  );
 
   const summary = useMemo(() => {
     if (!activeMonth) {
@@ -72,15 +81,41 @@ export function DashboardScreen() {
     ] as const;
   }, [config]);
 
-  const sortedFixedExpenses = useMemo(() => {
-    if (!config) {
-      return [];
+  function handleConfirmPayment(input: Omit<PayFixedExpenseInput, 'fixedExpenseId'>) {
+    const expense = payingExpense;
+
+    if (!expense) {
+      return Promise.resolve();
     }
 
-    return [...config.fixedExpenses].sort(
-      (left, right) => calculateFixedExpenseAmount(right) - calculateFixedExpenseAmount(left),
+    return payFixedExpense({ ...input, fixedExpenseId: expense.id }).then(
+      () => setPayingExpense(null),
+      (error: unknown) => {
+        Alert.alert(
+          'Não foi possível registrar o pagamento',
+          error instanceof Error ? error.message : 'Tente novamente.',
+        );
+      },
     );
-  }, [config]);
+  }
+
+  function handleUndoPayment(payment: FixedPaymentRecord) {
+    Alert.alert('Desfazer pagamento?', `${payment.name} voltará a ficar pendente.`, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Desfazer',
+        style: 'destructive',
+        onPress: () => {
+          void undoFixedPayment(payment.id).catch((error: unknown) => {
+            Alert.alert(
+              'Não foi possível desfazer',
+              error instanceof Error ? error.message : 'Tente novamente.',
+            );
+          });
+        },
+      },
+    ]);
+  }
 
   function handleCloseMonth() {
     Alert.alert('Fechar ciclo', 'O ciclo ativo será movido para o histórico.', [
@@ -197,6 +232,13 @@ export function DashboardScreen() {
           title="Registrar"
         />
         <AppButton
+          iconName="cash-outline"
+          onPress={() => navigation.navigate('Incomes')}
+          style={styles.gridButton}
+          title="Renda"
+          variant="secondary"
+        />
+        <AppButton
           iconName="settings-outline"
           onPress={() => navigation.navigate('Config')}
           style={styles.gridButton}
@@ -222,40 +264,21 @@ export function DashboardScreen() {
         <MetricRow label="Dias restantes" value={String(summary.remainingDays)} />
       </Card>
 
+      <FixedExpensesCard
+        expenses={config.fixedExpenses}
+        installmentsByPurchaseId={installmentsByPurchaseId}
+        onPay={setPayingExpense}
+        onUndo={handleUndoPayment}
+        payments={cyclePayments}
+      />
+
       <Card>
         <Text style={styles.sectionTitle}>Plano do ciclo</Text>
         <MetricRow label="Renda mensal" value={fixedMetrics?.[0][1] ?? ''} />
-        <TouchableOpacity
-          accessibilityLabel="Mostrar ou ocultar despesas fixas"
-          accessibilityRole="button"
-          onPress={() => setFixedExpensesExpanded((prev) => !prev)}
-          style={styles.collapsibleRow}
-        >
-          <Text style={styles.collapsibleLabel}>Despesas fixas</Text>
-          <View style={styles.collapsibleRight}>
-            <Text style={styles.collapsibleValue}>{fixedMetrics?.[1][1] ?? ''}</Text>
-            <Ionicons
-              color={colors.muted}
-              name={fixedExpensesExpanded ? 'chevron-up' : 'chevron-down'}
-              size={16}
-            />
-          </View>
-        </TouchableOpacity>
-        {fixedExpensesExpanded &&
-          sortedFixedExpenses.map((expense) => (
-            <MetricRow
-              key={expense.id}
-              indent
-              label={
-                expense.type === 'installment'
-                  ? `${expense.name} - ${expense.category} (${expense.remainingInstallments}/${expense.totalInstallments})`
-                  : `${expense.name} - ${expense.category}`
-              }
-              value={formatCurrency(calculateFixedExpenseAmount(expense))}
-            />
-          ))}
+        <MetricRow label="Rendas avulsas" value={formatCurrency(adjustments?.extraIncome ?? 0)} />
+        <MetricRow label="Despesas fixas pagas" value={formatCurrency(adjustments?.paidFixedExpenses ?? 0)} />
         <MetricRow label="Meta de economia" value={fixedMetrics?.[2][1] ?? ''} />
-        <MetricRow label="Faturas de cartão" value={formatCurrency(cardCharges)} />
+        <MetricRow label="Faturas de cartão" value={formatCurrency(adjustments?.cardCharges ?? 0)} />
         <MetricRow label="Dívida herdada" value={formatCurrency(activeMonth.previousMonthDebt)} />
       </Card>
 
@@ -273,6 +296,23 @@ export function DashboardScreen() {
         title="Fechar ciclo"
         variant="danger"
       />
+
+      {payingExpense ? (
+        <PayFixedExpenseModal
+          amount={calculateFixedExpenseAmount(payingExpense)}
+          cards={doc.creditCards.filter(isLive)}
+          cycleStartDate={activeMonth.startDate}
+          name={payingExpense.name}
+          onClose={() => setPayingExpense(null)}
+          onConfirm={handleConfirmPayment}
+          onRegisterCard={() => {
+            setPayingExpense(null);
+            navigation.navigate('Cards');
+          }}
+          payday={config.payday}
+          paymentDate={clampIsoDate(toISODate(today), activeMonth.startDate, activeMonth.endDate)}
+        />
+      ) : null}
     </Screen>
   );
 }
@@ -358,27 +398,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     textAlign: 'center',
-  },
-  collapsibleRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.md,
-    justifyContent: 'space-between',
-  },
-  collapsibleLabel: {
-    color: colors.muted,
-    flex: 1,
-    fontSize: 14,
-  },
-  collapsibleRight: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  collapsibleValue: {
-    color: colors.ink,
-    fontSize: 15,
-    fontWeight: '800',
-    textAlign: 'right',
   },
 });

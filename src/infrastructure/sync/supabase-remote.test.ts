@@ -64,12 +64,12 @@ describe('SupabaseRemote', () => {
   });
 
   it('hasData, markAllDeleted e deleteAccount', async () => {
-    const { client, calls } = fakeClient([{ count: 0 }, { count: 2 }, {}, {}, {}, {}, {}, {}, {}]);
+    const { client, calls } = fakeClient([{ count: 0 }, { count: 2 }, {}, {}, {}, {}, {}, {}, {}, {}, {}]);
     const remote = new SupabaseRemote(client);
     expect(await remote.hasData()).toBe(true);
     await remote.markAllDeleted('2026-10-10T00:00:00.000Z');
     await remote.deleteAccount();
-    expect(calls.filter((call) => call[1] === 'update')).toHaveLength(6);
+    expect(calls.filter((call) => call[1] === 'update')).toHaveLength(8);
     expect(calls.at(-1)?.[0]).toBe('rpc:delete_my_account');
   });
 

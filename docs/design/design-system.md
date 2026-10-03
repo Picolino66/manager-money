@@ -8,7 +8,7 @@ summary: >
 code:
   - src/design/theme.ts
   - src/components/AppButton.tsx
-last_verified_commit: 359de21
+last_verified_commit: a16e575+T-020
 ---
 
 # Design system
@@ -34,12 +34,14 @@ em telas novas: usar sempre os tokens.
 |---|---|
 | `Screen` | Contêiner com scroll, safe area, teclado e rodapé opcional |
 | `Card` | Agrupador de seção |
-| `AppButton` | Variantes `primary`, `secondary`, `ghost`, `danger`; `isLoading`; altura ≥ 48 |
+| `AppButton` | Variantes `primary`, `secondary`, `ghost`, `danger`; `isLoading`; `accessibilityLabel`; altura ≥ 48 |
 | `MetricRow` | Par rótulo/valor; `tone` e `indent` |
 | `StatusBadge` | Status do dia com texto + cor |
 | `EmptyState` | Estado vazio com ação |
 | `CurrencyInput` | Entrada em centavos (BR-FIN-001) |
 | `TextInputField`, `SelectField`, `CategoryPicker` | Formulários |
+| `FixedExpensesCard` | Despesas fixas do ciclo com status (Pendente/Pago) e Pagar/Desfazer |
+| `PayFixedExpenseModal` | Modal de forma de pagamento (Pix, Dinheiro, Débito, Crédito) com cartão, parcelas e juros; opções em *chips*, sem `Modal` aninhado |
 
 ## Diretrizes
 - O status nunca é comunicado só pela cor.

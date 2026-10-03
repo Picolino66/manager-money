@@ -77,17 +77,43 @@ export function calculateFixedExpensesTotal(
   );
 }
 
-export function calculateBaseAvailableAmount(config: FinancialConfig): MoneyCents {
-  return config.monthlyIncome - calculateFixedExpensesTotal(config) - config.savingGoal;
+/**
+ * BR-FIN-004: saldo base = renda + rendas avulsas − despesas fixas pagas à vista − meta.
+ * Despesas fixas pendentes não descontam (BR-FIN-021).
+ */
+export function calculateBaseAvailableAmount(
+  config: Pick<FinancialConfig, 'monthlyIncome' | 'savingGoal'>,
+  adjustments: Pick<CycleAdjustments, 'extraIncome' | 'paidFixedExpenses'> = {},
+): MoneyCents {
+  return (
+    config.monthlyIncome +
+    (adjustments.extraIncome ?? 0) -
+    (adjustments.paidFixedExpenses ?? 0) -
+    config.savingGoal
+  );
 }
 
-/** BR-FIN-005 + BR-FIN-019: as parcelas de cartão do ciclo reduzem o saldo inicial. */
+/** Valores do ciclo que ajustam o saldo base (BR-FIN-019, BR-FIN-021, BR-FIN-023). */
+export type CycleAdjustments = {
+  /** Parcelas de cartão que caem no ciclo. */
+  cardCharges?: MoneyCents;
+  /** Rendas avulsas do ciclo. */
+  extraIncome?: MoneyCents;
+  /** Despesas fixas pagas à vista (Pix, dinheiro, débito) no ciclo. */
+  paidFixedExpenses?: MoneyCents;
+};
+
+/** BR-FIN-005: saldo inicial = saldo base − dívida herdada − parcelas de cartão do ciclo. */
 export function calculateInitialAvailableAmount(
-  config: FinancialConfig,
+  config: Pick<FinancialConfig, 'monthlyIncome' | 'savingGoal'>,
   previousMonthDebt: MoneyCents,
-  cardCharges: MoneyCents = 0,
+  adjustments: CycleAdjustments = {},
 ): MoneyCents {
-  return calculateBaseAvailableAmount(config) - previousMonthDebt - cardCharges;
+  return (
+    calculateBaseAvailableAmount(config, adjustments) -
+    previousMonthDebt -
+    (adjustments.cardCharges ?? 0)
+  );
 }
 
 export function calculateTotalSpent(expenses: Expense[]): MoneyCents {

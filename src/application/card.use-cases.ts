@@ -120,14 +120,14 @@ export function deleteCreditCard(state: LocalState, cardId: string, ctx: UseCase
 }
 
 /**
- * BR-FIN-019/020: registra a compra no crédito. A 1ª parcela cai no ciclo que contém o
- * fechamento da fatura; as demais, nos ciclos seguintes. O saldo do ciclo ativo é recalculado.
+ * Valida e monta a compra no cartão (sem gravar). A 1ª parcela cai no ciclo que contém o
+ * fechamento da fatura (BR-FIN-019); o valor já inclui os juros (BR-FIN-020).
  */
-export function addCardPurchase(
+export function buildCardPurchase(
   state: LocalState,
   input: CardPurchaseInput,
   ctx: UseCaseContext,
-): LocalState {
+): CardPurchaseRecord {
   const config = selectConfig(state);
   const cycle = requireActiveCycle(state, 'Nenhum ciclo ativo para registrar compras no cartão.');
 
@@ -156,7 +156,7 @@ export function addCardPurchase(
 
   assertDateWithinCycle(cycle, input.date);
 
-  const purchase: CardPurchaseRecord = {
+  return {
     id: ctx.newId('purchase'),
     cardId: card.id,
     description,
@@ -175,6 +175,15 @@ export function addCardPurchase(
     deletedAt: null,
     dirty: true,
   };
+}
+
+/** BR-FIN-019/020: registra a compra no crédito e recalcula o saldo do ciclo ativo. */
+export function addCardPurchase(
+  state: LocalState,
+  input: CardPurchaseInput,
+  ctx: UseCaseContext,
+): LocalState {
+  const purchase = buildCardPurchase(state, input, ctx);
 
   return recalculateActiveCycleBalance(
     { ...state, cardPurchases: [...state.cardPurchases, purchase] },

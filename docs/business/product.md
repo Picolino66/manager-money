@@ -7,7 +7,7 @@ summary: >
   Visão, mercado, modelo de negócio, personas e hipótese de MVP do Manager Money.
 code:
   - src/domain/financial/financial.calculations.ts
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Visão de produto — Manager Money
@@ -31,9 +31,9 @@ Um único número diário, recalculado automaticamente a cada gasto:
 limite de hoje = (saldo disponível do ciclo − gastos anteriores a hoje) ÷ dias restantes do ciclo
 ```
 
-Gastar menos hoje aumenta o limite dos próximos dias; gastar mais reduz. Despesas fixas,
-parcelamentos e meta de economia são descontados antes, e a dívida de um ciclo negativo é herdada
-pelo próximo.
+Gastar menos hoje aumenta o limite dos próximos dias; gastar mais reduz. A meta de economia e as
+despesas fixas e parcelamentos pagos (à vista, ou nas faturas do cartão) são descontados do ciclo,
+rendas avulsas somam, e a dívida de um ciclo negativo é herdada pelo próximo.
 
 ## 3. Contexto de mercado
 

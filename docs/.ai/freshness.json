@@ -1,76 +1,77 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T20:31:06.908Z",
-  "source_commit": "1e8ade5",
+  "generated_at": "2026-10-03T20:44:43.598Z",
+  "source_commit": "a16e575",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
     "architecture/contracts.md": {
       "id": "architecture.contracts",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "supabase/migrations/20261001000000_init.sql": "sha256:fbdafc4a64ab9b114512823451cffbb232b603310e616466c5bb811fe0ce93af",
         "supabase/migrations/20261003000000_income_sources.sql": "sha256:6064e8cb7df791a6aa806b8423cc6a8c15bcef9d5bab734d4363e9cc1a2cff34",
         "supabase/migrations/20261003000100_credit_cards.sql": "sha256:11e31395ffac4284c26ba25941774bbbfdaef389f2df220c2ca055c3ff209dad",
-        "src/infrastructure/storage/schema.ts": "sha256:1736e4f65d7b8922908af1677b2a0a541571667990589914300e24c7926f9298",
-        "src/infrastructure/sync/supabase-remote.ts": "sha256:4bb027e4b64186dff9f59b1ed7845a996141cd354239e921e16612d7f7481ac9",
-        "src/infrastructure/sync/mappers.ts": "sha256:19902f863c6a89a5fd3c1486e552bd9d4b8647ac23a3858ec3f74d744c12357e"
+        "supabase/migrations/20261003000200_fixed_payments_and_incomes.sql": "sha256:dfe4e1b1d18a43e45a18cb65c98310e498698a9aacf8c45dd06baf48ac6d5c6e",
+        "src/infrastructure/storage/schema.ts": "sha256:eb9f20b8938da9f8ab979d2c979855f4682ab12902587c9dec8690808f7d31ee",
+        "src/infrastructure/sync/supabase-remote.ts": "sha256:ef5c3001cb4ada6f669af06f7cbe0d7d97ef828372577051ddd2c1149dec18bb",
+        "src/infrastructure/sync/mappers.ts": "sha256:bb5e1d74f13243187950e3b5250d222c5d6ff99038a49255baaffcbf33b19e77"
       }
     },
     "architecture/overview.md": {
       "id": "architecture.overview",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "src/domain/financial/financial.calculations.ts": "sha256:7a28c47437e3769da5b992ed6be3ccf43e5bf2d7cbfe3533edabb899cfb89cf3",
-        "src/application/cycle.use-cases.ts": "sha256:e8981a04b99b7d917df907b76cd76bd1275e694b44ece1b273485d71982a9ff6",
+        "src/domain/financial/financial.calculations.ts": "sha256:2d0945390842c0f6b855468f034472a98919046d23daa36ed3fee59b68362b3f",
+        "src/application/cycle.use-cases.ts": "sha256:014eeb6b2cae79947b07e21bf6ed8147ac9f65d16a2cd419d94c5c6e6cdb2c87",
         "src/infrastructure/storage/local-store.ts": "sha256:e71cccf8d9a8faf48d01e8433516bd83442528be1c0d42969628f6effac5ae6e",
-        "src/infrastructure/sync/sync-engine.ts": "sha256:1b7fc3c62b930c91ed33fa45f8fe8f941439eccebaf83538d67800980c14d075",
-        "src/store/financial.store.ts": "sha256:a9cd7e15f4e86bb476a0a352ebf0f8e8fa4807da5f8b8f596667ff69d7e91990"
+        "src/infrastructure/sync/sync-engine.ts": "sha256:385999d450029d308f5439bed9ff6f166201928780e41b4c351a1f348086a381",
+        "src/store/financial.store.ts": "sha256:e31f6f9f65d8f3e9bf58b7c0e05a37644ffa3107db559a0b82b9727ce254eac1"
       }
     },
     "business/business-rules.md": {
       "id": "business.rules",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "src/domain/financial/financial.calculations.ts": "sha256:7a28c47437e3769da5b992ed6be3ccf43e5bf2d7cbfe3533edabb899cfb89cf3",
-        "src/application/cycle.use-cases.ts": "sha256:e8981a04b99b7d917df907b76cd76bd1275e694b44ece1b273485d71982a9ff6",
-        "src/infrastructure/sync/sync-engine.ts": "sha256:1b7fc3c62b930c91ed33fa45f8fe8f941439eccebaf83538d67800980c14d075"
+        "src/domain/financial/financial.calculations.ts": "sha256:2d0945390842c0f6b855468f034472a98919046d23daa36ed3fee59b68362b3f",
+        "src/application/cycle.use-cases.ts": "sha256:014eeb6b2cae79947b07e21bf6ed8147ac9f65d16a2cd419d94c5c6e6cdb2c87",
+        "src/infrastructure/sync/sync-engine.ts": "sha256:385999d450029d308f5439bed9ff6f166201928780e41b4c351a1f348086a381"
       }
     },
     "business/product.md": {
       "id": "business.product",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "src/domain/financial/financial.calculations.ts": "sha256:7a28c47437e3769da5b992ed6be3ccf43e5bf2d7cbfe3533edabb899cfb89cf3"
+        "src/domain/financial/financial.calculations.ts": "sha256:2d0945390842c0f6b855468f034472a98919046d23daa36ed3fee59b68362b3f"
       }
     },
     "business/requirements.md": {
       "id": "business.requirements",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "src/store/financial.store.ts": "sha256:a9cd7e15f4e86bb476a0a352ebf0f8e8fa4807da5f8b8f596667ff69d7e91990"
+        "src/store/financial.store.ts": "sha256:e31f6f9f65d8f3e9bf58b7c0e05a37644ffa3107db559a0b82b9727ce254eac1"
       }
     },
     "design/design-system.md": {
       "id": "design.system",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "src/design/theme.ts": "sha256:9e5ab49c86d245ba891a6aea32eb9385b9b367c1264e15906924d6bcab25fc76",
-        "src/components/AppButton.tsx": "sha256:ecc1e8ddec9ad26faac79fd81e189928a6341ee2562699f7b7b0070e3762cd80"
+        "src/components/AppButton.tsx": "sha256:4a1b405567741d16ed22839ed0560cd56fa0190e41ad7ce4b47e4f6e0bf6a3e5"
       }
     },
     "flows/journeys.md": {
       "id": "flows.journeys",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "src/navigation/AppNavigator.tsx": "sha256:3b84350c07078ba6fabd7f96017b82d340ba6107b38fd565622b21361d8b5de6"
+        "src/navigation/AppNavigator.tsx": "sha256:68e2179d630cd103bd784f4d66f3105dc681903da2b24d665b7c1f769bf74173"
       }
     },
     "modules/account/auth.md": {
@@ -114,18 +115,19 @@
     },
     "modules/application/index.md": {
       "id": "application",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "src/application/cycle.use-cases.ts": "sha256:e8981a04b99b7d917df907b76cd76bd1275e694b44ece1b273485d71982a9ff6"
+        "src/application/cycle.use-cases.ts": "sha256:014eeb6b2cae79947b07e21bf6ed8147ac9f65d16a2cd419d94c5c6e6cdb2c87"
       }
     },
     "modules/application/use-cases.md": {
       "id": "application.use-cases",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "saveConfig": "sha256:7027efe74f7aa7342f9a21a3478854995a4b52ecd0510bf17af88cf19e597498",
+        "recalculateActiveCycleBalance": "sha256:c5823e53757fb0f666f5ca5a4bbdbb2f0a59c3b48619eaaff5443d953891a7cf",
+        "saveConfig": "sha256:f486691420c21ec6e7c6cceefeabd4b206dca6c5c04448c8f6240f7506f390f5",
         "addCategory": "sha256:f7ca77dae4a0e2db18f32c4b66490a2274a8d980ae104435e2ae76769649e75a",
         "addExpense": "sha256:2e35563d5c9701da20a9e3a08c9294c6c9c82d5e0462a436ed17d7e584386d07",
         "updateExpense": "sha256:f9e87d7b3ee7526d885ef3050516e45a9410c8029d3652ed39c96b979a0b5c9e",
@@ -137,7 +139,7 @@
     },
     "modules/card/index.md": {
       "id": "card",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "src/screens/CardsScreen.tsx": "sha256:a40df995ddd11c82f6fc99fd27ccd669cd63a008645f7f621f314ac324328fd5"
@@ -145,7 +147,7 @@
     },
     "modules/card/manage.md": {
       "id": "card.manage",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "saveCreditCard": "sha256:8a79a1ec887c9072390aa76c126d0bbc01760f1321f721cc023ae9861ec9c594",
@@ -157,15 +159,15 @@
     },
     "modules/card/purchase.md": {
       "id": "card.purchase",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "addCardPurchase": "sha256:fe7606775b5c186c3d0f288d47f63ec122624f7fea04306328eccb4096750f9f",
+        "addCardPurchase": "sha256:4d3e65f1a555a89f2e770cb035a134e347c5eb145f69f46cbad4f815cb62dbe9",
         "calculateFirstCycleKey": "sha256:e6d5129edfc09c4ee4550dbedafdb6d2503c044631bdc0f76459abf043a040d1",
         "calculateInvoiceClosingDate": "sha256:fa38b63fad20ba6e5e8caf8dfa0f6c2446852ae79c8269c8673f6ef193be4075",
         "splitInstallments": "sha256:ccac4ad66a6e86ab6147415d8f6718cc86d1d8874f843af586725754e1b1de53",
         "calculateCardChargesForCycle": "sha256:bbec246657ad6ad230a709ba6efc535ebaff7efabfbb5ebcf0ebdebd1fe81f89",
-        "recalculateActiveCycleBalance": "sha256:15a24b93d7316ef4420b8cfef9cafb70d5192f1651e22a33dbd77e0ea1744aa0"
+        "recalculateActiveCycleBalance": "sha256:c5823e53757fb0f666f5ca5a4bbdbb2f0a59c3b48619eaaff5443d953891a7cf"
       }
     },
     "modules/category/analysis.md": {
@@ -208,7 +210,7 @@
     },
     "modules/cycle/dashboard.md": {
       "id": "cycle.dashboard",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "buildDashboardSummary": "sha256:328f415c9254721051cfb2f595d040d20e196b43493ad148d819470cfc54c41f",
@@ -228,15 +230,15 @@
     },
     "modules/cycle/index.md": {
       "id": "cycle",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "src/domain/financial/financial.calculations.ts": "sha256:7a28c47437e3769da5b992ed6be3ccf43e5bf2d7cbfe3533edabb899cfb89cf3"
+        "src/domain/financial/financial.calculations.ts": "sha256:2d0945390842c0f6b855468f034472a98919046d23daa36ed3fee59b68362b3f"
       }
     },
     "modules/cycle/open.md": {
       "id": "cycle.open",
-      "last_verified_commit": "359de21",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "openCycle": "sha256:008554f5bdd6b19957dff090e259aba34b6fc1ba7590bb674cc165e2c975915f",
@@ -266,37 +268,37 @@
     },
     "modules/expense/index.md": {
       "id": "expense",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "src/screens/AddExpenseScreen.tsx": "sha256:3cf78836266e8b6eb9d1b231db78f87ad974cb35ddce6679f642bcbf3715966d"
+        "src/screens/AddExpenseScreen.tsx": "sha256:4662d16a1495a18aec7e6436195a3592068186389ff5eae0ae90def20632000a"
       }
     },
     "modules/expense/register.md": {
       "id": "expense.register",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "addExpense": "sha256:2e35563d5c9701da20a9e3a08c9294c6c9c82d5e0462a436ed17d7e584386d07",
         "updateExpense": "sha256:f9e87d7b3ee7526d885ef3050516e45a9410c8029d3652ed39c96b979a0b5c9e",
-        "assertDateWithinCycle": "sha256:41b812474a87446e035d7d8815bd3dd7b7edfba94b6d7673b8440d41cd896f06",
+        "assertDateWithinCycle": "sha256:28574787f0843b5a76399a2f95f613ef762c935c9d324ef326e6252c09a18047",
         "parseBRDateInput": "sha256:872956f1697922fe191008736b67278da9820e5994dbf0b99f6b7cf779a4bf48"
       }
     },
     "modules/legal/index.md": {
       "id": "legal",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "src/legal/privacy-policy.ts": "sha256:3a580a969d8fbe78fa4e679d468f442cce75a37468a1c051b71a3c9b07d10de8"
+        "src/legal/privacy-policy.ts": "sha256:78d5484753bc2bef587b5e75aef0c30c9af2129b87ce4cf245fa62b492e631bc"
       }
     },
     "modules/legal/privacy-policy.md": {
       "id": "legal.privacy-policy",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "PRIVACY_POLICY_SECTIONS": "sha256:9ac23d3fdef02016817949e81472e5bbd6b7871cce8240ba7c2e636c42c20d96"
+        "PRIVACY_POLICY_SECTIONS": "sha256:15c4b1d27d40737413a6df0ae5aef08cff53a4f95148904ce357f9cb15472c9e"
       }
     },
     "modules/monitoring/index.md": {
@@ -316,24 +318,54 @@
         "logger": "sha256:23ebfbde50cb22011426130e50aecee798e084c396cbfd6e4b5dbc81b26ec22c"
       }
     },
-    "modules/planning/configure.md": {
-      "id": "planning.configure",
-      "last_verified_commit": "1e8ade5+T-019",
+    "modules/payment/extra-income.md": {
+      "id": "payment.extra-income",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "saveConfig": "sha256:7027efe74f7aa7342f9a21a3478854995a4b52ecd0510bf17af88cf19e597498",
+        "addExtraIncome": "sha256:c7adc5844669fc538302f3cc258b069a97a71f0fda86dd465914ac1ae4737b1a",
+        "deleteExtraIncome": "sha256:41e74b7ae6a999016ece9429588191b589467a4bae7df5234991ceedd0b60f6f",
+        "calculateExtraIncomeTotal": "sha256:0435bb2359532455f5097af2813577975d57692edaa0696cafc70c5f398daec3"
+      }
+    },
+    "modules/payment/fixed-expense.md": {
+      "id": "payment.fixed-expense",
+      "last_verified_commit": "a16e575+T-020",
+      "state": "fresh",
+      "source_hashes": {
+        "payFixedExpense": "sha256:b3d37b70681bd70d85488fd288eeadb0cf2c228061534a4616f34d3a4272dbf6",
+        "undoFixedPayment": "sha256:38ab4673cd173805b9fdc3c6ff4d805081a2b3c9c7a8deef6b5f09c622fde5d1",
+        "calculatePaidFixedAmount": "sha256:0520fcff0481aa76cbac438de0a543af357296dd5093db76a1fb2ce56a2991a7",
+        "calculateInitialAvailableAmount": "sha256:b1a47e54ae0d6919954ff25ef41d7a480a6fab9627f83bd8fb0a17cac4a1dee1",
+        "selectCycleAdjustments": "sha256:b93012ffe6eff778931cc807c8dfe3a0497c033a3eb72396b2e0130c3186af45"
+      }
+    },
+    "modules/payment/index.md": {
+      "id": "payment",
+      "last_verified_commit": "a16e575+T-020",
+      "state": "fresh",
+      "source_hashes": {
+        "src/components/FixedExpensesCard.tsx": "sha256:660d075f30326afd4783ec81f8d994aef6a0b265b68fbfc7d8e3f948fb9c1f6d"
+      }
+    },
+    "modules/planning/configure.md": {
+      "id": "planning.configure",
+      "last_verified_commit": "a16e575+T-020",
+      "state": "fresh",
+      "source_hashes": {
+        "saveConfig": "sha256:f486691420c21ec6e7c6cceefeabd4b206dca6c5c04448c8f6240f7506f390f5",
         "calculateIncomeTotal": "sha256:4db203ed31599b302db605b1bfab1f0d9e417b44b8ee9ce9fb9c8543a6ed7742",
         "calculateFixedExpensesTotal": "sha256:335bef3c0951f537efa8f7849aca518f78b18ab16fafbdca5a01808992bac550",
-        "calculateBaseAvailableAmount": "sha256:63670b9697d48107b00884f779c99a78388115f824ce50cef2d3f10b9b22655c",
+        "calculateBaseAvailableAmount": "sha256:6dc0ef9c90ddd9c3959798da49fd6088cd431bc6300e5cc30b5167ebdcd70853",
         "calculateFixedExpenseAmount": "sha256:28122a0880cd390d1e51a1ca80605927521fe52f0fead2d23b117760f6dd8eb7"
       }
     },
     "modules/planning/income-sources.md": {
       "id": "planning.income-sources",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "saveConfig": "sha256:7027efe74f7aa7342f9a21a3478854995a4b52ecd0510bf17af88cf19e597498",
+        "saveConfig": "sha256:f486691420c21ec6e7c6cceefeabd4b206dca6c5c04448c8f6240f7506f390f5",
         "calculateIncomeTotal": "sha256:4db203ed31599b302db605b1bfab1f0d9e417b44b8ee9ce9fb9c8543a6ed7742",
         "legacyIncomeSources": "sha256:0c72cc8111a46a4e7423e4754bec6c8b3c8ed774d9f36dfe10b4dfdd70cc4a71",
         "migrateV2ToV3": "sha256:083284ad29d3cf7f57ea02c3e10d14daf22af27d5bb20e48905dd2aed7915c05",
@@ -342,7 +374,7 @@
     },
     "modules/planning/index.md": {
       "id": "planning",
-      "last_verified_commit": "c3d79fd",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "src/screens/ConfigScreen.tsx": "sha256:85f7a08350d50ee6487962b13145601dfdbc0c8c0aa3e2af27d19e2e9aaafec4"
@@ -360,7 +392,7 @@
     },
     "modules/settings/hub.md": {
       "id": "settings.hub",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "describeSyncStatus": "sha256:7c8e875d883d3109ccaa86ff98c949fe27190afb01acd602d9d2b22b9f40c8e1",
@@ -369,7 +401,7 @@
     },
     "modules/settings/index.md": {
       "id": "settings",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "src/screens/SettingsScreen.tsx": "sha256:4e309af248de5db33bac9fb240dbbe11398ba468ad077f7710ec1570512b43d3"
@@ -377,7 +409,7 @@
     },
     "modules/storage/index.md": {
       "id": "storage",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "src/infrastructure/storage/local-store.ts": "sha256:e71cccf8d9a8faf48d01e8433516bd83442528be1c0d42969628f6effac5ae6e"
@@ -385,7 +417,7 @@
     },
     "modules/storage/local-document.md": {
       "id": "storage.local-document",
-      "last_verified_commit": "c3d79fd",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "migrateV1ToV2": "sha256:3f1919f48fece9094b2ae10eab15cadbe659e3b2113488fa37898e91bb9545dd",
@@ -398,13 +430,13 @@
     },
     "modules/sync/engine.md": {
       "id": "sync.engine",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
         "runSync": "sha256:0833efbfb6cc4dd3597a5a2afb088e687fb4c86ede3cfe2a4e84f190e29c6ff9",
         "collectDirty": "sha256:3b69697ef0e88facfc0ea2605af5199818084a8b5d087b0e307e69fc9cf4977a",
-        "acknowledge": "sha256:00f13a8c52419ee72e7e3a44003e9afbd495a14217fe7f1037009ad163a099b8",
-        "applyRemoteRows": "sha256:ef72001c761a4508a7fa0912fcefa9c0580158a8e7f28427face30b71bbfc3f3",
+        "acknowledge": "sha256:801472a557ecc1dd63624c88baa428b9bff2cb5c67a6df3cc2e3cc525333ed8a",
+        "applyRemoteRows": "sha256:dfd41a6c624be0b84c115efda1793248515d86fd972dde4bbebfaa90346401e9",
         "adoptRemoteActiveCycle": "sha256:506ecd4d3c575d3b92187cefe5a20b0d61d7cac73e3bd30b8ce218630f3e6ad6",
         "mapSupabaseError": "sha256:04ded0ffa791db065fca5c1d82cfcc647ddd395fa3cecfcac0ad03b49397155f",
         "scheduleSync": "sha256:dad10c4b3dbf5ac9fb93a56d94195446567f4f144fc1201005520b62e2cf950b"
@@ -424,10 +456,10 @@
     },
     "modules/sync/index.md": {
       "id": "sync",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "src/infrastructure/sync/sync-engine.ts": "sha256:1b7fc3c62b930c91ed33fa45f8fe8f941439eccebaf83538d67800980c14d075"
+        "src/infrastructure/sync/sync-engine.ts": "sha256:385999d450029d308f5439bed9ff6f166201928780e41b4c351a1f348086a381"
       }
     },
     "modules/tooling/index.md": {
@@ -463,10 +495,10 @@
     },
     "quality/manual-qa.md": {
       "id": "quality.manual-qa",
-      "last_verified_commit": "1e8ade5+T-019",
+      "last_verified_commit": "a16e575+T-020",
       "state": "fresh",
       "source_hashes": {
-        "src/navigation/AppNavigator.tsx": "sha256:3b84350c07078ba6fabd7f96017b82d340ba6107b38fd565622b21361d8b5de6"
+        "src/navigation/AppNavigator.tsx": "sha256:68e2179d630cd103bd784f4d66f3105dc681903da2b24d665b7c1f769bf74173"
       }
     },
     "quality/security-report.md": {

@@ -17,7 +17,7 @@ symbols: [saveConfig, calculateIncomeTotal, legacyIncomeSources, migrateV2ToV3, 
 adrs: [ADR-013]
 tests: [src/application/cycle.use-cases.test.ts, src/infrastructure/storage/local-store.test.ts, src/infrastructure/sync/mappers.test.ts, src/screens/screens.test.tsx]
 business_rules: [BR-FIN-004, BR-FIN-018]
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Múltiplas fontes de renda

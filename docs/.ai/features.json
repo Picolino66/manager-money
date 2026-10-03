@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T20:31:06.908Z",
-  "source_commit": "1e8ade5",
+  "generated_at": "2026-10-03T20:44:43.598Z",
+  "source_commit": "a16e575",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -134,6 +134,7 @@
         "DomainError"
       ],
       "symbols": [
+        "recalculateActiveCycleBalance",
         "saveConfig",
         "addCategory",
         "addExpense",
@@ -158,7 +159,7 @@
       "type": "integration",
       "module": "architecture",
       "title": "Contratos de dados e API (v1)",
-      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 4).",
+      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 5).",
       "doc": "architecture/contracts.md",
       "state": "implemented",
       "adrs": [
@@ -654,6 +655,91 @@
       "summary": "Como configurar Supabase e EAS, publicar nas lojas, monitorar, responder a incidentes e reverter versões.",
       "doc": "operations/runbook.md",
       "state": "implemented"
+    },
+    {
+      "id": "payment",
+      "type": "module",
+      "module": "payment",
+      "title": "Pagamentos e rendas",
+      "summary": "Confirmação mensal do pagamento das despesas fixas (Pix, dinheiro, débito, crédito) e rendas avulsas do ciclo.",
+      "doc": "modules/payment/index.md",
+      "state": "implemented"
+    },
+    {
+      "id": "payment.extra-income",
+      "type": "feature",
+      "module": "payment",
+      "title": "Rendas avulsas do ciclo",
+      "summary": "Tela Rendas do ciclo: lança, lista e exclui entradas extras (nome, valor, data) que somam ao saldo disponível do ciclo ativo.",
+      "doc": "modules/payment/extra-income.md",
+      "state": "implemented",
+      "keywords": [
+        "renda avulsa",
+        "entrada extra",
+        "freela",
+        "13º",
+        "receita"
+      ],
+      "symbols": [
+        "addExtraIncome",
+        "deleteExtraIncome",
+        "calculateExtraIncomeTotal"
+      ],
+      "business_rules": [
+        "BR-FIN-004",
+        "BR-FIN-023"
+      ],
+      "adrs": [
+        "ADR-015"
+      ],
+      "tests": [
+        "src/application/payment.use-cases.test.ts",
+        "src/screens/screens.test.tsx"
+      ],
+      "spec": "SPEC-014"
+    },
+    {
+      "id": "payment.fixed-expense",
+      "type": "feature",
+      "module": "payment",
+      "title": "Pagar despesas fixas do ciclo",
+      "summary": "O Hoje lista as despesas fixas do ciclo como pendentes ou pagas; Pagar abre a escolha de Pix, dinheiro, débito ou crédito (cartão, parcelas e juros) e desconta o saldo do ciclo.",
+      "doc": "modules/payment/fixed-expense.md",
+      "state": "implemented",
+      "keywords": [
+        "pagar",
+        "despesa fixa",
+        "pix",
+        "dinheiro",
+        "débito",
+        "crédito",
+        "juros",
+        "pendente",
+        "desfazer"
+      ],
+      "symbols": [
+        "payFixedExpense",
+        "undoFixedPayment",
+        "calculatePaidFixedAmount",
+        "calculateInitialAvailableAmount",
+        "selectCycleAdjustments"
+      ],
+      "business_rules": [
+        "BR-FIN-004",
+        "BR-FIN-005",
+        "BR-FIN-021",
+        "BR-FIN-022"
+      ],
+      "adrs": [
+        "ADR-015",
+        "ADR-014"
+      ],
+      "tests": [
+        "src/application/payment.use-cases.test.ts",
+        "src/screens/screens.test.tsx",
+        "src/infrastructure/sync/sync-engine.test.ts"
+      ],
+      "spec": "SPEC-014"
     },
     {
       "id": "planning",

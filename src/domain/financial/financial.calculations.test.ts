@@ -67,9 +67,21 @@ const iso = (date: Date) => toISODate(date);
 describe('saldo base e fixos (BR-FIN-004, BR-FIN-005, BR-FIN-010)', () => {
   it('soma fixos e desconta a meta', () => {
     expect(calculateFixedExpensesTotal(config)).toBe(418000);
-    expect(calculateBaseAvailableAmount(config)).toBe(312000);
-    expect(calculateInitialAvailableAmount(config, 0)).toBe(312000);
-    expect(calculateInitialAvailableAmount(config, 12000)).toBe(300000);
+    // BR-FIN-021: fixas pendentes não descontam; só as pagas à vista entram no saldo.
+    expect(calculateBaseAvailableAmount(config)).toBe(730000);
+    expect(calculateBaseAvailableAmount(config, { paidFixedExpenses: 300000 })).toBe(430000);
+    expect(calculateInitialAvailableAmount(config, 0)).toBe(730000);
+    expect(calculateInitialAvailableAmount(config, 12000)).toBe(718000);
+  });
+
+  it('saldo inicial soma rendas avulsas e desconta fixas pagas, parcelas de cartão e dívida', () => {
+    expect(
+      calculateInitialAvailableAmount(config, 10000, {
+        extraIncome: 50000,
+        paidFixedExpenses: 300000,
+        cardCharges: 20000,
+      }),
+    ).toBe(880000 + 50000 - 300000 - 150000 - 10000 - 20000);
   });
 
   it('parcelamento conta enquanto houver parcelas restantes', () => {

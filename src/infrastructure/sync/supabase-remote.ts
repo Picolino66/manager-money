@@ -88,6 +88,8 @@ export class SupabaseRemote implements SyncRemote {
 
   async markAllDeleted(nowIso: string): Promise<void> {
     for (const table of [
+      'extra_incomes',
+      'fixed_payments',
       'card_purchases',
       'expenses',
       'cycles',

@@ -12,16 +12,17 @@ code:
   - src/application/selectors.ts
   - src/application/state.ts
   - src/store/financial.store.ts
-symbols: [saveConfig, addCategory, addExpense, updateExpense, selectActiveMonth, selectClosedMonths, touch, commit]
+symbols: [recalculateActiveCycleBalance, saveConfig, addCategory, addExpense, updateExpense, selectActiveMonth, selectClosedMonths, touch, commit]
 adrs: [ADR-001, ADR-008]
 tests: [src/application/cycle.use-cases.test.ts, src/store/financial.store.test.ts]
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Casos de uso
 
 Spec: [SPEC-009](../../../specs/SPEC-009-camada-de-aplicacao.md).
 
+- Pagamentos e rendas avulsas: [payment.fixed-expense](../payment/fixed-expense.md); cartões: [card.purchase](../card/purchase.md).
 - Contexto injetável `{ now, newId }` → testes determinísticos.
 - Toda escrita usa `touch` (`updatedAt` + `dirty`); remoções são lógicas.
 - A store aplica o caso de uso numa **fila serializada** (`commit`): calcula sobre o documento mais

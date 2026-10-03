@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T20:31:06.908Z",
-  "source_commit": "1e8ade5",
+  "generated_at": "2026-10-03T20:44:43.598Z",
+  "source_commit": "a16e575",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "stack": [
@@ -16,13 +16,13 @@
   "artifacts": {
     "features": {
       "path": ".ai/features.json",
-      "count": 48,
-      "hash": "sha256:263c70bd31110f0081238a52e3e6fb5adf91718d808a39f186348de034be15d8"
+      "count": 51,
+      "hash": "sha256:2a663f351ee9f7dae37e804e750b4070602b51297f070ed6db5420583eebd9db"
     },
     "freshness": {
       "path": ".ai/freshness.json",
-      "count": 48,
-      "hash": "sha256:546b28b8761abb0b91d9d0d936562d4894968ca008c8436e87545a9e0891c738"
+      "count": 51,
+      "hash": "sha256:cc9441728b20c6bcc7cbc69a3b1a16fdec19d46dc58675b58ba9e0a0520a1162"
     },
     "retrieval_tests": {
       "path": ".ai/retrieval-tests.json",
@@ -90,6 +90,12 @@
       "features": 1
     },
     {
+      "id": "payment",
+      "title": "Pagamentos e rendas",
+      "doc": "modules/payment/index.md",
+      "features": 2
+    },
+    {
       "id": "planning",
       "title": "Planejamento financeiro",
       "doc": "modules/planning/index.md",
@@ -121,7 +127,7 @@
     }
   ],
   "health": {
-    "fresh": 48,
+    "fresh": 51,
     "stale": 0,
     "stale_critical": 0,
     "planned": 0,

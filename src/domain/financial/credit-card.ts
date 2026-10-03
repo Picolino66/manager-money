@@ -85,15 +85,20 @@ export function calculateFirstCycleKey(
   return closingKey > activeCycleKey ? closingKey : activeCycleKey;
 }
 
+/** Quantos ciclos `toKey` está à frente de `fromKey` (negativo se estiver atrás). */
+export function cycleKeyOffset(fromKey: string, toKey: string): number {
+  const from = parseISO(`${fromKey}-01`);
+  const to = parseISO(`${toKey}-01`);
+
+  return (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+}
+
 /** Parcela da compra que cai no ciclo, se houver. */
 export function calculateInstallmentForCycle(
   purchase: CardPurchase,
   cycleKey: string,
 ): CardInstallment | null {
-  const first = parseISO(`${purchase.firstCycleKey}-01`);
-  const current = parseISO(`${cycleKey}-01`);
-  const index =
-    (current.getFullYear() - first.getFullYear()) * 12 + (current.getMonth() - first.getMonth());
+  const index = cycleKeyOffset(purchase.firstCycleKey, cycleKey);
 
   if (index < 0 || index >= purchase.installments) {
     return null;

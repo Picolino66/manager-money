@@ -1,0 +1,168 @@
+import { StyleSheet, Text, View } from 'react-native';
+
+import { FixedPaymentRecord } from '../application/state';
+import { colors, radius, spacing, typography } from '../design/theme';
+import { calculateFixedExpenseAmount } from '../domain/financial/financial.calculations';
+import { FixedExpense } from '../domain/financial/financial.types';
+import { PAYMENT_METHOD_LABELS } from '../domain/financial/payments';
+import { formatCurrency } from '../utils/currency';
+import { AppButton } from './AppButton';
+import { Card } from './Card';
+
+type FixedExpensesCardProps = {
+  expenses: FixedExpense[];
+  /** Pagamentos vigentes do ciclo ativo. */
+  payments: FixedPaymentRecord[];
+  /** Parcelas da compra no cartão por id, para descrever pagamentos no crédito. */
+  installmentsByPurchaseId: Record<string, number>;
+  onPay: (expense: FixedExpense) => void;
+  onUndo: (payment: FixedPaymentRecord) => void;
+};
+
+function describePayment(payment: FixedPaymentRecord, installments?: number): string {
+  const method = PAYMENT_METHOD_LABELS[payment.method];
+
+  return payment.method === 'credit' && installments && installments > 1
+    ? `Pago · ${method} em ${installments}x`
+    : `Pago · ${method}`;
+}
+
+/** BR-FIN-021: todo ciclo mostra as despesas fixas para confirmar o pagamento. */
+export function FixedExpensesCard({
+  expenses,
+  payments,
+  installmentsByPurchaseId,
+  onPay,
+  onUndo,
+}: FixedExpensesCardProps) {
+  const rows = expenses
+    .filter((expense) => calculateFixedExpenseAmount(expense) > 0)
+    .map((expense) => ({
+      expense,
+      amount: calculateFixedExpenseAmount(expense),
+      payment: payments.find((payment) => payment.fixedExpenseId === expense.id),
+    }))
+    .sort(
+      (left, right) =>
+        Number(Boolean(left.payment)) - Number(Boolean(right.payment)) || right.amount - left.amount,
+    );
+  const pending = rows.filter((row) => !row.payment).reduce((total, row) => total + row.amount, 0);
+  const paid = rows.filter((row) => row.payment).reduce((total, row) => total + row.amount, 0);
+
+  return (
+    <Card>
+      <Text style={styles.title}>Despesas fixas do ciclo</Text>
+      {rows.length === 0 ? (
+        <Text style={styles.empty}>Nenhuma despesa fixa neste ciclo.</Text>
+      ) : (
+        <>
+          <Text style={styles.summary}>
+            Pagas {formatCurrency(paid)} · Pendentes {formatCurrency(pending)}
+          </Text>
+          {rows.map(({ expense, amount, payment }) => (
+            <View key={expense.id} style={styles.row}>
+              <View style={styles.rowText}>
+                <Text style={styles.name}>
+                  {expense.name}
+                  {expense.type === 'installment'
+                    ? ` (${expense.remainingInstallments}/${expense.totalInstallments})`
+                    : ''}
+                </Text>
+                <Text style={styles.meta}>{expense.category}</Text>
+                <Text style={[styles.status, payment ? styles.statusPaid : styles.statusPending]}>
+                  {payment
+                    ? describePayment(payment, installmentsByPurchaseId[payment.cardPurchaseId ?? ''])
+                    : 'Pendente'}
+                </Text>
+              </View>
+              <View style={styles.rowAction}>
+                <Text style={styles.amount}>{formatCurrency(amount)}</Text>
+                {payment ? (
+                  <AppButton
+                    accessibilityLabel={`Desfazer pagamento de ${expense.name}`}
+                    onPress={() => onUndo(payment)}
+                    style={styles.button}
+                    title="Desfazer"
+                    variant="ghost"
+                  />
+                ) : (
+                  <AppButton
+                    accessibilityLabel={`Pagar ${expense.name}`}
+                    iconName="checkmark-outline"
+                    onPress={() => onPay(expense)}
+                    style={styles.button}
+                    title="Pagar"
+                    variant="secondary"
+                  />
+                )}
+              </View>
+            </View>
+          ))}
+        </>
+      )}
+    </Card>
+  );
+}
+
+const styles = StyleSheet.create({
+  title: {
+    color: colors.ink,
+    fontSize: typography.sectionTitle,
+    fontWeight: '900',
+  },
+  summary: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  empty: {
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  row: {
+    alignItems: 'center',
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.md,
+    padding: spacing.md,
+  },
+  rowText: {
+    flex: 1,
+    gap: 2,
+  },
+  name: {
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  meta: {
+    color: colors.muted,
+    fontSize: 13,
+  },
+  status: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  statusPending: {
+    color: colors.warning,
+  },
+  statusPaid: {
+    color: colors.healthy,
+  },
+  rowAction: {
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+  },
+  amount: {
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  button: {
+    minHeight: 40,
+    paddingHorizontal: spacing.md,
+  },
+});

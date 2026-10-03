@@ -51,6 +51,27 @@ export type CardPurchaseRow = RowMeta & {
   created_at: string;
 };
 
+export type FixedPaymentRow = RowMeta & {
+  id: string;
+  cycle_id: string;
+  fixed_expense_id: string;
+  name: string;
+  category: string;
+  method: 'pix' | 'cash' | 'debit' | 'credit';
+  amount: number;
+  interest: number;
+  paid_at: string;
+  card_purchase_id: string | null;
+};
+
+export type ExtraIncomeRow = RowMeta & {
+  id: string;
+  cycle_id: string;
+  name: string;
+  amount: number;
+  date: string;
+};
+
 export type CycleRow = RowMeta & {
   id: string;
   start_date: string;
@@ -81,6 +102,8 @@ export type RowByTable = {
   cycles: CycleRow;
   expenses: ExpenseRow;
   card_purchases: CardPurchaseRow;
+  fixed_payments: FixedPaymentRow;
+  extra_incomes: ExtraIncomeRow;
 };
 
 export type RemoteRow = RowByTable[SyncTable];

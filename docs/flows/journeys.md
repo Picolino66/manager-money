@@ -8,7 +8,7 @@ summary: >
   exportação, dia de pagamento) e avaliação heurística das telas existentes.
 code:
   - src/navigation/AppNavigator.tsx
-last_verified_commit: 1e8ade5+T-019
+last_verified_commit: a16e575+T-020
 ---
 
 # Jornadas, wireframes e usabilidade
@@ -27,6 +27,7 @@ Stack raiz
 ├── StartMonth        (abrir ciclo)
 ├── AddExpense        (registrar / editar / excluir gasto; à vista ou no crédito)
 ├── Cards             (cartões de crédito: cadastro e faturas)
+├── Incomes           (rendas avulsas do ciclo)
 ├── Account           (NOVA: entrar, sync, sair, excluir conta)
 └── PrivacyPolicy     (NOVA: política de privacidade)
 ```
@@ -36,7 +37,7 @@ Stack raiz
 ### FLOW-primeiro-uso (P1)
 
 1. Abre o app → Hoje mostra "Configuração inicial" → **Configurar**
-2. Informa as **fontes de renda** (nome e valor, uma ou mais), meta e **dia de pagamento** (novo, padrão 7) → adiciona fixos e parcelamentos → **Salvar**
+2. Informa as **fontes de renda** (nome e valor, uma ou mais), meta e **dia de pagamento** (novo, padrão 7) → adiciona fixos e parcelamentos → **Salvar**. Depois, em Hoje, confirma cada fixa com **Pagar** (Pix, dinheiro, débito ou crédito)
 3. É levada a **Abrir ciclo** → vê a prévia (saldo, período, dias, limite inicial) → **Iniciar ciclo**
 4. Volta a Hoje e vê "Ainda pode gastar R$ X"
 

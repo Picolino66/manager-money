@@ -10,7 +10,7 @@ O Manager Money é um aplicativo de planejamento financeiro pessoal. Esta polít
 
 ## Dados que tratamos
 
-Sem conta: fontes de renda, meta de economia, dia de pagamento, despesas fixas, parcelamentos, cartões de crédito (apenas nome e dias de fechamento e vencimento, nunca o número do cartão), compras no cartão, ciclos e gastos ficam somente no seu aparelho. Com conta: além desses dados, seu e-mail (para login) e um identificador de usuário, armazenados no nosso provedor de banco de dados.
+Sem conta: fontes de renda, meta de economia, dia de pagamento, despesas fixas, parcelamentos, cartões de crédito (apenas nome e dias de fechamento e vencimento, nunca o número do cartão), compras no cartão, pagamentos de despesas fixas, rendas avulsas, ciclos e gastos ficam somente no seu aparelho. Com conta: além desses dados, seu e-mail (para login) e um identificador de usuário, armazenados no nosso provedor de banco de dados.
 
 ## Finalidade e base legal
 

@@ -66,7 +66,7 @@ export function StartMonthScreen({ navigation }: Props) {
   const previousMonthDebt = calculatePreviousMonthDebt(previousClosedMonth);
   const fixedExpensesTotal = calculateFixedExpensesTotal(config);
   const cardCharges = selectCardCharges(doc, cycleKeyFromStartDate(cycleDates.startDate));
-  const initialAvailableAmount = calculateInitialAvailableAmount(config, previousMonthDebt, cardCharges);
+  const initialAvailableAmount = calculateInitialAvailableAmount(config, previousMonthDebt, { cardCharges });
   const remainingDays = calculateRemainingDays(
     {
       id: 'preview',
@@ -98,7 +98,7 @@ export function StartMonthScreen({ navigation }: Props) {
       <Text style={styles.title}>Abrir ciclo</Text>
       <Card>
         <MetricRow label="Renda mensal" value={formatCurrency(config.monthlyIncome)} />
-        <MetricRow label="Despesas fixas" value={formatCurrency(fixedExpensesTotal)} />
+        <MetricRow label="Despesas fixas (a pagar no ciclo)" value={formatCurrency(fixedExpensesTotal)} />
         {config.fixedExpenses.map((expense) => (
           <MetricRow
             key={expense.id}

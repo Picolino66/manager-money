@@ -20,3 +20,4 @@ O frontmatter `features:` declara os IDs estáveis cobertos; o gerador da knowle
 | [SPEC-011](SPEC-011-upgrade-expo-sdk-57.md) | — (técnica) | RNF-09, RNF-10 |
 | [SPEC-012](SPEC-012-fontes-de-renda.md) | planning.income-sources | RF-01 |
 | [SPEC-013](SPEC-013-cartoes-de-credito.md) | card.manage, card.purchase | RF-19 |
+| [SPEC-014](SPEC-014-pagamento-de-fixas-e-renda-avulsa.md) | payment.fixed-expense, payment.extra-income | RF-20, RF-21 |

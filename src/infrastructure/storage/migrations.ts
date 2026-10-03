@@ -1,4 +1,7 @@
-import { buildLegacyFinancialCycleDates } from '../../domain/financial/financial.calculations';
+import {
+  buildLegacyFinancialCycleDates,
+  calculateFixedExpensesTotal,
+} from '../../domain/financial/financial.calculations';
 import {
   DEFAULT_EXPENSE_CATEGORY,
   DEFAULT_PAYDAY,
@@ -231,6 +234,51 @@ export function migrateV3ToV4(raw: unknown): unknown {
   };
 }
 
+/**
+ * Migração v4 → v5 (documento bruto, ADR-015): despesas fixas deixam de descontar o saldo na
+ * abertura do ciclo (só ao pagar). O ciclo ativo recupera o valor que já havia sido descontado,
+ * para o usuário confirmar os pagamentos sem contar duas vezes.
+ */
+export function migrateV4ToV5(raw: unknown, now: Date): unknown {
+  const document = raw as {
+    fixedExpenses?: unknown[];
+    cycles?: { status?: string; deletedAt?: string | null; initialAvailableAmount?: number }[];
+    sync?: { cursors?: Record<string, unknown> };
+  };
+  const sync = document.sync ?? {};
+  const plannedFixed = calculateFixedExpensesTotal({
+    fixedExpenses: (document.fixedExpenses ?? []).filter(
+      (expense) => (expense as { deletedAt?: string | null }).deletedAt === null,
+    ) as FixedExpense[],
+  });
+  let restored = false;
+
+  return {
+    ...document,
+    schemaVersion: 5,
+    fixedPayments: [],
+    extraIncomes: [],
+    cycles: (document.cycles ?? []).map((cycle) => {
+      if (restored || cycle.status !== 'active' || cycle.deletedAt !== null || plannedFixed === 0) {
+        return cycle;
+      }
+
+      restored = true;
+
+      return {
+        ...cycle,
+        initialAvailableAmount: Number(cycle.initialAvailableAmount) + plannedFixed,
+        updatedAt: now.toISOString(),
+        dirty: true,
+      };
+    }),
+    sync: {
+      ...sync,
+      cursors: { ...sync.cursors, fixed_payments: null, extra_incomes: null },
+    },
+  };
+}
+
 /** Encadeia as migrações do documento bruto até a versão atual; `null` se já está atual. */
 export function migrateDocument(raw: unknown, now: Date): unknown | null {
   let document = raw;
@@ -244,6 +292,11 @@ export function migrateDocument(raw: unknown, now: Date): unknown | null {
   if (version === 3) {
     document = migrateV3ToV4(document);
     version = 4;
+  }
+
+  if (version === 4) {
+    document = migrateV4ToV5(document, now);
+    version = 5;
   }
 
   return document === raw ? null : document;

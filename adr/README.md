@@ -19,3 +19,4 @@ Fonte primária das decisões arquiteturais. ADRs nunca são apagadas: só passa
 | [ADR-012](ADR-012-upgrade-expo-sdk-57.md) | Upgrade do Expo SDK 54 para 57 | F2 (evolução) | ACCEPTED |
 | [ADR-013](ADR-013-fontes-de-renda.md) | Múltiplas fontes de renda e documento local v3 | F3 (evolução) | ACCEPTED |
 | [ADR-014](ADR-014-cartoes-de-credito.md) | Cartões de crédito e compras parceladas | F3 (evolução) | ACCEPTED |
+| [ADR-015](ADR-015-pagamento-de-fixas-e-renda-avulsa.md) | Pagamento de despesas fixas e renda avulsa | F3 (evolução) | ACCEPTED |

@@ -1,4 +1,5 @@
 import { CardPurchase, CreditCard } from '../domain/financial/credit-card';
+import { ExtraIncome, FixedExpensePayment } from '../domain/financial/payments';
 import {
   Expense,
   FinancialMonth,
@@ -7,7 +8,7 @@ import {
   MoneyCents,
 } from '../domain/financial/financial.types';
 
-export const STATE_SCHEMA_VERSION = 4;
+export const STATE_SCHEMA_VERSION = 5;
 
 /** Metadados de sincronização presentes em todo registro persistido (ADR-004). */
 export type SyncMeta = {
@@ -31,6 +32,10 @@ export type CreditCardRecord = CreditCard & SyncMeta;
 
 export type CardPurchaseRecord = CardPurchase & SyncMeta;
 
+export type FixedPaymentRecord = FixedExpensePayment & SyncMeta;
+
+export type ExtraIncomeRecord = ExtraIncome & SyncMeta;
+
 export type CycleRecord = Omit<FinancialMonth, 'expenses'> & SyncMeta;
 
 export type ExpenseRecord = Expense & SyncMeta & { cycleId: string };
@@ -43,6 +48,8 @@ export const SYNC_TABLES = [
   'cycles',
   'expenses',
   'card_purchases',
+  'fixed_payments',
+  'extra_incomes',
 ] as const;
 
 export type SyncTable = (typeof SYNC_TABLES)[number];
@@ -63,6 +70,8 @@ export type LocalState = {
   cycles: CycleRecord[];
   expenses: ExpenseRecord[];
   cardPurchases: CardPurchaseRecord[];
+  fixedPayments: FixedPaymentRecord[];
+  extraIncomes: ExtraIncomeRecord[];
   sync: SyncState;
 };
 
@@ -81,6 +90,8 @@ export function createEmptySyncState(userId: string | null = null): SyncState {
       cycles: null,
       expenses: null,
       card_purchases: null,
+      fixed_payments: null,
+      extra_incomes: null,
     },
     lastSyncAt: null,
     lastError: null,
@@ -96,6 +107,8 @@ export function createEmptyState(): LocalState {
     cycles: [],
     expenses: [],
     cardPurchases: [],
+    fixedPayments: [],
+    extraIncomes: [],
     sync: createEmptySyncState(),
   };
 }
@@ -123,7 +136,9 @@ export function countPendingChanges(state: LocalState): number {
     state.cycles.filter((record) => record.dirty).length +
     state.expenses.filter((record) => record.dirty).length +
     state.creditCards.filter((record) => record.dirty).length +
-    state.cardPurchases.filter((record) => record.dirty).length
+    state.cardPurchases.filter((record) => record.dirty).length +
+    state.fixedPayments.filter((record) => record.dirty).length +
+    state.extraIncomes.filter((record) => record.dirty).length
   );
 }
 
