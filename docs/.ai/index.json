@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T20:13:03.308Z",
-  "source_commit": "c3d79fd",
+  "generated_at": "2026-10-03T20:31:06.908Z",
+  "source_commit": "1e8ade5",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "stack": [
@@ -16,13 +16,13 @@
   "artifacts": {
     "features": {
       "path": ".ai/features.json",
-      "count": 45,
-      "hash": "sha256:a13ff9e56194d53e401b654e0aa71c642bd0bbf48e3c7e248f0fcc7bd9d13def"
+      "count": 48,
+      "hash": "sha256:263c70bd31110f0081238a52e3e6fb5adf91718d808a39f186348de034be15d8"
     },
     "freshness": {
       "path": ".ai/freshness.json",
-      "count": 44,
-      "hash": "sha256:bf6a4dc11a047856d6ca6ee2908bce4d46dd349861a03d4f784e226a13dae642"
+      "count": 48,
+      "hash": "sha256:546b28b8761abb0b91d9d0d936562d4894968ca008c8436e87545a9e0891c738"
     },
     "retrieval_tests": {
       "path": ".ai/retrieval-tests.json",
@@ -52,6 +52,12 @@
       "title": "Camada de aplicação",
       "doc": "modules/application/index.md",
       "features": 1
+    },
+    {
+      "id": "card",
+      "title": "Cartões de crédito",
+      "doc": "modules/card/index.md",
+      "features": 2
     },
     {
       "id": "category",
@@ -87,7 +93,7 @@
       "id": "planning",
       "title": "Planejamento financeiro",
       "doc": "modules/planning/index.md",
-      "features": 2
+      "features": 3
     },
     {
       "id": "settings",
@@ -115,10 +121,10 @@
     }
   ],
   "health": {
-    "fresh": 44,
+    "fresh": 48,
     "stale": 0,
     "stale_critical": 0,
-    "planned": 1,
+    "planned": 0,
     "broken_references": 0
   },
   "coverage_exceptions": [

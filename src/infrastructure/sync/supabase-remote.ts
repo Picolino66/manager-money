@@ -87,7 +87,14 @@ export class SupabaseRemote implements SyncRemote {
   }
 
   async markAllDeleted(nowIso: string): Promise<void> {
-    for (const table of ['expenses', 'cycles', 'fixed_expenses', 'settings'] as const) {
+    for (const table of [
+      'card_purchases',
+      'expenses',
+      'cycles',
+      'credit_cards',
+      'fixed_expenses',
+      'settings',
+    ] as const) {
       await this.run(
         this.client
           .from(table)

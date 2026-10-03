@@ -20,7 +20,7 @@ describe('exportação (BR-ACC-004)', () => {
   it('payload sem identificadores de sessão', () => {
     const state = { ...createEmptyState(), sync: { ...createEmptyState().sync, userId: 'u-1', lastSyncAt: 'ontem' } };
     const payload = JSON.parse(buildExportPayload(state, new Date('2026-10-10T00:00:00Z')));
-    expect(payload).toMatchObject({ app: 'manager-money', schemaVersion: 3, sync: { lastSyncAt: 'ontem' } });
+    expect(payload).toMatchObject({ app: 'manager-money', schemaVersion: 4, sync: { lastSyncAt: 'ontem' } });
     expect(JSON.stringify(payload)).not.toContain('u-1');
     expect(exportFileName(new Date(2026, 9, 10))).toBe('manager-money-2026-10-10.json');
   });

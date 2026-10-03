@@ -79,6 +79,12 @@ export function SettingsScreen({ navigation }: Props) {
           title="Configuração financeira"
         />
         <SettingsRow
+          icon="card-outline"
+          onPress={() => navigation.navigate('Cards')}
+          subtitle="Fechamento, vencimento e faturas"
+          title="Cartões de crédito"
+        />
+        <SettingsRow
           icon="cloud-outline"
           onPress={() => navigation.navigate('Account')}
           subtitle={email ? `${email} · ${syncStatus}` : syncStatus}

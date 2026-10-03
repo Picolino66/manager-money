@@ -91,7 +91,7 @@ describe('useFinancialStore', () => {
     await store().exportData();
     const payload = shareJson.mock.calls.at(-1)?.[1] as string;
     expect(payload).not.toContain('user-secreto');
-    expect(JSON.parse(payload)).toMatchObject({ app: 'manager-money', schemaVersion: 3 });
+    expect(JSON.parse(payload)).toMatchObject({ app: 'manager-money', schemaVersion: 4 });
   });
 
   it('sincroniza com debounce depois das escritas e faz backoff offline', async () => {

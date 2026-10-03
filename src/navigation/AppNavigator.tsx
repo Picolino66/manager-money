@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../design/theme';
 import { AccountScreen } from '../screens/AccountScreen';
 import { AddExpenseScreen } from '../screens/AddExpenseScreen';
+import { CardsScreen } from '../screens/CardsScreen';
 import { CategoriesScreen } from '../screens/CategoriesScreen';
 import { ConfigScreen } from '../screens/ConfigScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
@@ -78,6 +79,7 @@ export function AppNavigator() {
         <Stack.Screen component={ConfigScreen} name="Config" options={{ title: 'Configuração' }} />
         <Stack.Screen component={StartMonthScreen} name="StartMonth" options={{ title: 'Iniciar ciclo' }} />
         <Stack.Screen component={AddExpenseScreen} name="AddExpense" options={{ title: 'Registrar gasto' }} />
+        <Stack.Screen component={CardsScreen} name="Cards" options={{ title: 'Cartões' }} />
         <Stack.Screen component={AccountScreen} name="Account" options={{ title: 'Conta' }} />
         <Stack.Screen
           component={PrivacyPolicyScreen}

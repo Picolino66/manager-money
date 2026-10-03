@@ -8,7 +8,7 @@ summary: >
   análise de viabilidade e métricas de sucesso.
 code:
   - src/store/financial.store.ts
-last_verified_commit: a88175c
+last_verified_commit: 1e8ade5+T-019
 ---
 
 # Requisitos, escopo, viabilidade e métricas — v1.0 (lojas)
@@ -35,6 +35,7 @@ last_verified_commit: a88175c
 | RF-16 | **Excluir conta** e dados na nuvem | BR-ACC-003 | **novo** |
 | RF-17 | **Exportar dados** em JSON | BR-ACC-004 | **novo** |
 | RF-18 | **Sair da conta** mantendo ou apagando os dados locais | BR-ACC-001 | **novo** |
+| RF-19 | Cadastrar cartões de crédito (nome, fechamento, vencimento) e registrar compras parceladas no crédito | BR-FIN-019, BR-FIN-020 | **novo** |
 
 ## 2. Requisitos não funcionais
 

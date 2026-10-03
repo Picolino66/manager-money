@@ -5,15 +5,16 @@ module: architecture
 title: Contratos de dados e API (v1)
 summary: >
   Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento
-  local versionado (schemaVersion 3).
+  local versionado (schemaVersion 4).
 code:
   - supabase/migrations/20261001000000_init.sql
   - supabase/migrations/20261003000000_income_sources.sql
+  - supabase/migrations/20261003000100_credit_cards.sql
   - src/infrastructure/storage/schema.ts
   - src/infrastructure/sync/supabase-remote.ts
   - src/infrastructure/sync/mappers.ts
 adrs: [ADR-003, ADR-004, ADR-008]
-last_verified_commit: c3d79fd
+last_verified_commit: 1e8ade5+T-019
 ---
 
 # Contratos de dados e API — v1
@@ -28,6 +29,7 @@ Qualquer mudança incompatível exige nova migration e um `CONTRACT_VERSION` nov
 ```
 auth.users 1─1 settings
 auth.users 1─N fixed_expenses
+auth.users 1─N credit_cards 1─N card_purchases
 auth.users 1─N cycles 1─N expenses
 ```
 
@@ -35,6 +37,8 @@ auth.users 1─N cycles 1─N expenses
 |---|---|---|
 | `settings` | `user_id` | valores ≥ 0; `payday` entre 1 e 28 (BR-FIN-002); até 50 categorias |
 | `fixed_expenses` | `(user_id, id)` | forma por `kind`; `remaining ≤ total` (BR-FIN-010) |
+| `credit_cards` | `(user_id, id)` | nome 1–40; `closing_day` e `due_day` entre 1 e 28 (BR-FIN-019) |
+| `card_purchases` | `(user_id, id)` | `total_amount > 0` (com juros); 1–48 parcelas; `first_cycle_key` `yyyy-MM`; FK para o cartão (BR-FIN-019/020) |
 | `cycles` | `(user_id, id)` | `end ≥ start`; forma `active`/`closed`; **um ativo por usuário** (BR-FIN-013) |
 | `expenses` | `(user_id, id)` | `amount > 0` (BR-FIN-001); FK para o ciclo; tamanho dos textos |
 
@@ -58,6 +62,9 @@ Valores monetários são `bigint` em centavos no banco e `number` inteiro no cli
 | `fixed_expenses.installment_amount` | `fixedExpense.installmentAmount` | centavos |
 | `fixed_expenses.total_installments` / `remaining_installments` | idem camelCase | inteiros |
 | `fixed_expenses.started_at_cycle_id` | `fixedExpense.startedAtCycleId` | `string \| undefined` |
+| `credit_cards.closing_day` / `due_day` | `creditCard.closingDay` / `dueDay` | 1–28 |
+| `card_purchases.card_id` / `total_amount` / `installments` | `cardPurchase.cardId` / `totalAmount` / `installments` | centavos com juros; 1–48 |
+| `card_purchases.purchase_date` / `first_cycle_key` | `purchaseDate` / `firstCycleKey` | `yyyy-MM-dd` / `yyyy-MM` (início do ciclo da 1ª parcela) |
 | `cycles.*` | `cycle.*` (`FinancialMonth` sem `expenses`) | — |
 | `expenses.cycle_id` | `expense.cycleId` | `string` |
 | `*.client_updated_at` | `*.updatedAt` | ISO |
@@ -70,7 +77,7 @@ O mapeamento é implementado e testado em `src/infrastructure/sync/mappers.ts`.
 | Operação | Chamada Supabase | Observações |
 |---|---|---|
 | `pushSettings(row)` | `from('settings').upsert(row, { onConflict: 'user_id' })` | — |
-| `push(table, rows)` | `from(table).upsert(rows, { onConflict: 'user_id,id' })` | Ordem: `settings` → `fixed_expenses` → `cycles` → `expenses`. Em `cycles`, linhas `closed` vão **antes** de `active` (o índice único é verificado linha a linha) |
+| `push(table, rows)` | `from(table).upsert(rows, { onConflict: 'user_id,id' })` | Ordem: `settings` → `fixed_expenses` → `credit_cards` → `cycles` → `expenses` → `card_purchases`. Em `cycles`, linhas `closed` vão **antes** de `active` (o índice único é verificado linha a linha) |
 | `pull(table, cursor)` | `from(table).select('*').gt('server_updated_at', cursor − 5s).order('server_updated_at').limit(500)` | A janela de 5 s cobre commits concorrentes fora de ordem; aplicar o mesmo registro duas vezes não muda o resultado. Pagina até vir < 500 |
 | `hasRemoteData()` | `from('cycles').select('id', { head: true, count: 'exact' })` + `settings` | Usado no primeiro login (BR-ACC-002) |
 | `replaceRemoteWithLocal()` | `update({ deleted_at: now })` em todas as linhas não excluídas, seguido de `push` | Opção "manter dados deste aparelho" |
@@ -84,20 +91,22 @@ O mapeamento é implementado e testado em `src/infrastructure/sync/mappers.ts`.
 | `42501` / JWT expirado | Sessão inválida | Tenta refresh; se falhar, marca `sync.lastError = 'auth'` e pede novo login |
 | rede / 5xx | Indisponível | Mantém o outbox; backoff exponencial de 2 s a 60 s |
 
-## 4. Documento local — `@manager-money/state` (schemaVersion 3)
+## 4. Documento local — `@manager-money/state` (schemaVersion 4)
 
 ```ts
 type SyncMeta = { updatedAt: string; deletedAt: string | null; dirty: boolean };
 
-type LocalStateV3 = {
-  schemaVersion: 3;
+type LocalStateV4 = {
+  schemaVersion: 4;
   settings: (Settings & SyncMeta) | null;          // monthlyIncome, incomeSources, savingGoal, payday, customCategories
   fixedExpenses: Array<FixedExpense & SyncMeta>;
+  creditCards: Array<CreditCard & SyncMeta>;
   cycles: Array<Cycle & SyncMeta>;                 // FinancialMonth sem expenses
   expenses: Array<Expense & { cycleId: string } & SyncMeta>;
+  cardPurchases: Array<CardPurchase & SyncMeta>;
   sync: {
     userId: string | null;
-    cursors: Record<'settings' | 'fixed_expenses' | 'cycles' | 'expenses', string | null>;
+    cursors: Record<'settings' | 'fixed_expenses' | 'credit_cards' | 'cycles' | 'expenses' | 'card_purchases', string | null>;
     lastSyncAt: string | null;
     lastError: string | null;
   };
@@ -110,5 +119,7 @@ type LocalStateV3 = {
   `dirty: true` e `payday: 7`, grava a v2 e só então remove as chaves v1.
 - **Migração v2 → v3:** `settings.monthlyIncome` vira a fonte `{ id: 'income-legacy', name: 'Renda' }`
   e `settings` fica `dirty: true` para levar `income_sources` ao servidor (ADR-013).
+- **Migração v3 → v4:** acrescenta `creditCards: []`, `cardPurchases: []` e os cursores
+  `credit_cards` e `card_purchases` (ADR-014). Migrações v2 → v3 → v4 encadeiam em `migrateDocument`.
 - Um documento que falha na validação **não é sobrescrito**: o app mostra um erro de carregamento
   com a opção de exportar o conteúdo bruto (DEF-004).

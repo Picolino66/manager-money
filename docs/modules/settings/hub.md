@@ -4,8 +4,8 @@ type: feature
 module: settings
 title: Aba Ajustes e status de sincronização
 summary: >
-  Quinta aba com atalhos para configuração, conta (com status de sync), exportação, política de
-  privacidade e versão do app.
+  Quinta aba com atalhos para configuração, cartões de crédito, conta (com status de sync),
+  exportação, política de privacidade e versão do app.
 keywords: [ajustes, configurações, status, versão]
 code:
   - src/screens/SettingsScreen.tsx
@@ -13,7 +13,7 @@ code:
   - src/navigation/AppNavigator.tsx
 symbols: [describeSyncStatus, SettingsRow]
 tests: [src/screens/syncStatus.test.ts]
-last_verified_commit: 359de21
+last_verified_commit: 1e8ade5+T-019
 ---
 
 # Aba Ajustes

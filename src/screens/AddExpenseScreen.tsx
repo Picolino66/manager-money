@@ -1,9 +1,9 @@
 import { Alert, StyleSheet, Text } from 'react-native';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { isAfter, isBefore, parseISO, startOfDay } from 'date-fns';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { RootStackParamList } from '../navigation/types';
@@ -15,12 +15,20 @@ import { Screen } from '../components/Screen';
 import { SelectField } from '../components/SelectField';
 import { TextInputField } from '../components/TextInputField';
 import {
+  calculateFirstCycleKey,
+  cycleKeyFromStartDate,
+  MAX_CARD_INSTALLMENTS,
+  splitInstallments,
+} from '../domain/financial/credit-card';
+import {
   getSortedCategories,
   normalizeCategory,
 } from '../domain/financial/financial.calculations';
+import { isLive } from '../application/state';
 import { DEFAULT_EXPENSE_CATEGORY } from '../domain/financial/financial.types';
 import { colors, spacing, typography } from '../design/theme';
 import { useFinancialStore } from '../store/financial.store';
+import { formatCurrency } from '../utils/currency';
 import { formatCycleLabel, formatDateInput, parseBRDateInput, toISODate } from '../utils/date';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
@@ -40,6 +48,11 @@ export function AddExpenseScreen({ navigation, route }: Props) {
   const addExpense = useFinancialStore((state) => state.addExpense);
   const updateExpense = useFinancialStore((state) => state.updateExpense);
   const deleteExpense = useFinancialStore((state) => state.deleteExpense);
+  const addCardPurchase = useFinancialStore((state) => state.addCardPurchase);
+  const creditCards = useFinancialStore((state) => state.doc.creditCards).filter(isLive);
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit'>('cash');
+  const [cardId, setCardId] = useState<string | null>(null);
+  const [installmentsText, setInstallmentsText] = useState('1');
   const categories = getSortedCategories(config);
   const categoryOptions = categories.map((category) => ({ label: category, value: category }));
   const expenseId = route.params?.expenseId;
@@ -48,6 +61,9 @@ export function AddExpenseScreen({ navigation, route }: Props) {
     [activeMonth?.expenses, expenseId],
   );
   const isEditing = Boolean(expenseId);
+  const isCredit = !isEditing && paymentMethod === 'credit';
+  const selectedCard = creditCards.find((card) => card.id === cardId) ?? creditCards[0] ?? null;
+  const installments = Number(installmentsText.replace(/\D/g, '')) || 0;
   const {
     control,
     handleSubmit,
@@ -62,6 +78,10 @@ export function AddExpenseScreen({ navigation, route }: Props) {
       date: formatDateInput(toISODate(new Date())),
     },
   });
+
+  // useWatch é seguro para o React Compiler (watch() não pode ser memoizado).
+  const watchedAmount = useWatch({ control, name: 'amount' });
+  const watchedDateText = useWatch({ control, name: 'date' });
 
   useEffect(() => {
     if (expenseToEdit) {
@@ -126,6 +146,37 @@ export function AddExpenseScreen({ navigation, route }: Props) {
       return;
     }
 
+    if (isCredit) {
+      if (!selectedCard) {
+        Alert.alert('Nenhum cartão', 'Cadastre um cartão antes de registrar compras no crédito.');
+        return;
+      }
+
+      if (installments < 1 || installments > MAX_CARD_INSTALLMENTS) {
+        Alert.alert('Parcelas inválidas', `Informe de 1 a ${MAX_CARD_INSTALLMENTS} parcelas.`);
+        return;
+      }
+
+      try {
+        await addCardPurchase({
+          cardId: selectedCard.id,
+          description: values.description,
+          category: normalizeCategory(values.category),
+          totalAmount: values.amount,
+          installments,
+          date: toISODate(parsedExpenseDate),
+        });
+        navigation.goBack();
+      } catch (error) {
+        Alert.alert(
+          'Não foi possível salvar',
+          error instanceof Error ? error.message : 'Tente novamente.',
+        );
+      }
+
+      return;
+    }
+
     try {
       const expenseInput = {
         ...values,
@@ -172,17 +223,76 @@ export function AddExpenseScreen({ navigation, route }: Props) {
     ]);
   }
 
+  const watchedDate = parseBRDateInput(watchedDateText);
+  const firstCycleKey =
+    isCredit && selectedCard && watchedDate && config
+      ? calculateFirstCycleKey(
+          watchedDate,
+          selectedCard.closingDay,
+          config.payday,
+          cycleKeyFromStartDate(activeMonth.startDate),
+        )
+      : null;
+  const cyclesAhead = firstCycleKey
+    ? (Number(firstCycleKey.slice(0, 4)) - Number(cycleKeyFromStartDate(activeMonth.startDate).slice(0, 4))) *
+        12 +
+      (Number(firstCycleKey.slice(5)) - Number(cycleKeyFromStartDate(activeMonth.startDate).slice(5)))
+    : 0;
+  const installmentValues =
+    isCredit && watchedAmount > 0 && installments >= 1 && installments <= MAX_CARD_INSTALLMENTS
+      ? splitInstallments(watchedAmount, installments)
+      : [];
+
   return (
     <Screen>
       <Text style={styles.title}>{isEditing ? 'Editar gasto' : 'Novo gasto'}</Text>
       <Card>
+        {!isEditing ? (
+          <SelectField
+            label="Forma de pagamento"
+            onChange={(value) => setPaymentMethod(value === 'credit' ? 'credit' : 'cash')}
+            options={[
+              { label: 'À vista (Pix, dinheiro ou débito)', value: 'cash' },
+              { label: 'Cartão de crédito', value: 'credit' },
+            ]}
+            value={paymentMethod}
+          />
+        ) : null}
+        {isCredit && creditCards.length === 0 ? (
+          <>
+            <Text style={styles.hint}>Cadastre um cartão para registrar compras no crédito.</Text>
+            <AppButton
+              iconName="card-outline"
+              onPress={() => navigation.navigate('Cards')}
+              title="Cadastrar cartão"
+              variant="secondary"
+            />
+          </>
+        ) : null}
+        {isCredit && selectedCard ? (
+          <>
+            <SelectField
+              label="Cartão"
+              onChange={setCardId}
+              options={creditCards.map((card) => ({ label: card.name, value: card.id }))}
+              value={selectedCard.id}
+            />
+            <TextInputField
+              keyboardType="number-pad"
+              label="Parcelas"
+              maxLength={2}
+              onChangeText={setInstallmentsText}
+              value={installmentsText}
+            />
+          </>
+        ) : null}
         <Controller
           control={control}
           name="amount"
           render={({ field }) => (
             <CurrencyInput
               error={errors.amount?.message}
-              label="Valor"
+              label={isCredit ? 'Valor total (com juros)' : 'Valor'}
               onBlur={field.onBlur}
               onChangeValue={field.onChange}
               value={field.value}
@@ -230,12 +340,23 @@ export function AddExpenseScreen({ navigation, route }: Props) {
             />
           )}
         />
+        {isCredit && installmentValues.length > 0 ? (
+          <Text style={styles.hint}>
+            {installments}x de {formatCurrency(installmentValues[0] ?? 0)} ·{' '}
+            {cyclesAhead === 0
+              ? 'a 1ª parcela entra neste ciclo'
+              : cyclesAhead === 1
+                ? 'a 1ª parcela entra no próximo ciclo'
+                : `a 1ª parcela entra daqui a ${cyclesAhead} ciclos`}
+            . O valor informado já deve incluir os juros.
+          </Text>
+        ) : null}
       </Card>
       <AppButton
         iconName={isEditing ? 'save-outline' : 'add-circle-outline'}
         isLoading={isSubmitting}
         onPress={handleSubmit(onSubmit)}
-        title={isEditing ? 'Salvar alterações' : 'Salvar gasto'}
+        title={isEditing ? 'Salvar alterações' : isCredit ? 'Salvar compra no crédito' : 'Salvar gasto'}
       />
       {isEditing ? (
         <AppButton
@@ -250,6 +371,11 @@ export function AddExpenseScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
+  hint: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: '700',
+  },
   title: {
     color: colors.ink,
     fontSize: typography.title,

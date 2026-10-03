@@ -1,12 +1,14 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
+import { addCardPurchase, saveCreditCard } from '../application/card.use-cases';
 import { openCycle, saveConfig } from '../application/cycle.use-cases';
 import { createEmptyState, LocalState } from '../application/state';
 import { setUseCaseContextFactory, useFinancialStore } from '../store/financial.store';
 import { useSessionStore } from '../store/session.store';
 import { AccountScreen } from './AccountScreen';
 import { AddExpenseScreen } from './AddExpenseScreen';
+import { CardsScreen } from './CardsScreen';
 import { ConfigScreen } from './ConfigScreen';
 import { DashboardScreen } from './DashboardScreen';
 
@@ -90,6 +92,50 @@ describe('ConfigScreen (BR-FIN-018: várias fontes de renda)', () => {
   });
 });
 
+describe('CardsScreen (BR-FIN-019)', () => {
+  const route = { key: 'k', name: 'Cards', params: undefined } as const;
+
+  it('sem cartões oferece cadastrar; valida e salva o cartão', async () => {
+    render(<CardsScreen navigation={navigation} route={route} />);
+    expect(screen.getByText('Nenhum cartão')).toBeTruthy();
+    fireEvent.press(screen.getByText('Adicionar cartão'));
+
+    fireEvent.press(screen.getByText('Salvar cartão'));
+    expect(await screen.findByText('Informe o nome do cartão.')).toBeTruthy();
+    expect(screen.getAllByText('Informe um dia entre 1 e 28.')).toHaveLength(2);
+
+    fireEvent.changeText(screen.getByLabelText('Nome do cartão'), 'Nubank');
+    fireEvent.changeText(screen.getByLabelText('Dia de fechamento (1 a 28)'), '25');
+    fireEvent.changeText(screen.getByLabelText('Dia de vencimento (1 a 28)'), '5');
+    fireEvent.press(screen.getByText('Salvar cartão'));
+
+    expect(await screen.findByText('Fecha dia 25 · Vence dia 5')).toBeTruthy();
+    expect(useFinancialStore.getState().doc.creditCards[0]).toMatchObject({ name: 'Nubank', closingDay: 25, dueDay: 5 });
+  });
+
+  it('mostra a fatura do ciclo e exclui a compra', async () => {
+    const today = new Date();
+    const ctx = { now: today, newId: (p: string) => `${p}-${Math.random()}` };
+    let doc = saveCreditCard(activeDoc(), { name: 'Nubank', closingDay: 28, dueDay: 5 }, ctx);
+    const start = doc.cycles[0]!.startDate;
+    doc = addCardPurchase(doc, { cardId: doc.creditCards[0]!.id, description: 'Notebook', category: 'Outros', totalAmount: 30000, installments: 3, date: start }, ctx);
+    await seed(doc);
+
+    render(<CardsScreen navigation={navigation} route={route} />);
+    expect(screen.getByText('Fatura deste ciclo')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText('Fatura do cartão Nubank'));
+    expect(await screen.findByText('Notebook')).toBeTruthy();
+    expect(screen.getByText(/Parcela 1\/3/)).toBeTruthy();
+
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+      buttons?.find((button) => button.style === 'destructive')?.onPress?.();
+    });
+    fireEvent.press(screen.getByLabelText('Excluir compra Notebook'));
+    await waitFor(() => expect(useFinancialStore.getState().doc.cardPurchases[0]?.deletedAt).not.toBeNull());
+    alertSpy.mockRestore();
+  });
+});
+
 describe('AddExpenseScreen (FLOW-registrar-gasto)', () => {
   it('registra um gasto e volta', async () => {
     await seed(activeDoc());
@@ -107,6 +153,34 @@ describe('AddExpenseScreen (FLOW-registrar-gasto)', () => {
     fireEvent.changeText(screen.getByLabelText('Valor'), '100');
     fireEvent.press(screen.getByText('Salvar gasto'));
     expect(await screen.findByText('Informe uma descrição.')).toBeTruthy();
+  });
+
+  it('no crédito, registra a compra parcelada no cartão e não cria gasto à vista', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    await seed(saveCreditCard(activeDoc(), { name: 'Nubank', closingDay: 28, dueDay: 5 }, ctx));
+    render(<AddExpenseScreen navigation={navigation} route={{ key: 'k', name: 'AddExpense', params: undefined }} />);
+
+    fireEvent.press(screen.getByText('À vista (Pix, dinheiro ou débito)'));
+    fireEvent.press(await screen.findByText('Cartão de crédito'));
+    fireEvent.changeText(screen.getByLabelText('Parcelas'), '3');
+    fireEvent.changeText(screen.getByLabelText('Valor total (com juros)'), '30000');
+    fireEvent.changeText(screen.getByLabelText('Descrição'), 'Notebook');
+    expect(await screen.findByText(/3x de R\$ 100,00/)).toBeTruthy();
+    fireEvent.press(screen.getByText('Salvar compra no crédito'));
+
+    await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
+    const { doc, activeMonth } = useFinancialStore.getState();
+    expect(doc.cardPurchases[0]).toMatchObject({ totalAmount: 30000, installments: 3, description: 'Notebook' });
+    expect(activeMonth?.expenses).toHaveLength(0);
+  });
+
+  it('no crédito sem cartão oferece cadastrar um', async () => {
+    await seed(activeDoc());
+    render(<AddExpenseScreen navigation={navigation} route={{ key: 'k', name: 'AddExpense', params: undefined }} />);
+    fireEvent.press(screen.getByText('À vista (Pix, dinheiro ou débito)'));
+    fireEvent.press(await screen.findByText('Cartão de crédito'));
+    fireEvent.press(screen.getByText('Cadastrar cartão'));
+    expect(mockNavigate).toHaveBeenCalledWith('Cards');
   });
 
   it('edição oferece excluir', async () => {

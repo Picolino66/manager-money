@@ -35,6 +35,18 @@ select pg_temp.expect_error($q$insert into public.expenses (id,cycle_id,amount,c
 select pg_temp.expect_error($q$insert into public.fixed_expenses (id,kind,name,category,installment_amount,total_installments,remaining_installments,client_updated_at) values ('f1','installment','Notebook','Outros',100,3,5,now())$q$,'23514','restantes > total rejeitado');
 select pg_temp.expect_error($q$delete from public.expenses where id='e1'$q$,'42501','DELETE físico negado');
 
+-- cartões e compras no cartão (BR-FIN-019/020)
+insert into public.credit_cards (id,name,closing_day,due_day,client_updated_at) values ('k1','Nubank',25,5,now());
+insert into public.card_purchases (id,card_id,description,category,total_amount,installments,purchase_date,first_cycle_key,created_at,client_updated_at)
+values ('p1','k1','Notebook','Educação',300000,3,'2026-10-20','2026-10',now(),now());
+do $$ begin assert (select count(*) from public.card_purchases)=1; raise notice 'ok - A grava e vê compra no cartão'; end $$;
+select pg_temp.expect_error($q$insert into public.credit_cards (id,name,closing_day,due_day,client_updated_at) values ('k2','X',29,5,now())$q$,'23514','fechamento fora de 1–28 rejeitado');
+select pg_temp.expect_error($q$insert into public.card_purchases (id,card_id,description,category,total_amount,installments,purchase_date,first_cycle_key,created_at,client_updated_at) values ('p2','k1','x','Outros',0,1,'2026-10-20','2026-10',now(),now())$q$,'23514','compra com valor 0 rejeitada');
+select pg_temp.expect_error($q$insert into public.card_purchases (id,card_id,description,category,total_amount,installments,purchase_date,first_cycle_key,created_at,client_updated_at) values ('p3','k1','x','Outros',100,49,'2026-10-20','2026-10',now(),now())$q$,'23514','mais de 48 parcelas rejeitado');
+select pg_temp.expect_error($q$insert into public.card_purchases (id,card_id,description,category,total_amount,installments,purchase_date,first_cycle_key,created_at,client_updated_at) values ('p4','k1','x','Outros',100,1,'2026-10-20','outubro',now(),now())$q$,'23514','first_cycle_key inválida rejeitada');
+select pg_temp.expect_error($q$insert into public.card_purchases (id,card_id,description,category,total_amount,installments,purchase_date,first_cycle_key,created_at,client_updated_at) values ('p5','inexistente','x','Outros',100,1,'2026-10-20','2026-10',now(),now())$q$,'23503','compra exige cartão existente');
+select pg_temp.expect_error($q$delete from public.credit_cards where id='k1'$q$,'42501','DELETE físico de cartão negado');
+
 -- ordem closed→active na mesma instrução (contrato §3)
 insert into public.cycles (id,start_date,end_date,received_at,started_at,closed_at,status,initial_available_amount,previous_month_debt,final_balance,client_updated_at)
 values ('c1','2026-10-07','2026-11-06',now(),now(),now(),'closed',100000,0,98500,now()),
@@ -43,7 +55,7 @@ on conflict (user_id,id) do update set status=excluded.status, closed_at=exclude
 do $$ begin assert (select count(*) from public.cycles where status='active')=1; raise notice 'ok - upsert closed→active aceito'; end $$;
 
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-00000000000b"}',false);
-do $$ begin assert (select count(*) from public.cycles)=0, 'B não vê'; raise notice 'ok - B não vê dados de A'; end $$;
+do $$ begin assert (select count(*) from public.cycles)=0 and (select count(*) from public.card_purchases)=0 and (select count(*) from public.credit_cards)=0, 'B não vê'; raise notice 'ok - B não vê dados de A'; end $$;
 update public.cycles set initial_available_amount=0 where id='c3';
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-00000000000a"}',false);
 do $$ begin assert (select initial_available_amount from public.cycles where id='c3')=90000; raise notice 'ok - B não altera dados de A'; end $$;

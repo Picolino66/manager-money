@@ -74,7 +74,7 @@ describe('localStore (SPEC-004)', () => {
 
     // Chaves v1 removidas somente após gravar a v2.
     expect(await AsyncStorage.getItem(LEGACY_STORAGE_KEYS.config)).toBeNull();
-    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(3);
+    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(4);
 
     const reloaded = await localStore.load();
     expect(reloaded).toMatchObject({ status: 'ok', migrated: false });
@@ -119,13 +119,37 @@ describe('localStore (SPEC-004)', () => {
     if (result.status !== 'ok') throw new Error('falhou');
 
     expect(result.migrated).toBe(true);
-    expect(result.state.schemaVersion).toBe(3);
+    expect(result.state.schemaVersion).toBe(4);
     expect(result.state.settings).toMatchObject({
       monthlyIncome: 880000,
       incomeSources: [{ id: 'income-legacy', name: 'Renda', amount: 880000 }],
       dirty: true,
     });
-    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(3);
+    expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(4);
+  });
+
+  it('migra v2 → v4: acrescenta cartões e compras vazios e os cursores de sync', async () => {
+    const { creditCards, cardPurchases, ...rest } = createEmptyState();
+    const { credit_cards, card_purchases, ...cursors } = rest.sync.cursors;
+    void creditCards;
+    void cardPurchases;
+    void credit_cards;
+    void card_purchases;
+    await AsyncStorage.setItem(
+      STATE_STORAGE_KEY,
+      JSON.stringify({ ...rest, schemaVersion: 3, sync: { ...rest.sync, cursors: { ...cursors, settings: 'c1' } } }),
+    );
+
+    const result = await localStore.load();
+    if (result.status !== 'ok') throw new Error('falhou');
+
+    expect(result.migrated).toBe(true);
+    expect(result.state).toMatchObject({
+      schemaVersion: 4,
+      creditCards: [],
+      cardPurchases: [],
+      sync: { cursors: { settings: 'c1', credit_cards: null, card_purchases: null } },
+    });
   });
 
   it('migra documento v2 sem settings', async () => {

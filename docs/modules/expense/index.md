@@ -7,7 +7,7 @@ summary: >
   Registro, edição e exclusão de gastos variáveis do ciclo ativo.
 code:
   - src/screens/AddExpenseScreen.tsx
-last_verified_commit: 359de21
+last_verified_commit: 1e8ade5+T-019
 ---
 
 # Módulo: gastos

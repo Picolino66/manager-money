@@ -1,4 +1,9 @@
-import { FinancialConfig, FinancialMonth } from '../domain/financial/financial.types';
+import {
+  calculateCardChargesForCycle,
+  calculateCardInstallmentsForCycle,
+  CardInstallment,
+} from '../domain/financial/credit-card';
+import { FinancialConfig, FinancialMonth, MoneyCents } from '../domain/financial/financial.types';
 import { CycleRecord, isLive, LocalState } from './state';
 
 export function selectConfig(state: LocalState): FinancialConfig | null {
@@ -46,4 +51,13 @@ export function selectClosedMonths(state: LocalState): FinancialMonth[] {
     .filter((cycle) => isLive(cycle) && cycle.status === 'closed')
     .sort((left, right) => right.endDate.localeCompare(left.endDate))
     .map((cycle) => toFinancialMonth(state, cycle));
+}
+
+/** Parcelas de cartão que caem no ciclo (BR-FIN-019). */
+export function selectCardInstallments(state: LocalState, cycleKey: string): CardInstallment[] {
+  return calculateCardInstallmentsForCycle(state.cardPurchases.filter(isLive), cycleKey);
+}
+
+export function selectCardCharges(state: LocalState, cycleKey: string): MoneyCents {
+  return calculateCardChargesForCycle(state.cardPurchases.filter(isLive), cycleKey);
 }

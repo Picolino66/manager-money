@@ -11,7 +11,7 @@ export const PRIVACY_POLICY_SECTIONS: { title: string; body: string }[] = [
   },
   {
     title: 'Dados que tratamos',
-    body: 'Sem conta: renda, meta de economia, dia de pagamento, despesas fixas, parcelamentos, ciclos e gastos ficam somente no seu aparelho. Com conta: além desses dados, seu e-mail (para login) e um identificador de usuário, armazenados no nosso provedor de banco de dados.',
+    body: 'Sem conta: fontes de renda, meta de economia, dia de pagamento, despesas fixas, parcelamentos, cartões de crédito (apenas nome e dias de fechamento e vencimento, nunca o número do cartão), compras no cartão, ciclos e gastos ficam somente no seu aparelho. Com conta: além desses dados, seu e-mail (para login) e um identificador de usuário, armazenados no nosso provedor de banco de dados.',
   },
   {
     title: 'Finalidade e base legal',

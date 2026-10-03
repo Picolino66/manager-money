@@ -22,6 +22,8 @@ import {
   calculateFixedExpensesTotal,
   describeCloseCycleBlock,
 } from '../domain/financial/financial.calculations';
+import { selectCardCharges } from '../application/selectors';
+import { cycleKeyFromStartDate } from '../domain/financial/credit-card';
 import { DayStatus } from '../domain/financial/financial.types';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '../utils/currency';
@@ -46,6 +48,7 @@ export function DashboardScreen() {
   const showReceiveEarly = canReceiveIncomeEarlyNow(doc, today);
   const canClose = canCloseActiveCycle(doc, today);
   const [fixedExpensesExpanded, setFixedExpensesExpanded] = useState(false);
+  const cardCharges = activeMonth ? selectCardCharges(doc, cycleKeyFromStartDate(activeMonth.startDate)) : 0;
 
   const summary = useMemo(() => {
     if (!activeMonth) {
@@ -252,6 +255,7 @@ export function DashboardScreen() {
             />
           ))}
         <MetricRow label="Meta de economia" value={fixedMetrics?.[2][1] ?? ''} />
+        <MetricRow label="Faturas de cartão" value={formatCurrency(cardCharges)} />
         <MetricRow label="Dívida herdada" value={formatCurrency(activeMonth.previousMonthDebt)} />
       </Card>
 

@@ -8,7 +8,7 @@ summary: >
   críticos antes da publicação nas lojas.
 code:
   - src/navigation/AppNavigator.tsx
-last_verified_commit: 114b089
+last_verified_commit: 1e8ade5+T-019
 ---
 
 # Campanha de QA manual — v1.0
@@ -51,3 +51,10 @@ last_verified_commit: 114b089
 | D04.03 | Média | Revisar todas as telas | Nenhum texto sem acento |
 | D04.04 | Média | TalkBack/VoiceOver na tela de gasto | Campos anunciados com o rótulo ("Valor", "Descrição") |
 | D04.05 | Baixa | Fonte do sistema no tamanho máximo | Sem texto cortado no hero do Hoje |
+| **Dia 5 — fontes de renda e cartões de crédito** ||||
+| D05.01 | Alta | Configuração → Renda mensal → Adicionar uma 2ª fonte (Freela, R$ 500,00) | "Total" soma as duas fontes; ao salvar, "Renda mensal" do Hoje mostra o total |
+| D05.02 | Alta | Remover a única fonte de renda | Botão Remover não aparece com uma fonte só; nome ou valor vazio mostra erro |
+| D05.03 | Alta | Ajustes → Cartões de crédito → Adicionar (Nubank, fecha 25, vence 5) | Cartão listado com "Fecha dia 25 · Vence dia 5"; dia 29 mostra erro |
+| D05.04 | Alta | Registrar gasto → Cartão de crédito, R$ 300,00 em 3x, data antes do fechamento | Mostra "3x de R$ 100,00 · a 1ª parcela entra neste ciclo"; "Saldo inicial" cai R$ 100,00 |
+| D05.05 | Alta | Mesma compra com data depois do fechamento | Mostra que a 1ª parcela entra no próximo ciclo; saldo atual não muda |
+| D05.06 | Média | Cartões → tocar no cartão → excluir a compra | Saldo inicial volta ao valor anterior; cartão com compras não pode ser excluído |

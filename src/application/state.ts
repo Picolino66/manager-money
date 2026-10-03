@@ -1,3 +1,4 @@
+import { CardPurchase, CreditCard } from '../domain/financial/credit-card';
 import {
   Expense,
   FinancialMonth,
@@ -6,7 +7,7 @@ import {
   MoneyCents,
 } from '../domain/financial/financial.types';
 
-export const STATE_SCHEMA_VERSION = 3;
+export const STATE_SCHEMA_VERSION = 4;
 
 /** Metadados de sincronização presentes em todo registro persistido (ADR-004). */
 export type SyncMeta = {
@@ -26,11 +27,23 @@ export type SettingsRecord = SyncMeta & {
 
 export type FixedExpenseRecord = FixedExpense & SyncMeta;
 
+export type CreditCardRecord = CreditCard & SyncMeta;
+
+export type CardPurchaseRecord = CardPurchase & SyncMeta;
+
 export type CycleRecord = Omit<FinancialMonth, 'expenses'> & SyncMeta;
 
 export type ExpenseRecord = Expense & SyncMeta & { cycleId: string };
 
-export const SYNC_TABLES = ['settings', 'fixed_expenses', 'cycles', 'expenses'] as const;
+/** Ordem de envio: cartões antes das compras (chave estrangeira). */
+export const SYNC_TABLES = [
+  'settings',
+  'fixed_expenses',
+  'credit_cards',
+  'cycles',
+  'expenses',
+  'card_purchases',
+] as const;
 
 export type SyncTable = (typeof SYNC_TABLES)[number];
 
@@ -46,8 +59,10 @@ export type LocalState = {
   schemaVersion: typeof STATE_SCHEMA_VERSION;
   settings: SettingsRecord | null;
   fixedExpenses: FixedExpenseRecord[];
+  creditCards: CreditCardRecord[];
   cycles: CycleRecord[];
   expenses: ExpenseRecord[];
+  cardPurchases: CardPurchaseRecord[];
   sync: SyncState;
 };
 
@@ -59,7 +74,14 @@ export type UseCaseContext = {
 export function createEmptySyncState(userId: string | null = null): SyncState {
   return {
     userId,
-    cursors: { settings: null, fixed_expenses: null, cycles: null, expenses: null },
+    cursors: {
+      settings: null,
+      fixed_expenses: null,
+      credit_cards: null,
+      cycles: null,
+      expenses: null,
+      card_purchases: null,
+    },
     lastSyncAt: null,
     lastError: null,
   };
@@ -70,8 +92,10 @@ export function createEmptyState(): LocalState {
     schemaVersion: STATE_SCHEMA_VERSION,
     settings: null,
     fixedExpenses: [],
+    creditCards: [],
     cycles: [],
     expenses: [],
+    cardPurchases: [],
     sync: createEmptySyncState(),
   };
 }
@@ -97,7 +121,9 @@ export function countPendingChanges(state: LocalState): number {
     (state.settings?.dirty ? 1 : 0) +
     state.fixedExpenses.filter((record) => record.dirty).length +
     state.cycles.filter((record) => record.dirty).length +
-    state.expenses.filter((record) => record.dirty).length
+    state.expenses.filter((record) => record.dirty).length +
+    state.creditCards.filter((record) => record.dirty).length +
+    state.cardPurchases.filter((record) => record.dirty).length
   );
 }
 

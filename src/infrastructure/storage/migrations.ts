@@ -213,3 +213,38 @@ export function migrateV2ToV3(raw: unknown, now: Date): unknown {
     },
   };
 }
+
+/** Migração v3 → v4 (documento bruto): cartões de crédito e compras no cartão (ADR-014). */
+export function migrateV3ToV4(raw: unknown): unknown {
+  const document = raw as { sync?: { cursors?: Record<string, unknown> } };
+  const sync = document.sync ?? {};
+
+  return {
+    ...document,
+    schemaVersion: 4,
+    creditCards: [],
+    cardPurchases: [],
+    sync: {
+      ...sync,
+      cursors: { ...sync.cursors, credit_cards: null, card_purchases: null },
+    },
+  };
+}
+
+/** Encadeia as migrações do documento bruto até a versão atual; `null` se já está atual. */
+export function migrateDocument(raw: unknown, now: Date): unknown | null {
+  let document = raw;
+  let version = (document as { schemaVersion?: unknown } | null)?.schemaVersion;
+
+  if (version === 2) {
+    document = migrateV2ToV3(document, now);
+    version = 3;
+  }
+
+  if (version === 3) {
+    document = migrateV3ToV4(document);
+    version = 4;
+  }
+
+  return document === raw ? null : document;
+}

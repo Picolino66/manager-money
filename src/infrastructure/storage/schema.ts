@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+import {
+  MAX_CARD_DAY,
+  MAX_CARD_INSTALLMENTS,
+  MIN_CARD_DAY,
+} from '../../domain/financial/credit-card';
 import { MAX_PAYDAY, MIN_PAYDAY } from '../../domain/financial/financial.types';
 import { LocalState, STATE_SCHEMA_VERSION } from '../../application/state';
 
@@ -68,6 +73,27 @@ const expenseSchema = z.object({
   createdAt: z.string(),
 });
 
+const creditCardSchema = z.object({
+  ...syncMeta,
+  id: z.string().min(1),
+  name: z.string().min(1),
+  closingDay: z.number().int().min(MIN_CARD_DAY).max(MAX_CARD_DAY),
+  dueDay: z.number().int().min(MIN_CARD_DAY).max(MAX_CARD_DAY),
+});
+
+const cardPurchaseSchema = z.object({
+  ...syncMeta,
+  id: z.string().min(1),
+  cardId: z.string().min(1),
+  description: z.string().min(1),
+  category: z.string(),
+  totalAmount: cents.positive(),
+  installments: z.number().int().min(1).max(MAX_CARD_INSTALLMENTS),
+  purchaseDate: isoDate,
+  firstCycleKey: z.string().regex(/^\d{4}-\d{2}$/),
+  createdAt: z.string(),
+});
+
 const cursor = z.string().nullable();
 
 /** Validação do documento local v2 (contracts.md §4). */
@@ -75,11 +101,20 @@ export const localStateSchema = z.object({
   schemaVersion: z.literal(STATE_SCHEMA_VERSION),
   settings: settingsSchema.nullable(),
   fixedExpenses: z.array(fixedExpenseSchema),
+  creditCards: z.array(creditCardSchema),
   cycles: z.array(cycleSchema),
   expenses: z.array(expenseSchema),
+  cardPurchases: z.array(cardPurchaseSchema),
   sync: z.object({
     userId: z.string().nullable(),
-    cursors: z.object({ settings: cursor, fixed_expenses: cursor, cycles: cursor, expenses: cursor }),
+    cursors: z.object({
+      settings: cursor,
+      fixed_expenses: cursor,
+      credit_cards: cursor,
+      cycles: cursor,
+      expenses: cursor,
+      card_purchases: cursor,
+    }),
     lastSyncAt: z.string().nullable(),
     lastError: z.string().nullable(),
   }),

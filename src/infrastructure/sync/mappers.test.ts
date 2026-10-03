@@ -1,5 +1,16 @@
-import { CycleRecord, ExpenseRecord, FixedExpenseRecord, SettingsRecord } from '../../application/state';
 import {
+  CardPurchaseRecord,
+  CreditCardRecord,
+  CycleRecord,
+  ExpenseRecord,
+  FixedExpenseRecord,
+  SettingsRecord,
+} from '../../application/state';
+import {
+  cardPurchaseFromRow,
+  cardPurchaseToRow,
+  creditCardFromRow,
+  creditCardToRow,
   cycleFromRow,
   cycleToRow,
   expenseFromRow,
@@ -35,6 +46,29 @@ describe('mappers (contracts.md §2): ida e volta sem perda', () => {
       { id: 'income-legacy', name: 'Renda', amount: 880000 },
     ]);
     expect(settingsFromRow({ ...row, income_sources: [] }).incomeSources).toHaveLength(1);
+  });
+
+  it('cartão de crédito e compra no cartão (BR-FIN-019)', () => {
+    const card: CreditCardRecord = { ...meta, id: 'k1', name: 'Nubank', closingDay: 25, dueDay: 5 };
+    const cardRow = creditCardToRow(card, 'u');
+    expect(cardRow).toMatchObject({ user_id: 'u', closing_day: 25, due_day: 5 });
+    expect(creditCardFromRow(cardRow)).toEqual(card);
+
+    const purchase: CardPurchaseRecord = {
+      ...meta,
+      id: 'p1',
+      cardId: 'k1',
+      description: 'Notebook',
+      category: 'Educação',
+      totalAmount: 300000,
+      installments: 3,
+      purchaseDate: '2026-10-20',
+      firstCycleKey: '2026-10',
+      createdAt: '2026-10-20T12:00:00.000Z',
+    };
+    const purchaseRow = cardPurchaseToRow(purchase, 'u');
+    expect(purchaseRow).toMatchObject({ card_id: 'k1', total_amount: 300000, first_cycle_key: '2026-10' });
+    expect(cardPurchaseFromRow(purchaseRow)).toEqual(purchase);
   });
 
   it('despesa fixa permanente e parcelamento', () => {

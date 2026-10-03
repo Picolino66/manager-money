@@ -7,7 +7,7 @@ summary: >
   Aba que centraliza configuração financeira, conta, exportação e política de privacidade.
 code:
   - src/screens/SettingsScreen.tsx
-last_verified_commit: 359de21
+last_verified_commit: 1e8ade5+T-019
 ---
 
 # Módulo: ajustes

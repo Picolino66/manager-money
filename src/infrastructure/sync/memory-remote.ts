@@ -18,7 +18,14 @@ export class MemoryServer {
   }
 
   store(userId: string): Store {
-    this.data[userId] ??= { settings: [], fixed_expenses: [], cycles: [], expenses: [] };
+    this.data[userId] ??= {
+      settings: [],
+      fixed_expenses: [],
+      credit_cards: [],
+      cycles: [],
+      expenses: [],
+      card_purchases: [],
+    };
     return this.data[userId];
   }
 

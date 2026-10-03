@@ -18,6 +18,8 @@ import {
   calculateRemainingDays,
 } from '../domain/financial/financial.calculations';
 import { colors, spacing, typography } from '../design/theme';
+import { selectCardCharges } from '../application/selectors';
+import { cycleKeyFromStartDate } from '../domain/financial/credit-card';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '../utils/currency';
 import { formatCycleLabel } from '../utils/date';
@@ -63,7 +65,8 @@ export function StartMonthScreen({ navigation }: Props) {
   const previousClosedMonth = months[0];
   const previousMonthDebt = calculatePreviousMonthDebt(previousClosedMonth);
   const fixedExpensesTotal = calculateFixedExpensesTotal(config);
-  const initialAvailableAmount = calculateInitialAvailableAmount(config, previousMonthDebt);
+  const cardCharges = selectCardCharges(doc, cycleKeyFromStartDate(cycleDates.startDate));
+  const initialAvailableAmount = calculateInitialAvailableAmount(config, previousMonthDebt, cardCharges);
   const remainingDays = calculateRemainingDays(
     {
       id: 'preview',
@@ -108,6 +111,7 @@ export function StartMonthScreen({ navigation }: Props) {
           />
         ))}
         <MetricRow label="Meta de economia" value={formatCurrency(config.savingGoal)} />
+        <MetricRow label="Faturas de cartão" value={formatCurrency(cardCharges)} />
         <MetricRow
           label="Dívida herdada"
           tone={previousMonthDebt > 0 ? 'negative' : 'default'}

@@ -12,6 +12,10 @@ import {
 } from '../../application/state';
 import { logger } from '../monitoring/logger';
 import {
+  cardPurchaseFromRow,
+  cardPurchaseToRow,
+  creditCardFromRow,
+  creditCardToRow,
   cycleFromRow,
   cycleToRow,
   expenseFromRow,
@@ -21,7 +25,17 @@ import {
   settingsFromRow,
   settingsToRow,
 } from './mappers';
-import { CycleRow, ExpenseRow, FixedExpenseRow, RemoteRow, SettingsRow, SyncError, SyncRemote } from './types';
+import {
+  CardPurchaseRow,
+  CreditCardRow,
+  CycleRow,
+  ExpenseRow,
+  FixedExpenseRow,
+  RemoteRow,
+  SettingsRow,
+  SyncError,
+  SyncRemote,
+} from './types';
 
 /**
  * Acesso ao estado vivo da store. O sync lê o estado atual a cada passo e aplica
@@ -53,6 +67,14 @@ export function collectDirty(state: LocalState, table: SyncTable, userId: string
       const records = state.fixedExpenses.filter((record) => record.dirty);
       return { refs: records.map(ref), rows: records.map((record) => fixedExpenseToRow(record, userId)) };
     }
+    case 'credit_cards': {
+      const records = state.creditCards.filter((record) => record.dirty);
+      return { refs: records.map(ref), rows: records.map((record) => creditCardToRow(record, userId)) };
+    }
+    case 'card_purchases': {
+      const records = state.cardPurchases.filter((record) => record.dirty);
+      return { refs: records.map(ref), rows: records.map((record) => cardPurchaseToRow(record, userId)) };
+    }
     case 'cycles': {
       const order = (cycle: CycleRecord) => (cycle.status === 'closed' || cycle.deletedAt ? 0 : 1);
       const records = state.cycles.filter((record) => record.dirty).sort((a, b) => order(a) - order(b));
@@ -82,6 +104,10 @@ export function acknowledge(state: LocalState, table: SyncTable, pushed: PushedR
         : state;
     case 'fixed_expenses':
       return { ...state, fixedExpenses: state.fixedExpenses.map(clean) };
+    case 'credit_cards':
+      return { ...state, creditCards: state.creditCards.map(clean) };
+    case 'card_purchases':
+      return { ...state, cardPurchases: state.cardPurchases.map(clean) };
     case 'cycles':
       return { ...state, cycles: state.cycles.map(clean) };
     case 'expenses':
@@ -134,6 +160,18 @@ export function applyRemoteRows(state: LocalState, table: SyncTable, rows: Remot
         fixedExpenses: mergeRecords(state.fixedExpenses, (rows as FixedExpenseRow[]).map(fixedExpenseFromRow)),
       };
       break;
+    case 'credit_cards':
+      next = {
+        ...state,
+        creditCards: mergeRecords(state.creditCards, (rows as CreditCardRow[]).map(creditCardFromRow)),
+      };
+      break;
+    case 'card_purchases':
+      next = {
+        ...state,
+        cardPurchases: mergeRecords(state.cardPurchases, (rows as CardPurchaseRow[]).map(cardPurchaseFromRow)),
+      };
+      break;
     case 'cycles':
       next = { ...state, cycles: mergeRecords(state.cycles, (rows as CycleRow[]).map(cycleFromRow)) };
       break;
@@ -179,8 +217,10 @@ function markAllDirty(state: LocalState): LocalState {
     ...state,
     settings: state.settings ? dirty(state.settings) : null,
     fixedExpenses: state.fixedExpenses.map(dirty),
+    creditCards: state.creditCards.map(dirty),
     cycles: state.cycles.map(dirty),
     expenses: state.expenses.map(dirty),
+    cardPurchases: state.cardPurchases.map(dirty),
   };
 }
 

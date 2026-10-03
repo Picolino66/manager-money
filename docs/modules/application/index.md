@@ -7,7 +7,7 @@ summary: >
   Casos de uso puros sobre o documento local, seletores para os tipos de domínio e erros de regra.
 code:
   - src/application/cycle.use-cases.ts
-last_verified_commit: c3d79fd
+last_verified_commit: 1e8ade5+T-019
 ---
 
 # Módulo: aplicação

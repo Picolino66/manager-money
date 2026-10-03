@@ -14,7 +14,7 @@ code:
 symbols: [saveConfig, calculateIncomeTotal, calculateFixedExpensesTotal, calculateBaseAvailableAmount, calculateFixedExpenseAmount]
 tests: [src/application/cycle.use-cases.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-010, BR-FIN-014, BR-FIN-015, BR-FIN-018]
-last_verified_commit: c3d79fd
+last_verified_commit: 1e8ade5+T-019
 ---
 
 # Configurar base financeira

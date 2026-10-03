@@ -1,3 +1,4 @@
+import { addCardPurchase, deleteCardPurchase, saveCreditCard } from '../../application/card.use-cases';
 import { addExpense, deleteExpense, openCycle, receiveIncomeEarly, saveConfig } from '../../application/cycle.use-cases';
 import { selectActiveMonth } from '../../application/selectors';
 import { countPendingChanges, createEmptyState, LocalState, UseCaseContext } from '../../application/state';
@@ -91,6 +92,38 @@ describe('runSync (SPEC-006)', () => {
 
     expect(selectActiveMonth(a.state)?.expenses.map((e) => e.description)).toEqual(['Pão']);
     expect(selectActiveMonth(a.state)?.initialAvailableAmount).toBe(selectActiveMonth(b.state)?.initialAvailableAmount);
+  });
+
+  it('cartões e compras convergem entre aparelhos e o saldo do ciclo acompanha (BR-FIN-019)', async () => {
+    const server = new MemoryServer();
+    const a = linkedDevice(server);
+    a.apply((s) => openCycle(saveConfig(s, config, ctx(2026, 10, 10, 'a')), ctx(2026, 10, 10, 'a')));
+    a.apply((s) => saveCreditCard(s, { name: 'Nubank', closingDay: 25, dueDay: 5 }, ctx(2026, 10, 11, 'a')));
+    a.apply((s) =>
+      addCardPurchase(
+        s,
+        { cardId: s.creditCards[0]!.id, description: 'TV', category: 'Lazer', totalAmount: 30000, installments: 3, date: '2026-10-12' },
+        ctx(2026, 10, 12, 'a'),
+      ),
+    );
+    expect(await a.sync()).toEqual({ ok: true });
+    expect(countPendingChanges(a.state)).toBe(0);
+    expect(server.store(USER).credit_cards).toHaveLength(1);
+    expect(server.store(USER).card_purchases[0]).toMatchObject({ total_amount: 30000, first_cycle_key: '2026-10' });
+
+    const b = new Device(linkUsingRemote(USER), server.clientFor(USER));
+    await b.sync();
+    expect(b.state.creditCards.map((card) => card.name)).toEqual(['Nubank']);
+    expect(b.state.cardPurchases.map((purchase) => purchase.description)).toEqual(['TV']);
+    // Base 490.000 (renda − parcelamento de TV) menos a 1ª parcela da compra (10.000).
+    expect(selectActiveMonth(a.state)?.initialAvailableAmount).toBe(480000);
+    expect(selectActiveMonth(b.state)?.initialAvailableAmount).toBe(480000);
+
+    b.apply((s) => deleteCardPurchase(s, s.cardPurchases[0]!.id, ctx(2026, 10, 13, 'b')));
+    await b.sync();
+    await a.sync();
+    expect(a.state.cardPurchases[0]?.deletedAt).not.toBeNull();
+    expect(selectActiveMonth(a.state)?.initialAvailableAmount).toBe(490000);
   });
 
   it('registro sujo local não é sobrescrito pelo pull; limpo é atualizado', () => {

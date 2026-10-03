@@ -1,4 +1,6 @@
 import {
+  CardPurchaseRecord,
+  CreditCardRecord,
   CycleRecord,
   ExpenseRecord,
   FixedExpenseRecord,
@@ -6,7 +8,7 @@ import {
 } from '../../application/state';
 import { IncomeSource } from '../../domain/financial/financial.types';
 import { legacyIncomeSources } from '../storage/migrations';
-import { CycleRow, ExpenseRow, FixedExpenseRow, SettingsRow } from './types';
+import { CardPurchaseRow, CreditCardRow, CycleRow, ExpenseRow, FixedExpenseRow, SettingsRow } from './types';
 
 /** Mapeamento registro local ↔ linha remota (contracts.md §2). */
 
@@ -167,6 +169,64 @@ export function expenseFromRow(row: ExpenseRow): ExpenseRecord {
     category: row.category,
     description: row.description,
     date: row.date,
+    createdAt: row.created_at,
+    updatedAt: row.client_updated_at,
+    deletedAt: row.deleted_at,
+    dirty: false,
+  };
+}
+
+export function creditCardToRow(record: CreditCardRecord, userId: string): CreditCardRow {
+  return {
+    user_id: userId,
+    id: record.id,
+    name: record.name,
+    closing_day: record.closingDay,
+    due_day: record.dueDay,
+    client_updated_at: record.updatedAt,
+    deleted_at: record.deletedAt,
+  };
+}
+
+export function creditCardFromRow(row: CreditCardRow): CreditCardRecord {
+  return {
+    id: row.id,
+    name: row.name,
+    closingDay: row.closing_day,
+    dueDay: row.due_day,
+    updatedAt: row.client_updated_at,
+    deletedAt: row.deleted_at,
+    dirty: false,
+  };
+}
+
+export function cardPurchaseToRow(record: CardPurchaseRecord, userId: string): CardPurchaseRow {
+  return {
+    user_id: userId,
+    id: record.id,
+    card_id: record.cardId,
+    description: record.description,
+    category: record.category,
+    total_amount: record.totalAmount,
+    installments: record.installments,
+    purchase_date: record.purchaseDate,
+    first_cycle_key: record.firstCycleKey,
+    created_at: record.createdAt,
+    client_updated_at: record.updatedAt,
+    deleted_at: record.deletedAt,
+  };
+}
+
+export function cardPurchaseFromRow(row: CardPurchaseRow): CardPurchaseRecord {
+  return {
+    id: row.id,
+    cardId: row.card_id,
+    description: row.description,
+    category: row.category,
+    totalAmount: Number(row.total_amount),
+    installments: row.installments,
+    purchaseDate: row.purchase_date,
+    firstCycleKey: row.first_cycle_key,
     createdAt: row.created_at,
     updatedAt: row.client_updated_at,
     deletedAt: row.deleted_at,

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import * as cardUseCases from '../application/card.use-cases';
 import * as useCases from '../application/cycle.use-cases';
 import { selectActiveMonth, selectClosedMonths, selectConfig } from '../application/selectors';
 import {
@@ -38,6 +39,10 @@ type FinancialState = {
   addExpense: (expense: ExpenseInput) => Promise<void>;
   updateExpense: (expenseId: string, expense: ExpenseInput) => Promise<void>;
   deleteExpense: (expenseId: string) => Promise<void>;
+  saveCreditCard: (card: cardUseCases.CreditCardInput) => Promise<void>;
+  deleteCreditCard: (cardId: string) => Promise<void>;
+  addCardPurchase: (purchase: cardUseCases.CardPurchaseInput) => Promise<void>;
+  deleteCardPurchase: (purchaseId: string) => Promise<void>;
   closeActiveMonth: () => Promise<void>;
   exportData: () => Promise<void>;
   exportRawData: () => Promise<void>;
@@ -133,6 +138,10 @@ export const useFinancialStore = create<FinancialState>((set, get) => {
     updateExpense: (id, input) => run((doc, ctx) => useCases.updateExpense(doc, id, input, ctx)),
     deleteExpense: (id) => run((doc, ctx) => useCases.deleteExpense(doc, id, ctx)),
     closeActiveMonth: () => run((doc, ctx) => useCases.closeCycle(doc, ctx)),
+    saveCreditCard: (input) => run((doc, ctx) => cardUseCases.saveCreditCard(doc, input, ctx)),
+    deleteCreditCard: (id) => run((doc, ctx) => cardUseCases.deleteCreditCard(doc, id, ctx)),
+    addCardPurchase: (input) => run((doc, ctx) => cardUseCases.addCardPurchase(doc, input, ctx)),
+    deleteCardPurchase: (id) => run((doc, ctx) => cardUseCases.deleteCardPurchase(doc, id, ctx)),
 
     async exportData() {
       const now = new Date();

@@ -7,6 +7,7 @@ export type RootStackParamList = {
   AddExpense: {
     expenseId?: string;
   } | undefined;
+  Cards: undefined;
   Account: undefined;
   PrivacyPolicy: undefined;
 };

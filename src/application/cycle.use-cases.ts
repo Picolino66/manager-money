@@ -19,9 +19,16 @@ import {
   FinancialConfigInput,
   FixedExpense,
 } from '../domain/financial/financial.types';
+import { cycleKeyFromStartDate } from '../domain/financial/credit-card';
 import { toISODate } from '../utils/date';
 import { DomainError } from './errors';
-import { selectActiveCycle, selectClosedMonths, selectConfig, toFinancialMonth } from './selectors';
+import {
+  selectActiveCycle,
+  selectCardCharges,
+  selectClosedMonths,
+  selectConfig,
+  toFinancialMonth,
+} from './selectors';
 import {
   CycleRecord,
   ExpenseRecord,
@@ -47,7 +54,7 @@ function requireConfig(state: LocalState, message: string): FinancialConfig {
   return config;
 }
 
-function requireActiveCycle(state: LocalState, message: string): CycleRecord {
+export function requireActiveCycle(state: LocalState, message: string): CycleRecord {
   const cycle = selectActiveCycle(state);
 
   if (!cycle) {
@@ -129,13 +136,18 @@ function createCycle(
   ctx: UseCaseContext,
 ): CycleRecord {
   const config = configFrom(state, fixedExpenses);
+  const dates = buildFinancialCycleDates(startDate, config.payday);
 
   return {
     id: ctx.newId('cycle'),
-    ...buildFinancialCycleDates(startDate, config.payday),
+    ...dates,
     startedAt: ctx.now.toISOString(),
     status: 'active',
-    initialAvailableAmount: calculateInitialAvailableAmount(config, previousMonthDebt),
+    initialAvailableAmount: calculateInitialAvailableAmount(
+      config,
+      previousMonthDebt,
+      selectCardCharges(state, cycleKeyFromStartDate(dates.startDate)),
+    ),
     previousMonthDebt,
     updatedAt: ctx.now.toISOString(),
     deletedAt: null,
@@ -143,7 +155,7 @@ function createCycle(
   };
 }
 
-function assertDateWithinCycle(cycle: CycleRecord, date: string) {
+export function assertDateWithinCycle(cycle: CycleRecord, date: string) {
   const expenseDate = startOfDay(parseISO(date));
 
   if (
@@ -239,6 +251,7 @@ export function saveConfig(
   const initialAvailableAmount = calculateInitialAvailableAmount(
     configFrom(nextState, fixedExpenses),
     activeCycle.previousMonthDebt,
+    selectCardCharges(nextState, cycleKeyFromStartDate(activeCycle.startDate)),
   );
 
   if (initialAvailableAmount === activeCycle.initialAvailableAmount) {
@@ -248,6 +261,33 @@ export function saveConfig(
   return {
     ...nextState,
     cycles: nextState.cycles.map((cycle) =>
+      cycle.id === activeCycle.id ? touch({ ...cycle, initialAvailableAmount }, ctx.now) : cycle,
+    ),
+  };
+}
+
+/** BR-FIN-019: recalcula o saldo inicial do ciclo ativo após mudar as parcelas de cartão. */
+export function recalculateActiveCycleBalance(state: LocalState, ctx: UseCaseContext): LocalState {
+  const config = selectConfig(state);
+  const activeCycle = selectActiveCycle(state);
+
+  if (!config || !activeCycle) {
+    return state;
+  }
+
+  const initialAvailableAmount = calculateInitialAvailableAmount(
+    config,
+    activeCycle.previousMonthDebt,
+    selectCardCharges(state, cycleKeyFromStartDate(activeCycle.startDate)),
+  );
+
+  if (initialAvailableAmount === activeCycle.initialAvailableAmount) {
+    return state;
+  }
+
+  return {
+    ...state,
+    cycles: state.cycles.map((cycle) =>
       cycle.id === activeCycle.id ? touch({ ...cycle, initialAvailableAmount }, ctx.now) : cycle,
     ),
   };

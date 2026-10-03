@@ -17,3 +17,4 @@ last_verified_commit: c3d79fd
 |---|---|
 | `planning.configure` | [configure.md](configure.md) |
 | `planning.payday` | [payday.md](payday.md) |
+| `planning.income-sources` | [income-sources.md](income-sources.md) |

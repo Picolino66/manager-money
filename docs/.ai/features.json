@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T20:13:03.308Z",
-  "source_commit": "c3d79fd",
+  "generated_at": "2026-10-03T20:31:06.908Z",
+  "source_commit": "1e8ade5",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -158,7 +158,7 @@
       "type": "integration",
       "module": "architecture",
       "title": "Contratos de dados e API (v1)",
-      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 3).",
+      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 4).",
       "doc": "architecture/contracts.md",
       "state": "implemented",
       "adrs": [
@@ -211,6 +211,90 @@
       "summary": "Catálogo canônico das regras de negócio BR-FIN-* do domínio financeiro, com origem no código.",
       "doc": "business/business-rules.md",
       "state": "implemented"
+    },
+    {
+      "id": "card",
+      "type": "module",
+      "module": "card",
+      "title": "Cartões de crédito",
+      "summary": "Cartões (nome, fechamento, vencimento), compras parceladas no crédito e faturas por ciclo.",
+      "doc": "modules/card/index.md",
+      "state": "implemented"
+    },
+    {
+      "id": "card.manage",
+      "type": "feature",
+      "module": "card",
+      "title": "Cadastrar cartões e ver faturas",
+      "summary": "Tela Cartões: cria, edita e exclui cartões (nome, dia de fechamento e de vencimento) e mostra a fatura do ciclo atual e do próximo, com as parcelas e a exclusão de compras.",
+      "doc": "modules/card/manage.md",
+      "state": "implemented",
+      "keywords": [
+        "cartão",
+        "crédito",
+        "fatura",
+        "fechamento",
+        "vencimento",
+        "parcelas"
+      ],
+      "symbols": [
+        "saveCreditCard",
+        "deleteCreditCard",
+        "deleteCardPurchase",
+        "canDeleteCardPurchase",
+        "selectCardInstallments"
+      ],
+      "business_rules": [
+        "BR-FIN-019",
+        "BR-FIN-020"
+      ],
+      "adrs": [
+        "ADR-014"
+      ],
+      "tests": [
+        "src/application/card.use-cases.test.ts",
+        "src/screens/screens.test.tsx"
+      ],
+      "spec": "SPEC-013"
+    },
+    {
+      "id": "card.purchase",
+      "type": "feature",
+      "module": "card",
+      "title": "Compra parcelada no crédito",
+      "summary": "Em Registrar gasto, a forma de pagamento \"Cartão de crédito\" cria uma compra parcelada cuja 1ª parcela cai no ciclo do fechamento da fatura e que reduz o saldo inicial de cada ciclo.",
+      "doc": "modules/card/purchase.md",
+      "state": "implemented",
+      "keywords": [
+        "crédito",
+        "parcelas",
+        "juros",
+        "fatura",
+        "fechamento",
+        "saldo"
+      ],
+      "symbols": [
+        "addCardPurchase",
+        "calculateFirstCycleKey",
+        "calculateInvoiceClosingDate",
+        "splitInstallments",
+        "calculateCardChargesForCycle",
+        "recalculateActiveCycleBalance"
+      ],
+      "business_rules": [
+        "BR-FIN-005",
+        "BR-FIN-019",
+        "BR-FIN-020"
+      ],
+      "adrs": [
+        "ADR-014"
+      ],
+      "tests": [
+        "src/domain/financial/credit-card.test.ts",
+        "src/application/card.use-cases.test.ts",
+        "src/screens/screens.test.tsx"
+      ],
+      "spec": "SPEC-013"
     },
     {
       "id": "category",
@@ -476,7 +560,8 @@
       "business_rules": [
         "BR-FIN-001",
         "BR-FIN-011",
-        "BR-FIN-012"
+        "BR-FIN-012",
+        "BR-FIN-019"
       ],
       "tests": [
         "src/application/cycle.use-cases.test.ts"
@@ -616,9 +701,40 @@
     },
     {
       "id": "planning.income-sources",
-      "state": "planned",
-      "spec": "SPEC-012",
-      "spec_doc": "specs/SPEC-012-fontes-de-renda.md"
+      "type": "feature",
+      "module": "planning",
+      "title": "Múltiplas fontes de renda",
+      "summary": "A renda mensal é a soma de fontes com nome e valor, cadastradas na Configuração; dados antigos viram uma fonte \"Renda\".",
+      "doc": "modules/planning/income-sources.md",
+      "state": "implemented",
+      "keywords": [
+        "renda",
+        "fontes de renda",
+        "salário",
+        "freela",
+        "migração"
+      ],
+      "symbols": [
+        "saveConfig",
+        "calculateIncomeTotal",
+        "legacyIncomeSources",
+        "migrateV2ToV3",
+        "settingsFromRow"
+      ],
+      "business_rules": [
+        "BR-FIN-004",
+        "BR-FIN-018"
+      ],
+      "adrs": [
+        "ADR-013"
+      ],
+      "tests": [
+        "src/application/cycle.use-cases.test.ts",
+        "src/infrastructure/storage/local-store.test.ts",
+        "src/infrastructure/sync/mappers.test.ts",
+        "src/screens/screens.test.tsx"
+      ],
+      "spec": "SPEC-012"
     },
     {
       "id": "planning.payday",
@@ -682,7 +798,7 @@
       "type": "feature",
       "module": "settings",
       "title": "Aba Ajustes e status de sincronização",
-      "summary": "Quinta aba com atalhos para configuração, conta (com status de sync), exportação, política de privacidade e versão do app.",
+      "summary": "Quinta aba com atalhos para configuração, cartões de crédito, conta (com status de sync), exportação, política de privacidade e versão do app.",
       "doc": "modules/settings/hub.md",
       "state": "implemented",
       "keywords": [

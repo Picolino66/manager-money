@@ -81,11 +81,13 @@ export function calculateBaseAvailableAmount(config: FinancialConfig): MoneyCent
   return config.monthlyIncome - calculateFixedExpensesTotal(config) - config.savingGoal;
 }
 
+/** BR-FIN-005 + BR-FIN-019: as parcelas de cartão do ciclo reduzem o saldo inicial. */
 export function calculateInitialAvailableAmount(
   config: FinancialConfig,
   previousMonthDebt: MoneyCents,
+  cardCharges: MoneyCents = 0,
 ): MoneyCents {
-  return calculateBaseAvailableAmount(config) - previousMonthDebt;
+  return calculateBaseAvailableAmount(config) - previousMonthDebt - cardCharges;
 }
 
 export function calculateTotalSpent(expenses: Expense[]): MoneyCents {
