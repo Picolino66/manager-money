@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T18:52:29.154Z",
-  "source_commit": "38bc5eb",
+  "generated_at": "2026-10-03T18:52:34.701Z",
+  "source_commit": "4ae073f",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -402,7 +402,7 @@
     },
     "operations/runbook.md": {
       "id": "operations.runbook",
-      "last_verified_commit": "ENV-VERIFIED",
+      "last_verified_commit": "4ae073f",
       "state": "fresh",
       "source_hashes": {
         "eas.json": "sha256:6ae16fa238b4a43cc16d1d5a3fdcde66f2fa70eb6bc16cc9b2e4c80f3f6842aa",
