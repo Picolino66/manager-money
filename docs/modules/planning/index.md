@@ -8,7 +8,7 @@ summary: >
   parcelamentos.
 code:
   - src/screens/ConfigScreen.tsx
-last_verified_commit: 359de21
+last_verified_commit: SDK57-VERIFIED
 ---
 
 # Módulo: planejamento

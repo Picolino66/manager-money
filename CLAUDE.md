@@ -32,7 +32,7 @@
 - `npm run format` (Prettier: aspas simples, trailing comma, largura 100).
 
 ## Arquitetura
-- Monólito modular no cliente (Expo SDK 54, RN 0.81, TS estrito) + Supabase (Auth e-mail + senha, sem envio de e-mail — ADR-011; Postgres com RLS). Offline-first.
+- Monólito modular no cliente (Expo SDK 57, RN 0.86, React 19.2, TS 6 estrito) + Supabase (Auth e-mail + senha, sem envio de e-mail — ADR-011; Postgres com RLS). Offline-first.
 - Camadas em `src/`: `domain/financial` (cálculos puros) → `application` (casos de uso `(estado, comando, agora) → estado`) → `infrastructure` (`storage/`, `sync/`, `supabase/`, `export/`, `monitoring/`) → `store` (Zustand: caso de uso → persiste → agenda sync) → UI.
 - Lint (`import/no-restricted-paths`) proíbe `domain` e `application` de importar React, React Native, AsyncStorage ou Supabase.
 - Evite refactors amplos junto com mudanças funcionais.

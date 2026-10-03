@@ -15,7 +15,7 @@ a cada gasto dentro do ciclo do seu dia de pagamento. Funciona offline; o login 
 
 ## Stack
 
-Expo SDK 54 · React Native 0.81 · TypeScript estrito · Zustand · React Hook Form + Zod · date-fns ·
+Expo SDK 57 · React Native 0.86 · React 19.2 · TypeScript 6 estrito · Zustand · React Hook Form + Zod · date-fns ·
 Supabase (Auth + Postgres com RLS) · Jest. Valores monetários sempre em centavos.
 
 ## Como rodar
@@ -25,6 +25,8 @@ npm install
 cp .env.example .env   # opcional: preencha para habilitar o sync
 npx expo start
 ```
+
+Para abrir no celular, leia o QR code com o **Expo Go** (versão do SDK 57, a atual das lojas).
 
 Sem as variáveis `EXPO_PUBLIC_SUPABASE_*`, o app roda em **modo local** (tudo funciona, sem sync).
 

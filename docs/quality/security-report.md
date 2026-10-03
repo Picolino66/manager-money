@@ -11,7 +11,7 @@ code:
   - src/infrastructure/supabase/session-storage.ts
   - src/infrastructure/export/share-json.ts
 adrs: [ADR-006]
-last_verified_commit: 114b089
+last_verified_commit: SDK57-VERIFIED
 ---
 
 # Relatório de segurança — F6
@@ -36,6 +36,20 @@ Data: 2026-10-01 · Escopo: app (bundle Android) + schema Supabase + CI.
 
 A CI bloqueia vulnerabilidade **crítica** (`npm audit --omit=dev --audit-level=critical`).
 **Gatilho de revisão:** upgrade para o Expo SDK 55 (`maintenance-engine`).
+
+### Reavaliação após o upgrade para o Expo SDK 57 (ADR-012, 2026-10-03)
+
+| Item | Resultado |
+|---|---|
+| `image-size`, `postcss` (altas acima) | **Resolvidas** pelo SDK 57 |
+| Críticas | **0** |
+| `braces` ≤ 3.0.3 (alta, DoS por expansão) | Via Metro e Jest (`micromatch`). **Sem versão corrigida publicada.** Tooling local; não entra no bundle |
+| `node-forge` ≤ 1.4.0 (alta, verificação de assinatura RSA) | Via `@expo/code-signing-certificates` (CLI, assinatura de EAS Update, que não usamos). **Sem versão corrigida publicada** |
+| `uuid` < 11.1.1 (moderada) | Via `xcode` (prebuild iOS). Falha em v3/v5/v6 com `buf`; o `xcode` usa só v4, então **não é explorável** |
+
+O total do `npm audit` (24 altas e 9 moderadas) é quase todo propagação dessas três causas. A CI
+continua bloqueando só vulnerabilidade crítica. **Gatilho:** quando `braces` ou `node-forge`
+publicarem correção, rodar `npm audit fix` (`maintenance-engine`).
 
 ## 2. Isolamento de dados (DAST de banco)
 

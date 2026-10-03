@@ -7,7 +7,7 @@ summary: >
   Pipeline de qualidade: lint, tipos, testes, cobertura, knowledge layer, testes SQL e CI.
 code:
   - package.json
-last_verified_commit: 359de21
+last_verified_commit: SDK57-VERIFIED
 ---
 
 # Módulo: ferramentas

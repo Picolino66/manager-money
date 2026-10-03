@@ -8,7 +8,7 @@ summary: >
   análise de viabilidade e métricas de sucesso.
 code:
   - src/store/financial.store.ts
-last_verified_commit: 114b089
+last_verified_commit: SDK57-VERIFIED
 ---
 
 # Requisitos, escopo, viabilidade e métricas — v1.0 (lojas)
@@ -49,7 +49,7 @@ last_verified_commit: 114b089
 | RNF-07 | Acessibilidade: rótulos acessíveis, contraste AA, toques ≥ 44 pt | todas as telas |
 | RNF-08 | Idioma: textos visíveis em pt-BR com acentuação correta | 100% |
 | RNF-09 | Qualidade: cobertura de testes do domínio, store e sync | ≥ 80% de linhas |
-| RNF-10 | Compatibilidade | Android 7+ (API 24), iOS 15.1+ (mínimos do Expo SDK 54) |
+| RNF-10 | Compatibilidade | Android 7+ (API 24), iOS 16.4+ (mínimos do Expo SDK 57, ADR-012) |
 
 ## 3. Defeitos herdados do MVP (identificados no discovery)
 

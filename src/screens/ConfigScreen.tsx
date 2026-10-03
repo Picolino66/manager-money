@@ -3,7 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Controller, useFieldArray, useForm } from 'react-hook-form';
+import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
 import { RootStackParamList } from '../navigation/types';
@@ -77,7 +77,6 @@ export function ConfigScreen({ navigation }: Props) {
     handleSubmit,
     formState: { errors, isSubmitting },
     setValue,
-    watch,
   } = useForm<ConfigForm>({
     resolver: zodResolver(configSchema),
     defaultValues: {
@@ -108,8 +107,9 @@ export function ConfigScreen({ navigation }: Props) {
     keyName: 'fieldKey',
     name: 'installmentExpenses',
   });
-  const permanentExpenses = watch('permanentExpenses');
-  const installmentExpenses = watch('installmentExpenses');
+  // useWatch é seguro para o React Compiler (watch() não pode ser memoizado).
+  const permanentExpenses = useWatch({ control, name: 'permanentExpenses' });
+  const installmentExpenses = useWatch({ control, name: 'installmentExpenses' });
   const fixedExpenses = useMemo(
     () => [...permanentExpenses, ...installmentExpenses],
     [installmentExpenses, permanentExpenses],

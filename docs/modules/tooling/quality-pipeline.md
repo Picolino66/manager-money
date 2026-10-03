@@ -14,7 +14,7 @@ code:
   - scripts/ai-docs/build-index.mjs
   - supabase/tests/run-plain.sh
 adrs: [ADR-009, ADR-010]
-last_verified_commit: 114b089
+last_verified_commit: SDK57-VERIFIED
 ---
 
 # Pipeline de qualidade
