@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -18,7 +18,8 @@ import { CardLimitBar } from '../components/CardLimitBar';
 import { EmptyState } from '../components/EmptyState';
 import { MetricRow } from '../components/MetricRow';
 import { Screen } from '../components/Screen';
-import { colors, spacing, typography } from '../design/theme';
+import { spacing, typography } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { isActive } from '../domain/financial/financial.types';
 import { RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
@@ -37,6 +38,8 @@ function showError(title: string, error: unknown) {
 
 /** SPEC-016/017: lista de cartões com limite disponível do cartão, fatura atual e estado. */
 export function CardsScreen({ navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const doc = useFinancialStore((state) => state.doc);
   const saveCreditCard = useFinancialStore((state) => state.saveCreditCard);
   const deleteCreditCard = useFinancialStore((state) => state.deleteCreditCard);
@@ -238,7 +241,7 @@ export function CardsScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: {
     color: colors.ink,
     fontSize: typography.title,
@@ -293,4 +296,4 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
   },
-});
+}));

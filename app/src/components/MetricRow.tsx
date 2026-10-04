@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { colors, spacing } from '../design/theme';
+import { spacing } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 
 type MetricRowProps = {
   label: string;
@@ -10,6 +11,8 @@ type MetricRowProps = {
 };
 
 export function MetricRow({ label, value, tone = 'default', indent = false }: MetricRowProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const valueColor =
     tone === 'positive' ? colors.healthy : tone === 'negative' ? colors.negative : colors.ink;
 
@@ -21,7 +24,7 @@ export function MetricRow({ label, value, tone = 'default', indent = false }: Me
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   row: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -45,4 +48,4 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textAlign: 'right',
   },
-});
+}));

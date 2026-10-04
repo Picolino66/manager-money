@@ -1,6 +1,7 @@
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '../design/theme';
+import { radius, spacing } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 import { calculateLimitExcess, CardLimitUsage } from '../domain/financial/credit-card';
 import { MoneyCents } from '../domain/financial/financial.types';
 import { formatCurrency } from '../utils/currency';
@@ -56,6 +57,7 @@ type CardLimitNoticeProps = {
  * o que pode gastar é o "Ainda pode gastar hoje" da tela Hoje.
  */
 export function CardLimitNotice({ usage, amount }: CardLimitNoticeProps) {
+  const styles = useStyles();
   const exceeds = exceedsCardLimit(usage, amount);
 
   return (
@@ -75,7 +77,7 @@ export function CardLimitNotice({ usage, amount }: CardLimitNoticeProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   box: {
     backgroundColor: colors.infoSoft,
     borderColor: colors.info,
@@ -103,4 +105,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-});
+}));

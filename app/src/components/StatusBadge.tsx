@@ -1,9 +1,12 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '../design/theme';
+import { radius, spacing, ThemeColors } from '../design/theme';
+import { useTheme } from '../design/useTheme';
 import { DayStatus } from '../domain/financial/financial.types';
 
-const statusContent: Record<DayStatus, { label: string; backgroundColor: string; color: string }> = {
+const statusContent = (
+  colors: ThemeColors,
+): Record<DayStatus, { label: string; backgroundColor: string; color: string }> => ({
   healthy: {
     label: 'Saudável',
     backgroundColor: colors.healthySoft,
@@ -24,14 +27,15 @@ const statusContent: Record<DayStatus, { label: string; backgroundColor: string;
     backgroundColor: colors.negativeSoft,
     color: colors.negative,
   },
-};
+});
 
 type StatusBadgeProps = {
   status: DayStatus;
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const content = statusContent[status];
+  const { colors } = useTheme();
+  const content = statusContent(colors)[status];
 
   return (
     <View style={[styles.badge, { backgroundColor: content.backgroundColor }]}>

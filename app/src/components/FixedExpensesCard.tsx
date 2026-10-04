@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { FixedPaymentRecord } from '../application/state';
-import { colors, radius, spacing, typography } from '../design/theme';
+import { radius, spacing, typography } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { calculateFixedExpenseAmount } from '../domain/financial/financial.calculations';
 import { FixedExpense, isActive } from '../domain/financial/financial.types';
 import { PAYMENT_METHOD_LABELS } from '../domain/financial/payments';
@@ -40,6 +41,8 @@ export function FixedExpensesCard({
   onPay,
   onUndo,
 }: FixedExpensesCardProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   // Só fixas ativas com valor no ciclo; pagamentos já feitos continuam aparecendo.
   const rows = expenses
     .map((expense) => {
@@ -140,7 +143,7 @@ export function FixedExpensesCard({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: {
     color: colors.ink,
     fontSize: typography.sectionTitle,
@@ -211,4 +214,4 @@ const styles = StyleSheet.create({
     minHeight: 40,
     paddingHorizontal: spacing.md,
   },
-});
+}));

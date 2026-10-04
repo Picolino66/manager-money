@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, Text } from 'react-native';
+import { Alert, Text } from 'react-native';
 import { z } from 'zod';
 
 import { AppButton } from '../components/AppButton';
@@ -7,7 +7,8 @@ import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
 import { Screen } from '../components/Screen';
 import { TextInputField } from '../components/TextInputField';
-import { colors, typography } from '../design/theme';
+import { typography } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 import { useFinancialStore } from '../store/financial.store';
 import { MIN_PASSWORD_LENGTH, useSessionStore } from '../store/session.store';
 import { describeSyncStatus } from './syncStatus';
@@ -19,6 +20,7 @@ function errorMessage(error: unknown) {
 }
 
 export function AccountScreen() {
+  const styles = useStyles();
   const session = useSessionStore();
   const isSyncing = useFinancialStore((state) => state.isSyncing);
   const pendingChanges = useFinancialStore((state) => state.pendingChanges);
@@ -233,7 +235,7 @@ export function AccountScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: {
     color: colors.ink,
     fontSize: typography.title,
@@ -253,4 +255,4 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
   },
-});
+}));

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { isAfter, parseISO, startOfDay } from 'date-fns';
 
@@ -25,7 +25,8 @@ import { PayStatementModal } from '../components/PayStatementModal';
 import { Screen } from '../components/Screen';
 import { StatementCard } from '../components/StatementCard';
 import { StatementChargesModal } from '../components/StatementChargesModal';
-import { colors, spacing, typography } from '../design/theme';
+import { spacing, typography } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 import {
   CardPurchase,
   CardStatement,
@@ -60,6 +61,7 @@ function showError(title: string, error: unknown) {
  * juros/multas de fatura (BR-FIN-025/026/029/032/033).
  */
 export function CardDetailScreen({ navigation, route }: Props) {
+  const styles = useStyles();
   const doc = useFinancialStore((state) => state.doc);
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
@@ -495,7 +497,7 @@ export function CardDetailScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   titleRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -571,4 +573,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-});
+}));

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { Badge } from '../components/Badge';
 import { Card } from '../components/Card';
@@ -12,7 +12,8 @@ import {
   selectCycleSpending,
   selectCycleSpendingRange,
 } from '../application/selectors';
-import { colors, spacing, typography } from '../design/theme';
+import { spacing, typography } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency, formatSignedCurrency } from '../utils/currency';
 import { formatCycleLabel, formatMonthLabel, formatShortDate } from '../utils/date';
@@ -35,6 +36,7 @@ function monthOptions() {
 }
 
 function CycleSpendingCard({ spending }: { spending: CycleSpending }) {
+  const styles = useStyles();
   const badge = PHASE_BADGE[spending.phase];
   const planned = spending.phase === 'future';
 
@@ -140,6 +142,7 @@ function CycleSpendingCard({ spending }: { spending: CycleSpending }) {
 }
 
 export function PreviousMonthsScreen() {
+  const styles = useStyles();
   const months = useFinancialStore((state) => state.months);
   const doc = useFinancialStore((state) => state.doc);
   const now = new Date();
@@ -221,7 +224,7 @@ export function PreviousMonthsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: {
     color: colors.ink,
     fontSize: typography.title,
@@ -257,4 +260,4 @@ const styles = StyleSheet.create({
     fontSize: typography.sectionTitle,
     fontWeight: '900',
   },
-});
+}));

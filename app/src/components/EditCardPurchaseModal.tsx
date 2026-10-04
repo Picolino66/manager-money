@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, ScrollView, Text, View } from 'react-native';
 
 import { CardPurchaseUpdate } from '../application/card.use-cases';
-import { colors, radius, spacing, typography } from '../design/theme';
+import { radius, spacing, typography } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 import { CardPurchase, MAX_CARD_INSTALLMENTS } from '../domain/financial/credit-card';
 import { formatDateInput, parseBRDateInput, toISODate } from '../utils/date';
 import { AppButton } from './AppButton';
@@ -29,6 +30,7 @@ export function EditCardPurchaseModal({
   onConfirm,
   onClose,
 }: EditCardPurchaseModalProps) {
+  const styles = useStyles();
   const [description, setDescription] = useState(purchase.description);
   const [category, setCategory] = useState(purchase.category);
   const [totalAmount, setTotalAmount] = useState(purchase.totalAmount);
@@ -142,9 +144,9 @@ export function EditCardPurchaseModal({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   backdrop: {
-    backgroundColor: 'rgba(17, 24, 39, 0.5)',
+    backgroundColor: colors.overlay,
     flex: 1,
     justifyContent: 'center',
     padding: spacing.lg,
@@ -168,4 +170,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-});
+}));

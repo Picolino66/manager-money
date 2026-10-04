@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T16:30:41.471Z",
-  "source_commit": "7c4199c",
+  "generated_at": "2026-10-04T16:58:33.844Z",
+  "source_commit": "455a4b1",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -177,6 +177,7 @@
       "adrs": [
         "ADR-019",
         "ADR-020",
+        "ADR-021",
         "ADR-004",
         "ADR-006"
       ],
@@ -698,9 +699,19 @@
       "type": "module",
       "module": "design",
       "title": "Design system",
-      "summary": "Tokens de cor, espaçamento, raio e tipografia e o catálogo de componentes reutilizáveis do app.",
+      "summary": "Tokens de cor (temas claro e escuro), espaçamento, raio e tipografia, hooks useTheme/makeStyles e o catálogo de componentes reutilizáveis do app.",
       "doc": "design/design-system.md",
-      "state": "implemented"
+      "state": "implemented",
+      "adrs": [
+        "ADR-021"
+      ],
+      "tests": [
+        "app/src/design/theme.test.ts",
+        "app/src/components/ThemePreferenceSelector.test.tsx",
+        "app/src/store/theme.store.test.ts",
+        "app/src/infrastructure/storage/theme-preference.test.ts"
+      ],
+      "spec": "SPEC-021"
     },
     {
       "id": "expense",
@@ -1110,23 +1121,30 @@
       "type": "feature",
       "module": "settings",
       "title": "Aba Ajustes e status de sincronização",
-      "summary": "Quinta aba com atalhos para configuração, cartões de crédito, conta (com status de sync), exportação, política de privacidade e versão do app.",
+      "summary": "Quinta aba com atalhos para configuração, cartões de crédito, conta (com status de sync), exportação, política de privacidade, aparência (tema) e versão do app.",
       "doc": "modules/settings/hub.md",
       "state": "implemented",
       "keywords": [
         "ajustes",
         "configurações",
         "status",
-        "versão"
+        "versão",
+        "tema",
+        "escuro",
+        "aparência"
       ],
       "symbols": [
         "describeSyncStatus",
         "SettingsRow"
       ],
-      "tests": [
-        "app/src/screens/syncStatus.test.ts"
+      "adrs": [
+        "ADR-021"
       ],
-      "spec": "SPEC-007"
+      "tests": [
+        "app/src/screens/syncStatus.test.ts",
+        "app/src/components/ThemePreferenceSelector.test.tsx"
+      ],
+      "spec": "SPEC-021"
     },
     {
       "id": "storage",

@@ -1,6 +1,7 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '../design/theme';
+import { radius, spacing } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 
 type CategoryPickerProps = {
   label: string;
@@ -15,6 +16,7 @@ export function CategoryPicker({
   selectedCategory,
   onSelectCategory,
 }: CategoryPickerProps) {
+  const styles = useStyles();
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
@@ -42,7 +44,7 @@ export function CategoryPicker({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrapper: {
     gap: spacing.sm,
   },
@@ -76,4 +78,4 @@ const styles = StyleSheet.create({
   optionTextSelected: {
     color: colors.primaryDark,
   },
-});
+}));

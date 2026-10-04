@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors, spacing, typography } from '../design/theme';
+import { spacing, typography } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { CycleAdjustments } from '../domain/financial/financial.calculations';
 import { MoneyCents } from '../domain/financial/financial.types';
 import { formatCurrency } from '../utils/currency';
@@ -30,6 +31,8 @@ export function CyclePlanCard({
   initialAvailableAmount,
   adjustments,
 }: CyclePlanCardProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const [isExpanded, setIsExpanded] = useState(false);
   const reservedFixed = adjustments.paidFixedExpenses + adjustments.pendingFixedExpenses;
 
@@ -109,7 +112,7 @@ export function CyclePlanCard({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -135,4 +138,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-});
+}));

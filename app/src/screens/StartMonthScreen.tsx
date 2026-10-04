@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, Text } from 'react-native';
+import { Alert, Text } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
 import { RootStackParamList } from '../navigation/types';
@@ -13,7 +13,8 @@ import {
   calculateFixedExpenseAmount,
   calculateRemainingDays,
 } from '../domain/financial/financial.calculations';
-import { colors, spacing, typography } from '../design/theme';
+import { spacing, typography } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 import {
   selectActiveCycle,
   selectCycleAdjustments,
@@ -48,6 +49,7 @@ function previewCycle(doc: LocalState, now: Date) {
 }
 
 export function StartMonthScreen({ navigation }: Props) {
+  const styles = useStyles();
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const startFinancialCycle = useFinancialStore((state) => state.startFinancialCycle);
@@ -170,7 +172,7 @@ export function StartMonthScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   hint: {
     color: colors.muted,
     fontSize: 13,
@@ -182,4 +184,4 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     marginBottom: spacing.xs,
   },
-});
+}));

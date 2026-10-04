@@ -9,7 +9,8 @@ import {
   ViewStyle,
 } from 'react-native';
 
-import { colors, radius, spacing } from '../design/theme';
+import { radius, spacing } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -34,6 +35,8 @@ export function AppButton({
   accessibilityLabel,
   style,
 }: AppButtonProps) {
+  const buttonVariants = useButtonVariants();
+  const textVariants = useTextVariants();
   const isDisabled = disabled || isLoading;
   const variantStyle = buttonVariants[variant];
   const textStyle = textVariants[variant];
@@ -92,7 +95,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const buttonVariants = StyleSheet.create({
+const useButtonVariants = makeStyles((colors) => ({
   primary: {
     backgroundColor: colors.primary,
   },
@@ -107,19 +110,19 @@ const buttonVariants = StyleSheet.create({
   ghost: {
     backgroundColor: 'transparent',
   },
-});
+}));
 
-const textVariants = StyleSheet.create({
+const useTextVariants = makeStyles((colors) => ({
   primary: {
-    color: '#ffffff',
+    color: colors.onPrimary,
   },
   secondary: {
     color: colors.ink,
   },
   danger: {
-    color: '#ffffff',
+    color: colors.onNegative,
   },
   ghost: {
     color: colors.primary,
   },
-});
+}));

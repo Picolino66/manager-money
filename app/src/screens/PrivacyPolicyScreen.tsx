@@ -1,11 +1,13 @@
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
-import { colors, typography } from '../design/theme';
+import { typography } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 import { PRIVACY_POLICY_SECTIONS, PRIVACY_POLICY_UPDATED_AT } from '../legal/privacy-policy';
 
 export function PrivacyPolicyScreen() {
+  const styles = useStyles();
   return (
     <Screen>
       <Text style={styles.updated}>Última atualização: {PRIVACY_POLICY_UPDATED_AT}</Text>
@@ -21,7 +23,7 @@ export function PrivacyPolicyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   updated: {
     color: colors.muted,
     fontSize: 13,
@@ -36,4 +38,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
-});
+}));

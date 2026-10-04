@@ -1,16 +1,19 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '../design/theme';
+import { radius, spacing, ThemeColors } from '../design/theme';
+import { useTheme } from '../design/useTheme';
 
 export type BadgeTone = 'neutral' | 'info' | 'warning' | 'critical' | 'positive';
 
-const toneColors: Record<BadgeTone, { backgroundColor: string; color: string }> = {
+const toneColors = (
+  colors: ThemeColors,
+): Record<BadgeTone, { backgroundColor: string; color: string }> => ({
   neutral: { backgroundColor: colors.surfaceMuted, color: colors.muted },
   info: { backgroundColor: colors.infoSoft, color: colors.info },
   warning: { backgroundColor: colors.warningSoft, color: colors.warning },
   critical: { backgroundColor: colors.criticalSoft, color: colors.critical },
   positive: { backgroundColor: colors.healthySoft, color: colors.healthy },
-};
+});
 
 type BadgeProps = {
   label: string;
@@ -19,7 +22,8 @@ type BadgeProps = {
 
 /** Selo curto de estado (ex.: "Inativo", "Vencida"). */
 export function Badge({ label, tone = 'neutral' }: BadgeProps) {
-  const palette = toneColors[tone];
+  const { colors } = useTheme();
+  const palette = toneColors(colors)[tone];
 
   return (
     <View style={[styles.badge, { backgroundColor: palette.backgroundColor }]}>

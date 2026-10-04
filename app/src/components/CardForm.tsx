@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Text } from 'react-native';
 
 import { CreditCardInput } from '../application/card.use-cases';
-import { colors, typography } from '../design/theme';
+import { typography } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 import { CreditCard, MAX_CARD_DAY, MIN_CARD_DAY } from '../domain/financial/credit-card';
 import { MoneyCents } from '../domain/financial/financial.types';
 import { AppButton } from './AppButton';
@@ -27,6 +28,7 @@ const isValidDay = (day: number) => day >= MIN_CARD_DAY && day <= MAX_CARD_DAY;
 
 /** BR-FIN-019/026/028: formulário do cartão com limite total opcional. */
 export function CardForm({ card, onSubmit, onCancel }: CardFormProps) {
+  const styles = useStyles();
   const [name, setName] = useState(card?.name ?? '');
   const [closingDay, setClosingDay] = useState(card ? String(card.closingDay) : '');
   const [dueDay, setDueDay] = useState(card ? String(card.dueDay) : '');
@@ -115,7 +117,7 @@ export function CardForm({ card, onSubmit, onCancel }: CardFormProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: {
     color: colors.ink,
     fontSize: typography.sectionTitle,
@@ -125,4 +127,4 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
   },
-});
+}));

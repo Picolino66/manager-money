@@ -8,10 +8,11 @@ import { AppButton } from './src/components/AppButton';
 import { EmptyState } from './src/components/EmptyState';
 import { Screen } from './src/components/Screen';
 import { AppNavigator } from './src/navigation/AppNavigator';
-import { colors } from './src/design/theme';
+import { useTheme } from './src/design/useTheme';
 import { logger } from './src/infrastructure/monitoring/logger';
 import { useFinancialStore } from './src/store/financial.store';
 import { useSessionStore } from './src/store/session.store';
+import { useThemeStore } from './src/store/theme.store';
 
 /** DEF-004: falha de leitura nunca aparece como app vazio nem sobrescreve os dados. */
 function LoadErrorScreen({ message }: { message: string }) {
@@ -46,15 +47,18 @@ export default function App() {
   const isLoading = useFinancialStore((state) => state.isLoading);
   const loadError = useFinancialStore((state) => state.loadError);
   const initSession = useSessionStore((state) => state.init);
+  const loadThemePreference = useThemeStore((state) => state.loadPreference);
+  const { colors, scheme } = useTheme();
 
   useEffect(() => {
+    void loadThemePreference();
     void loadAppData().then(() => initSession().catch((error) => logger.error(error)));
-  }, [loadAppData, initSession]);
+  }, [loadAppData, initSession, loadThemePreference]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar style="dark" />
+        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
         {isLoading ? (
           <View
             style={{

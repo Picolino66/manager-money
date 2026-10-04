@@ -1,6 +1,7 @@
-import { Text, TextInput, TextInputProps, StyleSheet, View } from 'react-native';
+import { Text, TextInput, TextInputProps, View } from 'react-native';
 
-import { colors, radius, spacing } from '../design/theme';
+import { radius, spacing } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 
 type TextInputFieldProps = {
   label: string;
@@ -8,6 +9,8 @@ type TextInputFieldProps = {
 } & TextInputProps;
 
 export function TextInputField({ label, error, style, ...props }: TextInputFieldProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.wrapper}>
       <Text style={styles.label}>{label}</Text>
@@ -23,7 +26,7 @@ export function TextInputField({ label, error, style, ...props }: TextInputField
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrapper: {
     gap: spacing.sm,
   },
@@ -48,4 +51,4 @@ const styles = StyleSheet.create({
     color: colors.critical,
     fontSize: 13,
   },
-});
+}));

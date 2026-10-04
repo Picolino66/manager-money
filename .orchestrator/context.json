@@ -50,11 +50,10 @@
       "multimoeda",
       "push",
       "editar ciclos fechados",
-      "tema escuro",
       "monetização"
     ],
     "planned": [
-      "client web (P0 em docs/architecture/client-web-plan.md; implementação pendente)"
+      "client web online (lê/grava direto no Supabase, sem sync; P0 em docs/architecture/client-web-plan.md; implementação pendente)"
     ]
   },
   "feasibility": {
@@ -76,7 +75,8 @@
       "session": "expo-secure-store + aes-js",
       "monitoring": "@sentry/react-native",
       "tests": "jest-expo + @testing-library/react-native",
-      "ci": "github-actions"
+      "ci": "github-actions",
+      "theming": "temas claro/escuro: makeStyles/useTheme + theme.store (preferência só no aparelho) — ADR-021"
     },
     "security_model": "adr/ADR-006-modelo-de-seguranca.md",
     "integration_contracts": [
@@ -103,7 +103,8 @@
       "ADR-017",
       "ADR-018",
       "ADR-019",
-      "ADR-020"
+      "ADR-020",
+      "ADR-021"
     ],
     "overrides": [
       {
@@ -140,11 +141,17 @@
         "section": "scope.excluded",
         "change": "\"web\" removido do escopo excluído; client web planejado em client/ (sem implementação)",
         "date": "2026-10-04"
+      },
+      {
+        "adr": "ADR-021",
+        "section": "scope.excluded",
+        "change": "\"tema escuro\" removido do escopo excluído; implementado no mobile",
+        "date": "2026-10-04"
       }
     ],
     "repository_layout": {
       "app": "app/ — mobile Expo (npm independente)",
-      "client": "client/ — web, placeholder (ADR-020 PROPOSED: React + Vite SPA)",
+      "client": "client/ — web, placeholder (ADR-020 PROPOSED: React + Vite SPA, online direto no Supabase, sem sync; uso local, VPS no futuro)",
       "backend": "supabase/ — compartilhado, fonte única",
       "root": "workspace do produto: docs, specs, tasks, adr, agents, skills, scripts, CI; package.json mínimo (docs:*, test:db)",
       "monorepo_tooling": "nenhuma; reavaliar com packages/core"

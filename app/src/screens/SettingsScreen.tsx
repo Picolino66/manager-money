@@ -4,11 +4,13 @@ import { CompositeScreenProps } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as Application from 'expo-application';
 import { ComponentProps } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 
 import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
-import { colors, spacing, typography } from '../design/theme';
+import { ThemePreferenceSelector } from '../components/ThemePreferenceSelector';
+import { spacing, typography } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { MainTabParamList, RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
 import { useSessionStore } from '../store/session.store';
@@ -27,6 +29,8 @@ type RowProps = {
 };
 
 function SettingsRow({ icon, title, subtitle, onPress }: RowProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
@@ -45,6 +49,7 @@ function SettingsRow({ icon, title, subtitle, onPress }: RowProps) {
 }
 
 export function SettingsScreen({ navigation }: Props) {
+  const styles = useStyles();
   const sessionStatus = useSessionStore((state) => state.status);
   const email = useSessionStore((state) => state.email);
   const isSyncing = useFinancialStore((state) => state.isSyncing);
@@ -102,6 +107,10 @@ export function SettingsScreen({ navigation }: Props) {
           title="Política de privacidade"
         />
       </Card>
+      <Card>
+        <Text style={styles.sectionTitle}>Aparência</Text>
+        <ThemePreferenceSelector />
+      </Card>
       <Text style={styles.version}>
         Versão {Application.nativeApplicationVersion ?? '1.0.0'}
       </Text>
@@ -109,7 +118,7 @@ export function SettingsScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: {
     color: colors.ink,
     fontSize: typography.title,
@@ -120,6 +129,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     minHeight: 56,
+  },
+  sectionTitle: {
+    color: colors.ink,
+    fontSize: 16,
+    fontWeight: '800',
   },
   rowPressed: {
     opacity: 0.6,
@@ -142,4 +156,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
   },
-});
+}));

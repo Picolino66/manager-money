@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Alert, StyleSheet, Text, View } from 'react-native';
+import { Alert, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 
@@ -13,7 +13,8 @@ import { PayFixedExpenseModal } from '../components/PayFixedExpenseModal';
 import { Screen } from '../components/Screen';
 import { StatusBadge } from '../components/StatusBadge';
 import { RootStackParamList } from '../navigation/types';
-import { colors, spacing, typography } from '../design/theme';
+import { spacing, ThemeColors, typography } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { canCloseActiveCycle, canReceiveIncomeEarlyNow } from '../application/cycle.use-cases';
 import {
   buildDashboardSummary,
@@ -36,14 +37,18 @@ import { clampIsoDate, toISODate } from '../utils/date';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 
-const heroStatusColors: Record<DayStatus, { backgroundColor: string; borderColor: string }> = {
+const heroStatusColors = (
+  colors: ThemeColors,
+): Record<DayStatus, { backgroundColor: string; borderColor: string }> => ({
   healthy: { backgroundColor: colors.healthySoft, borderColor: colors.healthy },
   warning: { backgroundColor: colors.warningSoft, borderColor: colors.warning },
   critical: { backgroundColor: colors.criticalSoft, borderColor: colors.critical },
   negative: { backgroundColor: colors.negativeSoft, borderColor: colors.negative },
-};
+});
 
 export function DashboardScreen() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const navigation = useNavigation<Navigation>();
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
@@ -205,7 +210,7 @@ export function DashboardScreen() {
     );
   }
 
-  const heroColors = heroStatusColors[summary.dayStatus];
+  const heroColors = heroStatusColors(colors)[summary.dayStatus];
 
   return (
     <Screen>
@@ -321,6 +326,7 @@ export function DashboardScreen() {
 }
 
 function Header({ cycleLabel }: { cycleLabel?: string }) {
+  const styles = useStyles();
   return (
     <View style={styles.header}>
       <Text style={styles.eyebrow}>{cycleLabel ?? 'Manager Money'}</Text>
@@ -329,7 +335,7 @@ function Header({ cycleLabel }: { cycleLabel?: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: {
     gap: spacing.xs,
   },
@@ -402,4 +408,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     textAlign: 'center',
   },
-});
+}));

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
@@ -10,7 +10,8 @@ import { EmptyState } from '../components/EmptyState';
 import { MetricRow } from '../components/MetricRow';
 import { Screen } from '../components/Screen';
 import { TextInputField } from '../components/TextInputField';
-import { colors, spacing, typography } from '../design/theme';
+import { spacing, typography } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { selectCycleExtraIncomes } from '../application/selectors';
 import { RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
@@ -25,6 +26,8 @@ function showError(title: string, error: unknown) {
 
 /** BR-FIN-023: rendas avulsas do ciclo ativo (somam ao saldo disponível). */
 export function IncomesScreen({ navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const doc = useFinancialStore((state) => state.doc);
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
@@ -167,7 +170,7 @@ export function IncomesScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: {
     color: colors.ink,
     fontSize: typography.title,
@@ -207,4 +210,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-});
+}));

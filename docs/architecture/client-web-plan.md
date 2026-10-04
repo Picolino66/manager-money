@@ -13,8 +13,8 @@ code:
   - app/package.json
   - .github/workflows/ci.yml
   - client/README.md
-adrs: [ADR-019, ADR-020, ADR-004, ADR-006]
-last_verified_commit: 7c4199c+T-029
+adrs: [ADR-019, ADR-020, ADR-021, ADR-004, ADR-006]
+last_verified_commit: 455a4b1+T-030
 ---
 
 # Reorganização do repositório
@@ -158,10 +158,11 @@ réplicas por registro (LWW) e valida forma, não semântica. Não há RPC de ne
 | Tipos e cálculos financeiros (limite diário, status do dia, saldo, faturas, limite do cartão, projeção) | `app/src/domain/financial/*` (~1.070 linhas, só `date-fns`) | A. domínio reutilizável | reutilizar via `packages/core` |
 | Casos de uso (`openCycle`, `closeCycle`, `receiveIncomeEarly`, `add/update/deleteExpense`, `payFixedExpense`, `addExtraIncome`, `saveCreditCard`, `addCardPurchase`, `payStatement`, `addStatementCharges`…) e seletores (`selectClosedMonths`, `selectCardStatements`, `selectCycleProjections`, `selectCycleSpendingRange`…) | `app/src/application/*` (~2.300 linhas, puro) | A. domínio reutilizável | reutilizar |
 | `utils/date.ts`, `utils/currency.ts` (centavos, pt-BR) | `app/src/utils` | A | reutilizar |
-| Contrato de sync: `types.ts` (inclui `CONTRACT_VERSION`), `mappers.ts`, `sync-engine.ts`, porta `SyncRemote`, `supabase-remote.ts`, `memory-remote.ts` | `app/src/infrastructure/sync` | B/C. infraestrutura e contrato reutilizáveis | reutilizar (motor depende de `logger` → injetar) |
-| Schema do documento e migrações v1→v8 (`zod`) | `app/src/infrastructure/storage/schema.ts`, `migrations.ts` | C | reutilizar se o web tiver cache local (P1) |
-| `local-store.ts` (AsyncStorage), `session-storage.ts` (SecureStore + AES), `share-json.ts` (expo-sharing), NetInfo | `app/src/infrastructure/*`, `store/` | D. específico do mobile | reimplementar adaptador web (memória/IndexedDB, `localStorage` do supabase-js, download de arquivo) |
-| Store Zustand (caso de uso → persiste → agenda sync) | `app/src/store` | F. reimplementar para web | mesmo padrão, adaptadores web |
+| Contrato remoto: `types.ts` (DTOs das linhas + `CONTRACT_VERSION`), `mappers.ts` (linha ↔ registro) | `app/src/infrastructure/sync` | C. contrato reutilizável | reutilizar |
+| Motor de sync offline-first: `sync-engine.ts` (outbox, cursor, backoff, primeiro login), `memory-remote.ts` | `app/src/infrastructure/sync` | D. específico do mobile | **não usar no web** (web é online, sem sync) |
+| Schema do documento e migrações v1→v8 (`zod`) | `app/src/infrastructure/storage/schema.ts`, `migrations.ts` | D | não usado no web (sem documento persistido) |
+| `local-store.ts` (AsyncStorage), `session-storage.ts` (SecureStore + AES), `share-json.ts` (expo-sharing), NetInfo | `app/src/infrastructure/*`, `store/` | D. específico do mobile | reimplementar no web (estado em memória, `localStorage` do supabase-js, download de arquivo) |
+| Store Zustand (caso de uso → persiste → agenda sync) | `app/src/store` | F. reimplementar para web | caso de uso → grava no Supabase na hora |
 | Telas, componentes, navegação, design tokens | `app/src/screens`, `components`, `navigation`, `design` | E. específico de React Native | não copiar; só referência de textos e fluxos |
 | Política de privacidade | `app/src/legal/privacy-policy.ts` | C | reutilizar o texto |
 | Tabelas, RLS, `delete_my_account()` | `supabase/` | C. contrato compartilhado | mesmo uso; sem mudança de schema |
@@ -173,20 +174,28 @@ restante transportado (ADR-018, INV-01..10), centavos inteiros (BR-FIN-001).
 ## Papel do app mobile
 
 Uso diário: registrar gasto em segundos, ver o limite de hoje, marcar fixa paga, pagar fatura,
-abrir/fechar ciclo. Funciona offline e sem conta.
+abrir/fechar ciclo. Salva localmente, funciona offline e sem conta, e **sincroniza** com o Supabase
+quando há conta (outbox + pull, ADR-004).
 
 ## Papel do client web
 
-Visão consolidada e administração, com login obrigatório: histórico completo em tabelas com filtros,
-análises por categoria e período com gráficos, comparação entre ciclos, situação dos cartões e faturas,
-projeção, gestão de cadastros (fontes de renda, fixas, cartões, categorias) e exportação. Ações
-rápidas do dia a dia continuam sendo do mobile.
+Visão consolidada e administração, com login obrigatório (permite **criar conta**): histórico completo
+em tabelas com filtros, análises por categoria e período com gráficos, comparação entre ciclos, cartões
+e faturas, projeção, gestão de cadastros e exportação. Em P1 tem **as mesmas ações do mobile**
+(inclusive abrir/fechar ciclo e "Já recebi").
+
+**Sem sincronismo:** o web é sempre online. Ele lê do Supabase e grava no Supabase na hora; não guarda
+dados financeiros no navegador, não tem fila de envio nem modo offline. Se a gravação falhar, a ação não
+acontece e o erro aparece na tela.
 
 ## Escopo P0/P1/P2
 
 **P0 — MVP (valor: ver e corrigir o histórico com conforto)**
-- Login/logout com e-mail e senha; sem modo local.
-- Carregar os dados do usuário pelo motor de sync e montar o documento em memória.
+- Criar conta, entrar e sair com e-mail e senha; sem modo local.
+- **Onboarding** para conta nova (criada no web): configuração financeira (fontes de renda, dia de
+  pagamento, meta) e abrir o primeiro ciclo — sem isso, quem se cadastra no web vê só telas vazias.
+- Ler os dados do usuário do Supabase e montar o estado em memória (sem persistir no navegador).
+- Tema claro e escuro (Sistema/Claro/Escuro) desde o início (ADR-021).
 - Visão geral do ciclo ativo (limite de hoje, saldo, compromissos, cartões) — somente leitura.
 - Gastos: tabela com busca, filtros (ciclo, categoria, período), ordenação e paginação; **editar e
   excluir gasto do ciclo ativo** (fechados são somente leitura); registrar gasto.
@@ -194,20 +203,19 @@ rápidas do dia a dia continuam sendo do mobile.
 - Análise por categoria e período com gráfico (paridade com RF-09, em tela grande).
 - Estados de carregamento, vazio e erro; aviso de sessão expirada.
 
-**P1 — próxima evolução**
-- Cartões e faturas (lista, detalhe, pagar fatura total/parcial, encargos).
-- Gestão de cadastros: configuração, fontes de renda, despesas fixas, cartões, categorias.
-- Pagar despesa fixa, renda avulsa, abrir/fechar ciclo e "Já recebi" no web.
+**P1 — paridade com o mobile**
+- Cartões e faturas (lista, detalhe, compras, situação inicial, pagar fatura total/parcial, encargos).
+- Gestão de cadastros: configuração, fontes de renda, despesas fixas, cartões, categorias, ativar/desativar.
+- Pagar despesa fixa, renda avulsa, fechar ciclo, abrir o próximo e "Já recebi" — idêntico ao mobile.
 - Projeção dos próximos 3 ciclos com gráfico; comparação entre ciclos.
 - Exportar JSON (paridade) e CSV de gastos.
-- Cache local (IndexedDB) com schema/migrações do núcleo; sync ao focar a aba.
-- Excluir conta.
+- Recarregar dados ao focar a aba; excluir conta.
 
 **P2 — futuro**
 - Relatórios avançados (tendências, média por categoria, sazonalidade).
 - Simulação de planejamento ("e se eu parcelar em 10x?") usando `projectCycles`.
-- Realtime (assinatura das tabelas) no lugar de pull ao focar.
-- Tema escuro (fora do escopo do produto hoje — exige decisão), atalhos de teclado, PWA.
+- Realtime (assinatura das tabelas) no lugar de recarregar ao focar a aba.
+- Atalhos de teclado.
 
 ## Stack escolhida
 
@@ -216,9 +224,9 @@ rápidas do dia a dia continuam sendo do mobile.
 | Critério | React + Vite (SPA) | Next.js (App Router) |
 |---|---|---|
 | Necessidade de SSR/SEO | Não há: tudo fica atrás de login | SSR sem ganho real |
-| Onde rodam as regras | No browser, como no mobile (núcleo puro) | Teria de escolher: cliente (SSR inútil) ou servidor (duplicar estado e sync no servidor) |
+| Onde rodam as regras | No browser, como no mobile (núcleo puro), gravando direto no Supabase | Teria de escolher: cliente (SSR inútil) ou servidor (duplicar o estado no servidor) |
 | Supabase/Auth | supabase-js padrão; sessão no `localStorage` | `@supabase/ssr` com cookies httpOnly (vantagem real contra roubo de token por XSS) |
-| Deploy | Arquivos estáticos em qualquer CDN | Runtime Node/edge; mais peças |
+| Deploy | Arquivos estáticos (local hoje; Nginx/Caddy na VPS depois) | Processo Node rodando na VPS; mais peças |
 | Superfície de ataque | Só o browser + RLS | Browser + servidor (server actions, rotas de API) |
 | Compartilhar código com o app | Workspaces + TS direto no Vite | Possível, com `transpilePackages` |
 | Testes | Vitest (mesma API do Jest) | Jest/Vitest + particularidades de RSC |
@@ -230,16 +238,25 @@ dependências (ver Segurança).
 
 Bibliotecas: React Router (modo data/SPA), Zustand, React Hook Form + Zod (as mesmas do app),
 Tailwind CSS + shadcn/ui (Radix: acessibilidade de diálogos, menus e tabelas), TanStack Table,
-Recharts, date-fns. Sem TanStack Query no MVP: os dados vêm do documento em memória, não de consultas
-por tela.
+Recharts, date-fns. Sem TanStack Query no MVP: o estado completo do usuário é carregado de uma vez e
+os seletores do núcleo calculam as telas; não há consultas por tela.
 
 ## Decisões arquiteturais
 
-1. **Web = mais um aparelho** do usuário: pull → documento em memória → caso de uso → outbox → push.
-   A resolução de conflito (LWW, ciclo ativo concorrente) é a mesma do mobile (ADR-004).
+1. **Web online, sem sincronismo:** ao entrar, lê todas as linhas do usuário (9 tabelas) e monta o estado
+   em memória com os `mappers` do núcleo. Cada ação: recarrega o necessário → aplica o **caso de uso
+   compartilhado** → grava **na hora** (upsert) só os registros alterados, na ordem de dependência do
+   contrato. Falhou? Descarta a mudança em memória e mostra o erro. Não há outbox, retry, cursor nem
+   armazenamento local de dados.
+   "Gravar direto" **não** é editar tabela sem regra: o banco valida forma, não semântica (fechar ciclo,
+   dívida herdada, faturas, limite). Toda escrita passa pelo núcleo.
+   Concorrência com o mobile: o servidor é a verdade do web; o mobile resolve conflitos ao sincronizar
+   (LWW por registro; ciclo ativo do servidor vence — ADR-004 §4). Antes de abrir/fechar ciclo o web
+   recarrega os dados e, se o índice `cycles_one_active_per_user` recusar, avisa e recarrega.
 2. **Núcleo compartilhado** extraído para `packages/core` antes de qualquer tela (CLIENT-003), com
    npm workspaces; nova ADR registra a extração. O app passa a importar do pacote sem mudar comportamento.
-3. **Sem modo local no web**: exige conta (os dados de quem não tem conta vivem só no aparelho).
+3. **Sem modo local no web**: exige conta (os dados de quem não tem conta vivem só no aparelho). Conta
+   criada no web e depois usada no mobile cai no fluxo de primeiro login existente (BR-ACC-002).
 4. **Sem mudança de schema** no MVP. Qualquer nova necessidade vira migration aditiva (ADR-008).
 
 ### Monorepo / workspaces (avaliação)
@@ -259,7 +276,7 @@ muda para `npm ci` na raiz + `npm run verify -w app`, e o EAS precisa instalar a
 
 ```
 packages/core/                 (CLIENT-003; extraído de app/src)
-├── src/domain/  src/application/  src/sync/  src/utils/  src/schema/
+├── src/domain/  src/application/  src/contract/ (types + mappers)  src/utils/
 └── package.json  tsconfig.json
 client/
 ├── index.html  vite.config.ts  tsconfig.json  package.json  .env.example
@@ -271,20 +288,22 @@ client/
     │   ├── auth/  overview/  expenses/  cycles/  analysis/
     │   └── cards/  settings/  (P1)
     ├── components/ui/         shadcn/ui (gerados) + composições genéricas
-    ├── store/                 Zustand: sessão e documento (caso de uso → outbox → sync)
-    ├── infrastructure/        supabase client, SyncRemote web, logger
+    ├── store/                 Zustand: sessão, estado em memória, tema (caso de uso → grava no Supabase)
+    ├── infrastructure/        supabase client, repositório (lê tudo / upsert dos alterados), logger
     ├── lib/                   formatação, helpers de tabela/gráfico
     └── styles/
 tests/e2e/                     Playwright (client/tests/e2e)
 ```
 
-Regra de lint (como no app): `features` não importa `@supabase/supabase-js`; regras só vêm de `@manager-money/core`.
+Regra de lint (como no app): `features` não importa `@supabase/supabase-js`; regras só vêm de `@manager-money/core`;
+só `infrastructure/` fala com o Supabase.
 
 ## Rotas
 
 | Rota | Objetivo | Dados | Ações | Prioridade |
 |---|---|---|---|---|
-| `/login` | Entrar | — | entrar, criar conta | P0 |
+| `/login` | Entrar ou criar conta | — | entrar, criar conta | P0 |
+| `/comecar` | Onboarding de conta nova | config vazia | configurar renda/dia/meta, abrir 1º ciclo | P0 |
 | `/` | Visão geral do ciclo ativo | `selectActiveMonth`, `selectUpcomingCommitments`, `selectCardLimitUsage` | ir para gastos/ciclos | P0 |
 | `/gastos` | Tabela de gastos | gastos de todos os ciclos | buscar, filtrar, ordenar, paginar, registrar, editar/excluir (ciclo ativo) | P0 |
 | `/ciclos` | Ciclos fechados e resultado | `selectClosedMonths` | filtrar por ano | P0 |
@@ -301,7 +320,7 @@ no domínio, parcelamentos são compras de cartão ou fixas parceladas e renda �
 ## UI/UX
 
 - **Shell:** sidebar fixa (Visão geral, Gastos, Ciclos, Análise; P1: Cartões, Planejamento, Ajustes),
-  header com ciclo ativo, status de sync e menu da conta. Abaixo de 1024px a sidebar vira drawer;
+  header com ciclo ativo, indicador de gravação e menu da conta (com o seletor de tema). Abaixo de 1024px a sidebar vira drawer;
   telas pensadas para desktop, utilizáveis em tablet.
 - **Visão geral:** cards de KPI (limite de hoje, saldo do ciclo, livre após compromissos, limite dos
   cartões) + lista de compromissos + gráfico de gasto diário vs. limite.
@@ -310,8 +329,10 @@ no domínio, parcelamentos são compras de cartão ou fixas parceladas e renda �
 - **Gráficos:** barras por categoria, linha de gasto acumulado; sempre com tabela equivalente acessível.
 - **Feedback:** skeletons no carregamento inicial, estados vazios com ação ("Registre o primeiro
   gasto"), toasts de sucesso, diálogo de confirmação para excluir, erros em linguagem simples, banner
-  de sessão expirada e de falha de sync (com "tentar de novo").
-- **Tema:** claro no MVP, com tokens de cor prontos para escuro (o produto exclui tema escuro hoje).
+  de sessão expirada e de falha ao salvar (a ação não é aplicada; botão "tentar de novo").
+- **Tema:** claro e escuro desde o MVP (ADR-021): "Sistema" por padrão + escolha manual salva no
+  navegador; tokens com os mesmos nomes do app (`background`, `surface`, `ink`, `primary`…) como
+  variáveis CSS, contraste ≥ 4,5.
 - Textos em português, valores em `R$` via `utils/currency` do núcleo.
 
 ## Supabase
@@ -322,15 +343,17 @@ no domínio, parcelamentos são compras de cartão ou fixas parceladas e renda �
 | Auth | e-mail + senha (ADR-011) | idem; incluir a URL do web em *Site URL / Redirect URLs* |
 | Sessão | SecureStore + AES | `localStorage` padrão do supabase-js; `autoRefreshToken` ligado |
 | Refresh token | supabase-js | supabase-js; em `42501`/JWT expirado: refresh → se falhar, volta ao login |
-| Dados | upsert/pull pelas 9 tabelas | idem, pelo mesmo motor (`SyncRemote`) |
+| Dados | outbox + pull incremental pelas 9 tabelas (sync) | leitura completa ao entrar/focar e upsert imediato dos alterados (sem sync) |
 | RLS | `(select auth.uid()) = user_id` em todas | idem — é a proteção real |
 | RPC | `delete_my_account()` | idem (P1) |
 | Views, Edge Functions, Storage | não existem | não necessárias no MVP |
 | Realtime | não usado | P2 |
-| Tipos | DTOs em `sync/types.ts` | os mesmos do núcleo; `supabase gen types` opcional no futuro |
+| Tipos | DTOs em `sync/types.ts` | os mesmos do núcleo (DTOs + `mappers`); `supabase gen types` opcional no futuro |
+| Projeto | — | **o mesmo projeto** em dev e produção; E2E com usuário de teste dedicado |
 
-Conflito entre aparelhos: o web usa a mesma regra do mobile (o ciclo ativo do servidor vence,
-ADR-004 §4). Para reduzir janelas de conflito, o web faz pull ao focar a aba e antes de abrir/fechar ciclo.
+Conflito entre aparelhos: o web sempre parte do estado do servidor; o mobile aplica a regra de
+sempre ao sincronizar (LWW; ciclo ativo do servidor vence, ADR-004 §4). O web recarrega ao focar a aba
+e antes de abrir/fechar ciclo. Exclusões continuam lógicas (`deleted_at`), como no mobile.
 
 ## Segurança
 
@@ -351,9 +374,10 @@ ADR-004 §4). Para reduzir janelas de conflito, o web faz pull ao focar a aba e 
 - **Inputs:** Zod nos formulários com as mesmas regras do núcleo; o núcleo valida de novo nos casos de uso.
 - **Tokens e logs:** nunca logar token, e-mail ou valores (mesmo `logger` do núcleo); sem dados
   financeiros em URL (filtros por ID/período, não por valor).
-- **Armazenamento local:** no MVP só a sessão do supabase-js; o cache em IndexedDB (P1) contém dados
-  financeiros e deve ser apagado no logout.
+- **Armazenamento local:** só a sessão do supabase-js e a preferência de tema; **nenhum dado financeiro**
+  fica no navegador (estado só em memória, descartado no logout ou ao fechar a aba).
 - **Variáveis:** só `VITE_*` públicas no bundle; build falha se faltarem.
+- **Cabeçalhos na VPS:** CSP e demais cabeçalhos configurados no Nginx/Caddy; HTTPS obrigatório (Let's Encrypt).
 
 ## Compartilhamento de código
 
@@ -363,9 +387,11 @@ Recomendado **um** pacote, `packages/core`, porque o compartilhamento é comprov
 |---|---|---|
 | domínio | `financial.calculations.ts`, `credit-card.ts`, `payments.ts`, `projection.ts`, `financial.types.ts` | regras BR-FIN-*; divergir quebra invariantes |
 | aplicação | `cycle/card/payment.use-cases.ts`, `selectors.ts`, `state.ts`, `errors.ts` | o web precisa gravar com as mesmas regras |
-| sync | `types.ts`, `mappers.ts`, `sync-engine.ts`, `memory-remote.ts`, `supabase-remote.ts` | contrato e conflito idênticos nos dois clientes |
+| contrato | `types.ts` (DTOs, `CONTRACT_VERSION`), `mappers.ts` | as duas apps leem e gravam as mesmas linhas |
 | utils | `date.ts`, `currency.ts` | ciclo e formatação em centavos |
-| schema | `schema.ts`, `migrations.ts` | só quando houver cache local no web (P1) |
+
+Fica no app (não vai para o pacote): `sync-engine.ts`, `memory-remote.ts`, `supabase-remote.ts`,
+`schema.ts`, `migrations.ts` — são do modelo offline-first do mobile.
 
 Não recomendados agora: `packages/types` e `packages/validation` separados (os tipos já moram no
 domínio; não há validação compartilhável fora do schema) e `packages/ui` (RN e web não compartilham componentes).
@@ -374,10 +400,10 @@ domínio; não há validação compartilhável fora do schema) e `packages/ui` (
 
 | Nível | Ferramenta | O que cobrir |
 |---|---|---|
-| Unitário | Vitest | adaptadores web (SyncRemote web, store), helpers de tabela/gráfico. Regras já testadas no núcleo (Jest do pacote) |
+| Unitário | Vitest | repositório web (leitura completa, upsert dos alterados, ordem de dependência), store, helpers. Regras já testadas no núcleo |
 | Componente | Vitest + Testing Library | formulários (validação, centavos), tabela de gastos (filtro, somente leitura em ciclo fechado), guarda de rota |
-| Integração | Vitest + `MemoryRemote` do núcleo | login simulado → pull → editar gasto → push; conflito de ciclo ativo |
-| E2E | Playwright | 3 fluxos smoke: login, registrar/editar gasto, navegar ciclos e análise — contra projeto Supabase de teste ou local |
+| Integração | Vitest + Supabase client simulado | entrar → carregar → editar gasto → upsert; falha de gravação não altera o estado; recusa por ciclo ativo duplicado |
+| E2E | Playwright | 3 fluxos smoke: login, registrar/editar gasto, navegar ciclos e análise — local, no **mesmo projeto Supabase**, com usuário de teste dedicado (nunca a sua conta) |
 
 Meta: cobertura ≥ 80% em `store`, `infrastructure` e `lib` do client (mesmo critério do app);
 telas sem meta numérica.
@@ -386,24 +412,23 @@ telas sem meta numérica.
 
 Job `client` em `.github/workflows/ci.yml` com `working-directory: client`: `npm ci`, lint, typecheck,
 test, build, `npm audit --omit=dev --audit-level=critical`. Com workspaces, o pacote `core` ganha
-testes próprios e os jobs de app/client dependem dele. Preview deploy por PR pelo provedor.
+testes próprios e os jobs de app/client dependem dele. E2E fica local (não roda no CI).
 
 ## Deploy
 
-| Opção | Custo | Previews | Observação |
-|---|---|---|---|
-| **Cloudflare Pages (recomendado)** | Free com banda ilimitada | por PR | `_headers` para CSP; CDN com PoP em São Paulo |
-| Vercel | Hobby free (uso não comercial) | por PR | excelente DX; limites de banda e termos do plano gratuito |
-| Netlify | Free com limite de banda | por PR | equivalente; `_headers` igual |
+Decisão do dono do produto: **por enquanto só local** (`npm run dev` / `npm run preview`); no futuro,
+**VPS própria**. Sem Cloudflare/Vercel/Netlify.
 
-Variáveis `VITE_SUPABASE_*` configuradas no painel por ambiente (preview → projeto de teste,
-produção → projeto real). SPA precisa de fallback para `index.html`.
+Quando for para a VPS: `vite build` gera `client/dist/` (estático) → servido por Nginx ou Caddy com
+fallback de SPA para `index.html`, HTTPS, CSP e cabeçalhos de segurança, e cache longo só para
+`assets/` com hash. `VITE_SUPABASE_*` entram no momento do build. Adicionar a URL do web em *Site URL /
+Redirect URLs* do Supabase Auth. Deploy pode ser manual (rsync) ou um job do GitHub Actions por SSH.
 
 ## Backlog
 
 **CLIENT-001 — Decidir e aprovar a ADR-020**
 Objetivo: fechar stack e modelo de integração. Dependências: —.
-Aceite: ADR-020 ACCEPTED; SPEC do client criada; `context.json` atualizado.
+Aceite: ADR-020 ACCEPTED (modelo online sem sync); SPEC do client criada; `context.json` atualizado.
 
 **CLIENT-002 — Bootstrap do projeto**
 Objetivo: Vite + React + TS estrito em `client/`. Dependências: CLIENT-001.
@@ -411,8 +436,8 @@ Aceite: `npm run dev/build` funcionam; `tsconfig` estrito igual ao app; `.env.ex
 
 **CLIENT-003 — Extrair `packages/core` com npm workspaces**
 Objetivo: fonte única das regras. Dependências: CLIENT-001; ADR própria.
-Aceite: app importa do pacote; `cd app && npm run verify` e `expo export` verdes; testes do núcleo
-movidos com o código; cobertura mantida; EAS build preview validado; `logger` injetado no motor de sync.
+Aceite: domínio, aplicação, utils, `types.ts` e `mappers.ts` no pacote; app importa do pacote; `cd app &&
+npm run verify` e `expo export` verdes; testes movidos com o código; cobertura mantida; EAS build preview validado.
 
 **CLIENT-004 — Lint, formatação e CI**
 Objetivo: mesmos gates do app. Dependências: CLIENT-002.
@@ -422,9 +447,11 @@ Aceite: ESLint com regra de camadas e proibição de `dangerouslySetInnerHTML`; 
 Objetivo: Vitest + Testing Library + Playwright. Dependências: CLIENT-002.
 Aceite: um teste de cada tipo rodando no CI; limiar de cobertura configurado.
 
-**CLIENT-006 — Integração Supabase e SyncRemote web**
-Objetivo: cliente Supabase e motor de sync do núcleo no browser. Dependências: CLIENT-003.
-Aceite: pull monta o documento em memória; push envia o outbox; testes com `MemoryRemote`; erro de rede mantém pendências.
+**CLIENT-006 — Integração Supabase (repositório web, sem sync)**
+Objetivo: ler e gravar direto no Supabase usando o contrato do núcleo. Dependências: CLIENT-003.
+Aceite: leitura completa das 9 tabelas (paginada, sem `deleted_at`) monta o estado em memória; `save`
+faz upsert só dos registros alterados na ordem de dependência; falha não altera o estado em memória e
+vira erro legível; nada financeiro é gravado no navegador.
 
 **CLIENT-007 — Autenticação**
 Objetivo: login, criação de conta e logout. Dependências: CLIENT-006.
@@ -433,8 +460,14 @@ Aceite: e-mail + senha (mín. 8); sessão persiste no reload; logout limpa estad
 **CLIENT-008 — Proteção de rotas e sessão expirada**
 Dependências: CLIENT-007. Aceite: rotas privadas redirecionam; refresh automático; falha de refresh → login com aviso.
 
-**CLIENT-009 — Layout principal e navegação**
-Dependências: CLIENT-008. Aceite: sidebar, header com ciclo e status de sync, drawer < 1024px, páginas de erro/404.
+**CLIENT-009 — Layout principal, navegação e tema**
+Dependências: CLIENT-008. Aceite: sidebar, header com ciclo e indicador de gravação, drawer < 1024px,
+páginas de erro/404; temas claro/escuro (Sistema/Claro/Escuro, preferência no navegador, ADR-021).
+
+**CLIENT-009A — Onboarding de conta nova**
+Dependências: CLIENT-009. Aceite: conta sem configuração vai para `/comecar`; salva configuração e abre
+o 1º ciclo pelos casos de uso do núcleo; o app mobile, ao entrar com essa conta, recebe os dados pelo
+fluxo de primeiro login.
 
 **CLIENT-010 — Visão geral (dashboard)**
 Dependências: CLIENT-009. Aceite: KPIs e compromissos iguais aos números do app para o mesmo documento (teste com fixture); skeleton e vazio.
@@ -443,7 +476,8 @@ Dependências: CLIENT-009. Aceite: KPIs e compromissos iguais aos números do ap
 Dependências: CLIENT-009. Aceite: busca, filtros, ordenação, paginação; totais em centavos corretos.
 
 **CLIENT-012 — Registrar, editar e excluir gasto**
-Dependências: CLIENT-011. Aceite: usa `addExpense/updateExpense/deleteExpense` do núcleo; ciclo fechado somente leitura; confirmação ao excluir; sincroniza com o mobile.
+Dependências: CLIENT-011. Aceite: usa `addExpense/updateExpense/deleteExpense` do núcleo e grava na
+hora; ciclo fechado somente leitura; confirmação ao excluir; a mudança aparece no mobile no próximo sync.
 
 **CLIENT-013 — Ciclos e detalhe do ciclo**
 Dependências: CLIENT-009. Aceite: lista com resultado e filtro por ano; detalhe por dia igual ao histórico do app.
@@ -454,12 +488,13 @@ Dependências: CLIENT-009. Aceite: gráfico + tabela acessível; período livre;
 **CLIENT-015 — Hardening do MVP**
 Dependências: CLIENT-010..014. Aceite: CSP e cabeçalhos; auditoria (`fullstack-security-guardian`); E2E smoke verdes; acessibilidade de teclado.
 
-**CLIENT-016 — Deploy**
-Dependências: CLIENT-015. Aceite: Cloudflare Pages com preview por PR; env por ambiente; URL no Auth do Supabase; runbook atualizado.
+**CLIENT-016 — Publicação na VPS (futuro)**
+Dependências: CLIENT-015 e decisão de publicar. Aceite: build estático servido por Nginx/Caddy com
+HTTPS, CSP e fallback de SPA; URL no Auth do Supabase; runbook atualizado. Até lá, uso local.
 
-**CLIENT-017..022 (P1)** — Cartões e faturas · Cadastros e configuração · Fixas, renda avulsa e ciclo
-(abrir/fechar/"Já recebi") · Projeção e comparação · Exportação JSON/CSV e exclusão de conta ·
-Cache IndexedDB com schema do núcleo.
+**CLIENT-017..021 (P1, paridade com o mobile)** — Cartões e faturas (incl. situação inicial) · Cadastros
+e configuração · Fixas, renda avulsa e ciclo (fechar/abrir/"Já recebi", idêntico ao mobile) · Projeção
+e comparação · Exportação JSON/CSV e exclusão de conta.
 
 ## Ordem de implementação
 
@@ -467,28 +502,38 @@ Cache IndexedDB com schema do núcleo.
 |---|---|---|---|---|
 | 0 — Fundação | projeto e núcleo prontos | 001–005 | — | client vazio com gates; app usando `packages/core` |
 | 1 — Autenticação | entrar e manter sessão | 006–008 | 0 | usuário logado com documento em memória |
-| 2 — Shell | navegação desktop | 009 | 1 | layout navegável |
+| 2 — Shell | navegação desktop, tema e onboarding | 009, 009A | 1 | layout navegável; conta nova configurada no web |
 | 3 — Visão geral | valor imediato | 010 | 2 | dashboard consolidado |
 | 4 — Gestão de gastos | administrar histórico | 011–013 | 2 | tabela e ciclos com edição |
 | 5 — Relatórios | análise | 014 | 2 | análise por categoria/período |
 | 6 — Hardening | segurança e qualidade | 015 | 3–5 | MVP auditado |
-| 7 — Deploy | publicar | 016 | 6 | MVP no ar |
-| 8 — P1 | paridade e gestão | 017–022 | 7 | web completo para administração |
+| 7 — Uso local | MVP rodando localmente | — | 6 | MVP utilizável em `localhost` |
+| 8 — P1 | paridade com o mobile | 017–021 | 7 | web com as mesmas ações do mobile |
+| 9 — VPS (quando decidir) | publicar | 016 | 6 | web no ar na VPS |
 
 ## Riscos
 
-- **Divergência de regras** se alguém gravar direto nas tabelas sem o núcleo → lint + revisão; só o núcleo escreve.
+- **Divergência de regras** se alguém gravar nas tabelas sem passar pelo núcleo → lint + revisão; toda escrita passa por um caso de uso.
+- **Gravação parcial:** uma ação que altera vários registros (ex.: fechar ciclo) pode falhar no meio → gravar na ordem de dependência,
+  recarregar o estado do servidor após falha e, se virar problema real, mover a operação para uma RPC transacional (ADR nova).
 - **Extração do núcleo quebrar o app** (Metro/Jest/EAS com workspaces) → CLIENT-003 isolada, com
   `expo export` e build preview antes de seguir.
 - **Versões diferentes:** o web atualiza na hora e o mobile depende das lojas → contrato aditivo, `CONTRACT_VERSION` checado.
-- **Conflitos entre aparelhos** em ações de ciclo → pull antes de abrir/fechar; regra do servidor vence.
+- **Conflitos com o mobile offline:** edição feita no web pode ser sobrescrita por edição antiga do mobile ao sincronizar (LWW pelo relógio do cliente) → aceito, igual a dois celulares hoje; recarregar antes de ações de ciclo.
 - **XSS com sessão em `localStorage`** → CSP estrita, sem HTML dinâmico, dependências enxutas.
-- **Volume:** documento inteiro em memória — aceitável para finanças pessoais; medir se passar de alguns milhares de gastos.
+- **Volume:** todos os dados do usuário carregados a cada entrada — aceitável para finanças pessoais; medir se passar de alguns milhares de gastos.
+
+## Decisões do dono do produto (2026-10-04)
+
+| Pergunta | Decisão | Efeito no plano |
+|---|---|---|
+| Criar conta no web? | Sim | `/login` cria conta; onboarding (CLIENT-009A) no P0 |
+| Deploy | Só local por enquanto; VPS própria no futuro | Sem provedor gerenciado; CLIENT-016 vira publicação na VPS, quando decidir |
+| Abrir/fechar ciclo no web | Idêntico ao mobile | P1 = paridade total |
+| Tema escuro | Sim, mobile e web | ADR-021; mobile implementado (T-031); web nasce com os dois temas |
+| Projeto Supabase | O mesmo | E2E local com usuário de teste dedicado |
+| Sync no web | Não: web lê e grava direto no Supabase | Sem outbox/cache; escrita imediata pelo núcleo (decisão 1) |
 
 ## Dúvidas em aberto
 
-1. O web deve permitir **criar conta** ou só entrar com conta criada no app?
-2. Domínio e provedor de deploy definitivos (Cloudflare Pages vs. Vercel) e se há uso comercial.
-3. Em P1, abrir/fechar ciclo no web é desejado ou fica exclusivo do mobile?
-4. Tema escuro segue fora do escopo do produto?
-5. Projeto Supabase separado para previews/E2E ou só o de produção?
+1. Na VPS, o web terá domínio próprio (ex.: `app.seudominio`)? Define CSP, CORS de Auth e certificado.

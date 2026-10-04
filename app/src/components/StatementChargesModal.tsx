@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, ScrollView, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../design/theme';
+import { radius, spacing, typography } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 import { MoneyCents } from '../domain/financial/financial.types';
 import { AppButton } from './AppButton';
 import { CurrencyInput } from './CurrencyInput';
@@ -18,6 +19,7 @@ type StatementChargesModalProps = {
  * saem do orçamento do ciclo atual.
  */
 export function StatementChargesModal({ title, onConfirm, onClose }: StatementChargesModalProps) {
+  const styles = useStyles();
   const [amount, setAmount] = useState<MoneyCents>(0);
   const [error, setError] = useState<string | undefined>();
   const [isSaving, setIsSaving] = useState(false);
@@ -68,9 +70,9 @@ export function StatementChargesModal({ title, onConfirm, onClose }: StatementCh
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   backdrop: {
-    backgroundColor: 'rgba(17, 24, 39, 0.5)',
+    backgroundColor: colors.overlay,
     flex: 1,
     justifyContent: 'center',
     padding: spacing.lg,
@@ -94,4 +96,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
-});
+}));

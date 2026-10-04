@@ -8,7 +8,7 @@ summary: >
 code:
   - package.json
   - app/package.json
-last_verified_commit: 7c4199c+T-029
+last_verified_commit: 455a4b1+T-031
 ---
 
 # Módulo: ferramentas

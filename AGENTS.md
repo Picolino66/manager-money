@@ -17,7 +17,7 @@
 - Nova regra de negócio: seguir `skills/adicionar-regra-de-negocio.md`.
 
 ## Estrutura do repositório (ADR-019)
-- `app/` = aplicativo mobile Expo (projeto npm independente) · `client/` = aplicação web (**planejada, não implementada**; plano em `docs/architecture/client-web-plan.md`, stack proposta na ADR-020) · `supabase/` = backend compartilhado, fonte única (nunca duplicar migrations nos apps) · raiz = workspace do produto (docs, specs, tasks, adr, agents, skills, scripts, CI).
+- `app/` = aplicativo mobile Expo (projeto npm independente) · `client/` = aplicação web (**planejada, não implementada**; online, lê e grava direto no Supabase **sem sync**, regras pelo núcleo compartilhado; plano em `docs/architecture/client-web-plan.md`, ADR-020) · `supabase/` = backend compartilhado, fonte única (nunca duplicar migrations nos apps) · raiz = workspace do produto (docs, specs, tasks, adr, agents, skills, scripts, CI).
 - Sem ferramenta de monorepo/workspaces; reavaliar ao extrair `packages/core` (ADR-020). Caminhos `code:` nos docs são relativos à raiz (`app/src/...`).
 
 ## Documentação IA-First
@@ -46,6 +46,7 @@
 - Cartão: a fatura pesa no ciclo do **vencimento**; limite do cartão nunca é dinheiro disponível; fixas pendentes ficam reservadas (ADR-017, BR-FIN-004/025/026).
 - Fatura: pagar uma fatura já reservada **não desconta de novo** (só encargos pesam); o limite libera **só o amortizado**; o restante de pagamento parcial vira **dívida do próximo ciclo** (ADR-018, BR-FIN-026/033/034; invariantes INV-01..10 em BR-FIN-030).
 - Textos de UI em português.
+- Cores sempre pelo tema ativo (ADR-021): `makeStyles((colors) => ...)` + `useStyles()` ou `useTheme()`; nunca cor literal nem `colors` estático. Preferência de tema fica só no aparelho, fora do documento sincronizado.
 
 ## Persistência local e Sync
 - Documento local único versionado (v8) em `app/src/infrastructure/storage/`; mudança de esquema exige migração em `migrations.ts` e atualização de `schema.ts`.

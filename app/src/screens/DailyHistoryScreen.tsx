@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { parseISO } from 'date-fns';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -17,7 +17,8 @@ import {
   normalizeCategory,
 } from '../domain/financial/financial.calculations';
 import { Expense } from '../domain/financial/financial.types';
-import { colors, spacing, typography } from '../design/theme';
+import { spacing, typography } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '../utils/currency';
 import { formatDateLabel } from '../utils/date';
@@ -33,6 +34,8 @@ type DayGroup = {
 };
 
 export function DailyHistoryScreen({ navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
 
@@ -158,7 +161,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: {
     color: colors.ink,
     fontSize: typography.title,
@@ -233,4 +236,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     height: 1,
   },
-});
+}));

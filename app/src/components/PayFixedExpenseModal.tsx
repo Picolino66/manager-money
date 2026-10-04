@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { PayFixedExpenseInput } from '../application/payment.use-cases';
-import { colors, radius, spacing, typography } from '../design/theme';
+import { radius, spacing, typography } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 import {
   calculateFirstCycleKey,
   CardLimitUsage,
@@ -53,6 +54,7 @@ export function PayFixedExpenseModal({
   onClose,
   onRegisterCard,
 }: PayFixedExpenseModalProps) {
+  const styles = useStyles();
   const [kind, setKind] = useState<'cash' | 'credit'>('cash');
   const [cardId, setCardId] = useState<string | null>(null);
   const [installmentsText, setInstallmentsText] = useState('1');
@@ -210,6 +212,7 @@ function Chip({
   selected: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityLabel={label}
@@ -223,9 +226,9 @@ function Chip({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   backdrop: {
-    backgroundColor: 'rgba(17, 24, 39, 0.5)',
+    backgroundColor: colors.overlay,
     flex: 1,
     justifyContent: 'center',
     padding: spacing.lg,
@@ -285,4 +288,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
-});
+}));

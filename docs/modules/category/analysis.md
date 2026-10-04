@@ -10,7 +10,7 @@ keywords: [análise, gráfico, período, filtro, relatório, cartão, fixas paga
 code:
   - app/src/screens/CategoriesScreen.tsx
 business_rules: [BR-FIN-012, BR-FIN-030]
-last_verified_commit: c47cf18+T-025r2
+last_verified_commit: 455a4b1+T-031
 ---
 
 # Análise por categoria

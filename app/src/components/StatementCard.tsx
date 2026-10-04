@@ -1,8 +1,9 @@
 import { ReactNode, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { colors, spacing } from '../design/theme';
+import { spacing } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { CardPurchase, CardStatement, StatementStatus } from '../domain/financial/credit-card';
 import {
   describeStatementComposition,
@@ -53,6 +54,8 @@ export function StatementCard({
   onEditPurchase,
   onDeletePurchase,
 }: StatementCardProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const [expanded, setExpanded] = useState(defaultExpanded);
   const monthLabel = formatMonthKey(statement.key);
   const count = statement.installments.length;
@@ -166,7 +169,7 @@ export function StatementCard({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: {
     alignItems: 'flex-start',
     flexDirection: 'row',
@@ -241,4 +244,4 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.xs,
   },
-});
+}));

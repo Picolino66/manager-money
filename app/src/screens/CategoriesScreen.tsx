@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { isAfter, isBefore, parseISO, startOfDay } from 'date-fns';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
@@ -14,7 +14,8 @@ import { TextInputField } from '../components/TextInputField';
 import { getSortedCategories, normalizeCategory } from '../domain/financial/financial.calculations';
 import { isLive } from '../application/state';
 import { DEFAULT_EXPENSE_CATEGORY } from '../domain/financial/financial.types';
-import { colors, radius, spacing, typography } from '../design/theme';
+import { radius, spacing, typography } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { MainTabParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '../utils/currency';
@@ -68,6 +69,8 @@ function parseFilterDate(date: string) {
 }
 
 export function CategoriesScreen({ navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const months = useFinancialStore((state) => state.months);
@@ -341,7 +344,7 @@ export function CategoriesScreen({ navigation }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   header: {
     gap: spacing.xs,
   },
@@ -418,4 +421,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-});
+}));

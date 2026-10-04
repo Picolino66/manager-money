@@ -1,6 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '../design/theme';
+import { radius, spacing } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { MoneyCents } from '../domain/financial/financial.types';
 
 type CardLimitBarProps = {
@@ -10,6 +11,8 @@ type CardLimitBarProps = {
 
 /** BR-FIN-026: barra de uso do limite do cartão (comprometido / limite total). */
 export function CardLimitBar({ committed, creditLimit }: CardLimitBarProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   if (creditLimit === null || creditLimit <= 0) {
     return null;
   }
@@ -37,7 +40,7 @@ export function CardLimitBar({ committed, creditLimit }: CardLimitBarProps) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrapper: {
     gap: spacing.xs,
   },
@@ -59,4 +62,4 @@ const styles = StyleSheet.create({
   captionOver: {
     color: colors.critical,
   },
-});
+}));

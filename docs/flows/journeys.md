@@ -8,7 +8,7 @@ summary: >
   exportação, dia de pagamento) e avaliação heurística das telas existentes.
 code:
   - app/src/navigation/AppNavigator.tsx
-last_verified_commit: c47cf18+T-025r2
+last_verified_commit: 455a4b1+T-031
 ---
 
 # Jornadas, wireframes e usabilidade

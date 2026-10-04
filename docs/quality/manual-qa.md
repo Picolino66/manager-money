@@ -8,7 +8,7 @@ summary: >
   críticos antes da publicação nas lojas.
 code:
   - app/src/navigation/AppNavigator.tsx
-last_verified_commit: bfe9de6+T-028
+last_verified_commit: 455a4b1+T-031
 ---
 
 # Campanha de QA manual — v1.0
@@ -101,3 +101,10 @@ last_verified_commit: bfe9de6+T-028
 | D08.16 | Média | Lançar juros/multa de R$ 50,00 numa fatura já paga parcialmente | Restante aumenta R$ 50,00; "− Juros/multas de faturas" no plano; saldo do ciclo cai R$ 50,00; limite não muda |
 | D08.17 | Média | Excluir o "Total da fatura" informado | A parcela marcada "já incluída" volta a somar na fatura, no orçamento e no limite |
 | D08.18 | Baixa | Dois aparelhos offline registram o mesmo pagamento e sincronizam | Dois lançamentos na fatura; limite não libera além da fatura; saldo inalterado; desfazer um deles |
+| **Dia 9 — tema claro e escuro (ADR-021, SPEC-021)** ||||
+| D09.01 | Alta | Aparelho em modo escuro, app em "Sistema" (padrão) | App abre escuro: fundo, cabeçalhos, barra de abas, status bar e splash escuros; textos legíveis |
+| D09.02 | Alta | Ajustes → Aparência → "Claro" e depois "Escuro" | Tema troca na hora em todas as abas; a opção escolhida fica marcada |
+| D09.03 | Alta | Fechar e reabrir o app depois de escolher "Claro" com o aparelho escuro | Continua claro (preferência salva no aparelho) |
+| D09.04 | Alta | No tema escuro, abrir os modais (pagar fixa, pagar fatura, encargos, editar compra) e o seletor de categoria | Fundo escurecido atrás do modal; campos, chips e botões legíveis |
+| D09.05 | Média | No tema escuro, ver Hoje com status Saudável, Atenção, Crítico e Negativo | Cada status com texto + cor distinguíveis |
+| D09.06 | Média | Entrar na mesma conta em outro aparelho | O tema não é sincronizado: cada aparelho mantém a própria escolha |

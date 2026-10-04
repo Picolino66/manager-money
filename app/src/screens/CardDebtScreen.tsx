@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, Switch, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { isAfter, startOfDay } from 'date-fns';
 
@@ -12,7 +12,8 @@ import { EmptyState } from '../components/EmptyState';
 import { Screen } from '../components/Screen';
 import { SelectField } from '../components/SelectField';
 import { TextInputField } from '../components/TextInputField';
-import { colors, radius, spacing, typography } from '../design/theme';
+import { radius, spacing, typography } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import {
   addCycleKeys,
   currentStatementKey,
@@ -46,6 +47,8 @@ function toCount(value: string): number {
  * a parcela que já está no total informado só compõe esse total.
  */
 export function CardDebtScreen({ navigation, route }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const doc = useFinancialStore((state) => state.doc);
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
@@ -350,6 +353,7 @@ function Chip({
   selected: boolean;
   onPress: () => void;
 }) {
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityLabel={label}
@@ -363,7 +367,7 @@ function Chip({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   title: {
     color: colors.ink,
     fontSize: typography.title,
@@ -432,4 +436,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
   },
-});
+}));

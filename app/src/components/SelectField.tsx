@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 import { useState } from 'react';
 
-import { colors, radius, spacing, typography } from '../design/theme';
+import { radius, spacing, typography } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 
 type SelectOption = {
   label: string;
@@ -17,6 +18,8 @@ type SelectFieldProps = {
 };
 
 export function SelectField({ label, options, value, onChange }: SelectFieldProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const [isOpen, setIsOpen] = useState(false);
   const selectedOption = options.find((option) => option.value === value);
 
@@ -74,7 +77,7 @@ export function SelectField({ label, options, value, onChange }: SelectFieldProp
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   wrapper: {
     gap: spacing.sm,
   },
@@ -103,7 +106,7 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     alignItems: 'center',
-    backgroundColor: 'rgba(17, 24, 39, 0.38)',
+    backgroundColor: colors.overlaySoft,
     flex: 1,
     justifyContent: 'center',
     padding: spacing.lg,
@@ -141,4 +144,4 @@ const styles = StyleSheet.create({
   optionTextSelected: {
     color: colors.primaryDark,
   },
-});
+}));

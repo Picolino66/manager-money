@@ -1,8 +1,9 @@
 import { ComponentProps } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { colors, spacing } from '../design/theme';
+import { spacing } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { AppButton } from './AppButton';
 import { Card } from './Card';
 
@@ -23,6 +24,8 @@ export function EmptyState({
   actionLabel,
   onActionPress,
 }: EmptyStateProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Card style={styles.card}>
       <View style={styles.iconCircle}>
@@ -37,7 +40,7 @@ export function EmptyState({
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   card: {
     alignItems: 'center',
     paddingVertical: spacing.xl,
@@ -62,4 +65,4 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     textAlign: 'center',
   },
-});
+}));

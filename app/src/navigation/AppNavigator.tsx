@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { NavigationContainer } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, NavigationContainer, Theme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors } from '../design/theme';
+import { useTheme } from '../design/useTheme';
 import { AccountScreen } from '../screens/AccountScreen';
 import { AddExpenseScreen } from '../screens/AddExpenseScreen';
 import { CardDebtScreen } from '../screens/CardDebtScreen';
@@ -25,6 +25,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function MainTabs() {
+  const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
@@ -79,8 +80,23 @@ function MainTabs() {
 }
 
 export function AppNavigator() {
+  const { colors, scheme } = useTheme();
+  const baseTheme = scheme === 'dark' ? DarkTheme : DefaultTheme;
+  const navigationTheme: Theme = {
+    ...baseTheme,
+    colors: {
+      ...baseTheme.colors,
+      primary: colors.primary,
+      background: colors.background,
+      card: colors.surface,
+      text: colors.ink,
+      border: colors.border,
+      notification: colors.critical,
+    },
+  };
+
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator
         screenOptions={{
           contentStyle: { backgroundColor: colors.background },

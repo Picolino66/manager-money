@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, Switch, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -29,7 +29,8 @@ import {
   MIN_PAYDAY,
   PermanentFixedExpense,
 } from '../domain/financial/financial.types';
-import { colors, spacing, typography } from '../design/theme';
+import { spacing, typography } from '../design/theme';
+import { makeStyles, useTheme } from '../design/useTheme';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '../utils/currency';
 
@@ -103,6 +104,8 @@ function createIncomeSource(name = '', payday: number = DEFAULT_PAYDAY): IncomeS
 }
 
 export function ConfigScreen({ navigation }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const saveConfig = useFinancialStore((state) => state.saveConfig);
@@ -646,6 +649,8 @@ type ActiveToggleProps = {
 
 /** Interruptor Ativa/Inativa (BR-FIN-018 e despesas fixas): inativo fica guardado, mas não pesa. */
 function ActiveToggle({ accessibilityLabel, inactiveHint, value, onChange }: ActiveToggleProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.activeRow}>
       <View style={styles.activeText}>
@@ -664,7 +669,7 @@ function ActiveToggle({ accessibilityLabel, inactiveHint, value, onChange }: Act
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   activeRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -737,4 +742,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-});
+}));

@@ -4,13 +4,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   ViewStyle,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { colors, spacing } from '../design/theme';
+import { spacing } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 
 type ScreenProps = PropsWithChildren<{
   contentContainerStyle?: ViewStyle;
@@ -18,6 +18,7 @@ type ScreenProps = PropsWithChildren<{
 }>;
 
 export function Screen({ children, contentContainerStyle, footer }: ScreenProps) {
+  const styles = useStyles();
   const insets = useSafeAreaInsets();
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const bottomInset = Math.max(insets.bottom, spacing.xl);
@@ -67,7 +68,7 @@ export function Screen({ children, contentContainerStyle, footer }: ScreenProps)
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -83,4 +84,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
   },
-});
+}));

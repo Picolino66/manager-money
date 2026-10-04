@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, Text } from 'react-native';
+import { Alert, Text } from 'react-native';
 import { useEffect, useMemo, useState } from 'react';
 import { isAfter, isBefore, parseISO, startOfDay } from 'date-fns';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,7 +27,8 @@ import {
 import { getSortedCategories, normalizeCategory } from '../domain/financial/financial.calculations';
 import { selectActiveCreditCards, selectCardLimitUsage } from '../application/selectors';
 import { DEFAULT_EXPENSE_CATEGORY } from '../domain/financial/financial.types';
-import { colors, spacing, typography } from '../design/theme';
+import { spacing, typography } from '../design/theme';
+import { makeStyles } from '../design/useTheme';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '../utils/currency';
 import { describeFirstInstallment } from './cardText';
@@ -52,6 +53,7 @@ const expenseSchema = z.object({
 type ExpenseForm = z.infer<typeof expenseSchema>;
 
 export function AddExpenseScreen({ navigation, route }: Props) {
+  const styles = useStyles();
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const addExpense = useFinancialStore((state) => state.addExpense);
@@ -404,7 +406,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const useStyles = makeStyles((colors) => ({
   hint: {
     color: colors.muted,
     fontSize: 13,
@@ -416,4 +418,4 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     marginBottom: spacing.xs,
   },
-});
+}));

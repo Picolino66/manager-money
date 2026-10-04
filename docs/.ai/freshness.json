@@ -1,17 +1,17 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T16:30:41.471Z",
-  "source_commit": "7c4199c",
+  "generated_at": "2026-10-04T16:58:33.844Z",
+  "source_commit": "455a4b1",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
     "architecture/client-web-plan.md": {
       "id": "architecture.client-web-plan",
-      "last_verified_commit": "7c4199c+T-029",
+      "last_verified_commit": "455a4b1+T-030",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:52d4cc48fd6f8a60b44bb746d7f3064cdf2e01b9223729469a1e1f5ec3df9787",
-        "app/package.json": "sha256:7f9b45c3dedf9097af52c82b19f1e41dc319f958c17201aadd0588c91bd59d3f",
+        "app/package.json": "sha256:6235413c2ef87d141fd605eb00ab648c28df12de9d11e01eac39cbe234c42687",
         ".github/workflows/ci.yml": "sha256:fc281333e99b4fff78e0e885e4da1dcac1f693c28b9e3544f5e09eb32339d964",
         "client/README.md": "sha256:5d077d2abb1957107c1f2f8f77d986fc5122bf21059351f86c2b11a57ab8b157"
       }
@@ -77,19 +77,23 @@
     },
     "design/design-system.md": {
       "id": "design.system",
-      "last_verified_commit": "f9eaa87+T-023",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
-        "app/src/design/theme.ts": "sha256:9e5ab49c86d245ba891a6aea32eb9385b9b367c1264e15906924d6bcab25fc76",
-        "app/src/components/AppButton.tsx": "sha256:4a1b405567741d16ed22839ed0560cd56fa0190e41ad7ce4b47e4f6e0bf6a3e5"
+        "app/src/design/theme.ts": "sha256:09d330f5a97d414358812f98e9d5c85e2f789323102d2b347e72f92231ca8b53",
+        "app/src/design/useTheme.ts": "sha256:834d0525e6f548cf1f41dc2188c929c2e8f2aac2c5003d129492adef1c524168",
+        "app/src/store/theme.store.ts": "sha256:3c96a92084777495474939e7baacfa4fece219e7c8e38e68f365496033a8e909",
+        "app/src/infrastructure/storage/theme-preference.ts": "sha256:73bc6f5ac31b7f4b3e19cd22a747a76142a2334e8eccfa04dd79063dd63c52ff",
+        "app/src/components/AppButton.tsx": "sha256:30665ff72fb52fb31df4972330cdc6f34de9bfb845e5c1415476f053adcd59bd",
+        "app/src/components/ThemePreferenceSelector.tsx": "sha256:57c78e97cf9d6b45a152dfcdb5335ed7363176ad2171d8d62e3b65dc6d0459aa"
       }
     },
     "flows/journeys.md": {
       "id": "flows.journeys",
-      "last_verified_commit": "c47cf18+T-025r2",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
-        "app/src/navigation/AppNavigator.tsx": "sha256:f36c2b30b26ba79d8309585a3e0dd34dc5274037727320156ecc2ff3bfb32e3e"
+        "app/src/navigation/AppNavigator.tsx": "sha256:f1fffae9fd0dd6e5e8d84d4be87e0d9ff9d66ac917dfdf6e843c22a2108a9632"
       }
     },
     "modules/account/auth.md": {
@@ -231,18 +235,18 @@
     },
     "modules/category/analysis.md": {
       "id": "category.analysis",
-      "last_verified_commit": "c47cf18+T-025r2",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
-        "app/src/screens/CategoriesScreen.tsx": "sha256:d0a69f189d85978ae1e044bad449b08a75c1fe66e0631bfd3e3fa13417f0aed4"
+        "app/src/screens/CategoriesScreen.tsx": "sha256:5ac5a5b20545d2616e025a8ab4c850965febb5ad743dd7a6c709e48a10a652f0"
       }
     },
     "modules/category/index.md": {
       "id": "category",
-      "last_verified_commit": "c47cf18+T-025",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
-        "app/src/screens/CategoriesScreen.tsx": "sha256:d0a69f189d85978ae1e044bad449b08a75c1fe66e0631bfd3e3fa13417f0aed4"
+        "app/src/screens/CategoriesScreen.tsx": "sha256:5ac5a5b20545d2616e025a8ab4c850965febb5ad743dd7a6c709e48a10a652f0"
       }
     },
     "modules/category/manage.md": {
@@ -334,10 +338,10 @@
     },
     "modules/expense/index.md": {
       "id": "expense",
-      "last_verified_commit": "c47cf18+T-025",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
-        "app/src/screens/AddExpenseScreen.tsx": "sha256:b25685d935d78684c34917af568a6bb5172065338df7244b631f2d7bd5947716"
+        "app/src/screens/AddExpenseScreen.tsx": "sha256:ecf6919dd99aeb5e1a01a4b97c8e882169f20387b3afe60f1c0b09943318cd57"
       }
     },
     "modules/expense/register.md": {
@@ -410,10 +414,10 @@
     },
     "modules/payment/index.md": {
       "id": "payment",
-      "last_verified_commit": "c47cf18+T-025",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
-        "app/src/components/FixedExpensesCard.tsx": "sha256:e6feb1c8d47d261aa997703804affd2f1dd4fa6dcc51f9bf511b7c9216098fee"
+        "app/src/components/FixedExpensesCard.tsx": "sha256:02f0fe8b0338ac79065b3389781e7c4472c3b70fbc8eba02c958479f4ee9d728"
       }
     },
     "modules/planning/configure.md": {
@@ -447,10 +451,10 @@
     },
     "modules/planning/index.md": {
       "id": "planning",
-      "last_verified_commit": "c47cf18+T-025",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
-        "app/src/screens/ConfigScreen.tsx": "sha256:7789e7bebe7a7f6eed16871a002e43b88044d8ff4781023cb8b6e3e7cd0a1400"
+        "app/src/screens/ConfigScreen.tsx": "sha256:c916db0aec2808bf60628a38d09663e2b9fe3a87cb526f7633d44473b9ab4ad0"
       }
     },
     "modules/planning/payday.md": {
@@ -466,7 +470,7 @@
     },
     "modules/settings/hub.md": {
       "id": "settings.hub",
-      "last_verified_commit": "bfe9de6+T-028r2",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
         "describeSyncStatus": "sha256:d720229bc37fbb0aa631369c67bb793a9ac45488fa2e2ac4fa80ff2ce20ee144",
@@ -475,10 +479,10 @@
     },
     "modules/settings/index.md": {
       "id": "settings",
-      "last_verified_commit": "a16e575+T-020",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
-        "app/src/screens/SettingsScreen.tsx": "sha256:4e309af248de5db33bac9fb240dbbe11398ba468ad077f7710ec1570512b43d3"
+        "app/src/screens/SettingsScreen.tsx": "sha256:03a17a889c07207ee62eb8dfc7164aa1a6485b86ee670b99ea46d2995fe23715"
       }
     },
     "modules/storage/index.md": {
@@ -544,20 +548,20 @@
     },
     "modules/tooling/index.md": {
       "id": "tooling",
-      "last_verified_commit": "7c4199c+T-029",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:52d4cc48fd6f8a60b44bb746d7f3064cdf2e01b9223729469a1e1f5ec3df9787",
-        "app/package.json": "sha256:7f9b45c3dedf9097af52c82b19f1e41dc319f958c17201aadd0588c91bd59d3f"
+        "app/package.json": "sha256:6235413c2ef87d141fd605eb00ab648c28df12de9d11e01eac39cbe234c42687"
       }
     },
     "modules/tooling/quality-pipeline.md": {
       "id": "tooling.quality-pipeline",
-      "last_verified_commit": "7c4199c+T-029",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:52d4cc48fd6f8a60b44bb746d7f3064cdf2e01b9223729469a1e1f5ec3df9787",
-        "app/package.json": "sha256:7f9b45c3dedf9097af52c82b19f1e41dc319f958c17201aadd0588c91bd59d3f",
+        "app/package.json": "sha256:6235413c2ef87d141fd605eb00ab648c28df12de9d11e01eac39cbe234c42687",
         "app/eslint.config.js": "sha256:a7f354336788b1d28f896848ce316a1a9f8e34e14d9985e1a7cb03fdd3c5bb96",
         ".github/workflows/ci.yml": "sha256:fc281333e99b4fff78e0e885e4da1dcac1f693c28b9e3544f5e09eb32339d964",
         "scripts/ai-docs/build-index.mjs": "sha256:68d8f2e3831e93b828247f206678ffa0151ceb09acfaaf1436f674ff7d140856",
@@ -566,21 +570,21 @@
     },
     "operations/runbook.md": {
       "id": "operations.runbook",
-      "last_verified_commit": "7c4199c+T-029",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
         "app/eas.json": "sha256:6ae16fa238b4a43cc16d1d5a3fdcde66f2fa70eb6bc16cc9b2e4c80f3f6842aa",
-        "app/app.json": "sha256:8c0f1cfd6b8b5f01c29d10696272cfd78baa6000ec76f56ece75b55d48790ff8",
+        "app/app.json": "sha256:bed19b72115be8e40fa467f5fda6b6f55ab9be3a64825b15a19d251ecae035a6",
         "supabase/migrations/20261001000000_init.sql": "sha256:fbdafc4a64ab9b114512823451cffbb232b603310e616466c5bb811fe0ce93af",
         "docs/operations/metrics.sql": "sha256:2c78ad7035f9191701ec6a0179d8caccd5d0468a82ec0c8185b883cc1ef66e58"
       }
     },
     "quality/manual-qa.md": {
       "id": "quality.manual-qa",
-      "last_verified_commit": "bfe9de6+T-028",
+      "last_verified_commit": "455a4b1+T-031",
       "state": "fresh",
       "source_hashes": {
-        "app/src/navigation/AppNavigator.tsx": "sha256:f36c2b30b26ba79d8309585a3e0dd34dc5274037727320156ecc2ff3bfb32e3e"
+        "app/src/navigation/AppNavigator.tsx": "sha256:f1fffae9fd0dd6e5e8d84d4be87e0d9ff9d66ac917dfdf6e843c22a2108a9632"
       }
     },
     "quality/security-report.md": {
