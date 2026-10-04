@@ -97,7 +97,7 @@ export function CardsScreen({ navigation }: Props) {
   const today = new Date();
 
   return (
-    <Screen>
+    <Screen refreshable>
       <Text style={styles.title}>Cartões de crédito</Text>
 
       {cards.length === 0 && !formTarget ? (

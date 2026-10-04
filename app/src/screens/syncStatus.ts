@@ -26,3 +26,16 @@ export function describeSyncStatus(input: SyncStatusInput): string {
   if (input.lastSyncAt) return `Sincronizado às ${format(parseISO(input.lastSyncAt), 'HH:mm')}`;
   return 'Aguardando a primeira sincronização';
 }
+
+/** Aviso do puxar para atualizar quando a sincronização falha; `null` = nada a avisar. */
+export function describeRefreshFailure(code: string): { title: string; message: string } | null {
+  if (code === 'busy' || code === 'disabled' || code === 'no-user') return null;
+  if (code === 'network') {
+    return { title: 'Sem conexão', message: 'Verifique a internet e puxe a tela de novo.' };
+  }
+  if (code === 'auth') {
+    return { title: 'Sessão expirada', message: 'Entre novamente na aba Ajustes, em Conta.' };
+  }
+
+  return { title: 'Não foi possível atualizar', message: 'Tentaremos de novo em instantes.' };
+}

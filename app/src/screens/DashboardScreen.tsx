@@ -173,7 +173,7 @@ export function DashboardScreen() {
 
   if (!config) {
     return (
-      <Screen>
+      <Screen refreshable>
         <Header />
         <EmptyState
           actionLabel="Configurar"
@@ -188,7 +188,7 @@ export function DashboardScreen() {
 
   if (!activeMonth || !summary) {
     return (
-      <Screen>
+      <Screen refreshable>
         <Header />
         <Card>
           <Text style={styles.sectionTitle}>Base financeira</Text>
@@ -216,7 +216,7 @@ export function DashboardScreen() {
   const heroColors = heroStatusColors(colors)[summary.dayStatus];
 
   return (
-    <Screen>
+    <Screen refreshable>
       <Header cycleLabel={summary.cycleLabel} />
 
       <Card style={[styles.heroCard, heroColors]}>

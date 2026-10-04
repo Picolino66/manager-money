@@ -74,7 +74,7 @@ export function SettingsScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen>
+    <Screen refreshable>
       <Text style={styles.title}>Ajustes</Text>
       <Card>
         <SettingsRow

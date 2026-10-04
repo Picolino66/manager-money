@@ -1,4 +1,4 @@
-import { describeSyncStatus } from './syncStatus';
+import { describeRefreshFailure, describeSyncStatus } from './syncStatus';
 
 const base = {
   sessionStatus: 'signed-in' as const,
@@ -27,5 +27,16 @@ describe('describeSyncStatus', () => {
     expect(describeSyncStatus({ ...base, lastSyncAt: '2026-10-10T14:32:00' })).toBe(
       'Sincronizado às 14:32',
     );
+  });
+});
+
+describe('describeRefreshFailure', () => {
+  it('traduz o código da sincronização em aviso; busy/disabled/no-user não avisam', () => {
+    expect(describeRefreshFailure('network')?.title).toBe('Sem conexão');
+    expect(describeRefreshFailure('auth')?.title).toBe('Sessão expirada');
+    expect(describeRefreshFailure('unknown')?.title).toBe('Não foi possível atualizar');
+    expect(describeRefreshFailure('busy')).toBeNull();
+    expect(describeRefreshFailure('disabled')).toBeNull();
+    expect(describeRefreshFailure('no-user')).toBeNull();
   });
 });

@@ -15,11 +15,13 @@ code:
   - packages/core/src/contract/dirty.ts
   - packages/core/src/contract/errors.ts
   - app/src/store/financial.store.ts
-symbols: [runSync, collectDirty, acknowledge, applyRemoteRows, adoptRemoteActiveCycle, mapSupabaseError, scheduleSync, statementPaymentFromRow, cardPurchaseFromRow, cycleFromRow]
+  - app/src/components/useSyncRefresh.ts
+  - app/src/screens/syncStatus.ts
+symbols: [useSyncRefresh, describeRefreshFailure, runSync, collectDirty, acknowledge, applyRemoteRows, adoptRemoteActiveCycle, scheduleSync, statementPaymentFromRow, cycleFromRow]
 business_rules: [BR-SYNC-001, BR-SYNC-002, BR-SYNC-003, BR-FIN-013]
 adrs: [ADR-004, ADR-008, ADR-017, ADR-018]
-tests: [packages/core/src/contract/dirty.test.ts, app/src/infrastructure/sync/sync-engine.test.ts, app/src/infrastructure/sync/supabase-remote.test.ts, packages/core/src/contract/mappers.test.ts]
-last_verified_commit: 3b9bf25+T-033
+tests: [packages/core/src/contract/dirty.test.ts, app/src/infrastructure/sync/sync-engine.test.ts, app/src/infrastructure/sync/supabase-remote.test.ts, app/src/components/Screen.test.tsx, app/src/screens/syncStatus.test.ts, packages/core/src/contract/mappers.test.ts]
+last_verified_commit: 7903717+pull-refresh
 ---
 
 # Motor de sincronização
@@ -37,7 +39,11 @@ Spec: [SPEC-006](../../../specs/SPEC-006-sync.md) · contrato: [contracts](../..
 - **Lançamentos de fatura (ADR-018):** vários por fatura, id gerado no cliente; o índice único da ADR-017 foi
   removido. Dois aparelhos que registram o mesmo pagamento offline geram dois lançamentos: o amortizado é limitado
   ao principal (o limite nunca é liberado a mais) e o pagamento não mexe no orçamento; o usuário desfaz o duplicado.
-- **Gatilhos:** escrita (+2 s), abertura, primeiro plano, reconexão; backoff 2 s → 60 s.
+- **Gatilhos:** escrita (+2 s), abertura, primeiro plano, reconexão, **puxar para atualizar**; backoff 2 s → 60 s.
+- **Puxar para atualizar:** `Screen refreshable` + `useSyncRefresh` chamam `syncNow` (envia o pendente e busca do banco o
+  que mudou). Ligado em Hoje, Histórico, Ciclos, Categorias, Cartões, Detalhe do cartão e Ajustes; só com a
+  conta conectada (no modo local o gesto não existe). Falha avisa por `describeRefreshFailure` (sem conexão,
+  sessão expirada, genérica); `busy` espera a sincronização em andamento e não avisa.
 - Commits do sync são descartados se a conta mudar durante a rede.
 - **Contrato v1 aditivo (ADR-017):** `credit_cards.credit_limit`/`active`, `card_purchases.first_statement_key`/`settled_installments`/`origin`,
   `fixed_expenses.active` e `income_sources[].active`. Linha antiga sem `first_statement_key` deriva a fatura da data e do

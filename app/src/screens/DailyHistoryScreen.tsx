@@ -200,7 +200,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
 
   if (!activeMonth) {
     return (
-      <Screen>
+      <Screen refreshable>
         <EmptyState
           actionLabel="Iniciar ciclo"
           iconName="calendar-outline"
@@ -214,7 +214,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
 
   if (groups.length === 0 && hasFilter) {
     return (
-      <Screen>
+      <Screen refreshable>
         {header}
         <EmptyState
           actionLabel="Limpar filtros"
@@ -230,7 +230,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
 
   if (groups.length === 0) {
     return (
-      <Screen>
+      <Screen refreshable>
         <Text style={styles.title}>Histórico diário</Text>
         <EmptyState
           actionLabel="Registrar gasto"
@@ -244,7 +244,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen>
+    <Screen refreshable>
       {header}
       {groups.map((group) => {
         const date = parseISO(group.date);

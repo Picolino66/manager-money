@@ -173,7 +173,7 @@ export function PreviousMonthsScreen() {
   }
 
   return (
-    <Screen>
+    <Screen refreshable>
       <Text style={styles.title}>Ciclos</Text>
       <View style={styles.filters}>
         <View style={styles.filter}>

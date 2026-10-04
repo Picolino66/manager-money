@@ -23,7 +23,7 @@ symbols: [saveCreditCard, setCreditCardActive, deleteCreditCard, updateCardPurch
 adrs: [ADR-014, ADR-017, ADR-018]
 tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/application/card.use-cases.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/domain/financial/credit-card.test.ts, app/src/screens/cards.screens.test.tsx, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-020, BR-FIN-026, BR-FIN-028, BR-FIN-029]
-last_verified_commit: 7903717+T-041
+last_verified_commit: 7903717+pull-refresh
 ---
 
 # Cadastrar cartões, limite e ativo/inativo

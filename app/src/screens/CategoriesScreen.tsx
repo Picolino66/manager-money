@@ -122,7 +122,7 @@ export function CategoriesScreen({ navigation }: Props) {
 
   if (!config) {
     return (
-      <Screen>
+      <Screen refreshable>
         <EmptyState
           actionLabel="Configurar"
           iconName="settings-outline"
@@ -135,7 +135,7 @@ export function CategoriesScreen({ navigation }: Props) {
   }
 
   return (
-    <Screen>
+    <Screen refreshable>
       <View style={styles.header}>
         <Text style={styles.title}>Categorias</Text>
         <Text style={styles.subtitle}>Gastos por período e categoria</Text>

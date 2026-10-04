@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T21:55:10.976Z",
-  "source_commit": "396a02a",
+  "generated_at": "2026-10-04T22:25:31.850Z",
+  "source_commit": "b57c4f8",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -1283,15 +1283,15 @@
         "supabase"
       ],
       "symbols": [
+        "useSyncRefresh",
+        "describeRefreshFailure",
         "runSync",
         "collectDirty",
         "acknowledge",
         "applyRemoteRows",
         "adoptRemoteActiveCycle",
-        "mapSupabaseError",
         "scheduleSync",
         "statementPaymentFromRow",
-        "cardPurchaseFromRow",
         "cycleFromRow"
       ],
       "business_rules": [
@@ -1310,6 +1310,8 @@
         "packages/core/src/contract/dirty.test.ts",
         "app/src/infrastructure/sync/sync-engine.test.ts",
         "app/src/infrastructure/sync/supabase-remote.test.ts",
+        "app/src/components/Screen.test.tsx",
+        "app/src/screens/syncStatus.test.ts",
         "packages/core/src/contract/mappers.test.ts"
       ],
       "spec": "SPEC-006"

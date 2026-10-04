@@ -80,7 +80,7 @@ export function CardDetailScreen({ navigation, route }: Props) {
 
   if (!card) {
     return (
-      <Screen>
+      <Screen refreshable>
         <EmptyState
           actionLabel="Voltar"
           iconName="alert-circle-outline"
@@ -304,7 +304,7 @@ export function CardDetailScreen({ navigation, route }: Props) {
   };
 
   return (
-    <Screen>
+    <Screen refreshable>
       <View style={styles.titleRow}>
         <Text style={styles.title}>{card.name}</Text>
         {!active ? <Badge label="Inativo" /> : null}

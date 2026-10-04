@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T21:55:10.976Z",
-  "source_commit": "396a02a",
+  "generated_at": "2026-10-04T22:25:31.850Z",
+  "source_commit": "b57c4f8",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -185,12 +185,12 @@
     },
     "modules/card/manage.md": {
       "id": "card.manage",
-      "last_verified_commit": "7903717+T-041",
+      "last_verified_commit": "7903717+pull-refresh",
       "state": "fresh",
       "source_hashes": {
         "saveCreditCard": "sha256:c426c83e44c89a96943e9a706ae703f5a3214489b3f7f94d8d2e6124d47e01cd",
         "setCreditCardActive": "sha256:db6e40645153698ddf9b086c43a32157f845dcac51818df2fa3b2175d920e965",
-        "deleteCreditCard": "sha256:0171e4f24c38a007d22671d5def7d2d0f929ed65154369825a22637fd42d26a0",
+        "deleteCreditCard": "sha256:9f028b3c3846bcabf8888022d7df3dffdc077027adf2be57aa9d9ac7a1106dea",
         "updateCardPurchase": "sha256:00ad12e69309489358cc30e3d13fd5f825f9d262cc285ddcfb5d5a3c5081c0ea",
         "deleteCardPurchase": "sha256:9013dba199841c54fabcedd51119ce346e9404addafa93c9242ed5c5267b5624",
         "canModifyCardPurchase": "sha256:349a8c72fdfee0b3840f538e03ef6968c1cf543f25b19e5a67b9ff878021bcd0",
@@ -246,10 +246,10 @@
     },
     "modules/category/index.md": {
       "id": "category",
-      "last_verified_commit": "3b9bf25+T-040",
+      "last_verified_commit": "7903717+pull-refresh",
       "state": "fresh",
       "source_hashes": {
-        "app/src/screens/CategoriesScreen.tsx": "sha256:a6a7627f4e6a178f06fdb4e19a9afd3f5bdd00c6b62bd01dab196241946058de"
+        "app/src/screens/CategoriesScreen.tsx": "sha256:fe038ca84bba3dcb885a538a10f82dab54f9fb8f2807d438e0e5b8a0f706a5c2"
       }
     },
     "modules/category/manage.md": {
@@ -511,10 +511,10 @@
     },
     "modules/settings/index.md": {
       "id": "settings",
-      "last_verified_commit": "7903717+historico-acoes",
+      "last_verified_commit": "7903717+pull-refresh",
       "state": "fresh",
       "source_hashes": {
-        "app/src/screens/SettingsScreen.tsx": "sha256:03a17a889c07207ee62eb8dfc7164aa1a6485b86ee670b99ea46d2995fe23715"
+        "app/src/screens/SettingsScreen.tsx": "sha256:c4102f195b6176a7d9c754a22d3bf318984a0c15a6f6ba4c5ce5715471e7dd63"
       }
     },
     "modules/storage/index.md": {
@@ -543,18 +543,18 @@
     },
     "modules/sync/engine.md": {
       "id": "sync.engine",
-      "last_verified_commit": "3b9bf25+T-033",
+      "last_verified_commit": "7903717+pull-refresh",
       "state": "fresh",
       "source_hashes": {
+        "useSyncRefresh": "sha256:4795ff6a8f2dcab719bb65570464d770d0d0a6d96c193265a7360ef6aaeb81c3",
+        "describeRefreshFailure": "sha256:05ab827de023c7822285a24d325db6b86eba2968b383b39f6a19f543b0bd91bb",
         "runSync": "sha256:940247f9168af2cde24990cbe682f46b37e78c96f20135091e7389036fd3be59",
         "collectDirty": "sha256:57814d10f566ec59d056debf253507a28ff02c581c7cfc990dcb791e63476b72",
         "acknowledge": "sha256:6ff4e30adffafe4364aa38f86c29b265938dea375b0f8297ada3c0c519876820",
         "applyRemoteRows": "sha256:bda2fb5fb9bc68ec0c116ad439b97f434df7fc44848e5e4b07753dbbeee0b0a3",
         "adoptRemoteActiveCycle": "sha256:e0d296ff8a1bda9c90af62d3174b43aec7d90b35e457ee1e053e3610e9dab704",
-        "mapSupabaseError": "sha256:bdd714798783c699815006f3718d165d11d216d7c41d2d64b420701b0dc49fd3",
         "scheduleSync": "sha256:dad10c4b3dbf5ac9fb93a56d94195446567f4f144fc1201005520b62e2cf950b",
         "statementPaymentFromRow": "sha256:ccaefc38c9fce5f05d3f80eb3604705b80cd953519072a321ea385604af582a1",
-        "cardPurchaseFromRow": "sha256:d49778485f80bd013b59e8ec9197ecf5c78e91e64fabcd854b62df1c1590184e",
         "cycleFromRow": "sha256:cc744be0019d8c83f7666399118df21c725955df618cdd6a6c0d47c2fc1f7f6a"
       }
     },
