@@ -10,19 +10,19 @@ summary: >
   do próximo ciclo.
 keywords: [fatura, paguei a fatura, pagamento parcial, restante, encargos, juros, multa, vencimento, limite, status da fatura]
 code:
-  - src/domain/financial/credit-card.ts
-  - src/application/card.use-cases.ts
-  - src/application/selectors.ts
-  - src/store/financial.store.ts
-  - src/screens/CardDetailScreen.tsx
-  - src/screens/cardView.ts
-  - src/components/StatementCard.tsx
-  - src/components/PayStatementModal.tsx
-  - src/components/StatementChargesModal.tsx
-  - src/screens/cardText.ts
+  - app/src/domain/financial/credit-card.ts
+  - app/src/application/card.use-cases.ts
+  - app/src/application/selectors.ts
+  - app/src/store/financial.store.ts
+  - app/src/screens/CardDetailScreen.tsx
+  - app/src/screens/cardView.ts
+  - app/src/components/StatementCard.tsx
+  - app/src/components/PayStatementModal.tsx
+  - app/src/components/StatementChargesModal.tsx
+  - app/src/screens/cardText.ts
 symbols: [buildCardStatements, summarizeStatement, statementDueDate, payStatement, addStatementCharges, undoStatementPayment, statementPayableFrom, selectCardStatements, selectStatementPayments, selectCycleStatementInterest]
 adrs: [ADR-017, ADR-018]
-tests: [src/application/card-rules.test.ts, src/domain/financial/credit-card.test.ts, src/domain/financial/statement.test.ts, src/application/card.use-cases.test.ts, src/application/financial-vision.test.ts, src/screens/cards.screens.test.tsx]
+tests: [app/src/application/card-rules.test.ts, app/src/domain/financial/credit-card.test.ts, app/src/domain/financial/statement.test.ts, app/src/application/card.use-cases.test.ts, app/src/application/financial-vision.test.ts, app/src/screens/cards.screens.test.tsx]
 business_rules: [BR-FIN-005, BR-FIN-025, BR-FIN-026, BR-FIN-030, BR-FIN-033, BR-FIN-034]
 last_verified_commit: bfe9de6+T-028
 ---

@@ -49,10 +49,12 @@
       "open finance",
       "multimoeda",
       "push",
-      "web",
       "editar ciclos fechados",
       "tema escuro",
       "monetização"
+    ],
+    "planned": [
+      "client web (P0 em docs/architecture/client-web-plan.md; implementação pendente)"
     ]
   },
   "feasibility": {
@@ -99,7 +101,9 @@
       "ADR-011",
       "ADR-012",
       "ADR-017",
-      "ADR-018"
+      "ADR-018",
+      "ADR-019",
+      "ADR-020"
     ],
     "overrides": [
       {
@@ -130,8 +134,21 @@
         "section": "contracts.schemas / BR-FIN-026",
         "change": "documento local v8 + colunas card_purchases.kind/included_in_balance, statement_payments.charges (índice único removido; vários lançamentos por fatura), cycles.carried_statement_debt/carried_statements (contrato v1 aditivo); pagamento parcial com restante transportado ao próximo ciclo, encargos separados, total informado da fatura e invariantes INV-01..INV-10; spec SPEC-019",
         "date": "2026-10-04"
+      },
+      {
+        "adr": "ADR-019",
+        "section": "scope.excluded",
+        "change": "\"web\" removido do escopo excluído; client web planejado em client/ (sem implementação)",
+        "date": "2026-10-04"
       }
-    ]
+    ],
+    "repository_layout": {
+      "app": "app/ — mobile Expo (npm independente)",
+      "client": "client/ — web, placeholder (ADR-020 PROPOSED: React + Vite SPA)",
+      "backend": "supabase/ — compartilhado, fonte única",
+      "root": "workspace do produto: docs, specs, tasks, adr, agents, skills, scripts, CI; package.json mínimo (docs:*, test:db)",
+      "monorepo_tooling": "nenhuma; reavaliar com packages/core"
+    }
   },
   "contracts": {
     "api_version": "v1",

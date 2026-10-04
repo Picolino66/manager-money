@@ -8,15 +8,15 @@ summary: >
   registro e resolução de conflito de ciclo ativo concorrente.
 keywords: [sync, sincronizar, offline, conflito, outbox, supabase]
 code:
-  - src/infrastructure/sync/sync-engine.ts
-  - src/infrastructure/sync/supabase-remote.ts
-  - src/infrastructure/sync/mappers.ts
-  - src/infrastructure/sync/types.ts
-  - src/store/financial.store.ts
+  - app/src/infrastructure/sync/sync-engine.ts
+  - app/src/infrastructure/sync/supabase-remote.ts
+  - app/src/infrastructure/sync/mappers.ts
+  - app/src/infrastructure/sync/types.ts
+  - app/src/store/financial.store.ts
 symbols: [runSync, collectDirty, acknowledge, applyRemoteRows, adoptRemoteActiveCycle, mapSupabaseError, scheduleSync, statementPaymentFromRow, cardPurchaseFromRow, cycleFromRow]
 business_rules: [BR-SYNC-001, BR-SYNC-002, BR-SYNC-003, BR-FIN-013]
 adrs: [ADR-004, ADR-008, ADR-017, ADR-018]
-tests: [src/infrastructure/sync/sync-engine.test.ts, src/infrastructure/sync/supabase-remote.test.ts, src/infrastructure/sync/mappers.test.ts]
+tests: [app/src/infrastructure/sync/sync-engine.test.ts, app/src/infrastructure/sync/supabase-remote.test.ts, app/src/infrastructure/sync/mappers.test.ts]
 last_verified_commit: bfe9de6+T-028
 ---
 
@@ -44,4 +44,4 @@ Spec: [SPEC-006](../../../specs/SPEC-006-sync.md) · contrato: [contracts](../..
   servidor: linha sem `charges` ou nula → `max(0, paid − statement)`), `cycles.carried_statement_debt`/`carried_statements` (jsonb com
   `card_id`/`statement_key`/`amount`; 0 e `[]` no remoto = ausente no local).
 - `replaceRemoteWithLocal` marca `statement_payments` como excluídas primeiro (ordem inversa das dependências).
-- Testes com `MemoryRemote` (`src/infrastructure/sync/memory-remote.ts`) que reproduz RLS, cursor e índice único.
+- Testes com `MemoryRemote` (`app/src/infrastructure/sync/memory-remote.ts`) que reproduz RLS, cursor e índice único.

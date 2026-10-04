@@ -8,13 +8,13 @@ summary: >
   dados do aparelho continuam no modo local.
 keywords: [excluir conta, apagar conta, lgpd, direito ao esquecimento]
 code:
-  - src/store/session.store.ts
-  - src/infrastructure/sync/supabase-remote.ts
+  - app/src/store/session.store.ts
+  - app/src/infrastructure/sync/supabase-remote.ts
   - supabase/migrations/20261001000000_init.sql
 symbols: [deleteAccount]
 business_rules: [BR-ACC-003]
 adrs: [ADR-005, ADR-006]
-tests: [src/store/session.store.test.ts]
+tests: [app/src/store/session.store.test.ts]
 last_verified_commit: bfe9de6+T-028r2
 ---
 

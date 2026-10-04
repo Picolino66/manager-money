@@ -8,13 +8,13 @@ summary: >
   ciclo ativo e ciclos fechados ignorando registros excluídos.
 keywords: [caso de uso, store, zustand, seletor, DomainError]
 code:
-  - src/application/cycle.use-cases.ts
-  - src/application/selectors.ts
-  - src/application/state.ts
-  - src/store/financial.store.ts
+  - app/src/application/cycle.use-cases.ts
+  - app/src/application/selectors.ts
+  - app/src/application/state.ts
+  - app/src/store/financial.store.ts
 symbols: [recalculateActiveCycleBalance, saveConfig, addExpense, updateExpense, selectActiveMonth, selectClosedMonths, selectCycleAdjustments, selectStatementsToCarry, touch, commit]
 adrs: [ADR-001, ADR-008, ADR-018]
-tests: [src/application/cycle.use-cases.test.ts, src/store/financial.store.test.ts]
+tests: [app/src/application/cycle.use-cases.test.ts, app/src/store/financial.store.test.ts]
 last_verified_commit: bfe9de6+T-028r2
 ---
 

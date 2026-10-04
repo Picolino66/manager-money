@@ -6,7 +6,7 @@ title: Legal
 summary: >
   Textos legais exigidos pelas lojas e pela LGPD.
 code:
-  - src/legal/privacy-policy.ts
+  - app/src/legal/privacy-policy.ts
 last_verified_commit: a16e575+T-020
 ---
 

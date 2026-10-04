@@ -6,7 +6,7 @@ title: Observabilidade
 summary: >
   Eventos estruturados e captura de erros sem dados financeiros.
 code:
-  - src/infrastructure/monitoring/logger.ts
+  - app/src/infrastructure/monitoring/logger.ts
 last_verified_commit: 359de21
 ---
 

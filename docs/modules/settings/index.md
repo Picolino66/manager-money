@@ -6,7 +6,7 @@ title: Ajustes
 summary: >
   Aba que centraliza configuração financeira, conta, exportação e política de privacidade.
 code:
-  - src/screens/SettingsScreen.tsx
+  - app/src/screens/SettingsScreen.tsx
 last_verified_commit: a16e575+T-020
 ---
 

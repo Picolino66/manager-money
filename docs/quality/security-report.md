@@ -8,8 +8,8 @@ summary: >
   varredura de segredos, verificação do threat model e achados de revisão de código.
 code:
   - supabase/migrations/20261001000000_init.sql
-  - src/infrastructure/supabase/session-storage.ts
-  - src/infrastructure/export/share-json.ts
+  - app/src/infrastructure/supabase/session-storage.ts
+  - app/src/infrastructure/export/share-json.ts
 adrs: [ADR-006]
 last_verified_commit: bfe9de6+T-028r2
 ---

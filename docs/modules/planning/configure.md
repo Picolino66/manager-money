@@ -8,13 +8,13 @@ summary: >
   item ativo ou inativo); calcula o total de fixos ativos e alerta quando o plano passa da renda.
 keywords: [configuração, renda, fontes de renda, meta, despesas fixas, parcelamento, cartão, ativo, inativo]
 code:
-  - src/screens/ConfigScreen.tsx
-  - src/application/cycle.use-cases.ts
-  - src/domain/financial/financial.calculations.ts
-  - src/domain/financial/financial.types.ts
+  - app/src/screens/ConfigScreen.tsx
+  - app/src/application/cycle.use-cases.ts
+  - app/src/domain/financial/financial.calculations.ts
+  - app/src/domain/financial/financial.types.ts
 symbols: [saveConfig, calculateIncomeTotal, calculateFixedExpensesTotal, calculateBaseAvailableAmount, calculateFixedExpenseAmount, isActive]
 adrs: [ADR-017]
-tests: [src/application/cycle.use-cases.test.ts, src/application/financial-vision.test.ts]
+tests: [app/src/application/cycle.use-cases.test.ts, app/src/application/financial-vision.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-010, BR-FIN-014, BR-FIN-015, BR-FIN-018]
 last_verified_commit: c47cf18+T-025r2
 ---

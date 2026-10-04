@@ -8,15 +8,15 @@ summary: >
   Configuração; fontes podem ser desativadas; dados antigos viram uma fonte "Renda".
 keywords: [renda, fontes de renda, salário, freela, migração, ativa, inativa]
 code:
-  - src/screens/ConfigScreen.tsx
-  - src/application/cycle.use-cases.ts
-  - src/domain/financial/financial.calculations.ts
-  - src/domain/financial/financial.types.ts
-  - src/infrastructure/storage/migrations.ts
-  - src/infrastructure/sync/mappers.ts
+  - app/src/screens/ConfigScreen.tsx
+  - app/src/application/cycle.use-cases.ts
+  - app/src/domain/financial/financial.calculations.ts
+  - app/src/domain/financial/financial.types.ts
+  - app/src/infrastructure/storage/migrations.ts
+  - app/src/infrastructure/sync/mappers.ts
 symbols: [calculatePrimaryPayday, calculatePrimaryIncomeSource, saveConfig, calculateIncomeTotal, isActive, legacyIncomeSources, migrateV2ToV3, migrateV5ToV6, settingsFromRow]
 adrs: [ADR-013, ADR-016, ADR-017]
-tests: [src/application/cycle.use-cases.test.ts, src/infrastructure/storage/local-store.test.ts, src/infrastructure/sync/mappers.test.ts, src/screens/screens.test.tsx]
+tests: [app/src/application/cycle.use-cases.test.ts, app/src/infrastructure/storage/local-store.test.ts, app/src/infrastructure/sync/mappers.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-004, BR-FIN-018, BR-FIN-024]
 last_verified_commit: c47cf18+T-025
 ---

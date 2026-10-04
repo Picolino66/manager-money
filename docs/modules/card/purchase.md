@@ -9,14 +9,14 @@ summary: >
   inicial do ciclo e comprometendo o limite do cartão.
 keywords: [crédito, parcelas, juros, fatura, fechamento, vencimento, saldo, limite]
 code:
-  - src/screens/AddExpenseScreen.tsx
-  - src/components/CardLimitNotice.tsx
-  - src/application/card.use-cases.ts
-  - src/domain/financial/credit-card.ts
-  - src/application/cycle.use-cases.ts
+  - app/src/screens/AddExpenseScreen.tsx
+  - app/src/components/CardLimitNotice.tsx
+  - app/src/application/card.use-cases.ts
+  - app/src/domain/financial/credit-card.ts
+  - app/src/application/cycle.use-cases.ts
 symbols: [addCardPurchase, buildCardPurchase, calculateFirstCycleKey, statementKeyForDate, statementDueDate, statementCycleKey, splitInstallments, listInstallments, calculateCardChargesForCycle, recalculateActiveCycleBalance]
 adrs: [ADR-014, ADR-017]
-tests: [src/domain/financial/credit-card.test.ts, src/application/card.use-cases.test.ts, src/application/financial-vision.test.ts, src/screens/screens.test.tsx]
+tests: [app/src/domain/financial/credit-card.test.ts, app/src/application/card.use-cases.test.ts, app/src/application/financial-vision.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-005, BR-FIN-019, BR-FIN-020, BR-FIN-025, BR-FIN-026, BR-FIN-030]
 last_verified_commit: bfe9de6+T-028
 ---

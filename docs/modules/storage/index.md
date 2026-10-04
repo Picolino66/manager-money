@@ -6,7 +6,7 @@ title: Persistência local
 summary: >
   Documento local único versionado (schemaVersion 8) com migrações encadeadas desde o formato do MVP.
 code:
-  - src/infrastructure/storage/local-store.ts
+  - app/src/infrastructure/storage/local-store.ts
 last_verified_commit: bfe9de6+T-028r2
 ---
 

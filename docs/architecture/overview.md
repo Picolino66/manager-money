@@ -7,11 +7,11 @@ summary: >
   Padrão arquitetural, mapa de camadas, integrações externas e estratégia de infraestrutura do
   Manager Money v1.0.
 code:
-  - src/domain/financial/financial.calculations.ts
-  - src/application/cycle.use-cases.ts
-  - src/infrastructure/storage/local-store.ts
-  - src/infrastructure/sync/sync-engine.ts
-  - src/store/financial.store.ts
+  - app/src/domain/financial/financial.calculations.ts
+  - app/src/application/cycle.use-cases.ts
+  - app/src/infrastructure/storage/local-store.ts
+  - app/src/infrastructure/sync/sync-engine.ts
+  - app/src/store/financial.store.ts
 adrs: [ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007]
 last_verified_commit: bfe9de6+T-028r2
 ---
@@ -49,11 +49,11 @@ o servidor garante isolamento (RLS) e integridade estrutural.
 
 | Camada | Pasta | Responsabilidade | Pode depender de |
 |---|---|---|---|
-| Domain | `src/domain/` | Cálculos e invariantes financeiros (BR-FIN-*) | — |
-| Application | `src/application/` | Casos de uso puros: abrir, fechar, receber antecipado, CRUD de gasto, salvar config | domain |
-| Infrastructure | `src/infrastructure/` | Persistência local, sync, cliente Supabase, monitoramento | domain, application |
-| Store | `src/store/` | Estado reativo; aplica caso de uso → persiste → agenda sync | todas as anteriores |
-| Presentation | `src/screens`, `src/components`, `src/navigation`, `src/design` | UI | store, domain (somente leitura de cálculos) |
+| Domain | `app/src/domain/` | Cálculos e invariantes financeiros (BR-FIN-*) | — |
+| Application | `app/src/application/` | Casos de uso puros: abrir, fechar, receber antecipado, CRUD de gasto, salvar config | domain |
+| Infrastructure | `app/src/infrastructure/` | Persistência local, sync, cliente Supabase, monitoramento | domain, application |
+| Store | `app/src/store/` | Estado reativo; aplica caso de uso → persiste → agenda sync | todas as anteriores |
+| Presentation | `app/src/screens`, `app/src/components`, `app/src/navigation`, `app/src/design` | UI | store, domain (somente leitura de cálculos) |
 
 Regra verificada por lint (`import/no-restricted-paths`): `domain` e `application` não importam
 React, React Native, AsyncStorage nem Supabase.

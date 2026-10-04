@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T15:22:02.283Z",
-  "source_commit": "1ce01fc",
+  "generated_at": "2026-10-04T16:30:41.471Z",
+  "source_commit": "7c4199c",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -47,8 +47,8 @@
         "ADR-006"
       ],
       "tests": [
-        "src/store/session.store.test.ts",
-        "src/infrastructure/supabase/session-storage.test.ts"
+        "app/src/store/session.store.test.ts",
+        "app/src/infrastructure/supabase/session-storage.test.ts"
       ],
       "spec": "SPEC-005"
     },
@@ -77,7 +77,7 @@
         "ADR-006"
       ],
       "tests": [
-        "src/store/session.store.test.ts"
+        "app/src/store/session.store.test.ts"
       ],
       "spec": "SPEC-005"
     },
@@ -105,7 +105,7 @@
         "BR-ACC-004"
       ],
       "tests": [
-        "src/infrastructure/export/share-json.test.ts"
+        "app/src/infrastructure/export/share-json.test.ts"
       ],
       "spec": "SPEC-005"
     },
@@ -151,10 +151,36 @@
         "ADR-018"
       ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts",
-        "src/store/financial.store.test.ts"
+        "app/src/application/cycle.use-cases.test.ts",
+        "app/src/store/financial.store.test.ts"
       ],
       "spec": "SPEC-009"
+    },
+    {
+      "id": "architecture.client-web-plan",
+      "type": "plan",
+      "module": "architecture",
+      "title": "Reorganização do repositório e plano do client web",
+      "summary": "Registro da separação em app/ (mobile), client/ (web, ainda não implementado) e supabase/ (backend compartilhado) e plano técnico do client web: escopo, stack, rotas, segurança, testes, deploy, backlog CLIENT-* e fases.",
+      "doc": "architecture/client-web-plan.md",
+      "state": "implemented",
+      "keywords": [
+        "monorepo",
+        "client",
+        "web",
+        "vite",
+        "reorganização",
+        "estrutura",
+        "workspaces",
+        "backlog"
+      ],
+      "adrs": [
+        "ADR-019",
+        "ADR-020",
+        "ADR-004",
+        "ADR-006"
+      ],
+      "spec": "SPEC-020"
     },
     {
       "id": "architecture.contracts",
@@ -262,10 +288,10 @@
         "ADR-018"
       ],
       "tests": [
-        "src/application/card-rules.test.ts",
-        "src/application/financial-vision.test.ts",
-        "src/application/card.use-cases.test.ts",
-        "src/screens/cards.screens.test.tsx"
+        "app/src/application/card-rules.test.ts",
+        "app/src/application/financial-vision.test.ts",
+        "app/src/application/card.use-cases.test.ts",
+        "app/src/screens/cards.screens.test.tsx"
       ],
       "spec": "SPEC-019"
     },
@@ -311,12 +337,12 @@
         "ADR-018"
       ],
       "tests": [
-        "src/application/card-rules.test.ts",
-        "src/application/card.use-cases.test.ts",
-        "src/application/financial-vision.test.ts",
-        "src/domain/financial/credit-card.test.ts",
-        "src/screens/cards.screens.test.tsx",
-        "src/screens/screens.test.tsx"
+        "app/src/application/card-rules.test.ts",
+        "app/src/application/card.use-cases.test.ts",
+        "app/src/application/financial-vision.test.ts",
+        "app/src/domain/financial/credit-card.test.ts",
+        "app/src/screens/cards.screens.test.tsx",
+        "app/src/screens/screens.test.tsx"
       ],
       "spec": "SPEC-019"
     },
@@ -363,10 +389,10 @@
         "ADR-017"
       ],
       "tests": [
-        "src/domain/financial/credit-card.test.ts",
-        "src/application/card.use-cases.test.ts",
-        "src/application/financial-vision.test.ts",
-        "src/screens/screens.test.tsx"
+        "app/src/domain/financial/credit-card.test.ts",
+        "app/src/application/card.use-cases.test.ts",
+        "app/src/application/financial-vision.test.ts",
+        "app/src/screens/screens.test.tsx"
       ],
       "spec": "SPEC-016"
     },
@@ -415,12 +441,12 @@
         "ADR-018"
       ],
       "tests": [
-        "src/application/card-rules.test.ts",
-        "src/domain/financial/credit-card.test.ts",
-        "src/domain/financial/statement.test.ts",
-        "src/application/card.use-cases.test.ts",
-        "src/application/financial-vision.test.ts",
-        "src/screens/cards.screens.test.tsx"
+        "app/src/application/card-rules.test.ts",
+        "app/src/domain/financial/credit-card.test.ts",
+        "app/src/domain/financial/statement.test.ts",
+        "app/src/application/card.use-cases.test.ts",
+        "app/src/application/financial-vision.test.ts",
+        "app/src/screens/cards.screens.test.tsx"
       ],
       "spec": "SPEC-019"
     },
@@ -519,8 +545,8 @@
         "ADR-018"
       ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts",
-        "src/application/card-rules.test.ts"
+        "app/src/application/cycle.use-cases.test.ts",
+        "app/src/application/card-rules.test.ts"
       ],
       "spec": "SPEC-019"
     },
@@ -569,11 +595,11 @@
         "ADR-018"
       ],
       "tests": [
-        "src/application/card-rules.test.ts",
-        "src/application/financial-vision.test.ts",
-        "src/domain/financial/projection.test.ts",
-        "src/domain/financial/financial.calculations.test.ts",
-        "src/screens/screens.test.tsx"
+        "app/src/application/card-rules.test.ts",
+        "app/src/application/financial-vision.test.ts",
+        "app/src/domain/financial/projection.test.ts",
+        "app/src/domain/financial/financial.calculations.test.ts",
+        "app/src/screens/screens.test.tsx"
       ],
       "spec": "SPEC-019"
     },
@@ -632,9 +658,9 @@
         "BR-FIN-034"
       ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts",
-        "src/application/financial-vision.test.ts",
-        "src/application/card-rules.test.ts"
+        "app/src/application/cycle.use-cases.test.ts",
+        "app/src/application/financial-vision.test.ts",
+        "app/src/application/card-rules.test.ts"
       ],
       "spec": "SPEC-002"
     },
@@ -662,8 +688,8 @@
         "BR-FIN-034"
       ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts",
-        "src/application/card-rules.test.ts"
+        "app/src/application/cycle.use-cases.test.ts",
+        "app/src/application/card-rules.test.ts"
       ],
       "spec": "SPEC-002"
     },
@@ -707,7 +733,7 @@
         "BR-SYNC-002"
       ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts"
+        "app/src/application/cycle.use-cases.test.ts"
       ],
       "spec": "SPEC-003"
     },
@@ -740,7 +766,7 @@
         "BR-FIN-026"
       ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts"
+        "app/src/application/cycle.use-cases.test.ts"
       ]
     },
     {
@@ -818,7 +844,7 @@
         "ADR-007"
       ],
       "tests": [
-        "src/infrastructure/monitoring/logger.test.ts"
+        "app/src/infrastructure/monitoring/logger.test.ts"
       ],
       "spec": "SPEC-008"
     },
@@ -868,8 +894,8 @@
         "ADR-015"
       ],
       "tests": [
-        "src/application/payment.use-cases.test.ts",
-        "src/screens/screens.test.tsx"
+        "app/src/application/payment.use-cases.test.ts",
+        "app/src/screens/screens.test.tsx"
       ],
       "spec": "SPEC-014"
     },
@@ -915,10 +941,10 @@
         "ADR-017"
       ],
       "tests": [
-        "src/application/payment.use-cases.test.ts",
-        "src/application/financial-vision.test.ts",
-        "src/screens/screens.test.tsx",
-        "src/infrastructure/sync/sync-engine.test.ts"
+        "app/src/application/payment.use-cases.test.ts",
+        "app/src/application/financial-vision.test.ts",
+        "app/src/screens/screens.test.tsx",
+        "app/src/infrastructure/sync/sync-engine.test.ts"
       ],
       "spec": "SPEC-018"
     },
@@ -969,8 +995,8 @@
         "ADR-017"
       ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts",
-        "src/application/financial-vision.test.ts"
+        "app/src/application/cycle.use-cases.test.ts",
+        "app/src/application/financial-vision.test.ts"
       ],
       "spec": "SPEC-017"
     },
@@ -1013,10 +1039,10 @@
         "ADR-017"
       ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts",
-        "src/infrastructure/storage/local-store.test.ts",
-        "src/infrastructure/sync/mappers.test.ts",
-        "src/screens/screens.test.tsx"
+        "app/src/application/cycle.use-cases.test.ts",
+        "app/src/infrastructure/storage/local-store.test.ts",
+        "app/src/infrastructure/sync/mappers.test.ts",
+        "app/src/screens/screens.test.tsx"
       ],
       "spec": "SPEC-017"
     },
@@ -1045,7 +1071,7 @@
         "BR-FIN-024"
       ],
       "tests": [
-        "src/domain/financial/financial.calculations.test.ts"
+        "app/src/domain/financial/financial.calculations.test.ts"
       ],
       "spec": "SPEC-015"
     },
@@ -1098,7 +1124,7 @@
         "SettingsRow"
       ],
       "tests": [
-        "src/screens/syncStatus.test.ts"
+        "app/src/screens/syncStatus.test.ts"
       ],
       "spec": "SPEC-007"
     },
@@ -1147,8 +1173,8 @@
         "ADR-018"
       ],
       "tests": [
-        "src/infrastructure/storage/local-store.test.ts",
-        "src/infrastructure/storage/migrations.v8.test.ts"
+        "app/src/infrastructure/storage/local-store.test.ts",
+        "app/src/infrastructure/storage/migrations.v8.test.ts"
       ],
       "spec": "SPEC-004"
     },
@@ -1202,9 +1228,9 @@
         "ADR-018"
       ],
       "tests": [
-        "src/infrastructure/sync/sync-engine.test.ts",
-        "src/infrastructure/sync/supabase-remote.test.ts",
-        "src/infrastructure/sync/mappers.test.ts"
+        "app/src/infrastructure/sync/sync-engine.test.ts",
+        "app/src/infrastructure/sync/supabase-remote.test.ts",
+        "app/src/infrastructure/sync/mappers.test.ts"
       ],
       "spec": "SPEC-006"
     },
@@ -1233,8 +1259,8 @@
         "BR-ACC-002"
       ],
       "tests": [
-        "src/infrastructure/sync/sync-engine.test.ts",
-        "src/store/session.store.test.ts"
+        "app/src/infrastructure/sync/sync-engine.test.ts",
+        "app/src/store/session.store.test.ts"
       ],
       "spec": "SPEC-006"
     },
@@ -1267,7 +1293,7 @@
         "ADR-009",
         "ADR-010"
       ],
-      "spec": "SPEC-010"
+      "spec": "SPEC-020"
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Manager Money
 
-App mobile (Android e iOS) que transforma a renda mensal em um **limite diário de gastos**, recalculado
+Produto de finanças pessoais. O app mobile (Android e iOS) transforma a renda mensal em um **limite diário de gastos**, recalculado
 a cada gasto dentro do ciclo do seu dia de pagamento. Funciona offline; o login com e-mail e senha
 é opcional e habilita a sincronização entre aparelhos.
 
@@ -22,9 +22,19 @@ a cada gasto dentro do ciclo do seu dia de pagamento. Funciona offline; o login 
 Expo SDK 57 · React Native 0.86 · React 19.2 · TypeScript 6 estrito · Zustand · React Hook Form + Zod · date-fns ·
 Supabase (Auth + Postgres com RLS) · Jest. Valores monetários sempre em centavos.
 
-## Como rodar
+## Estrutura
+
+| Pasta | O que é |
+|---|---|
+| [`app/`](app) | aplicativo mobile (Expo) — projeto npm independente |
+| [`client/`](client) | aplicação web — **planejada, sem implementação** ([plano](docs/architecture/client-web-plan.md)) |
+| [`supabase/`](supabase) | backend compartilhado: migrations e testes de RLS |
+| raiz | documentação, specs, tasks, ADRs, scripts da knowledge layer e CI |
+
+## Como rodar (app mobile)
 
 ```bash
+cd app
 npm install
 cp .env.example .env   # opcional: preencha para habilitar o sync
 npx expo start
@@ -37,9 +47,10 @@ Sem as variáveis `EXPO_PUBLIC_SUPABASE_*`, o app roda em **modo local** (tudo f
 ## Qualidade
 
 ```bash
-npm run verify      # lint + typecheck + testes com cobertura (≥ 80%) + knowledge layer
-npm run test:db     # migrations + RLS em Postgres descartável (requer Docker)
-npm run docs:index  # regenera docs/.ai após mudar documentação
+cd app && npm run verify   # lint + typecheck + testes com cobertura (≥ 80%)
+npm run docs:check         # (raiz) valida a knowledge layer
+npm run test:db            # (raiz) migrations + RLS em Postgres descartável (requer Docker)
+npm run docs:index         # (raiz) regenera docs/.ai após mudar documentação
 ```
 
 ## Documentação
@@ -48,10 +59,10 @@ Comece por [docs/index.md](docs/index.md). Decisões em [adr/](adr/README.md), c
 [specs/](specs/README.md), execução em [tasks/](tasks/README.md).
 
 ```
-src/domain          regras financeiras puras
-src/application     casos de uso puros sobre o documento local
-src/infrastructure  storage local, sync, Supabase, exportação, monitoramento
-src/store           Zustand (composição)
-src/screens|components|navigation|design   interface
-supabase/           migrations SQL e testes de RLS
+app/src/domain          regras financeiras puras
+app/src/application     casos de uso puros sobre o documento local
+app/src/infrastructure  storage local, sync, Supabase, exportação, monitoramento
+app/src/store           Zustand (composição)
+app/src/screens|components|navigation|design   interface
+supabase/               migrations SQL e testes de RLS (compartilhado por app e client)
 ```

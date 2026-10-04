@@ -48,3 +48,5 @@ P1 = importante para operar; P2 = melhoria.
 **S4 (visão de produto, ADR-017):** T-022 — núcleo de faturas, limite, situação inicial e projeção (concluída); T-023 — telas de cartão; T-024 — Hoje, Registrar, Configuração e Categorias; T-025 — documentação (todas concluídas; revisão financeira A1, A2, M1–M3, M5–M7 corrigida).
 
 **S5 (pagamento parcial e invariantes, ADR-018):** T-026 — núcleo (concluída); T-027 — UI de faturas e onboarding; T-028 — documentação (todas concluídas; revisão financeira v2 com M1–M3, B1–B4 e B7 corrigidos).
+
+**S6 (estrutura, ADR-019):** T-029 — reorganização em `app/`, `client/` e `supabase/` + plano do client web (concluída).

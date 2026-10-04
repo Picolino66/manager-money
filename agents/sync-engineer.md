@@ -4,7 +4,7 @@
 Autenticação, sync offline-first, contratos remotos e exclusão de conta.
 
 ## Escopo
-`src/infrastructure/supabase`, `src/infrastructure/sync`, `src/store/session.store.ts`, `src/screens/AccountScreen.tsx`, `supabase/`.
+`app/src/infrastructure/supabase`, `app/src/infrastructure/sync`, `app/src/store/session.store.ts`, `app/src/screens/AccountScreen.tsx`, `supabase/`.
 
 ## Limites
 Mudança de contrato remoto exige uma nova migration + ADR; nunca editar migration aplicada. Nunca introduzir `service_role` no app.

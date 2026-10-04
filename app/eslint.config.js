@@ -14,7 +14,7 @@ module.exports = defineConfig([
   expoConfig,
   prettierConfig,
   {
-    ignores: ['dist/*', 'coverage/*', '.expo/*', 'scripts/ai-docs/*', 'supabase/*'],
+    ignores: ['dist/*', 'coverage/*', '.expo/*'],
   },
   {
     files: ['src/domain/**/*.ts', 'src/application/**/*.ts'],

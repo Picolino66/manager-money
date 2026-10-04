@@ -7,7 +7,7 @@ summary: >
   Requisitos funcionais e não funcionais da v1.0, limites de escopo, defeitos herdados do MVP,
   análise de viabilidade e métricas de sucesso.
 code:
-  - src/store/financial.store.ts
+  - app/src/store/financial.store.ts
 last_verified_commit: bfe9de6+T-028
 ---
 
@@ -87,7 +87,7 @@ last_verified_commit: bfe9de6+T-028
 | RF-19 a RF-21 | Entregues (S3), cobertos por testes; RF-19/20 ajustados pela ADR-017 |
 | RF-22 a RF-28 | Entregues (S4): núcleo em T-022, telas em T-023/T-024 |
 | RF-29 a RF-31 | Núcleo (domínio, aplicação, documento v8, sync e migration) entregue e testado em T-026; telas entregues em T-027 |
-| DEF-001 a DEF-009 | Corrigidos, com teste de regressão (ver `src/application/cycle.use-cases.test.ts`, `src/infrastructure/storage/local-store.test.ts`) |
+| DEF-001 a DEF-009 | Corrigidos, com teste de regressão (ver `app/src/application/cycle.use-cases.test.ts`, `app/src/infrastructure/storage/local-store.test.ts`) |
 
 ## 4. Escopo
 

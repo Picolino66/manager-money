@@ -6,13 +6,13 @@ title: Regras de negócio
 summary: >
   Catálogo canônico das regras de negócio BR-FIN-* do domínio financeiro, com origem no código.
 code:
-  - src/domain/financial/financial.calculations.ts
-  - src/domain/financial/credit-card.ts
-  - src/domain/financial/projection.ts
-  - src/application/cycle.use-cases.ts
-  - src/application/card.use-cases.ts
-  - src/application/selectors.ts
-  - src/infrastructure/sync/sync-engine.ts
+  - app/src/domain/financial/financial.calculations.ts
+  - app/src/domain/financial/credit-card.ts
+  - app/src/domain/financial/projection.ts
+  - app/src/application/cycle.use-cases.ts
+  - app/src/application/card.use-cases.ts
+  - app/src/application/selectors.ts
+  - app/src/infrastructure/sync/sync-engine.ts
 last_verified_commit: a1af85a+ciclos-filtro
 ---
 
@@ -62,7 +62,7 @@ aponta o símbolo que implementa cada regra.
 
 ### Invariantes do domínio (BR-FIN-030)
 
-Nenhuma mudança pode quebrá-las; cobertas por `src/application/card-rules.test.ts` (SPEC-019).
+Nenhuma mudança pode quebrá-las; cobertas por `app/src/application/card-rules.test.ts` (SPEC-019).
 
 | ID | Invariante |
 |---|---|

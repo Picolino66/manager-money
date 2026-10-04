@@ -8,11 +8,11 @@ summary: >
   do último ciclo fechado e reserva o restante de faturas parciais transportado, sem sobrepor períodos.
 keywords: [abrir ciclo, iniciar ciclo, novo mês]
 code:
-  - src/application/cycle.use-cases.ts
-  - src/screens/StartMonthScreen.tsx
+  - app/src/application/cycle.use-cases.ts
+  - app/src/screens/StartMonthScreen.tsx
 symbols: [openCycle, calculateNextCycleStartDate, advanceInstallments, startPendingInstallments]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-006, BR-FIN-010, BR-FIN-013, BR-FIN-017, BR-FIN-025, BR-FIN-034]
-tests: [src/application/cycle.use-cases.test.ts, src/application/financial-vision.test.ts, src/application/card-rules.test.ts]
+tests: [app/src/application/cycle.use-cases.test.ts, app/src/application/financial-vision.test.ts, app/src/application/card-rules.test.ts]
 last_verified_commit: bfe9de6+T-028
 ---
 

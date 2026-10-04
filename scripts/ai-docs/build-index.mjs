@@ -268,7 +268,7 @@ function build() {
       broken_references: errors.length,
     },
     coverage_exceptions: [
-      { scope: 'src/screens', reason: 'telas descritas por feature; símbolos de UI não indexados individualmente' },
+      { scope: 'app/src/screens', reason: 'telas descritas por feature; símbolos de UI não indexados individualmente' },
       { scope: 'code-graph', reason: 'repositório pequeno; análise de impacto por símbolos do frontmatter (sob demanda)' },
     ],
   };

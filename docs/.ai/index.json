@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T15:22:02.283Z",
-  "source_commit": "1ce01fc",
+  "generated_at": "2026-10-04T16:30:41.471Z",
+  "source_commit": "7c4199c",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "stack": [
@@ -16,13 +16,13 @@
   "artifacts": {
     "features": {
       "path": ".ai/features.json",
-      "count": 53,
-      "hash": "sha256:53594425622a1654440a145423efe9c6f405742abfa78d462ac187bcc3be85d3"
+      "count": 54,
+      "hash": "sha256:a68d9151b7122b8ff4444f894260fac8e3df5fc015e7828f921e6faeeba9b407"
     },
     "freshness": {
       "path": ".ai/freshness.json",
-      "count": 53,
-      "hash": "sha256:e08e8945d6e047a72ecdb1b560b58e1f723191bf2c4f954b99cf2301ab32cabe"
+      "count": 54,
+      "hash": "sha256:2c2e95ff2e0ca2477d4a69fe6c992f136404e427aaf361ae6a30e08b4d865cba"
     },
     "retrieval_tests": {
       "path": ".ai/retrieval-tests.json",
@@ -127,7 +127,7 @@
     }
   ],
   "health": {
-    "fresh": 53,
+    "fresh": 54,
     "stale": 0,
     "stale_critical": 0,
     "planned": 0,
@@ -135,7 +135,7 @@
   },
   "coverage_exceptions": [
     {
-      "scope": "src/screens",
+      "scope": "app/src/screens",
       "reason": "telas descritas por feature; símbolos de UI não indexados individualmente"
     },
     {

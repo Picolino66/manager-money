@@ -7,11 +7,11 @@ summary: >
   Gera um JSON com todos os dados (sem identificadores de sessão) e abre o compartilhamento nativo.
 keywords: [exportar, backup, json, lgpd, portabilidade]
 code:
-  - src/infrastructure/export/share-json.ts
-  - src/screens/SettingsScreen.tsx
+  - app/src/infrastructure/export/share-json.ts
+  - app/src/screens/SettingsScreen.tsx
 symbols: [buildExportPayload, shareJson, exportFileName]
 business_rules: [BR-ACC-004]
-tests: [src/infrastructure/export/share-json.test.ts]
+tests: [app/src/infrastructure/export/share-json.test.ts]
 last_verified_commit: bfe9de6+T-028r2
 ---
 

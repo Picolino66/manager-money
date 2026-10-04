@@ -8,13 +8,13 @@ summary: >
   v1 e protegido contra sobrescrita quando corrompido.
 keywords: [asyncstorage, persistência, migração, schema, offline]
 code:
-  - src/infrastructure/storage/local-store.ts
-  - src/infrastructure/storage/migrations.ts
-  - src/infrastructure/storage/schema.ts
-  - App.tsx
+  - app/src/infrastructure/storage/local-store.ts
+  - app/src/infrastructure/storage/migrations.ts
+  - app/src/infrastructure/storage/schema.ts
+  - app/App.tsx
 symbols: [migrateV1ToV2, migrateV2ToV3, migrateV6ToV7, migrateV7ToV8, migrateDocument, legacyIncomeSources, normalizeLegacyMonth, parseLocalState, LoadErrorScreen]
 adrs: [ADR-003, ADR-013, ADR-014, ADR-015, ADR-016, ADR-017, ADR-018]
-tests: [src/infrastructure/storage/local-store.test.ts, src/infrastructure/storage/migrations.v8.test.ts]
+tests: [app/src/infrastructure/storage/local-store.test.ts, app/src/infrastructure/storage/migrations.v8.test.ts]
 last_verified_commit: bfe9de6+T-028r2
 ---
 

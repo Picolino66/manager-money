@@ -8,11 +8,11 @@ summary: >
   de cada ciclo.
 keywords: [dia do pagamento, payday, salário, início do ciclo]
 code:
-  - src/domain/financial/financial.calculations.ts
-  - src/screens/ConfigScreen.tsx
+  - app/src/domain/financial/financial.calculations.ts
+  - app/src/screens/ConfigScreen.tsx
 symbols: [calculatePrimaryPayday, calculateCycleEndDate, calculateDefaultCycleStartDate, canReceiveIncomeEarly]
 business_rules: [BR-FIN-002, BR-FIN-024]
-tests: [src/domain/financial/financial.calculations.test.ts]
+tests: [app/src/domain/financial/financial.calculations.test.ts]
 last_verified_commit: c47cf18+T-025
 ---
 

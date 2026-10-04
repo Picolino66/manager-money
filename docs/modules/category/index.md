@@ -6,7 +6,7 @@ title: Categorias
 summary: >
   Categorias padrão e personalizadas e análise de gastos por categoria e período.
 code:
-  - src/screens/CategoriesScreen.tsx
+  - app/src/screens/CategoriesScreen.tsx
 last_verified_commit: c47cf18+T-025
 ---
 

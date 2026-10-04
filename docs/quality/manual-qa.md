@@ -7,7 +7,7 @@ summary: >
   Roteiro de testes manuais em aparelho real, por dia e sequência, cobrindo as telas e fluxos
   críticos antes da publicação nas lojas.
 code:
-  - src/navigation/AppNavigator.tsx
+  - app/src/navigation/AppNavigator.tsx
 last_verified_commit: bfe9de6+T-028
 ---
 

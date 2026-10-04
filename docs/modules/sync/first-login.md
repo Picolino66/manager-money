@@ -8,12 +8,12 @@ summary: >
   lados têm dados.
 keywords: [primeiro login, migrar dados, vincular conta, mesclar]
 code:
-  - src/infrastructure/sync/sync-engine.ts
-  - src/store/session.store.ts
-  - src/screens/AccountScreen.tsx
+  - app/src/infrastructure/sync/sync-engine.ts
+  - app/src/store/session.store.ts
+  - app/src/screens/AccountScreen.tsx
 symbols: [planFirstLogin, linkKeepingLocal, linkUsingRemote, unlinkAccount, resolveFirstLogin]
 business_rules: [BR-ACC-002]
-tests: [src/infrastructure/sync/sync-engine.test.ts, src/store/session.store.test.ts]
+tests: [app/src/infrastructure/sync/sync-engine.test.ts, app/src/store/session.store.test.ts]
 last_verified_commit: c47cf18+T-025
 ---
 

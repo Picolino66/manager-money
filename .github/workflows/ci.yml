@@ -12,11 +12,38 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Estrutura (ADR-019): app/ = mobile Expo · client/ = web (ainda sem implementação) ·
+# supabase/ = backend compartilhado · raiz = workspace do produto (docs, scripts).
+# Quando o client existir: adicionar job `client` (install, lint, typecheck, test, build) com
+# working-directory: client, no mesmo formato do job `app`.
+
 jobs:
-  verify:
-    name: Lint, tipos, testes, cobertura e knowledge layer
+  app:
+    name: App mobile — lint, tipos, testes e cobertura
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+      - run: npm ci
+      - run: npm run verify
+      - name: Validação da configuração Expo
+        run: npx expo config --type public > /dev/null
+      - name: Auditoria de dependências (bloqueia crítica)
+        # Altas/moderadas restantes são ferramentas de build do Expo SDK — ver docs/quality/security-report.md
+        run: npm audit --omit=dev --audit-level=critical
+
+  docs:
+    name: Knowledge layer (docs/.ai)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,12 +51,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - run: npm run verify
-      - name: Auditoria de dependências (bloqueia crítica)
-        # Altas/moderadas restantes são ferramentas de build do Expo SDK 54 — ver docs/quality/security-report.md
-        run: npm audit --omit=dev --audit-level=critical
+      - run: npm run docs:check
 
   database:
     name: Migrations e RLS (Postgres 15)

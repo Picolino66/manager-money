@@ -8,11 +8,11 @@ summary: >
   exportação, política de privacidade e versão do app.
 keywords: [ajustes, configurações, status, versão]
 code:
-  - src/screens/SettingsScreen.tsx
-  - src/screens/syncStatus.ts
-  - src/navigation/AppNavigator.tsx
+  - app/src/screens/SettingsScreen.tsx
+  - app/src/screens/syncStatus.ts
+  - app/src/navigation/AppNavigator.tsx
 symbols: [describeSyncStatus, SettingsRow]
-tests: [src/screens/syncStatus.test.ts]
+tests: [app/src/screens/syncStatus.test.ts]
 last_verified_commit: bfe9de6+T-028r2
 ---
 

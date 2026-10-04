@@ -13,9 +13,9 @@ code:
   - supabase/migrations/20261003000200_fixed_payments_and_incomes.sql
   - supabase/migrations/20261004000000_card_limits_and_statements.sql
   - supabase/migrations/20261005000000_statement_partial_payments.sql
-  - src/infrastructure/storage/schema.ts
-  - src/infrastructure/sync/supabase-remote.ts
-  - src/infrastructure/sync/mappers.ts
+  - app/src/infrastructure/storage/schema.ts
+  - app/src/infrastructure/sync/supabase-remote.ts
+  - app/src/infrastructure/sync/mappers.ts
 adrs: [ADR-003, ADR-004, ADR-008, ADR-017, ADR-018]
 last_verified_commit: bfe9de6+T-028r2
 ---
@@ -94,7 +94,7 @@ Valores monetários são `bigint` em centavos no banco e `number` inteiro no cli
 | `*.client_updated_at` | `*.updatedAt` | ISO |
 | `*.deleted_at` | `*.deletedAt` | ISO \| `null` |
 
-O mapeamento é implementado e testado em `src/infrastructure/sync/mappers.ts`.
+O mapeamento é implementado e testado em `app/src/infrastructure/sync/mappers.ts`.
 
 ## 3. Operações (porta `SyncRemote`)
 

@@ -8,8 +8,8 @@ summary: >
   derivadas com vários lançamentos (pagamento total ou parcial, encargos) e liberação proporcional
   do limite, e situação inicial (total informado da fatura e parcelamentos anteriores ao app).
 code:
-  - src/domain/financial/credit-card.ts
-  - src/application/card.use-cases.ts
+  - app/src/domain/financial/credit-card.ts
+  - app/src/application/card.use-cases.ts
 last_verified_commit: bfe9de6+T-028r2
 ---
 

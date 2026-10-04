@@ -9,13 +9,13 @@ summary: >
   novo; as parcelas já pagas não pesam no orçamento nem no limite.
 keywords: [situação inicial, compra anterior, parcelamento existente, fatura em aberto, total da fatura, já incluída, parcelas pagas, limite já usado]
 code:
-  - src/application/card.use-cases.ts
-  - src/domain/financial/credit-card.ts
-  - src/screens/CardDebtScreen.tsx
-  - src/screens/CardsScreen.tsx
+  - app/src/application/card.use-cases.ts
+  - app/src/domain/financial/credit-card.ts
+  - app/src/screens/CardDebtScreen.tsx
+  - app/src/screens/CardsScreen.tsx
 symbols: [addExistingCardDebt, listOpenInstallments, listEffectiveInstallments, calculateInstallmentForCycle, firstCountedCycleKey, updateCardPurchase]
 adrs: [ADR-017, ADR-018]
-tests: [src/application/card-rules.test.ts, src/application/financial-vision.test.ts, src/application/card.use-cases.test.ts, src/screens/cards.screens.test.tsx]
+tests: [app/src/application/card-rules.test.ts, app/src/application/financial-vision.test.ts, app/src/application/card.use-cases.test.ts, app/src/screens/cards.screens.test.tsx]
 business_rules: [BR-FIN-027, BR-FIN-029, BR-FIN-032]
 last_verified_commit: bfe9de6+T-028r2
 ---

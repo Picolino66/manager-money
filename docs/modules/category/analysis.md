@@ -8,7 +8,7 @@ summary: >
   tipo, e mostra o total, o gráfico de barras por categoria e a lista de itens.
 keywords: [análise, gráfico, período, filtro, relatório, cartão, fixas pagas]
 code:
-  - src/screens/CategoriesScreen.tsx
+  - app/src/screens/CategoriesScreen.tsx
 business_rules: [BR-FIN-012, BR-FIN-030]
 last_verified_commit: c47cf18+T-025r2
 ---

@@ -7,7 +7,7 @@ summary: >
   Base financeira do usuário: renda mensal (fontes ativas com dia de pagamento), meta de economia,
   despesas fixas e parcelamentos (ativos ou inativos).
 code:
-  - src/screens/ConfigScreen.tsx
+  - app/src/screens/ConfigScreen.tsx
 last_verified_commit: c47cf18+T-025
 ---
 

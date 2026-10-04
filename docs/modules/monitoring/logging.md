@@ -8,11 +8,11 @@ summary: >
   é descartado antes do reporter.
 keywords: [log, evento, sentry, crash, métrica]
 code:
-  - src/infrastructure/monitoring/logger.ts
+  - app/src/infrastructure/monitoring/logger.ts
 symbols: [sanitizeFields, logger]
 business_rules: [BR-ACC-006]
 adrs: [ADR-007]
-tests: [src/infrastructure/monitoring/logger.test.ts]
+tests: [app/src/infrastructure/monitoring/logger.test.ts]
 last_verified_commit: 114b089
 ---
 

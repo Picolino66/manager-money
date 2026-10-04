@@ -9,21 +9,26 @@ summary: >
 keywords: [ci, lint, jest, cobertura, github actions, verify]
 code:
   - package.json
-  - eslint.config.js
+  - app/package.json
+  - app/eslint.config.js
   - .github/workflows/ci.yml
   - scripts/ai-docs/build-index.mjs
   - supabase/tests/run-plain.sh
 adrs: [ADR-009, ADR-010]
-last_verified_commit: a88175c
+last_verified_commit: 7c4199c+T-029
 ---
 
 # Pipeline de qualidade
 
 Spec: [SPEC-010](../../../specs/SPEC-010-pipeline-de-qualidade.md).
 
-| Comando | Gate |
-|---|---|
-| `npm run verify` | lint (0 avisos) + typecheck + Jest com cobertura + docs:check |
-| `npm run test:db` | migrations + RLS em Postgres 15 descartável (Docker) |
-| `npm run docs:index` | regenera `docs/.ai` |
-| CI | verify + `npm audit` bloqueando crítica (triagem em [security-report](../../quality/security-report.md)) + RLS + gitleaks |
+Cada projeto tem seus próprios scripts (ADR-019): o app em `app/package.json`; os comandos
+transversais (knowledge layer e banco) no `package.json` mínimo da raiz, sem dependências.
+
+| Onde | Comando | Gate |
+|---|---|---|
+| `app/` | `npm run verify` | lint (0 avisos) + typecheck + Jest com cobertura |
+| raiz | `npm run docs:check` | knowledge layer (gerador em modo verificação + validador) |
+| raiz | `npm run docs:index` | regenera `docs/.ai` |
+| raiz | `npm run test:db` | migrations + RLS em Postgres 15 descartável (Docker) |
+| CI | — | job `app` (verify + `npm audit` bloqueando crítica, triagem em [security-report](../../quality/security-report.md)) + job `docs` + job `database` (RLS) + gitleaks |

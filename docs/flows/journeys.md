@@ -7,7 +7,7 @@ summary: >
   Jornadas críticas por persona, wireframes dos fluxos novos da v1.0 (conta, sync, exclusão,
   exportação, dia de pagamento) e avaliação heurística das telas existentes.
 code:
-  - src/navigation/AppNavigator.tsx
+  - app/src/navigation/AppNavigator.tsx
 last_verified_commit: c47cf18+T-025r2
 ---
 

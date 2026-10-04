@@ -2,7 +2,7 @@
 
 _Última atualização: 01/10/2026_
 
-> Texto canônico em `src/legal/privacy-policy.ts`. Publicar este arquivo na URL informada à Play Store e à App Store.
+> Texto canônico em `app/src/legal/privacy-policy.ts`. Publicar este arquivo na URL informada à Play Store e à App Store.
 
 ## Quem somos
 

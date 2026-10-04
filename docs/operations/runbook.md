@@ -7,11 +7,11 @@ summary: >
   Como configurar Supabase e EAS, publicar nas lojas, monitorar, responder a incidentes e
   reverter versões.
 code:
-  - eas.json
-  - app.json
+  - app/eas.json
+  - app/app.json
   - supabase/migrations/20261001000000_init.sql
   - docs/operations/metrics.sql
-last_verified_commit: a88175c
+last_verified_commit: 7c4199c+T-029
 ---
 
 # Runbook de operação
@@ -20,10 +20,12 @@ last_verified_commit: a88175c
 
 | Variável | Onde | Pública? |
 |---|---|---|
-| `EXPO_PUBLIC_SUPABASE_URL` | EAS env (`preview`, `production`) e `.env` em dev | Sim (vai no app) |
+| `EXPO_PUBLIC_SUPABASE_URL` | EAS env (`preview`, `production`) e `app/.env` em dev | Sim (vai no app) |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | idem | Sim (protegida por RLS) |
 | `EXPO_PUBLIC_SENTRY_DSN` | idem (quando T-013 for feita) | Sim |
 | `service_role` do Supabase | **Somente** no painel do Supabase. Nunca no app, no repositório nem no EAS | **Não** |
+
+Comandos `eas` e `expo` rodam dentro de `app/`; comandos `supabase` rodam na raiz (ADR-019).
 
 ```bash
 eas env:create --environment production --name EXPO_PUBLIC_SUPABASE_URL --value https://<ref>.supabase.co --visibility plaintext
@@ -51,7 +53,7 @@ Sem essas variáveis, o build sai em **modo local** (sem sync), que é o comport
    ficam em cada aparelho e podem ser exportados, isso é aceitável no lançamento. Migrar para o
    plano Pro ao passar de ~500 usuários ativos.
 
-Validação local do schema, sem projeto: `npm run test:db`.
+Validação local do schema, sem projeto: `npm run test:db` (na raiz).
 
 ## 3. Builds (EAS)
 
@@ -62,26 +64,27 @@ Validação local do schema, sem projeto: `npm run test:db`.
 | `production` | Lojas | AAB (Android) / IPA (iOS), `autoIncrement` do número de build |
 
 ```bash
+cd app
 npx eas-cli build -p android --profile preview      # APK para instalar direto
 npx eas-cli build -p android --profile production   # AAB para a Play Store
 npx eas-cli build -p ios --profile production       # exige conta Apple Developer
 ```
 
-Cada perfil declara `environment` no `eas.json` e carrega as variáveis do ambiente EAS de mesmo nome
+Cada perfil declara `environment` no `app/eas.json` e carrega as variáveis do ambiente EAS de mesmo nome
 (`preview` → preview, `production` → production).
 
-A versão exibida (`app.json → expo.version`) é alterada manualmente a cada release (semver). O
+A versão exibida (`app/app.json → expo.version`) é alterada manualmente a cada release (semver). O
 número de build é controlado pelo EAS (`appVersionSource: remote`).
 
 ## 4. Checklist de publicação
 
 ### Comum
 
-- [ ] E-mail de contato definido em `src/legal/privacy-policy.ts` e no espelho em `docs/legal/`
+- [ ] E-mail de contato definido em `app/src/legal/privacy-policy.ts` e no espelho em `docs/legal/`
 - [ ] Política de privacidade publicada em uma URL pública (GitHub Pages, Notion público ou site)
 - [ ] Supabase configurado (§2), com SMTP próprio
 - [ ] Campanha de QA manual (`docs/quality/manual-qa.md`) executada em pelo menos 1 aparelho Android e 1 iOS
-- [ ] `npm run verify` e `npm run test:db` verdes no commit da release
+- [ ] `npm run verify` (em `app/`), `npm run docs:check` e `npm run test:db` (na raiz) verdes no commit da release
 
 ### Google Play
 

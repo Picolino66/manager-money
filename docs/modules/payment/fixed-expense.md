@@ -9,17 +9,17 @@ summary: >
   reserva e leva o valor para as faturas.
 keywords: [pagar, despesa fixa, à vista, pix, crédito, juros, pendente, reservada, desfazer, inativa]
 code:
-  - src/components/FixedExpensesCard.tsx
-  - src/components/PayFixedExpenseModal.tsx
-  - src/components/CardLimitNotice.tsx
-  - src/screens/DashboardScreen.tsx
-  - src/application/payment.use-cases.ts
-  - src/domain/financial/payments.ts
-  - src/domain/financial/financial.calculations.ts
-  - src/application/selectors.ts
+  - app/src/components/FixedExpensesCard.tsx
+  - app/src/components/PayFixedExpenseModal.tsx
+  - app/src/components/CardLimitNotice.tsx
+  - app/src/screens/DashboardScreen.tsx
+  - app/src/application/payment.use-cases.ts
+  - app/src/domain/financial/payments.ts
+  - app/src/domain/financial/financial.calculations.ts
+  - app/src/application/selectors.ts
 symbols: [payFixedExpense, undoFixedPayment, calculatePaidFixedAmount, calculateBaseAvailableAmount, calculateInitialAvailableAmount, selectCycleAdjustments, selectPendingFixedExpenses]
 adrs: [ADR-015, ADR-014, ADR-017]
-tests: [src/application/payment.use-cases.test.ts, src/application/financial-vision.test.ts, src/screens/screens.test.tsx, src/infrastructure/sync/sync-engine.test.ts]
+tests: [app/src/application/payment.use-cases.test.ts, app/src/application/financial-vision.test.ts, app/src/screens/screens.test.tsx, app/src/infrastructure/sync/sync-engine.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-021, BR-FIN-022, BR-FIN-030]
 last_verified_commit: bfe9de6+T-028
 ---

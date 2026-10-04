@@ -8,10 +8,10 @@ summary: >
   fechados com o resultado final.
 keywords: [histórico, dias, ciclos anteriores, resultado]
 code:
-  - src/screens/DailyHistoryScreen.tsx
-  - src/screens/PreviousMonthsScreen.tsx
-  - src/application/selectors.ts
-  - src/domain/financial/financial.calculations.ts
+  - app/src/screens/DailyHistoryScreen.tsx
+  - app/src/screens/PreviousMonthsScreen.tsx
+  - app/src/application/selectors.ts
+  - app/src/domain/financial/financial.calculations.ts
 symbols: [calculateDayBalance, calculateFinalBalance, selectCycleSpending, selectCycleSpendingRange]
 business_rules: [BR-FIN-006, BR-FIN-008]
 last_verified_commit: a1af85a+ciclos-filtro

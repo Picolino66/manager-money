@@ -8,14 +8,14 @@ summary: >
   criptografada no aparelho; sair mantendo ou apagando os dados locais.
 keywords: [login, entrar, criar conta, senha, e-mail, sair, sessão]
 code:
-  - src/store/session.store.ts
-  - src/screens/AccountScreen.tsx
-  - src/infrastructure/supabase/session-storage.ts
-  - src/infrastructure/supabase/client.ts
+  - app/src/store/session.store.ts
+  - app/src/screens/AccountScreen.tsx
+  - app/src/infrastructure/supabase/session-storage.ts
+  - app/src/infrastructure/supabase/client.ts
 symbols: [signIn, signUp, signOut, friendlyAuthError, assertCredentials, encryptedSessionStorage]
 business_rules: [BR-ACC-001]
 adrs: [ADR-011, ADR-006]
-tests: [src/store/session.store.test.ts, src/infrastructure/supabase/session-storage.test.ts]
+tests: [app/src/store/session.store.test.ts, app/src/infrastructure/supabase/session-storage.test.ts]
 last_verified_commit: bfe9de6+T-028r2
 ---
 

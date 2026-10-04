@@ -6,14 +6,14 @@ title: Design system
 summary: >
   Tokens de cor, espaçamento, raio e tipografia e o catálogo de componentes reutilizáveis do app.
 code:
-  - src/design/theme.ts
-  - src/components/AppButton.tsx
+  - app/src/design/theme.ts
+  - app/src/components/AppButton.tsx
 last_verified_commit: f9eaa87+T-023
 ---
 
 # Design system
 
-Fonte: [`src/design/theme.ts`](../../src/design/theme.ts). Nenhuma cor ou espaçamento literal
+Fonte: [`app/src/design/theme.ts`](../../app/src/design/theme.ts). Nenhuma cor ou espaçamento literal
 em telas novas: usar sempre os tokens.
 
 ## Tokens
