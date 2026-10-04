@@ -35,6 +35,12 @@ BR-ACC-006 · INV-01..10 (garantidas pelo núcleo, não reimplementadas).
 - Conta sem `settings` vai para `/comecar` (onboarding: `saveConfig` + `openCycle`). Conta com
   configuração e sem ciclo ativo mostra o aviso para abrir o próximo ciclo no app (ação de ciclo é P1).
 - Gastos de ciclo fechado são somente leitura.
+- **Histórico (`/gastos` no web e aba Histórico no app):** mostra tudo que foi pago (gasto à vista, compra no
+  cartão, fixas, parcelados e fatura) a partir de `selectPaidHistory` do núcleo. Só o gasto à vista do ciclo
+  ativo e a compra no cartão (BR-FIN-029) têm lápis e lixeira; fixa, parcelado e lançamento de fatura do ciclo
+  ativo só têm lixeira (desfazer); pagamento de fatura é informativo e não soma. Coluna/linha "Meio": Crédito ou Saldo; Pix, débito e
+  dinheiro não são distinguidos (todos Saldo). Os filtros (busca, categoria, tipo, período) são os mesmos nos dois, via
+  `filterPaidHistory`; o app abre os filtros num modal pelo ícone de funil.
 - Dinheiro em centavos inteiros; textos em português; temas Sistema/Claro/Escuro.
 
 ## Critérios de aceite

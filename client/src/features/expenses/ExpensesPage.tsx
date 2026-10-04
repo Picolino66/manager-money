@@ -12,9 +12,19 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, X } from 'lucide
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
 
+import {
+  deleteCardPurchase,
+  undoStatementPayment,
+} from '@manager-money/core/application/card.use-cases';
 import { deleteExpense } from '@manager-money/core/application/cycle.use-cases';
+import { undoFixedPayment } from '@manager-money/core/application/payment.use-cases';
+import {
+  PAID_HISTORY_LABELS,
+  PAID_HISTORY_MEANS_LABELS,
+  PaidHistoryType,
+} from '@manager-money/core/application/paid-history';
 import { selectActiveCycle, selectConfig } from '@manager-money/core/application/selectors';
-import { isLive } from '@manager-money/core/application/state';
+import { CardPurchaseRecord, isLive } from '@manager-money/core/application/state';
 import { getSortedCategories } from '@manager-money/core/domain/financial/financial.calculations';
 import { formatCurrency } from '@manager-money/core/utils/currency';
 import { formatCycleLabel, formatDateLabel } from '@manager-money/core/utils/date';
@@ -29,34 +39,78 @@ import { Input, NativeSelect } from '@/components/ui/input';
 import { EmptyState } from '@/components/ui/states';
 import { MoneyTd, Table, Td, Th } from '@/components/ui/table';
 import {
-  buildExpenseRows,
+  buildHistoryRows,
   categoriesOf,
   EMPTY_FILTER,
-  ExpenseFilter,
-  ExpenseRow,
-  filterExpenseRows,
+  filterHistoryRows,
+  HistoryFilter,
+  HistoryRow,
   sumAmounts,
 } from '@/lib/expenses';
 import { useDataStore } from '@/store/data.store';
 
+import { CardPurchaseFormDialog } from './CardPurchaseFormDialog';
 import { ExpenseFormDialog } from './ExpenseFormDialog';
 
 const PAGE_SIZE = 20;
+
+/** Textos da ação de remover por tipo: gasto e compra são excluídos; fixa e fatura, desfeitas. */
+const REMOVAL: Record<
+  PaidHistoryType,
+  { noun: string; action: string; title: string; success: string; effect: string }
+> = {
+  expense: {
+    noun: 'gasto',
+    action: 'Excluir',
+    title: 'Excluir gasto?',
+    success: 'Gasto excluído.',
+    effect: 'sairá do ciclo ativo.',
+  },
+  card: {
+    noun: 'compra',
+    action: 'Excluir',
+    title: 'Excluir compra?',
+    success: 'Compra excluída.',
+    effect: '(todas as parcelas) será removida das faturas e o limite volta a ficar livre.',
+  },
+  fixed: {
+    noun: 'pagamento',
+    action: 'Desfazer',
+    title: 'Desfazer pagamento?',
+    success: 'Pagamento desfeito.',
+    effect: 'volta a ficar pendente no ciclo. Se foi no crédito, a compra no cartão também sai.',
+  },
+  installment: {
+    noun: 'pagamento',
+    action: 'Desfazer',
+    title: 'Desfazer pagamento?',
+    success: 'Pagamento desfeito.',
+    effect: 'volta a ficar pendente no ciclo. Se foi no crédito, a compra no cartão também sai.',
+  },
+  statement: {
+    noun: 'lançamento',
+    action: 'Desfazer',
+    title: 'Desfazer lançamento da fatura?',
+    success: 'Lançamento desfeito.',
+    effect: 'será desfeito: o limite volta a ficar comprometido e os encargos saem do orçamento.',
+  },
+};
 
 export function ExpensesPage() {
   const doc = useDataStore((state) => state.doc);
   const run = useDataStore((state) => state.run);
   const saving = useDataStore((state) => state.saving);
   const [params, setParams] = useSearchParams();
-  const [filter, setFilter] = useState<ExpenseFilter>(EMPTY_FILTER);
+  const [filter, setFilter] = useState<HistoryFilter>(EMPTY_FILTER);
   const [sorting, setSorting] = useState<SortingState>([{ id: 'date', desc: true }]);
-  const [editing, setEditing] = useState<ExpenseRow | null>(null);
-  const [deleting, setDeleting] = useState<ExpenseRow | null>(null);
+  const [editing, setEditing] = useState<HistoryRow | null>(null);
+  const [editingPurchase, setEditingPurchase] = useState<CardPurchaseRecord | null>(null);
+  const [deleting, setDeleting] = useState<HistoryRow | null>(null);
   const creating = params.get('novo') === '1';
 
   const activeCycle = doc ? selectActiveCycle(doc) : null;
-  const rows = useMemo(() => (doc ? buildExpenseRows(doc) : []), [doc]);
-  const filtered = useMemo(() => filterExpenseRows(rows, filter), [rows, filter]);
+  const rows = useMemo(() => (doc ? buildHistoryRows(doc) : []), [doc]);
+  const filtered = useMemo(() => filterHistoryRows(rows, filter), [rows, filter]);
   const cycles = useMemo(
     () => (doc?.cycles ?? []).filter(isLive).sort((a, b) => b.startDate.localeCompare(a.startDate)),
     [doc],
@@ -68,7 +122,7 @@ export function ExpensesPage() {
     [doc, rows],
   );
 
-  const columns = useMemo<ColumnDef<ExpenseRow>[]>(
+  const columns = useMemo<ColumnDef<HistoryRow>[]>(
     () => [
       {
         id: 'date',
@@ -77,10 +131,22 @@ export function ExpensesPage() {
         cell: (info) => formatDateLabel(info.row.original.date),
       },
       {
-        id: 'description',
-        accessorKey: 'description',
+        id: 'name',
+        accessorKey: 'name',
         header: 'Descrição',
-        cell: (info) => info.row.original.description || <span className="text-muted">—</span>,
+        cell: (info) => info.row.original.name || <span className="text-muted">—</span>,
+      },
+      {
+        id: 'type',
+        accessorKey: 'type',
+        header: 'Tipo',
+        cell: (info) => <Badge>{PAID_HISTORY_LABELS[info.row.original.type]}</Badge>,
+      },
+      {
+        id: 'means',
+        accessorKey: 'means',
+        header: 'Meio',
+        cell: (info) => PAID_HISTORY_MEANS_LABELS[info.row.original.means],
       },
       { id: 'category', accessorKey: 'category', header: 'Categoria' },
       { id: 'cycle', accessorKey: 'cycleLabel', header: 'Ciclo', enableSorting: false },
@@ -101,7 +167,7 @@ export function ExpensesPage() {
     autoResetPageIndex: true,
   });
 
-  function update(patch: Partial<ExpenseFilter>) {
+  function update(patch: Partial<HistoryFilter>) {
     setFilter((current) => ({ ...current, ...patch }));
   }
 
@@ -110,11 +176,30 @@ export function ExpensesPage() {
     setParams(params, { replace: true });
   }
 
+  function startEdit(row: HistoryRow) {
+    if (row.type === 'card') {
+      setEditingPurchase(doc?.cardPurchases.find((purchase) => purchase.id === row.id) ?? null);
+    } else {
+      setEditing(row);
+    }
+  }
+
   async function confirmDelete() {
     if (!deleting) return;
     try {
-      await run((state, ctx) => deleteExpense(state, deleting.id, ctx));
-      toast.success('Gasto excluído.');
+      await run((state, ctx) => {
+        switch (deleting.type) {
+          case 'expense':
+            return deleteExpense(state, deleting.sourceId, ctx);
+          case 'card':
+            return deleteCardPurchase(state, deleting.sourceId, ctx);
+          case 'statement':
+            return undoStatementPayment(state, deleting.sourceId, ctx);
+          default:
+            return undoFixedPayment(state, deleting.sourceId, ctx);
+        }
+      });
+      toast.success(REMOVAL[deleting.type].success);
       setDeleting(null);
     } catch (failure) {
       toast.error(failure instanceof Error ? failure.message : 'Não foi possível excluir.');
@@ -138,13 +223,18 @@ export function ExpensesPage() {
       label: `Categoria: ${filter.category}`,
       clear: { category: null },
     },
+    filter.type && {
+      key: 'type',
+      label: `Tipo: ${PAID_HISTORY_LABELS[filter.type]}`,
+      clear: { type: null },
+    },
     filter.from && {
       key: 'from',
       label: `De ${formatDateLabel(filter.from)}`,
       clear: { from: '' },
     },
     filter.to && { key: 'to', label: `Até ${formatDateLabel(filter.to)}`, clear: { to: '' } },
-  ].filter(Boolean) as { key: string; label: string; clear: Partial<ExpenseFilter> }[];
+  ].filter(Boolean) as { key: string; label: string; clear: Partial<HistoryFilter> }[];
 
   const pageRows = table.getRowModel().rows;
   const { pageIndex } = table.getState().pagination;
@@ -152,8 +242,8 @@ export function ExpensesPage() {
   return (
     <>
       <PageHeader
-        title="Gastos"
-        description="Gastos à vista de todos os ciclos. Só os do ciclo ativo podem ser editados."
+        title="Histórico"
+        description="Tudo que foi pago em todos os ciclos: gastos à vista, cartão, fixas e parcelamentos. Só os gastos à vista do ciclo ativo podem ser editados."
         actions={
           activeCycle ? (
             <Button onClick={() => setParams({ novo: '1' })}>
@@ -163,7 +253,7 @@ export function ExpensesPage() {
         }
       />
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-6">
+      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-7">
         <Field label="Buscar" className="xl:col-span-2">
           {(props) => (
             <Input
@@ -202,6 +292,24 @@ export function ExpensesPage() {
               <option value="">Todas</option>
               {categoriesOf(rows).map((category) => (
                 <option key={category}>{category}</option>
+              ))}
+            </NativeSelect>
+          )}
+        </Field>
+        <Field label="Tipo">
+          {(props) => (
+            <NativeSelect
+              value={filter.type ?? ''}
+              onChange={(event) =>
+                update({ type: (event.target.value || null) as PaidHistoryType | null })
+              }
+              {...props}
+            >
+              <option value="">Todos</option>
+              {(Object.keys(PAID_HISTORY_LABELS) as PaidHistoryType[]).map((type) => (
+                <option key={type} value={type}>
+                  {PAID_HISTORY_LABELS[type]}
+                </option>
               ))}
             </NativeSelect>
           )}
@@ -251,13 +359,16 @@ export function ExpensesPage() {
       ) : null}
 
       <p className="mb-3 text-sm text-muted" aria-live="polite">
-        {filtered.length} gasto(s) · total{' '}
+        {filtered.length} item(ns) · total pago{' '}
         <Money value={sumAmounts(filtered)} className="font-semibold text-ink" />
+        {filtered.some((row) => !row.countsInTotal) ? (
+          <span> (pagamentos de fatura não entram: a compra já foi contada)</span>
+        ) : null}
       </p>
 
       {rows.length === 0 ? (
         <EmptyState
-          title="Nenhum gasto ainda"
+          title="Nada pago ainda"
           message="Registre o primeiro gasto do ciclo para acompanhar o limite diário."
           action={
             activeCycle ? (
@@ -266,11 +377,11 @@ export function ExpensesPage() {
           }
         />
       ) : filtered.length === 0 ? (
-        <EmptyState title="Nada encontrado" message="Nenhum gasto corresponde aos filtros." />
+        <EmptyState title="Nada encontrado" message="Nenhum item corresponde aos filtros." />
       ) : (
         <>
           <Table>
-            <caption className="sr-only">Gastos filtrados, {filtered.length} no total</caption>
+            <caption className="sr-only">Histórico filtrado, {filtered.length} item(ns)</caption>
             <thead>
               {table.getHeaderGroups().map((group) => (
                 <tr key={group.id}>
@@ -322,27 +433,33 @@ export function ExpensesPage() {
                         ),
                       )}
                     <Td className="text-right whitespace-nowrap">
-                      {expense.editable ? (
+                      {expense.editable || expense.deletable ? (
                         <span className="inline-flex gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Editar gasto ${expense.description || expense.category}`}
-                            onClick={() => setEditing(expense)}
-                          >
-                            <Pencil aria-hidden className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Excluir gasto ${expense.description || expense.category}`}
-                            onClick={() => setDeleting(expense)}
-                          >
-                            <Trash2 aria-hidden className="h-4 w-4" />
-                          </Button>
+                          {expense.editable ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title="Editar"
+                              aria-label={`Editar ${REMOVAL[expense.type].noun} ${expense.name || expense.category}`}
+                              onClick={() => startEdit(expense)}
+                            >
+                              <Pencil aria-hidden className="h-4 w-4" />
+                            </Button>
+                          ) : null}
+                          {expense.deletable ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              title={REMOVAL[expense.type].action}
+                              aria-label={`${REMOVAL[expense.type].action} ${REMOVAL[expense.type].noun} ${expense.name || expense.category}`}
+                              onClick={() => setDeleting(expense)}
+                            >
+                              <Trash2 aria-hidden className="h-4 w-4" />
+                            </Button>
+                          ) : null}
                         </span>
                       ) : (
-                        <Badge>Ciclo fechado</Badge>
+                        <span className="text-xs text-muted">Somente leitura</span>
                       )}
                     </Td>
                   </tr>
@@ -393,19 +510,28 @@ export function ExpensesPage() {
             categories={formCategories}
             expense={editing ?? undefined}
           />
+          {editingPurchase ? (
+            <CardPurchaseFormDialog
+              open
+              onOpenChange={(open) => !open && setEditingPurchase(null)}
+              cycle={activeCycle}
+              categories={formCategories}
+              purchase={editingPurchase}
+            />
+          ) : null}
         </>
       ) : null}
 
       <ConfirmDialog
         open={deleting !== null}
         onOpenChange={(open) => !open && setDeleting(null)}
-        title="Excluir gasto?"
+        title={deleting ? REMOVAL[deleting.type].title : ''}
         description={
           deleting
-            ? `${deleting.description || deleting.category} de ${formatCurrency(deleting.amount)} sairá do ciclo ativo.`
+            ? `${deleting.name || deleting.category} de ${formatCurrency(deleting.amount)} ${REMOVAL[deleting.type].effect}`
             : ''
         }
-        confirmLabel="Excluir"
+        confirmLabel={deleting ? REMOVAL[deleting.type].action : 'Excluir'}
         busy={saving}
         onConfirm={() => void confirmDelete()}
       />

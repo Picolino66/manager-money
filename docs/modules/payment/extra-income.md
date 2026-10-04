@@ -15,7 +15,7 @@ symbols: [addExtraIncome, deleteExtraIncome, calculateExtraIncomeTotal]
 adrs: [ADR-015]
 tests: [packages/core/src/application/payment.use-cases.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-004, BR-FIN-023]
-last_verified_commit: c47cf18+T-025
+last_verified_commit: 7903717+historico-acoes
 ---
 
 # Rendas avulsas do ciclo

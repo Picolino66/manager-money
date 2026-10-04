@@ -4,7 +4,9 @@ const email = process.env.E2E_EMAIL;
 const password = process.env.E2E_PASSWORD;
 
 test.describe('público', () => {
-  test('sem sessão, qualquer rota leva ao login; cabeçalhos de segurança presentes', async ({ page }) => {
+  test('sem sessão, qualquer rota leva ao login; cabeçalhos de segurança presentes', async ({
+    page,
+  }) => {
     const violations: string[] = [];
     page.on('console', (message) => {
       if (message.type() === 'error' && /Content Security Policy/i.test(message.text())) {
@@ -45,7 +47,10 @@ test.describe('público', () => {
 });
 
 test.describe('autenticado (usuário de teste)', () => {
-  test.skip(!email || !password, 'Defina E2E_EMAIL e E2E_PASSWORD de um usuário de teste dedicado.');
+  test.skip(
+    !email || !password,
+    'Defina E2E_EMAIL e E2E_PASSWORD de um usuário de teste dedicado.',
+  );
 
   test('entrar, registrar/editar/excluir gasto, ciclos, análise e sair', async ({ page }) => {
     await page.goto('/login');
@@ -62,7 +67,7 @@ test.describe('autenticado (usuário de teste)', () => {
     const keys = await page.evaluate(() => Object.keys(window.localStorage));
     expect(keys.every((key) => key.startsWith('manager-money'))).toBe(true);
 
-    await page.getByRole('link', { name: 'Gastos' }).click();
+    await page.getByRole('link', { name: 'Histórico' }).click();
     const marker = `E2E ${Date.now()}`;
     const register = page.getByRole('button', { name: 'Registrar gasto' }).first();
     if (await register.isVisible()) {

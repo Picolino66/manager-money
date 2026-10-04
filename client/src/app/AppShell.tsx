@@ -13,7 +13,7 @@ import { useDataStore } from '@/store/data.store';
 
 const NAV = [
   { to: '/', label: 'Visão geral', icon: LayoutDashboard, end: true },
-  { to: '/gastos', label: 'Gastos', icon: ReceiptText, end: false },
+  { to: '/gastos', label: 'Histórico', icon: ReceiptText, end: false },
   { to: '/ciclos', label: 'Ciclos', icon: History, end: false },
   { to: '/analise', label: 'Análise', icon: ChartPie, end: false },
 ] as const;

@@ -1,12 +1,14 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { addCardPurchase, saveCreditCard } from '@manager-money/core/application/card.use-cases';
+import { payFixedExpense } from '@manager-money/core/application/payment.use-cases';
 import { SyncError } from '@manager-money/core/contract/types';
 
 import { useDataStore } from '@/store/data.store';
 import { setDependencies } from '@/store/dependencies';
 import { useSessionStore } from '@/store/session.store';
-import { userFixture } from '@/test/fixtures';
+import { at, userFixture } from '@/test/fixtures';
 import { FakeAuth, MemoryGateway } from '@/test/memory-gateway';
 import { renderApp } from '@/test/render';
 
@@ -121,13 +123,13 @@ describe('visão geral', () => {
   });
 });
 
-describe('gastos', () => {
+describe('histórico', () => {
   it('lista todos os ciclos e deixa o fechado somente leitura', async () => {
     signedIn();
     renderApp('/gastos');
 
     const table = await screen.findByRole('table');
-    expect(within(table).getAllByText('Ciclo fechado')).toHaveLength(2);
+    expect(within(table).getAllByText('Somente leitura')).toHaveLength(2);
     expect(within(table).getByRole('button', { name: 'Editar gasto Padaria' })).toBeInTheDocument();
     expect(within(table).queryByRole('button', { name: 'Editar gasto Mercado' })).toBeNull();
   });
@@ -140,7 +142,7 @@ describe('gastos', () => {
     await user.type(await screen.findByLabelText('Buscar'), 'onibus');
     const table = screen.getByRole('table');
     await waitFor(() => expect(within(table).getAllByRole('row')).toHaveLength(2));
-    expect(screen.getByText(/1 gasto\(s\)/)).toHaveTextContent('R$ 12,00');
+    expect(screen.getByText(/1 item\(ns\) · total pago/)).toHaveTextContent('R$ 12,00');
   });
 
   it('registra gasto em centavos e grava só a linha nova', async () => {
@@ -197,6 +199,93 @@ describe('gastos', () => {
     expect(
       gateway.rows.expenses.find((row) => row.description === 'Ração')?.deleted_at,
     ).not.toBeNull();
+  });
+});
+
+describe('histórico: cartão e fixas', () => {
+  function signedInWithPaid() {
+    signedIn(false);
+    let state = saveCreditCard(
+      userFixture(),
+      { name: 'Nubank', closingDay: 1, dueDay: 10 },
+      at(2026, 11, 9),
+    );
+    state = addCardPurchase(
+      state,
+      {
+        cardId: state.creditCards[0]!.id,
+        description: 'Tênis',
+        category: 'Vestuário',
+        totalAmount: 25000,
+        installments: 1,
+        date: '2026-11-09',
+      },
+      at(2026, 11, 9),
+    );
+    state = payFixedExpense(state, { fixedExpenseId: 'aluguel', method: 'pix' }, at(2026, 11, 9));
+    gateway.seed(state, USER);
+  }
+
+  it('compra no cartão tem lápis e lixeira; fixa paga só tem desfazer', async () => {
+    signedInWithPaid();
+    renderApp('/gastos');
+
+    expect(await screen.findByRole('button', { name: 'Editar compra Tênis' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Excluir compra Tênis' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Desfazer pagamento Aluguel' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Editar pagamento Aluguel' })).toBeNull();
+
+    const table = screen.getByRole('table');
+    expect(within(table).getByRole('columnheader', { name: /Meio/ })).toBeInTheDocument();
+    const rowOf = (name: string) => within(table).getByText(name).closest('tr')!;
+    expect(within(rowOf('Tênis')).getByText('Crédito')).toBeInTheDocument();
+    expect(within(rowOf('Aluguel')).getByText('Saldo')).toBeInTheDocument();
+  });
+
+  it('edita a compra no cartão e grava só ela', async () => {
+    signedInWithPaid();
+    renderApp('/gastos');
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'Editar compra Tênis' }));
+    const dialog = await screen.findByRole('dialog');
+    const description = within(dialog).getByLabelText('Descrição');
+    await user.clear(description);
+    await user.type(description, 'Tênis de corrida');
+    await user.click(within(dialog).getByRole('button', { name: 'Salvar' }));
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(gateway.upserts.at(-1)).toEqual({ table: 'card_purchases', count: 1 });
+    expect(gateway.rows.card_purchases[0]?.description).toBe('Tênis de corrida');
+    expect(await screen.findByText('Tênis de corrida')).toBeInTheDocument();
+  });
+
+  it('desfaz o pagamento da fixa com confirmação', async () => {
+    signedInWithPaid();
+    renderApp('/gastos');
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'Desfazer pagamento Aluguel' }));
+    const confirm = await screen.findByRole('alertdialog');
+    await user.click(within(confirm).getByRole('button', { name: 'Desfazer' }));
+
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: 'Desfazer pagamento Aluguel' })).toBeNull(),
+    );
+    expect(gateway.rows.fixed_payments[0]?.deleted_at).not.toBeNull();
+  });
+
+  it('exclui a compra no cartão com confirmação', async () => {
+    signedInWithPaid();
+    renderApp('/gastos');
+    const user = userEvent.setup();
+
+    await user.click(await screen.findByRole('button', { name: 'Excluir compra Tênis' }));
+    const confirm = await screen.findByRole('alertdialog');
+    await user.click(within(confirm).getByRole('button', { name: 'Excluir' }));
+
+    await waitFor(() => expect(screen.queryByText('Tênis')).toBeNull());
+    expect(gateway.rows.card_purchases[0]?.deleted_at).not.toBeNull();
   });
 });
 

@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T19:36:15.782Z",
-  "source_commit": "3b9bf25",
+  "generated_at": "2026-10-04T21:31:12.832Z",
+  "source_commit": "7903717",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -541,6 +541,9 @@
         "acknowledge",
         "markAllClean",
         "mapSupabaseError",
+        "filterPaidHistory",
+        "selectPaidHistory",
+        "sumPaidHistory",
         "selectCategorizedItems",
         "filterCategorizedItems",
         "summarizeByCategory"
@@ -552,7 +555,8 @@
       ],
       "tests": [
         "packages/core/src/contract/dirty.test.ts",
-        "packages/core/src/application/category-analysis.test.ts"
+        "packages/core/src/application/category-analysis.test.ts",
+        "packages/core/src/application/paid-history.test.ts"
       ],
       "spec": "SPEC-022"
     },
@@ -660,7 +664,7 @@
       "type": "feature",
       "module": "cycle",
       "title": "Histórico diário e ciclos anteriores",
-      "summary": "Lista de gastos do ciclo ativo agrupados por dia, com o saldo de cada dia, e lista de ciclos fechados com o resultado final.",
+      "summary": "Histórico de tudo que foi pago no ciclo ativo (gasto à vista, cartão, fixas, parcelados e fatura) agrupado por dia, com o saldo de cada dia, e lista de ciclos fechados com o resultado final.",
       "doc": "modules/cycle/history.md",
       "state": "implemented",
       "keywords": [
@@ -670,6 +674,9 @@
         "resultado"
       ],
       "symbols": [
+        "filterPaidHistory",
+        "selectPaidHistory",
+        "sumPaidHistory",
         "calculateDayBalance",
         "calculateFinalBalance",
         "selectCycleSpending",
@@ -1485,11 +1492,13 @@
       "id": "web.expenses",
       "type": "feature",
       "module": "web",
-      "title": "Tabela de gastos (web)",
-      "summary": "Gastos à vista de todos os ciclos com busca, filtros por ciclo, categoria e período, ordenação e paginação; registrar, editar e excluir só no ciclo ativo, pelos casos de uso do núcleo.",
+      "title": "Histórico de pagamentos (web)",
+      "summary": "Tudo que foi pago em todos os ciclos (gasto à vista, cartão, fixas, parcelados e fatura) com busca, filtros por ciclo, categoria, tipo e período, ordenação e paginação; registrar, editar e excluir só gastos à vista do ciclo ativo, pelos casos de uso do núcleo.",
       "doc": "modules/web/expenses.md",
       "state": "implemented",
       "keywords": [
+        "histórico",
+        "pagamentos",
         "gastos",
         "tabela",
         "filtro",
@@ -1499,8 +1508,11 @@
         "registrar"
       ],
       "symbols": [
-        "buildExpenseRows",
-        "filterExpenseRows",
+        "filterPaidHistory",
+        "CardPurchaseFormDialog",
+        "buildHistoryRows",
+        "filterHistoryRows",
+        "selectPaidHistory",
         "ExpenseFormDialog",
         "MoneyInput"
       ],
@@ -1512,6 +1524,7 @@
         "ADR-020"
       ],
       "tests": [
+        "packages/core/src/application/paid-history.test.ts",
         "client/src/lib/view-models.test.ts",
         "client/src/features/features.test.tsx"
       ],

@@ -3,7 +3,7 @@ import { addMonths, format } from 'date-fns';
 import { Alert } from 'react-native';
 
 import { addCardPurchase, saveCreditCard } from '@manager-money/core/application/card.use-cases';
-import { openCycle, saveConfig } from '@manager-money/core/application/cycle.use-cases';
+import { addExpense, openCycle, saveConfig } from '@manager-money/core/application/cycle.use-cases';
 import { payFixedExpense } from '@manager-money/core/application/payment.use-cases';
 import {
   CardPurchaseRecord,
@@ -19,6 +19,7 @@ import { CardsScreen } from './CardsScreen';
 import { CategoriesScreen } from './CategoriesScreen';
 import { ConfigScreen } from './ConfigScreen';
 import { IncomesScreen } from './IncomesScreen';
+import { DailyHistoryScreen } from './DailyHistoryScreen';
 import { DashboardScreen } from './DashboardScreen';
 import { PreviousMonthsScreen } from './PreviousMonthsScreen';
 
@@ -870,6 +871,179 @@ describe('CategoriesScreen (compras no cartão e fixas pagas)', () => {
     expect(screen.getAllByText('R$ 1.510,00').length).toBeGreaterThan(0);
     // 900,00 (TV) + 1.510,00 (aluguel + juros) = 2.410,00
     expect(screen.getAllByText('R$ 2.410,00').length).toBeGreaterThan(0);
+  });
+});
+
+describe('DailyHistoryScreen (tudo que foi pago no ciclo)', () => {
+  it('mostra tudo que foi pago; lápis em gasto e compra, lixeira também em fixa (desfazer)', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    let doc = docWithFixed(true);
+    const cardId = doc.creditCards[0]!.id;
+    const today = format(ctx.now, 'yyyy-MM-dd');
+    doc = addExpense(
+      doc,
+      { amount: 1500, category: 'Alimentação', description: 'Padaria', date: today },
+      ctx,
+    );
+    doc = addCardPurchase(
+      doc,
+      {
+        cardId,
+        description: 'TV',
+        category: 'Lazer',
+        totalAmount: 90000,
+        installments: 1,
+        date: today,
+      },
+      ctx,
+    );
+    doc = payFixedExpense(doc, { fixedExpenseId: 'aluguel', method: 'pix' }, ctx);
+    await seed(doc);
+    render(
+      <DailyHistoryScreen
+        navigation={navigation}
+        route={{ key: 'k', name: 'DailyHistory', params: undefined }}
+      />,
+    );
+
+    // Total do dia = 15,00 + 900,00 + 1.500,00 (nada contado duas vezes).
+    expect(screen.getByText('R$ 2.415,00')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText(/Alternar detalhes de/));
+    expect(await screen.findByText('Padaria')).toBeTruthy();
+    expect(screen.getByText('Crédito · Cartão · Lazer')).toBeTruthy();
+    expect(screen.getByText('Saldo · Fixo · Moradia')).toBeTruthy();
+    expect(screen.getByLabelText('Editar gasto Padaria')).toBeTruthy();
+    expect(screen.getByLabelText('Editar compra TV')).toBeTruthy();
+    expect(screen.queryByLabelText(/Editar pagamento Aluguel/)).toBeNull();
+    expect(screen.getByLabelText('Desfazer pagamento Aluguel')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('Editar gasto Padaria'));
+    expect(mockNavigate).toHaveBeenCalledWith('AddExpense', {
+      expenseId: expect.any(String),
+    });
+    fireEvent.press(screen.getByLabelText('Editar compra TV'));
+    expect(mockNavigate).toHaveBeenCalledWith('CardDetail', { cardId: expect.any(String) });
+  });
+
+  it('ícone de filtro abre o gadget; a busca filtra e limpar restaura', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    let doc = docWithFixed(true);
+    const cardId = doc.creditCards[0]!.id;
+    const today = format(ctx.now, 'yyyy-MM-dd');
+    doc = addExpense(
+      doc,
+      { amount: 1500, category: 'Alimentação', description: 'Padaria', date: today },
+      ctx,
+    );
+    doc = addCardPurchase(
+      doc,
+      {
+        cardId,
+        description: 'TV',
+        category: 'Lazer',
+        totalAmount: 90000,
+        installments: 1,
+        date: today,
+      },
+      ctx,
+    );
+    await seed(doc);
+    render(
+      <DailyHistoryScreen
+        navigation={navigation}
+        route={{ key: 'k', name: 'DailyHistory', params: undefined }}
+      />,
+    );
+    fireEvent.press(screen.getByLabelText(/Alternar detalhes de/));
+    expect(await screen.findByText('TV')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('Filtros'));
+    fireEvent.changeText(await screen.findByLabelText('Buscar'), 'padar');
+    fireEvent.press(screen.getByText('Aplicar filtros'));
+
+    expect(await screen.findByText('Padaria')).toBeTruthy();
+    expect(screen.queryByText('TV')).toBeNull();
+    expect(screen.getByLabelText('Filtros (ativos)')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('Filtros (ativos)'));
+    fireEvent.changeText(await screen.findByLabelText('Buscar'), 'zzz');
+    fireEvent.press(screen.getByText('Aplicar filtros'));
+    expect(await screen.findByText('Nada encontrado')).toBeTruthy();
+
+    fireEvent.press(screen.getByText('Limpar filtros'));
+    // O dia continua expandido: o filtro não mexe no estado dos grupos.
+    expect(await screen.findByText('TV')).toBeTruthy();
+  });
+
+  it('data inválida no filtro mostra erro e não aplica', async () => {
+    await seed(docWithFixed());
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    await seed(
+      addExpense(
+        docWithFixed(),
+        {
+          amount: 1500,
+          category: 'Alimentação',
+          description: 'Padaria',
+          date: format(ctx.now, 'yyyy-MM-dd'),
+        },
+        ctx,
+      ),
+    );
+    render(
+      <DailyHistoryScreen
+        navigation={navigation}
+        route={{ key: 'k', name: 'DailyHistory', params: undefined }}
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText('Filtros'));
+    fireEvent.changeText(await screen.findByLabelText('De'), '99/99/9999');
+    fireEvent.press(screen.getByText('Aplicar filtros'));
+
+    expect(await screen.findByText('Use o formato DD/MM/AAAA.')).toBeTruthy();
+    expect(screen.getByLabelText('Filtros')).toBeTruthy();
+  });
+
+  it('lixeira confirma e exclui o gasto; desfazer remove o pagamento da fixa', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    let doc = docWithFixed();
+    doc = addExpense(
+      doc,
+      {
+        amount: 1500,
+        category: 'Alimentação',
+        description: 'Padaria',
+        date: format(ctx.now, 'yyyy-MM-dd'),
+      },
+      ctx,
+    );
+    doc = payFixedExpense(doc, { fixedExpenseId: 'aluguel', method: 'pix' }, ctx);
+    await seed(doc);
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+      buttons?.find((button) => button.style === 'destructive')?.onPress?.();
+    });
+    render(
+      <DailyHistoryScreen
+        navigation={navigation}
+        route={{ key: 'k', name: 'DailyHistory', params: undefined }}
+      />,
+    );
+    fireEvent.press(screen.getByLabelText(/Alternar detalhes de/));
+
+    fireEvent.press(await screen.findByLabelText('Excluir gasto Padaria'));
+    await waitFor(() => expect(useFinancialStore.getState().activeMonth?.expenses).toHaveLength(0));
+    fireEvent.press(await screen.findByLabelText('Desfazer pagamento Aluguel'));
+    await waitFor(() =>
+      expect(
+        useFinancialStore.getState().doc.fixedPayments.filter((p) => p.deletedAt === null),
+      ).toHaveLength(0),
+    );
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Desfazer pagamento?',
+      expect.stringContaining('Aluguel'),
+      expect.any(Array),
+    );
   });
 });
 

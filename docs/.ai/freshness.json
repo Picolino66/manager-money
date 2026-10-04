@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T19:36:15.782Z",
-  "source_commit": "3b9bf25",
+  "generated_at": "2026-10-04T21:31:12.832Z",
+  "source_commit": "7903717",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -274,13 +274,16 @@
     },
     "modules/core/shared-package.md": {
       "id": "core.shared-package",
-      "last_verified_commit": "3b9bf25+T-040",
+      "last_verified_commit": "7903717+historico-filtros",
       "state": "fresh",
       "source_hashes": {
         "collectDirty": "sha256:57814d10f566ec59d056debf253507a28ff02c581c7cfc990dcb791e63476b72",
         "acknowledge": "sha256:6ff4e30adffafe4364aa38f86c29b265938dea375b0f8297ada3c0c519876820",
         "markAllClean": "sha256:32ce698dbdbe8b10fee52877520944a8a7d63632950d63d78b4bb890f3ce7a1c",
         "mapSupabaseError": "sha256:bdd714798783c699815006f3718d165d11d216d7c41d2d64b420701b0dc49fd3",
+        "filterPaidHistory": "sha256:dd0426e97b285d3c3bf293a9c2f28b471d368f7fc771fd4e7f07e8868ee43311",
+        "selectPaidHistory": "sha256:6b35ced5a941e889cb81bd9d14888c42858e7903ff5a1f28ef3a45dc2406c0ce",
+        "sumPaidHistory": "sha256:42b1e85704c7445dca1c55b60f62ec6f59337c5b3bf6ecda0ee24202b0b46a09",
         "selectCategorizedItems": "sha256:662a0309882498b1c76757583709b6ec4b3566c8dd4a74cdbc31b3e4837a709e",
         "filterCategorizedItems": "sha256:491df81f6ca22ee486f44e82e53d44cc44e8f55ce1cb7b42a4195c6cb3771488",
         "summarizeByCategory": "sha256:816258608bab32cc71087dae6c94f21fcd95ca69fcdad91135433359c1ee8ceb"
@@ -315,9 +318,12 @@
     },
     "modules/cycle/history.md": {
       "id": "cycle.history",
-      "last_verified_commit": "a1af85a+ciclos-filtro",
+      "last_verified_commit": "7903717+historico-filtros",
       "state": "fresh",
       "source_hashes": {
+        "filterPaidHistory": "sha256:dd0426e97b285d3c3bf293a9c2f28b471d368f7fc771fd4e7f07e8868ee43311",
+        "selectPaidHistory": "sha256:6b35ced5a941e889cb81bd9d14888c42858e7903ff5a1f28ef3a45dc2406c0ce",
+        "sumPaidHistory": "sha256:42b1e85704c7445dca1c55b60f62ec6f59337c5b3bf6ecda0ee24202b0b46a09",
         "calculateDayBalance": "sha256:fb42174e932181cea938be6113183edf45901abc8f7d10f68d2aac8abb581179",
         "calculateFinalBalance": "sha256:08e27d475c050f0048b26cd3923d5077be41593ef96cd26a5e5f4bef6892a049",
         "selectCycleSpending": "sha256:626abbbe13d1783b3765ac479f3add7dc6d51118a695a276c458fa900a6cc7af",
@@ -416,7 +422,7 @@
     },
     "modules/payment/extra-income.md": {
       "id": "payment.extra-income",
-      "last_verified_commit": "c47cf18+T-025",
+      "last_verified_commit": "7903717+historico-acoes",
       "state": "fresh",
       "source_hashes": {
         "addExtraIncome": "sha256:82c7012497624e6bc507028ce65a6d483fcf74215141382d924f358cda4a32c4",
@@ -505,7 +511,7 @@
     },
     "modules/settings/index.md": {
       "id": "settings",
-      "last_verified_commit": "455a4b1+T-031",
+      "last_verified_commit": "7903717+historico-acoes",
       "state": "fresh",
       "source_hashes": {
         "app/src/screens/SettingsScreen.tsx": "sha256:03a17a889c07207ee62eb8dfc7164aa1a6485b86ee670b99ea46d2995fe23715"
@@ -630,11 +636,14 @@
     },
     "modules/web/expenses.md": {
       "id": "web.expenses",
-      "last_verified_commit": "3b9bf25+T-040",
+      "last_verified_commit": "7903717+historico-filtros",
       "state": "fresh",
       "source_hashes": {
-        "buildExpenseRows": "sha256:a345bbacaeee0b4d5c8b5ec35a242836d5bcfd25459f58839705babbc42e9153",
-        "filterExpenseRows": "sha256:92914f6dbfb712bb63bb7218d8a328630e00ab292b99f802cedced48fd621b62",
+        "filterPaidHistory": "sha256:dd0426e97b285d3c3bf293a9c2f28b471d368f7fc771fd4e7f07e8868ee43311",
+        "CardPurchaseFormDialog": "sha256:fd34f23fba765a7b13421ac6b538d6cb2bc0d6dcf31c56805eeaada43cda8a9e",
+        "buildHistoryRows": "sha256:a5b1060ab7152f6687d9f48f04442bb7003af01b0037e3f3e02e21dcb3a435a5",
+        "filterHistoryRows": "sha256:f102a264d9d0a6f338c1d7bccf68fb43e4305adf1d555550eee1b9da05ca4e8e",
+        "selectPaidHistory": "sha256:6b35ced5a941e889cb81bd9d14888c42858e7903ff5a1f28ef3a45dc2406c0ce",
         "ExpenseFormDialog": "sha256:182cf5871b588be298ce639f489c004884c7827e52787b0966bab298337a8510",
         "MoneyInput": "sha256:7199aefffc18da197912f6ac07d46029cc540bdc57b87a3611b39caf85dfcfbe"
       }

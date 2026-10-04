@@ -1,11 +1,13 @@
 import { parseISO } from 'date-fns';
 
+import { addCardPurchase, saveCreditCard } from '@manager-money/core/application/card.use-cases';
 import { deleteExpense, saveConfig } from '@manager-money/core/application/cycle.use-cases';
 import {
   filterCategorizedItems,
   selectCategorizedItems,
   summarizeByCategory,
 } from '@manager-money/core/application/category-analysis';
+import { payFixedExpense } from '@manager-money/core/application/payment.use-cases';
 import {
   selectActiveMonth,
   selectClosedMonths,
@@ -20,10 +22,10 @@ import {
 import { at, userFixture } from '../test/fixtures';
 import { buildClosedCycles, buildCycleDetail } from './cycles';
 import {
-  buildExpenseRows,
+  buildHistoryRows,
   categoriesOf,
   EMPTY_FILTER,
-  filterExpenseRows,
+  filterHistoryRows,
   sumAmounts,
 } from './expenses';
 import { buildOverview } from './overview';
@@ -67,28 +69,25 @@ describe('visão geral (paridade com o Hoje do app)', () => {
   });
 });
 
-describe('tabela de gastos', () => {
+describe('histórico (tudo que foi pago)', () => {
   const fixture = userFixture();
-  const rows = buildExpenseRows(fixture);
+  const rows = buildHistoryRows(fixture);
 
   it('lista todos os ciclos, mais recentes primeiro, e marca o fechado como somente leitura', () => {
-    expect(rows.map((row) => row.description)).toEqual(['Padaria', 'Ração', 'Ônibus', 'Mercado']);
-    expect(rows.filter((row) => row.editable).map((row) => row.description)).toEqual([
-      'Padaria',
-      'Ração',
-    ]);
+    expect(rows.map((row) => row.name)).toEqual(['Padaria', 'Ração', 'Ônibus', 'Mercado']);
+    expect(rows.filter((row) => row.editable).map((row) => row.name)).toEqual(['Padaria', 'Ração']);
     expect(sumAmounts(rows)).toBe(4590 + 1200 + 3000 + 2550);
   });
 
   it('busca sem acento, filtra por ciclo, categoria e período', () => {
-    expect(filterExpenseRows(rows, { ...EMPTY_FILTER, search: 'onibus' })).toHaveLength(1);
-    expect(filterExpenseRows(rows, { ...EMPTY_FILTER, search: 'aliment' })).toHaveLength(2);
+    expect(filterHistoryRows(rows, { ...EMPTY_FILTER, search: 'onibus' })).toHaveLength(1);
+    expect(filterHistoryRows(rows, { ...EMPTY_FILTER, search: 'aliment' })).toHaveLength(2);
     const closedId = selectClosedMonths(fixture)[0]!.id;
-    expect(filterExpenseRows(rows, { ...EMPTY_FILTER, cycleId: closedId })).toHaveLength(2);
-    expect(filterExpenseRows(rows, { ...EMPTY_FILTER, category: 'Pets' })).toHaveLength(1);
+    expect(filterHistoryRows(rows, { ...EMPTY_FILTER, cycleId: closedId })).toHaveLength(2);
+    expect(filterHistoryRows(rows, { ...EMPTY_FILTER, category: 'Pets' })).toHaveLength(1);
     expect(
       sumAmounts(
-        filterExpenseRows(rows, { ...EMPTY_FILTER, from: '2026-10-20', to: '2026-11-08' }),
+        filterHistoryRows(rows, { ...EMPTY_FILTER, from: '2026-10-20', to: '2026-11-08' }),
       ),
     ).toBe(1200 + 3000);
     expect(categoriesOf(rows)).toEqual(['Alimentação', 'Pets', 'Transporte']);
@@ -97,7 +96,53 @@ describe('tabela de gastos', () => {
   it('gasto excluído some da tabela', () => {
     const state = userFixture();
     const id = selectActiveMonth(state)!.expenses[0]!.id;
-    expect(buildExpenseRows(deleteExpense(state, id, at(2026, 11, 12)))).toHaveLength(3);
+    expect(buildHistoryRows(deleteExpense(state, id, at(2026, 11, 12)))).toHaveLength(3);
+  });
+});
+
+describe('histórico com cartão e fixas', () => {
+  function paidFixture() {
+    let state = userFixture();
+    state = saveCreditCard(state, { name: 'Nubank', closingDay: 1, dueDay: 10 }, at(2026, 11, 8));
+    state = addCardPurchase(
+      state,
+      {
+        cardId: state.creditCards[0]!.id,
+        description: 'Tênis',
+        category: 'Vestuário',
+        totalAmount: 25000,
+        installments: 1,
+        date: '2026-11-09',
+      },
+      at(2026, 11, 9),
+    );
+    return payFixedExpense(state, { fixedExpenseId: 'aluguel', method: 'pix' }, at(2026, 11, 9));
+  }
+
+  it('inclui compra no cartão e fixa paga, somente leitura, e filtra por tipo', () => {
+    const rows = buildHistoryRows(paidFixture());
+
+    expect(rows.map((row) => row.type).sort()).toEqual([
+      'card',
+      'expense',
+      'expense',
+      'expense',
+      'expense',
+      'fixed',
+    ]);
+    expect(
+      rows
+        .filter((row) => row.editable)
+        .map((row) => row.name)
+        .sort(),
+    ).toEqual(['Padaria', 'Ração', 'Tênis']);
+    expect(rows.find((row) => row.name === 'Tênis')?.means).toBe('credit');
+    expect(rows.find((row) => row.name === 'Aluguel')?.means).toBe('balance');
+    expect(sumAmounts(rows)).toBe(4590 + 1200 + 3000 + 2550 + 25000 + 150000);
+    expect(filterHistoryRows(rows, { ...EMPTY_FILTER, type: 'card' }).map((r) => r.name)).toEqual([
+      'Tênis',
+    ]);
+    expect(rows.every((row) => row.cycleLabel !== '—')).toBe(true);
   });
 });
 
