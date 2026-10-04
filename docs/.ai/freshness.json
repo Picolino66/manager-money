@@ -1,20 +1,20 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T21:31:12.832Z",
-  "source_commit": "7903717",
+  "generated_at": "2026-10-04T21:55:10.976Z",
+  "source_commit": "396a02a",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
     "architecture/client-web-plan.md": {
       "id": "architecture.client-web-plan",
-      "last_verified_commit": "3b9bf25+T-040",
+      "last_verified_commit": "7903717+T-041",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:052fc5534bf1bee397ee1cca5da2ddeb609ced41ce4952d767661ee49e2e91eb",
         "app/package.json": "sha256:91ec3a321e89412e3a7065a8db05a9cc0904ba8d87ffca5774cb1cc98c5e1754",
         "client/package.json": "sha256:9eb428390a6a4f198656e7b3a853bfda81aba80a777ef2f791d8bec153890315",
         ".github/workflows/ci.yml": "sha256:597fe87591055d49008a22fff837addba9c5c0e6cea7cf7cf9812709e5217e12",
-        "client/README.md": "sha256:bd42e1c500953d5c1d683880f901cc07908accff2bbae823858e1963fdddc6ce"
+        "client/README.md": "sha256:4cd8f04a0b9ed6266dd53175f803a09e7cd9183c8a59a1b710a68c54ffaf4a76"
       }
     },
     "architecture/contracts.md": {
@@ -120,10 +120,10 @@
     },
     "modules/account/export.md": {
       "id": "account.export",
-      "last_verified_commit": "bfe9de6+T-028r2",
+      "last_verified_commit": "7903717+T-041",
       "state": "fresh",
       "source_hashes": {
-        "buildExportPayload": "sha256:6c6fabc0891cc19f61c5f5ac0ab3cf3cfbac436b99168fa138b3315c3d67fd1b",
+        "buildExportPayload": "sha256:8428bdddb7250b3700db029f7d901040140cb95c670e421fabfd63f12fd7e5f6",
         "shareJson": "sha256:cc6cf0bbedcad442f6eadb687e439ef1e1a11e6cc03186f77cd54ae71fcfb84f",
         "exportFileName": "sha256:e6002be4fa8453c5454f956b23c7e578850ee32bfcd0276d7b480d884998bf51"
       }
@@ -185,7 +185,7 @@
     },
     "modules/card/manage.md": {
       "id": "card.manage",
-      "last_verified_commit": "bfe9de6+T-028",
+      "last_verified_commit": "7903717+T-041",
       "state": "fresh",
       "source_hashes": {
         "saveCreditCard": "sha256:c426c83e44c89a96943e9a706ae703f5a3214489b3f7f94d8d2e6124d47e01cd",
@@ -219,7 +219,7 @@
     },
     "modules/card/statement.md": {
       "id": "card.statement",
-      "last_verified_commit": "bfe9de6+T-028",
+      "last_verified_commit": "7903717+T-041",
       "state": "fresh",
       "source_hashes": {
         "buildCardStatements": "sha256:b4b35b2b6ac3584a14d9867a8e2cf9da09ecec62cc37e87c4c59e436702d8d62",
@@ -274,7 +274,7 @@
     },
     "modules/core/shared-package.md": {
       "id": "core.shared-package",
-      "last_verified_commit": "7903717+historico-filtros",
+      "last_verified_commit": "7903717+T-041",
       "state": "fresh",
       "source_hashes": {
         "collectDirty": "sha256:57814d10f566ec59d056debf253507a28ff02c581c7cfc990dcb791e63476b72",
@@ -370,10 +370,10 @@
     },
     "modules/expense/index.md": {
       "id": "expense",
-      "last_verified_commit": "3b9bf25+T-033",
+      "last_verified_commit": "7903717+T-041",
       "state": "fresh",
       "source_hashes": {
-        "app/src/screens/AddExpenseScreen.tsx": "sha256:b0107c591b7619d4cd6fcca582bd657cc403e18623707a2a21622d042ca58c24"
+        "app/src/screens/AddExpenseScreen.tsx": "sha256:d2af1680f147a84b4ead5d3c17395200a7b4848ce99cd5f3bde4d47266ed6ecc"
       }
     },
     "modules/expense/register.md": {
@@ -625,6 +625,23 @@
         "EXPIRED_NOTICE": "sha256:eb3c8db147f598f699358d26a744df41f021df1782fd47587421a06412bb84c4"
       }
     },
+    "modules/web/cards.md": {
+      "id": "web.cards",
+      "last_verified_commit": "7903717+T-041",
+      "state": "fresh",
+      "source_hashes": {
+        "buildCardStatementsView": "sha256:d7f408606144ab1cf19acb7044e9c02c99f5f861744e4eee7a35e9d96dc66d96",
+        "statementCycleKeys": "sha256:96810833a0d805dc7c5e6f08112377a9496fa4949ad4a355d1c532e90bf944d8",
+        "weightByCycle": "sha256:dcc9baf730d08463c08b178b66518a0eb1f7e84adc83174ecd69443f0e904091",
+        "hasCardPurchases": "sha256:d5186b4cc1aedbb3098062ba70e22d5d3238eeba57a98d00717365bb3b406fc6",
+        "describeStatementEntry": "sha256:1a2b58b89f56305fd9756a18e875b2f33f3e86400b4ac862bb6184cb5bc3599a",
+        "CardFormDialog": "sha256:db61299ef6f8b4830eab57066b0539d99ccbb838270978c907647de32a604cdc",
+        "StatementPanel": "sha256:746c9ccb322188e5fe84acbb1f26baa2438114f108c76dac4956c88edf4d0d8f",
+        "PayStatementDialog": "sha256:d17f025464e0f7f730b33887d575369abe13f2a9767a21d01eff356ad7438a73",
+        "StatementChargesDialog": "sha256:762d376a6e81333a8bb49ff409b23c7c408606c318c59fcc1e2d05a61086e9d3",
+        "LimitBar": "sha256:f8617728b290313e67ace433979b5e3c5c7e6357c6911f6fc0f6103018942a5b"
+      }
+    },
     "modules/web/cycles.md": {
       "id": "web.cycles",
       "last_verified_commit": "3b9bf25+T-040",
@@ -650,13 +667,13 @@
     },
     "modules/web/index.md": {
       "id": "web",
-      "last_verified_commit": "3b9bf25+T-040",
+      "last_verified_commit": "7903717+T-041",
       "state": "fresh",
       "source_hashes": {
         "client/package.json": "sha256:9eb428390a6a4f198656e7b3a853bfda81aba80a777ef2f791d8bec153890315",
-        "client/vite.config.ts": "sha256:3ebd9531b631b9e9a161dd499886dbb77c8bbfce1b7e93dfc9c64717857d778c",
+        "client/vite.config.ts": "sha256:fbe8e4462d698ecf33bdf017c0633ca0920635e3ced71c845e64185d13060d63",
         "client/eslint.config.js": "sha256:8f4084021a82d0e08764f88267984237f828e820ca123e6d59ed5044ddc61f71",
-        "client/src/router.tsx": "sha256:68c261c84c6f217c515c6221389c4ce91dcd3a452b87c3cf650eaef4b6a89caf"
+        "client/src/router.tsx": "sha256:779a8db46bcbef12cfe9c9d9747ad73650fa307b393f28167c57990693cab396"
       }
     },
     "modules/web/onboarding.md": {
@@ -676,6 +693,19 @@
         "buildOverview": "sha256:eddb055d91d20ff9ba1d53c55d6f0a86bb0db1f1b29171a9e888db748fbc394d",
         "OverviewPage": "sha256:1736d845199347e27e98c002f5b91c9198c51f8578ef13ff606ef76a318c91b8",
         "moneyTicks": "sha256:17e8af977a5885e407b51b5c214f62778307504df31b3e7017330062b3844a54"
+      }
+    },
+    "modules/web/settings.md": {
+      "id": "web.settings",
+      "last_verified_commit": "7903717+T-041",
+      "state": "fresh",
+      "source_hashes": {
+        "configToForm": "sha256:aff932be63106019c6860ea5a709d0c26f29051b331a803f5d104d5bbdf97399",
+        "formToConfigInput": "sha256:1038ab63578bf7813430e4721294649564f4722fddbe0a67393a69093f4a15f8",
+        "plannedOutflowExceedsIncome": "sha256:f871ef91f69b26502375b6b912efe4297acb804766536df7da800ba1cf2ca2fa",
+        "downloadTextFile": "sha256:df9d0bc696bca17b64c6be098722c148ee65d4ebd2bb8e348851dd8245b219e1",
+        "buildExportPayload": "sha256:8428bdddb7250b3700db029f7d901040140cb95c670e421fabfd63f12fd7e5f6",
+        "exportFileName": "sha256:e6002be4fa8453c5454f956b23c7e578850ee32bfcd0276d7b480d884998bf51"
       }
     },
     "modules/web/shell.md": {
@@ -711,12 +741,13 @@
     },
     "quality/security-report.md": {
       "id": "quality.security-report",
-      "last_verified_commit": "3b9bf25+T-033",
+      "last_verified_commit": "7903717+T-041",
       "state": "fresh",
       "source_hashes": {
         "supabase/migrations/20261001000000_init.sql": "sha256:fbdafc4a64ab9b114512823451cffbb232b603310e616466c5bb811fe0ce93af",
         "app/src/infrastructure/supabase/session-storage.ts": "sha256:d9c6c59deb2636a97b43ab99c523ebfb130d5b19c1a006c7143cf74f4f5edc73",
-        "app/src/infrastructure/export/share-json.ts": "sha256:c6f873aa5aedf57061d7333e48f75d98ec4711cfc1943b0cbd8f15d8948b9816",
+        "app/src/infrastructure/export/share-json.ts": "sha256:347f312cfbd89dac1e1f0da77deaab738f26b72ae55cd75c633a4afd2a0c65a3",
+        "packages/core/src/application/export-data.ts": "sha256:050b87f538b9c590adc399d5370c316e82904789e30201a8a01b7a047a768fb2",
         "client/security/headers.ts": "sha256:16cc6f86340461b804d6dced495b698533fa4578d902458b3f37f87ad7023000",
         "client/src/infrastructure/repository.ts": "sha256:28f8a8a24341f47e427fa8dc6ae9c05a338d3b0001592352e18a79bddbfec6bf",
         "client/src/infrastructure/monitoring/logger.ts": "sha256:2f6c3e6be7a2d483a1b329c96e70dfe14a2a8264077cc15526d3a0403b9adb87"

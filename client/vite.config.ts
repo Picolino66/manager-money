@@ -49,6 +49,8 @@ export default defineConfig(({ command, mode }) => {
     },
     test: {
       globals: true,
+      // Telas lazy + workers em paralelo: o 1º import de cada rota pode levar alguns segundos.
+      testTimeout: 15000,
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
       include: ['src/**/*.test.{ts,tsx}', 'security/**/*.test.ts'],

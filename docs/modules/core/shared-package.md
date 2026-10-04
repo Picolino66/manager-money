@@ -14,18 +14,21 @@ code:
   - packages/core/src/contract/errors.ts
   - packages/core/src/application/category-analysis.ts
   - packages/core/src/application/paid-history.ts
+  - packages/core/src/application/card-view.ts
+  - packages/core/src/application/card-text.ts
+  - packages/core/src/application/export-data.ts
   - package.json
 symbols: [collectDirty, acknowledge, markAllClean, mapSupabaseError, filterPaidHistory, selectPaidHistory, sumPaidHistory, selectCategorizedItems, filterCategorizedItems, summarizeByCategory]
 adrs: [ADR-022, ADR-020, ADR-001]
-tests: [packages/core/src/contract/dirty.test.ts, packages/core/src/application/category-analysis.test.ts, packages/core/src/application/paid-history.test.ts]
-last_verified_commit: 7903717+historico-filtros
+tests: [packages/core/src/contract/dirty.test.ts, packages/core/src/application/category-analysis.test.ts, packages/core/src/application/paid-history.test.ts, packages/core/src/application/card-view.test.ts, packages/core/src/application/export-data.test.ts]
+last_verified_commit: 7903717+T-041
 ---
 
 # Pacote @manager-money/core
 
 Spec: [SPEC-022](../../../specs/SPEC-022-client-web-mvp.md) · task [T-033](../../../tasks/done/T-033.md).
 
-- **Conteúdo:** `domain/financial`, `application` (casos de uso, seletores, `category-analysis`, `paid-history`),
+- **Conteúdo:** `domain/financial`, `application` (casos de uso, seletores, `category-analysis`, `paid-history`, `card-view`, `card-text`, `export-data`),
   `utils/{date,currency}`, `contract/{types,mappers,dirty,errors}`, `legal/privacy-policy`.
 - **Importação:** por subcaminho, sem build: `@manager-money/core/application/selectors`
   (`exports: { "./*": "./src/*.ts" }`). Metro (app), Jest do app, Vite e Vitest do web transformam o TS.

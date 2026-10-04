@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T21:31:12.832Z",
-  "source_commit": "7903717",
+  "generated_at": "2026-10-04T21:55:10.976Z",
+  "source_commit": "396a02a",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -556,9 +556,11 @@
       "tests": [
         "packages/core/src/contract/dirty.test.ts",
         "packages/core/src/application/category-analysis.test.ts",
-        "packages/core/src/application/paid-history.test.ts"
+        "packages/core/src/application/paid-history.test.ts",
+        "packages/core/src/application/card-view.test.ts",
+        "packages/core/src/application/export-data.test.ts"
       ],
-      "spec": "SPEC-022"
+      "spec": "SPEC-023"
     },
     {
       "id": "cycle",
@@ -1456,6 +1458,56 @@
       "spec": "SPEC-022"
     },
     {
+      "id": "web.cards",
+      "type": "feature",
+      "module": "web",
+      "title": "Cartões de crédito, faturas e compras (web)",
+      "summary": "Lista e detalhe de cartões com limite comprometido, faturas (pagar total ou parcial, juros e multa, desfazer) e compras editáveis, usando os casos de uso e as visões do núcleo.",
+      "doc": "modules/web/cards.md",
+      "state": "implemented",
+      "keywords": [
+        "cartões",
+        "fatura",
+        "limite",
+        "pagar fatura",
+        "juros",
+        "multa",
+        "compras",
+        "parcelas"
+      ],
+      "symbols": [
+        "buildCardStatementsView",
+        "statementCycleKeys",
+        "weightByCycle",
+        "hasCardPurchases",
+        "describeStatementEntry",
+        "CardFormDialog",
+        "StatementPanel",
+        "PayStatementDialog",
+        "StatementChargesDialog",
+        "LimitBar"
+      ],
+      "business_rules": [
+        "BR-FIN-019",
+        "BR-FIN-025",
+        "BR-FIN-026",
+        "BR-FIN-028",
+        "BR-FIN-029",
+        "BR-FIN-033",
+        "BR-FIN-034"
+      ],
+      "adrs": [
+        "ADR-018",
+        "ADR-020",
+        "ADR-022"
+      ],
+      "tests": [
+        "packages/core/src/application/card-view.test.ts",
+        "client/src/features/settings.test.tsx"
+      ],
+      "spec": "SPEC-023"
+    },
+    {
       "id": "web.cycles",
       "type": "feature",
       "module": "web",
@@ -1599,6 +1651,48 @@
         "client/src/lib/chart.test.ts"
       ],
       "spec": "SPEC-022"
+    },
+    {
+      "id": "web.settings",
+      "type": "feature",
+      "module": "web",
+      "title": "Ajustes, configuração financeira e exportação (web)",
+      "summary": "Tela Ajustes com atalhos, configuração financeira (renda, meta, despesas fixas e parcelamentos) pelo caso de uso saveConfig e exportação do JSON sem dados de sessão.",
+      "doc": "modules/web/settings.md",
+      "state": "implemented",
+      "keywords": [
+        "ajustes",
+        "configuração",
+        "renda",
+        "meta",
+        "despesas fixas",
+        "parcelamentos",
+        "exportar",
+        "json"
+      ],
+      "symbols": [
+        "configToForm",
+        "formToConfigInput",
+        "plannedOutflowExceedsIncome",
+        "downloadTextFile",
+        "buildExportPayload",
+        "exportFileName"
+      ],
+      "business_rules": [
+        "BR-FIN-018",
+        "BR-FIN-024",
+        "BR-ACC-004"
+      ],
+      "adrs": [
+        "ADR-020",
+        "ADR-022"
+      ],
+      "tests": [
+        "client/src/lib/settings.test.ts",
+        "client/src/features/settings.test.tsx",
+        "packages/core/src/application/export-data.test.ts"
+      ],
+      "spec": "SPEC-023"
     },
     {
       "id": "web.shell",

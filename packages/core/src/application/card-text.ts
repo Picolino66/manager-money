@@ -1,10 +1,6 @@
-import {
-  CardStatement,
-  StatementPayment,
-  StatementStatus,
-} from '@manager-money/core/domain/financial/credit-card';
-import { MoneyCents } from '@manager-money/core/domain/financial/financial.types';
-import { formatCurrency } from '@manager-money/core/utils/currency';
+import { CardStatement, StatementPayment, StatementStatus } from '../domain/financial/credit-card';
+import { MoneyCents } from '../domain/financial/financial.types';
+import { formatCurrency } from '../utils/currency';
 
 /** Texto de em qual ciclo cai a 1ª parcela de uma compra no crédito (BR-FIN-019). */
 export function describeFirstInstallment(cyclesAhead: number): string {

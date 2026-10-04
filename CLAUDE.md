@@ -18,7 +18,7 @@
 - Nova regra de negócio: seguir `skills/adicionar-regra-de-negocio.md`.
 
 ## Estrutura do repositório (ADR-019)
-- `app/` = aplicativo mobile Expo (projeto npm independente) · `client/` = aplicação web (P0 implementado; React + Vite SPA, **sempre online, sem sync**: lê do Supabase, aplica caso de uso do núcleo e grava só os registros `dirty`; plano em `docs/architecture/client-web-plan.md`, ADR-020) · `packages/core/` = núcleo compartilhado (`@manager-money/core`, ADR-022) · `supabase/` = backend compartilhado, fonte única (nunca duplicar migrations nos apps) · raiz = workspace do produto (docs, specs, tasks, adr, agents, skills, scripts, CI).
+- `app/` = aplicativo mobile Expo (projeto npm independente) · `client/` = aplicação web (P0 + Ajustes — configuração, cartões e exportação; React + Vite SPA, **sempre online, sem sync**: lê do Supabase, aplica caso de uso do núcleo e grava só os registros `dirty`; plano em `docs/architecture/client-web-plan.md`, ADR-020) · `packages/core/` = núcleo compartilhado (`@manager-money/core`, ADR-022) · `supabase/` = backend compartilhado, fonte única (nunca duplicar migrations nos apps) · raiz = workspace do produto (docs, specs, tasks, adr, agents, skills, scripts, CI).
 - **npm workspaces** (ADR-022): `packages/*`, `app`, `client`; lockfile único na raiz (`npm ci` na raiz). Sem Turborepo/Nx. Caminhos `code:` nos docs são relativos à raiz (`app/src/...`, `packages/core/src/...`, `client/src/...`).
 
 ## Documentação IA-First

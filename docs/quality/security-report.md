@@ -10,11 +10,12 @@ code:
   - supabase/migrations/20261001000000_init.sql
   - app/src/infrastructure/supabase/session-storage.ts
   - app/src/infrastructure/export/share-json.ts
+  - packages/core/src/application/export-data.ts
   - client/security/headers.ts
   - client/src/infrastructure/repository.ts
   - client/src/infrastructure/monitoring/logger.ts
 adrs: [ADR-006, ADR-020]
-last_verified_commit: 3b9bf25+T-033
+last_verified_commit: 7903717+T-041
 ---
 
 # Relatório de segurança — F6
@@ -114,3 +115,4 @@ Auditoria focada (`fullstack-security-guardian`) do `client/` (SPA React + Vite,
 | WEB-03 | Baixa | `style-src 'unsafe-inline'` (Radix e sonner aplicam estilos inline) | Aceito: não executa código |
 | WEB-04 | Baixa | Texto da política de privacidade diz que a sessão fica "criptografada no aparelho" (verdade no mobile, não no navegador) | **Aberto** (revisão do dono do produto): a página web mostra uma nota explicando a diferença; o texto jurídico não foi alterado |
 | WEB-05 | Info | Sair encerra só a sessão deste navegador (`scope: 'local'`), não a do celular | Por desenho |
+| WEB-06 | Info | Exportar dados (SPEC-023) baixa um JSON financeiro sem proteção, iniciado pelo usuário; o conteúdo vem de `buildExportPayload` (núcleo, sem sessão, BR-ACC-004), vive só no `Blob` e o endereço temporário é liberado na hora; a tela avisa para guardar o arquivo com cuidado | Por desenho |

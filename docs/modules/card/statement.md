@@ -15,16 +15,16 @@ code:
   - packages/core/src/application/selectors.ts
   - app/src/store/financial.store.ts
   - app/src/screens/CardDetailScreen.tsx
-  - app/src/screens/cardView.ts
+  - packages/core/src/application/card-view.ts
   - app/src/components/StatementCard.tsx
   - app/src/components/PayStatementModal.tsx
   - app/src/components/StatementChargesModal.tsx
-  - app/src/screens/cardText.ts
+  - packages/core/src/application/card-text.ts
 symbols: [buildCardStatements, summarizeStatement, statementDueDate, payStatement, addStatementCharges, undoStatementPayment, statementPayableFrom, selectCardStatements, selectStatementPayments, selectCycleStatementInterest]
 adrs: [ADR-017, ADR-018]
 tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/domain/financial/credit-card.test.ts, packages/core/src/domain/financial/statement.test.ts, packages/core/src/application/card.use-cases.test.ts, packages/core/src/application/financial-vision.test.ts, app/src/screens/cards.screens.test.tsx]
 business_rules: [BR-FIN-005, BR-FIN-025, BR-FIN-026, BR-FIN-030, BR-FIN-033, BR-FIN-034]
-last_verified_commit: bfe9de6+T-028
+last_verified_commit: 7903717+T-041
 ---
 
 # Faturas, pagamento parcial e encargos
@@ -42,12 +42,12 @@ sem as quitadas antes do cadastro; parcela "já incluída" no total informado co
 Domínio: `buildCardStatements`, `summarizeStatement` (`credit-card.ts`). Casos de uso: `payStatement`,
 `addStatementCharges`, `undoStatementPayment` (`card.use-cases.ts`). Seletores: `selectCardStatements`,
 `selectStatementPayments`, `selectCycleStatementInterest`. Store: `payStatement`, `addStatementCharges`,
-`undoStatementPayment`. UI: detalhe do cartão (`CardDetailScreen`, `cardView`, `StatementCard`,
+`undoStatementPayment`. UI: detalhe do cartão (`CardDetailScreen`, `card-view` (núcleo), `StatementCard`,
 `PayStatementModal`, `StatementChargesModal`), entregue na [T-027](../../../tasks/done/T-027.md).
 
 ## Telas
 - **`StatementCard`:** principal, encargos, pago e **Restante**, composição (com a parcela "já incluída" e o total
-  informado) e status ("Parcial" para `partial`, `cardText.ts`). Área de lançamentos ("Lançamentos", cada um com
+  informado) e status ("Parcial" para `partial`, `card-text.ts` (núcleo)). Área de lançamentos ("Lançamentos", cada um com
   **Desfazer** se for do ciclo ativo); fatura quitada mostra "Quitada em dd/MM"; aberta, "Fatura aberta: recebe
   compras até dd/MM".
 - Fatura fechada/vencida com restante: **"Paguei a fatura"** e **"Registrar juros/multa"**; vencida mostra "Venceu em

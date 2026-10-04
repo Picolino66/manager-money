@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { ChartPie, History, LayoutDashboard, Loader2, Menu, ReceiptText } from 'lucide-react';
+import {
+  ChartPie,
+  History,
+  LayoutDashboard,
+  Loader2,
+  Menu,
+  ReceiptText,
+  Settings,
+} from 'lucide-react';
 import { NavLink, Outlet } from 'react-router';
 
 import { selectActiveCycle } from '@manager-money/core/application/selectors';
@@ -16,6 +24,7 @@ const NAV = [
   { to: '/gastos', label: 'Histórico', icon: ReceiptText, end: false },
   { to: '/ciclos', label: 'Ciclos', icon: History, end: false },
   { to: '/analise', label: 'Análise', icon: ChartPie, end: false },
+  { to: '/ajustes', label: 'Ajustes', icon: Settings, end: false },
 ] as const;
 
 function Navigation({ onNavigate }: { onNavigate?: () => void }) {

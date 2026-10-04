@@ -15,7 +15,7 @@ import {
   statementDueDate,
   statementKeyForDate,
 } from '@manager-money/core/domain/financial/credit-card';
-import { describeFirstInstallment } from '../screens/cardText';
+import { describeFirstInstallment } from '@manager-money/core/application/card-text';
 import { formatCurrency } from '@manager-money/core/utils/currency';
 import { toISODate, formatShortDate } from '@manager-money/core/utils/date';
 import { parseISO } from 'date-fns';

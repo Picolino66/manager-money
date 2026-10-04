@@ -9,9 +9,9 @@ import {
   statementCycleKey,
   statementDueDate,
   StatementStatus,
-} from '@manager-money/core/domain/financial/credit-card';
-import { MoneyCents } from '@manager-money/core/domain/financial/financial.types';
-import { isLive, LocalState } from '@manager-money/core/application/state';
+} from '../domain/financial/credit-card';
+import { MoneyCents } from '../domain/financial/financial.types';
+import { isLive, LocalState } from './state';
 
 /** Faturas do cartão organizadas para a tela (BR-FIN-025/026). */
 export type CardStatementsView = {

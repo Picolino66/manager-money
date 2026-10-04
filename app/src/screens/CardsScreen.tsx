@@ -24,8 +24,8 @@ import { isActive } from '@manager-money/core/domain/financial/financial.types';
 import { RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '@manager-money/core/utils/currency';
-import { CARD_LIMIT_DISCLAIMER, STATEMENT_STATUS_LABEL } from './cardText';
-import { buildCardStatementsView, formatDayMonth, hasCardPurchases } from './cardView';
+import { CARD_LIMIT_DISCLAIMER, STATEMENT_STATUS_LABEL } from '@manager-money/core/application/card-text';
+import { buildCardStatementsView, formatDayMonth, hasCardPurchases } from '@manager-money/core/application/card-view';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Cards'>;
 

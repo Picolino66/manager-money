@@ -11,12 +11,12 @@ code:
   - client/vite.config.ts
   - client/eslint.config.js
   - client/src/router.tsx
-last_verified_commit: 3b9bf25+T-040
+last_verified_commit: 7903717+T-041
 ---
 
 # Módulo: client web
 
-Spec [SPEC-022](../../../specs/SPEC-022-client-web-mvp.md) · plano
+Specs [SPEC-022](../../../specs/SPEC-022-client-web-mvp.md) e [SPEC-023](../../../specs/SPEC-023-client-web-ajustes.md) · plano
 [client-web-plan](../../architecture/client-web-plan.md) · [ADR-020](../../../adr/ADR-020-client-web-stack-e-integracao.md).
 
 | Feature | Rota | Doc |
@@ -28,6 +28,8 @@ Spec [SPEC-022](../../../specs/SPEC-022-client-web-mvp.md) · plano
 | `web.expenses` | `/gastos` | [expenses.md](expenses.md) |
 | `web.cycles` | `/ciclos`, `/ciclos/:id` | [cycles.md](cycles.md) |
 | `web.analysis` | `/analise` | [analysis.md](analysis.md) |
+| `web.settings` | `/ajustes`, `/ajustes/configuracao`, `/ajustes/exportar` | [settings.md](settings.md) |
+| `web.cards` | `/ajustes/cartoes`, `/ajustes/cartoes/:id` | [cards.md](cards.md) |
 
 ## Camadas (`client/src`)
 

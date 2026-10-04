@@ -37,7 +37,7 @@ import { spacing, typography } from '../design/theme';
 import { makeStyles } from '../design/useTheme';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '@manager-money/core/utils/currency';
-import { describeFirstInstallment } from './cardText';
+import { describeFirstInstallment } from '@manager-money/core/application/card-text';
 import {
   formatCycleLabel,
   formatDateInput,

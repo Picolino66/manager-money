@@ -31,8 +31,8 @@ import { RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '@manager-money/core/utils/currency';
 import { toISODate } from '@manager-money/core/utils/date';
-import { describeInstallmentSchedule, formatMonthKey } from './cardText';
-import { formatDayMonth } from './cardView';
+import { describeInstallmentSchedule, formatMonthKey } from '@manager-money/core/application/card-text';
+import { formatDayMonth } from '@manager-money/core/application/card-view';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CardDebt'>;
 

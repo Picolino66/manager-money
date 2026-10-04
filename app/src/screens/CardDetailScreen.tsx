@@ -42,13 +42,13 @@ import {
   describeCycleWeight,
   describeStatementEntry,
   formatMonthKey,
-} from './cardText';
+} from '@manager-money/core/application/card-text';
 import {
   buildCardStatementsView,
   formatDayMonth,
   statementCycleKeys,
   weightByCycle,
-} from './cardView';
+} from '@manager-money/core/application/card-view';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CardDetail'>;
 

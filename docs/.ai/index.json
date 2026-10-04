@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T21:31:12.832Z",
-  "source_commit": "7903717",
+  "generated_at": "2026-10-04T21:55:10.976Z",
+  "source_commit": "396a02a",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "stack": [
@@ -16,13 +16,13 @@
   "artifacts": {
     "features": {
       "path": ".ai/features.json",
-      "count": 64,
-      "hash": "sha256:e6e33cddf99525a67716210754dde67252144b27d04031269ef83414e062c307"
+      "count": 66,
+      "hash": "sha256:1b4c72db946e8912996e108322e2c95c7ba386ccd072f617450b49bd7ebd6098"
     },
     "freshness": {
       "path": ".ai/freshness.json",
-      "count": 64,
-      "hash": "sha256:564488e0089e858df4bb75cc82de5010ee5696dcb6cbc4d684680cb61bf4d78f"
+      "count": 66,
+      "hash": "sha256:3dac01f457e1f3ff366339660cd489b8ad88403ce187ec87d169c3fbaae04bb6"
     },
     "retrieval_tests": {
       "path": ".ai/retrieval-tests.json",
@@ -135,11 +135,11 @@
       "id": "web",
       "title": "Client web",
       "doc": "modules/web/index.md",
-      "features": 7
+      "features": 9
     }
   ],
   "health": {
-    "fresh": 64,
+    "fresh": 66,
     "stale": 0,
     "stale_critical": 0,
     "planned": 0,

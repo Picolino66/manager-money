@@ -15,7 +15,7 @@ code:
   - .github/workflows/ci.yml
   - client/README.md
 adrs: [ADR-019, ADR-020, ADR-021, ADR-022, ADR-004, ADR-006]
-last_verified_commit: 3b9bf25+T-040
+last_verified_commit: 7903717+T-041
 ---
 
 # Reorganização do repositório
@@ -571,6 +571,15 @@ Spec [SPEC-022](../../specs/SPEC-022-client-web-mvp.md) · tasks T-032..T-040 ·
 - Usuário de teste dedicado para o E2E autenticado (`E2E_EMAIL`/`E2E_PASSWORD` em `client/.env`).
 - WEB-02 (CAPTCHA no Auth) e WEB-04 (texto da política para a sessão no navegador) — security-report §6.
 - Recarregar ao focar a aba (P1); hoje o web recarrega a cada ação e ao entrar.
+
+## Implementação do P1: Ajustes (2026-10-04)
+
+Spec [SPEC-023](../../specs/SPEC-023-client-web-ajustes.md) · task T-041. Entregue: `/ajustes` (atalhos),
+configuração financeira, cartões (lista, detalhe, faturas, compras) e exportar JSON; docs
+[settings](../modules/web/settings.md) e [cards](../modules/web/cards.md). `card-view`, `card-text` e
+`export-data` passaram para o núcleo. Também no Histórico (`/gastos`): lápis e lixeira, coluna Meio e filtros
+(`paid-history`). **Falta do P1:** situação inicial do cartão, registrar compra no cartão, abrir/fechar ciclo,
+pagar fixa, renda avulsa, planejamento, CSV, recarregar ao focar a aba e excluir conta.
 
 ## Dúvidas em aberto
 

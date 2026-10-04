@@ -1,7 +1,7 @@
 # client — aplicação web do Manager Money
 
 SPA (React 19 + Vite + TypeScript estrito) para **ver e administrar o histórico** com a mesma conta e as
-mesmas regras do app mobile. P0 implementado; uso **local** por enquanto (VPS no futuro).
+mesmas regras do app mobile. P0 implementado e Ajustes (configuração financeira, cartões e exportação); uso **local** por enquanto (VPS no futuro).
 
 - **Sempre online, sem sync:** ao entrar, lê do Supabase as linhas do usuário e monta o estado em memória.
   Cada ação recarrega → aplica o caso de uso do núcleo (`@manager-money/core`) → grava na hora só os
@@ -45,9 +45,9 @@ npm run build && npm run preview   # http://localhost:4173
 
 ```
 src/
-├── main.tsx  router.tsx        entrada e rotas (/login, /comecar, /, /gastos, /ciclos, /ciclos/:id, /analise, /privacidade)
+├── main.tsx  router.tsx        entrada e rotas (/login, /comecar, /, /gastos, /ciclos, /ciclos/:id, /analise, /ajustes/*, /privacidade)
 ├── app/                        guarda de rota, layout (sidebar/drawer), páginas de status
-├── features/                   telas por área: auth, onboarding, overview, expenses, cycles, analysis, legal
+├── features/                   telas por área: auth, onboarding, overview, expenses, cycles, analysis, settings, cards, legal
 ├── components/ (ui/)           componentes Radix + Tailwind no padrão shadcn/ui
 ├── store/                      Zustand: sessão, dados (caso de uso → grava), tema
 ├── infrastructure/             Supabase (leitura/upsert), repositório, auth, logger, preferência de tema

@@ -1,5 +1,8 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
+
+// As telas são carregadas sob demanda (lazy); com os workers em paralelo o 1º import é lento.
+configure({ asyncUtilTimeout: 5000 });
 
 afterEach(() => {
   cleanup();

@@ -52,6 +52,36 @@ export const routes = [
             }),
           },
           {
+            path: 'ajustes',
+            lazy: async () => ({
+              Component: (await import('./features/settings/SettingsPage')).SettingsPage,
+            }),
+          },
+          {
+            path: 'ajustes/configuracao',
+            lazy: async () => ({
+              Component: (await import('./features/settings/ConfigPage')).ConfigPage,
+            }),
+          },
+          {
+            path: 'ajustes/exportar',
+            lazy: async () => ({
+              Component: (await import('./features/settings/ExportPage')).ExportPage,
+            }),
+          },
+          {
+            path: 'ajustes/cartoes',
+            lazy: async () => ({
+              Component: (await import('./features/cards/CardsPage')).CardsPage,
+            }),
+          },
+          {
+            path: 'ajustes/cartoes/:id',
+            lazy: async () => ({
+              Component: (await import('./features/cards/CardDetailPage')).CardDetailPage,
+            }),
+          },
+          {
             path: 'analise',
             lazy: async () => ({
               Component: (await import('./features/analysis/AnalysisPage')).AnalysisPage,

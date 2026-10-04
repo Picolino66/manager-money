@@ -15,8 +15,8 @@ import {
   knownItemsTotal,
   PURCHASE_LOCKED_REASON,
   STATEMENT_STATUS_LABEL,
-} from '../screens/cardText';
-import { formatDayMonth } from '../screens/cardView';
+} from '@manager-money/core/application/card-text';
+import { formatDayMonth } from '@manager-money/core/application/card-view';
 import { formatCurrency } from '@manager-money/core/utils/currency';
 import { Badge, BadgeTone } from './Badge';
 import { Card } from './Card';
