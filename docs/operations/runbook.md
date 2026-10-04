@@ -80,7 +80,7 @@ número de build é controlado pelo EAS (`appVersionSource: remote`).
 
 ### Comum
 
-- [ ] E-mail de contato definido em `app/src/legal/privacy-policy.ts` e no espelho em `docs/legal/`
+- [ ] E-mail de contato definido em `packages/core/src/legal/privacy-policy.ts` e no espelho em `docs/legal/`
 - [ ] Política de privacidade publicada em uma URL pública (GitHub Pages, Notion público ou site)
 - [ ] Supabase configurado (§2), com SMTP próprio
 - [ ] Campanha de QA manual (`docs/quality/manual-qa.md`) executada em pelo menos 1 aparelho Android e 1 iOS

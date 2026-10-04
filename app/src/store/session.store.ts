@@ -12,7 +12,7 @@ import {
   planFirstLogin,
   unlinkAccount,
 } from '../infrastructure/sync/sync-engine';
-import { SyncRemote } from '../infrastructure/sync/types';
+import { SyncRemote } from '@manager-money/core/contract/types';
 import { useFinancialStore } from './financial.store';
 
 export type SessionStatus = 'disabled' | 'loading' | 'signed-out' | 'signed-in';

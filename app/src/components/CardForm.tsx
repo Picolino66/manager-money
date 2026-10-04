@@ -1,11 +1,15 @@
 import { useState } from 'react';
 import { Text } from 'react-native';
 
-import { CreditCardInput } from '../application/card.use-cases';
+import { CreditCardInput } from '@manager-money/core/application/card.use-cases';
 import { typography } from '../design/theme';
 import { makeStyles } from '../design/useTheme';
-import { CreditCard, MAX_CARD_DAY, MIN_CARD_DAY } from '../domain/financial/credit-card';
-import { MoneyCents } from '../domain/financial/financial.types';
+import {
+  CreditCard,
+  MAX_CARD_DAY,
+  MIN_CARD_DAY,
+} from '@manager-money/core/domain/financial/credit-card';
+import { MoneyCents } from '@manager-money/core/domain/financial/financial.types';
 import { AppButton } from './AppButton';
 import { Card } from './Card';
 import { CurrencyInput } from './CurrencyInput';

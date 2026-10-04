@@ -8,7 +8,7 @@ import {
   FixedPaymentRecord,
   SettingsRecord,
   StatementPaymentRecord,
-} from '../../application/state';
+} from '../application/state';
 import {
   extraIncomeFromRow,
   extraIncomeToRow,
@@ -29,7 +29,7 @@ import {
   statementPaymentFromRow,
   statementPaymentToRow,
 } from './mappers';
-import { mapSupabaseError, pullSince } from './supabase-remote';
+import { mapSupabaseError } from './errors';
 
 const meta = { updatedAt: '2026-10-10T12:00:00.000Z', deletedAt: null, dirty: false };
 
@@ -295,7 +295,7 @@ describe('mappers (contracts.md §2): ida e volta sem perda', () => {
   });
 });
 
-describe('SupabaseRemote: erros e cursor', () => {
+describe('mapSupabaseError', () => {
   it('classifica erros do PostgREST', () => {
     expect(
       mapSupabaseError({
@@ -308,10 +308,5 @@ describe('SupabaseRemote: erros e cursor', () => {
     expect(mapSupabaseError({ code: '', message: 'TypeError: Network request failed' }).code).toBe(
       'network',
     );
-  });
-
-  it('pull usa janela de 5 s antes do cursor', () => {
-    expect(pullSince(null)).toBeNull();
-    expect(pullSince('2026-10-10T12:00:05.000Z')).toBe('2026-10-10T12:00:00.000Z');
   });
 });

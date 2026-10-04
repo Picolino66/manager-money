@@ -13,13 +13,13 @@ code:
   - app/src/components/PayFixedExpenseModal.tsx
   - app/src/components/CardLimitNotice.tsx
   - app/src/screens/DashboardScreen.tsx
-  - app/src/application/payment.use-cases.ts
-  - app/src/domain/financial/payments.ts
-  - app/src/domain/financial/financial.calculations.ts
-  - app/src/application/selectors.ts
+  - packages/core/src/application/payment.use-cases.ts
+  - packages/core/src/domain/financial/payments.ts
+  - packages/core/src/domain/financial/financial.calculations.ts
+  - packages/core/src/application/selectors.ts
 symbols: [payFixedExpense, undoFixedPayment, calculatePaidFixedAmount, calculateBaseAvailableAmount, calculateInitialAvailableAmount, selectCycleAdjustments, selectPendingFixedExpenses]
 adrs: [ADR-015, ADR-014, ADR-017]
-tests: [app/src/application/payment.use-cases.test.ts, app/src/application/financial-vision.test.ts, app/src/screens/screens.test.tsx, app/src/infrastructure/sync/sync-engine.test.ts]
+tests: [packages/core/src/application/payment.use-cases.test.ts, packages/core/src/application/financial-vision.test.ts, app/src/screens/screens.test.tsx, app/src/infrastructure/sync/sync-engine.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-021, BR-FIN-022, BR-FIN-030]
 last_verified_commit: bfe9de6+T-028
 ---

@@ -4,9 +4,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { spacing, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
-import { CycleAdjustments } from '../domain/financial/financial.calculations';
-import { MoneyCents } from '../domain/financial/financial.types';
-import { formatCurrency } from '../utils/currency';
+import { CycleAdjustments } from '@manager-money/core/domain/financial/financial.calculations';
+import { MoneyCents } from '@manager-money/core/domain/financial/financial.types';
+import { formatCurrency } from '@manager-money/core/utils/currency';
 import { Card } from './Card';
 import { MetricRow } from './MetricRow';
 

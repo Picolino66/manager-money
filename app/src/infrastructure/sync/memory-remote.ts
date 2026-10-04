@@ -1,5 +1,5 @@
-import { SyncTable } from '../../application/state';
-import { RemoteRow, RowByTable, SyncError, SyncRemote } from './types';
+import { SyncTable } from '@manager-money/core/application/state';
+import { RemoteRow, RowByTable, SyncError, SyncRemote } from '@manager-money/core/contract/types';
 
 type Store = { [T in SyncTable]: RowByTable[T][] };
 

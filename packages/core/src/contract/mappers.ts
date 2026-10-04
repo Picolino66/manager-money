@@ -8,11 +8,10 @@ import {
   FixedPaymentRecord,
   SettingsRecord,
   StatementPaymentRecord,
-} from '../../application/state';
-import { MAX_CARD_DAY, statementKeyForDate } from '../../domain/financial/credit-card';
+} from '../application/state';
+import { MAX_CARD_DAY, statementKeyForDate } from '../domain/financial/credit-card';
 import { parseISO } from 'date-fns';
-import { IncomeSource, isActive } from '../../domain/financial/financial.types';
-import { legacyIncomeSources } from '../storage/migrations';
+import { DEFAULT_PAYDAY, IncomeSource, isActive } from '../domain/financial/financial.types';
 import {
   CardPurchaseRow,
   CreditCardRow,
@@ -26,6 +25,14 @@ import {
 } from './types';
 
 /** Mapeamento registro local ↔ linha remota (contracts.md §2). */
+
+/** Fonte única "Renda" para configurações anteriores às fontes de renda (ADR-013). */
+export function legacyIncomeSources(
+  monthlyIncome: number,
+  payday: number = DEFAULT_PAYDAY,
+): IncomeSource[] {
+  return [{ id: 'income-legacy', name: 'Renda', amount: Math.max(0, monthlyIncome), payday }];
+}
 
 export function settingsToRow(record: SettingsRecord, userId: string): SettingsRow {
   return {

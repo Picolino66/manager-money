@@ -8,12 +8,12 @@ summary: >
   partir de hoje, movendo os gastos do novo período.
 keywords: [já recebi, antecipado, salário adiantado]
 code:
-  - app/src/application/cycle.use-cases.ts
-  - app/src/domain/financial/financial.calculations.ts
+  - packages/core/src/application/cycle.use-cases.ts
+  - packages/core/src/domain/financial/financial.calculations.ts
   - app/src/screens/DashboardScreen.tsx
 symbols: [receiveIncomeEarly, canReceiveIncomeEarlyNow, canReceiveIncomeEarlyForCycle]
 business_rules: [BR-FIN-003, BR-FIN-016, BR-FIN-034]
-tests: [app/src/application/cycle.use-cases.test.ts, app/src/application/card-rules.test.ts]
+tests: [packages/core/src/application/cycle.use-cases.test.ts, packages/core/src/application/card-rules.test.ts]
 last_verified_commit: bfe9de6+T-028
 ---
 

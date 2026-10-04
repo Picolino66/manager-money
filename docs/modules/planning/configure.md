@@ -9,12 +9,12 @@ summary: >
 keywords: [configuração, renda, fontes de renda, meta, despesas fixas, parcelamento, cartão, ativo, inativo]
 code:
   - app/src/screens/ConfigScreen.tsx
-  - app/src/application/cycle.use-cases.ts
-  - app/src/domain/financial/financial.calculations.ts
-  - app/src/domain/financial/financial.types.ts
+  - packages/core/src/application/cycle.use-cases.ts
+  - packages/core/src/domain/financial/financial.calculations.ts
+  - packages/core/src/domain/financial/financial.types.ts
 symbols: [saveConfig, calculateIncomeTotal, calculateFixedExpensesTotal, calculateBaseAvailableAmount, calculateFixedExpenseAmount, isActive]
 adrs: [ADR-017]
-tests: [app/src/application/cycle.use-cases.test.ts, app/src/application/financial-vision.test.ts]
+tests: [packages/core/src/application/cycle.use-cases.test.ts, packages/core/src/application/financial-vision.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-010, BR-FIN-014, BR-FIN-015, BR-FIN-018]
 last_verified_commit: c47cf18+T-025r2
 ---

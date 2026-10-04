@@ -2,10 +2,18 @@
   "name": "manager-money-workspace",
   "version": "1.0.0",
   "private": true,
-  "description": "Raiz do produto: comandos transversais (knowledge layer e banco). Apps em app/ (mobile) e client/ (web); backend em supabase/.",
+  "description": "Raiz do produto (npm workspaces, ADR-022): núcleo em packages/core, app mobile em app/, web em client/; backend em supabase/.",
+  "workspaces": [
+    "packages/*",
+    "app",
+    "client"
+  ],
   "scripts": {
     "docs:index": "node scripts/ai-docs/build-index.mjs",
     "docs:check": "node scripts/ai-docs/build-index.mjs --check && node scripts/ai-docs/validate-knowledge-layer.mjs --docs docs",
-    "test:db": "bash supabase/tests/run-plain.sh"
+    "test:db": "bash supabase/tests/run-plain.sh",
+    "verify:core": "npm run verify -w @manager-money/core",
+    "verify:app": "npm run verify -w app",
+    "verify:client": "npm run verify -w client"
   }
 }

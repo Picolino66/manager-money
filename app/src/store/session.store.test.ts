@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { saveConfig } from '../application/cycle.use-cases';
-import { createEmptyState } from '../application/state';
+import { saveConfig } from '@manager-money/core/application/cycle.use-cases';
+import { createEmptyState } from '@manager-money/core/application/state';
 import { MemoryServer } from '../infrastructure/sync/memory-remote';
 import { useFinancialStore } from './financial.store';
 import { configureSessionDependencies, useSessionStore } from './session.store';

@@ -8,14 +8,14 @@ summary: >
   negativo) e transportando ao próximo ciclo o restante de faturas pagas parcialmente.
 keywords: [fechar ciclo, encerrar mês, saldo final, restante da fatura, dívida de fatura, transporte]
 code:
-  - app/src/application/cycle.use-cases.ts
-  - app/src/application/selectors.ts
-  - app/src/domain/financial/financial.calculations.ts
+  - packages/core/src/application/cycle.use-cases.ts
+  - packages/core/src/application/selectors.ts
+  - packages/core/src/domain/financial/financial.calculations.ts
   - app/src/screens/DashboardScreen.tsx
 symbols: [closeCycle, canCloseActiveCycle, canCloseCycle, describeCloseCycleBlock, selectStatementsToCarry]
 business_rules: [BR-FIN-006, BR-FIN-017, BR-FIN-034]
 adrs: [ADR-018]
-tests: [app/src/application/cycle.use-cases.test.ts, app/src/application/card-rules.test.ts]
+tests: [packages/core/src/application/cycle.use-cases.test.ts, packages/core/src/application/card-rules.test.ts]
 last_verified_commit: bfe9de6+T-028r2
 ---
 

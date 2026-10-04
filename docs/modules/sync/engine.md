@@ -10,14 +10,16 @@ keywords: [sync, sincronizar, offline, conflito, outbox, supabase]
 code:
   - app/src/infrastructure/sync/sync-engine.ts
   - app/src/infrastructure/sync/supabase-remote.ts
-  - app/src/infrastructure/sync/mappers.ts
-  - app/src/infrastructure/sync/types.ts
+  - packages/core/src/contract/mappers.ts
+  - packages/core/src/contract/types.ts
+  - packages/core/src/contract/dirty.ts
+  - packages/core/src/contract/errors.ts
   - app/src/store/financial.store.ts
 symbols: [runSync, collectDirty, acknowledge, applyRemoteRows, adoptRemoteActiveCycle, mapSupabaseError, scheduleSync, statementPaymentFromRow, cardPurchaseFromRow, cycleFromRow]
 business_rules: [BR-SYNC-001, BR-SYNC-002, BR-SYNC-003, BR-FIN-013]
 adrs: [ADR-004, ADR-008, ADR-017, ADR-018]
-tests: [app/src/infrastructure/sync/sync-engine.test.ts, app/src/infrastructure/sync/supabase-remote.test.ts, app/src/infrastructure/sync/mappers.test.ts]
-last_verified_commit: bfe9de6+T-028
+tests: [packages/core/src/contract/dirty.test.ts, app/src/infrastructure/sync/sync-engine.test.ts, app/src/infrastructure/sync/supabase-remote.test.ts, packages/core/src/contract/mappers.test.ts]
+last_verified_commit: 3b9bf25+T-033
 ---
 
 # Motor de sincronização
@@ -45,3 +47,10 @@ Spec: [SPEC-006](../../../specs/SPEC-006-sync.md) · contrato: [contracts](../..
   `card_id`/`statement_key`/`amount`; 0 e `[]` no remoto = ausente no local).
 - `replaceRemoteWithLocal` marca `statement_payments` como excluídas primeiro (ordem inversa das dependências).
 - Testes com `MemoryRemote` (`app/src/infrastructure/sync/memory-remote.ts`) que reproduz RLS, cursor e índice único.
+
+## Núcleo compartilhado (ADR-022)
+
+`collectDirty`, `acknowledge` e `mapSupabaseError` moram em `packages/core/src/contract/` desde a
+extração do núcleo: o sync importa de lá, e o client web usa as mesmas funções para gravar na hora só
+os registros que o caso de uso marcou `dirty` (sem outbox). `markAllClean` (só usado pelo web) zera as
+marcações depois de ler o estado do servidor.

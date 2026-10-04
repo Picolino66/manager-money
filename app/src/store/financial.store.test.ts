@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { createEmptyState, UseCaseContext } from '../application/state';
+import { createEmptyState, UseCaseContext } from '@manager-money/core/application/state';
 import { STATE_STORAGE_KEY } from '../infrastructure/storage/local-store';
 import { MemoryServer } from '../infrastructure/sync/memory-remote';
 import { linkKeepingLocal } from '../infrastructure/sync/sync-engine';
@@ -61,8 +61,8 @@ describe('useFinancialStore', () => {
 
   it('ao carregar, recalcula o saldo do ciclo ativo com as regras atuais e persiste (ADR-017)', async () => {
     const { openCycle, saveConfig } = jest.requireActual(
-      '../application/cycle.use-cases',
-    ) as typeof import('../application/cycle.use-cases');
+      '@manager-money/core/application/cycle.use-cases',
+    ) as typeof import('@manager-money/core/application/cycle.use-cases');
     const withRent = {
       ...config,
       fixedExpenses: [

@@ -28,3 +28,4 @@ O frontmatter `features:` declara os IDs estáveis cobertos; o gerador da knowle
 | [SPEC-019](SPEC-019-pagamento-parcial-total-da-fatura-e-invariantes.md) | card.statement, card.existing-debt, card.manage, cycle.close, cycle.dashboard | RF-24, RF-25, RF-29, RF-30, RF-31 |
 | [SPEC-020](SPEC-020-reorganizacao-do-repositorio-e-plano-do-client.md) | tooling.quality-pipeline, architecture.client-web-plan | — |
 | [SPEC-021](SPEC-021-tema-claro-e-escuro.md) | design.system, settings.hub | — |
+| [SPEC-022](SPEC-022-client-web-mvp.md) | core.shared-package, web.auth, web.onboarding, web.shell, web.overview, web.expenses, web.cycles, web.analysis | RF-04, RF-05, RF-06, RF-09, RF-10, RF-13 |

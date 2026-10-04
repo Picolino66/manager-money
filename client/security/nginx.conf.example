@@ -1,0 +1,35 @@
+# Exemplo para a VPS (CLIENT-016, ainda não publicado). Gerado a partir de security/headers.ts:
+# mantenha os dois iguais. Troque SEU_DOMINIO e seu-projeto.
+server {
+  listen 443 ssl http2;
+  server_name SEU_DOMINIO;
+  root /var/www/manager-money/client/dist;
+
+  # ssl_certificate / ssl_certificate_key: Let's Encrypt (certbot).
+
+  add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://seu-projeto.supabase.co wss://seu-projeto.supabase.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'" always;
+  add_header X-Content-Type-Options "nosniff" always;
+  add_header X-Frame-Options "DENY" always;
+  add_header Referrer-Policy "no-referrer" always;
+  add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()" always;
+  add_header Cross-Origin-Opener-Policy "same-origin" always;
+  add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+  # Arquivos com hash: cache longo. index.html: sem cache (novas versões chegam na hora).
+  location /assets/ {
+    add_header Cache-Control "public, max-age=31536000, immutable" always;
+    try_files $uri =404;
+  }
+
+  # Fallback de SPA.
+  location / {
+    add_header Cache-Control "no-cache" always;
+    try_files $uri /index.html;
+  }
+}
+
+server {
+  listen 80;
+  server_name SEU_DOMINIO;
+  return 301 https://$host$request_uri;
+}

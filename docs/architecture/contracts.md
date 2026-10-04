@@ -15,9 +15,9 @@ code:
   - supabase/migrations/20261005000000_statement_partial_payments.sql
   - app/src/infrastructure/storage/schema.ts
   - app/src/infrastructure/sync/supabase-remote.ts
-  - app/src/infrastructure/sync/mappers.ts
+  - packages/core/src/contract/mappers.ts
 adrs: [ADR-003, ADR-004, ADR-008, ADR-017, ADR-018]
-last_verified_commit: bfe9de6+T-028r2
+last_verified_commit: 3b9bf25+T-033
 ---
 
 # Contratos de dados e API — v1
@@ -94,7 +94,7 @@ Valores monetários são `bigint` em centavos no banco e `number` inteiro no cli
 | `*.client_updated_at` | `*.updatedAt` | ISO |
 | `*.deleted_at` | `*.deletedAt` | ISO \| `null` |
 
-O mapeamento é implementado e testado em `app/src/infrastructure/sync/mappers.ts`.
+O mapeamento é implementado e testado em `packages/core/src/contract/mappers.ts`.
 
 ## 3. Operações (porta `SyncRemote`)
 

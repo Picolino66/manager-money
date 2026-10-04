@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { createEmptyState, LocalState } from '../../application/state';
+import { createEmptyState, LocalState } from '@manager-money/core/application/state';
 import { logger } from '../monitoring/logger';
 import { LEGACY_STORAGE_KEYS, LegacySnapshot, migrateDocument, migrateV1ToV2 } from './migrations';
 import { parseLocalState } from './schema';

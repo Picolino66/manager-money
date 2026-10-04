@@ -6,7 +6,7 @@ title: Camada de aplicação
 summary: >
   Casos de uso puros sobre o documento local, seletores para os tipos de domínio e erros de regra.
 code:
-  - app/src/application/cycle.use-cases.ts
+  - packages/core/src/application/cycle.use-cases.ts
 last_verified_commit: bfe9de6+T-028
 ---
 

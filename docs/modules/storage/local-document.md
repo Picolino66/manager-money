@@ -11,11 +11,12 @@ code:
   - app/src/infrastructure/storage/local-store.ts
   - app/src/infrastructure/storage/migrations.ts
   - app/src/infrastructure/storage/schema.ts
+  - packages/core/src/contract/mappers.ts
   - app/App.tsx
 symbols: [migrateV1ToV2, migrateV2ToV3, migrateV6ToV7, migrateV7ToV8, migrateDocument, legacyIncomeSources, normalizeLegacyMonth, parseLocalState, LoadErrorScreen]
 adrs: [ADR-003, ADR-013, ADR-014, ADR-015, ADR-016, ADR-017, ADR-018]
 tests: [app/src/infrastructure/storage/local-store.test.ts, app/src/infrastructure/storage/migrations.v8.test.ts]
-last_verified_commit: bfe9de6+T-028r2
+last_verified_commit: 3b9bf25+T-033
 ---
 
 # Documento local versionado

@@ -9,10 +9,10 @@ keywords: [gasto, registrar, lançamento, editar, despesa]
 code:
   - app/src/screens/AddExpenseScreen.tsx
   - app/src/components/CardLimitNotice.tsx
-  - app/src/application/cycle.use-cases.ts
-  - app/src/utils/date.ts
+  - packages/core/src/application/cycle.use-cases.ts
+  - packages/core/src/utils/date.ts
 symbols: [addExpense, updateExpense, assertDateWithinCycle, parseBRDateInput]
-tests: [app/src/application/cycle.use-cases.test.ts]
+tests: [packages/core/src/application/cycle.use-cases.test.ts]
 business_rules: [BR-FIN-001, BR-FIN-011, BR-FIN-012, BR-FIN-025, BR-FIN-026]
 last_verified_commit: c47cf18+T-025r2
 ---

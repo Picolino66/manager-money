@@ -11,12 +11,12 @@ keywords: [crédito, parcelas, juros, fatura, fechamento, vencimento, saldo, lim
 code:
   - app/src/screens/AddExpenseScreen.tsx
   - app/src/components/CardLimitNotice.tsx
-  - app/src/application/card.use-cases.ts
-  - app/src/domain/financial/credit-card.ts
-  - app/src/application/cycle.use-cases.ts
+  - packages/core/src/application/card.use-cases.ts
+  - packages/core/src/domain/financial/credit-card.ts
+  - packages/core/src/application/cycle.use-cases.ts
 symbols: [addCardPurchase, buildCardPurchase, calculateFirstCycleKey, statementKeyForDate, statementDueDate, statementCycleKey, splitInstallments, listInstallments, calculateCardChargesForCycle, recalculateActiveCycleBalance]
 adrs: [ADR-014, ADR-017]
-tests: [app/src/domain/financial/credit-card.test.ts, app/src/application/card.use-cases.test.ts, app/src/application/financial-vision.test.ts, app/src/screens/screens.test.tsx]
+tests: [packages/core/src/domain/financial/credit-card.test.ts, packages/core/src/application/card.use-cases.test.ts, packages/core/src/application/financial-vision.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-005, BR-FIN-019, BR-FIN-020, BR-FIN-025, BR-FIN-026, BR-FIN-030]
 last_verified_commit: bfe9de6+T-028
 ---

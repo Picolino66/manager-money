@@ -11,12 +11,12 @@ keywords: [limite diário, hoje, você pode gastar hoje, saldo do dia, status, d
 code:
   - app/src/screens/DashboardScreen.tsx
   - app/src/components/CyclePlanCard.tsx
-  - app/src/domain/financial/financial.calculations.ts
-  - app/src/domain/financial/projection.ts
-  - app/src/application/selectors.ts
+  - packages/core/src/domain/financial/financial.calculations.ts
+  - packages/core/src/domain/financial/projection.ts
+  - packages/core/src/application/selectors.ts
 symbols: [buildDashboardSummary, calculateDailyLimitForDate, calculateDayStatus, calculateRemainingDays, selectUpcomingCommitments, selectCycleProjections, projectCycles, selectCycleAdjustments]
 adrs: [ADR-017, ADR-018]
-tests: [app/src/application/card-rules.test.ts, app/src/application/financial-vision.test.ts, app/src/domain/financial/projection.test.ts, app/src/domain/financial/financial.calculations.test.ts, app/src/screens/screens.test.tsx]
+tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/domain/financial/projection.test.ts, packages/core/src/domain/financial/financial.calculations.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-007, BR-FIN-008, BR-FIN-009, BR-FIN-030, BR-FIN-031, BR-FIN-033, BR-FIN-034]
 last_verified_commit: bfe9de6+T-028
 ---

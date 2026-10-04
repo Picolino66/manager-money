@@ -4,17 +4,18 @@ type: plan
 module: architecture
 title: Reorganização do repositório e plano do client web
 summary: >
-  Registro da separação em app/ (mobile), client/ (web, ainda não implementado) e supabase/
-  (backend compartilhado) e plano técnico do client web: escopo, stack, rotas, segurança, testes,
-  deploy, backlog CLIENT-* e fases.
+  Registro da separação em app/ (mobile), client/ (web) e supabase/ (backend compartilhado), plano
+  técnico do client web (escopo, stack, rotas, segurança, testes, deploy, backlog CLIENT-*, fases) e o
+  registro da implementação do P0 com packages/core e npm workspaces.
 keywords: [monorepo, client, web, vite, reorganização, estrutura, workspaces, backlog]
 code:
   - package.json
   - app/package.json
+  - client/package.json
   - .github/workflows/ci.yml
   - client/README.md
-adrs: [ADR-019, ADR-020, ADR-021, ADR-004, ADR-006]
-last_verified_commit: 455a4b1+T-030
+adrs: [ADR-019, ADR-020, ADR-021, ADR-022, ADR-004, ADR-006]
+last_verified_commit: 3b9bf25+T-040
 ---
 
 # Reorganização do repositório
@@ -35,7 +36,7 @@ comandos do repositório (`test:db`, `docs:index`, `docs:check`).
 ```
 manager-money/
 ├── app/            aplicativo mobile (Expo) — projeto npm independente
-├── client/         aplicação web — só README (implementação pendente)
+├── client/         aplicação web (P0 implementado — ver "Implementação do P0")
 ├── supabase/       backend compartilhado (migrations, testes de RLS)
 ├── scripts/        ai-docs (gerador e validador da knowledge layer)
 ├── docs/ adr/ specs/ tasks/ agents/ skills/ .orchestrator/
@@ -113,7 +114,7 @@ aceitável: não são segredos. Não há `.env` na raiz nem em `supabase/` hoje 
 | `docs` | raiz | `npm run docs:check` (sem `npm ci`: scripts só usam `node:*`) |
 | `database` | raiz | `bash supabase/tests/run-plain.sh` (inalterado) |
 | `secrets` | raiz | gitleaks (inalterado) |
-| `client` (futuro) | `client/` | `npm ci` → lint → typecheck → test → build (criar em CLIENT-004) |
+| `client` | raiz (`-w client`) | `npm ci` → lint → typecheck → test:coverage → build → `npm audit` (criado em CLIENT-004; ver "Implementação do P0") |
 
 Futuro: filtros `paths` por job (`app/**`, `client/**`, `supabase/**`) quando o tempo de CI pesar.
 
@@ -155,16 +156,16 @@ réplicas por registro (LWW) e valida forma, não semântica. Não há RPC de ne
 
 | Parte | Onde | Classificação | Uso no client |
 |---|---|---|---|
-| Tipos e cálculos financeiros (limite diário, status do dia, saldo, faturas, limite do cartão, projeção) | `app/src/domain/financial/*` (~1.070 linhas, só `date-fns`) | A. domínio reutilizável | reutilizar via `packages/core` |
-| Casos de uso (`openCycle`, `closeCycle`, `receiveIncomeEarly`, `add/update/deleteExpense`, `payFixedExpense`, `addExtraIncome`, `saveCreditCard`, `addCardPurchase`, `payStatement`, `addStatementCharges`…) e seletores (`selectClosedMonths`, `selectCardStatements`, `selectCycleProjections`, `selectCycleSpendingRange`…) | `app/src/application/*` (~2.300 linhas, puro) | A. domínio reutilizável | reutilizar |
-| `utils/date.ts`, `utils/currency.ts` (centavos, pt-BR) | `app/src/utils` | A | reutilizar |
+| Tipos e cálculos financeiros (limite diário, status do dia, saldo, faturas, limite do cartão, projeção) | `packages/core/src/domain/financial/*` (~1.070 linhas, só `date-fns`) | A. domínio reutilizável | reutilizar via `packages/core` |
+| Casos de uso (`openCycle`, `closeCycle`, `receiveIncomeEarly`, `add/update/deleteExpense`, `payFixedExpense`, `addExtraIncome`, `saveCreditCard`, `addCardPurchase`, `payStatement`, `addStatementCharges`…) e seletores (`selectClosedMonths`, `selectCardStatements`, `selectCycleProjections`, `selectCycleSpendingRange`…) | `packages/core/src/application/*` (~2.300 linhas, puro) | A. domínio reutilizável | reutilizar |
+| `utils/date.ts`, `utils/currency.ts` (centavos, pt-BR) | `packages/core/src/utils` | A | reutilizar |
 | Contrato remoto: `types.ts` (DTOs das linhas + `CONTRACT_VERSION`), `mappers.ts` (linha ↔ registro) | `app/src/infrastructure/sync` | C. contrato reutilizável | reutilizar |
 | Motor de sync offline-first: `sync-engine.ts` (outbox, cursor, backoff, primeiro login), `memory-remote.ts` | `app/src/infrastructure/sync` | D. específico do mobile | **não usar no web** (web é online, sem sync) |
 | Schema do documento e migrações v1→v8 (`zod`) | `app/src/infrastructure/storage/schema.ts`, `migrations.ts` | D | não usado no web (sem documento persistido) |
 | `local-store.ts` (AsyncStorage), `session-storage.ts` (SecureStore + AES), `share-json.ts` (expo-sharing), NetInfo | `app/src/infrastructure/*`, `store/` | D. específico do mobile | reimplementar no web (estado em memória, `localStorage` do supabase-js, download de arquivo) |
 | Store Zustand (caso de uso → persiste → agenda sync) | `app/src/store` | F. reimplementar para web | caso de uso → grava no Supabase na hora |
 | Telas, componentes, navegação, design tokens | `app/src/screens`, `components`, `navigation`, `design` | E. específico de React Native | não copiar; só referência de textos e fluxos |
-| Política de privacidade | `app/src/legal/privacy-policy.ts` | C | reutilizar o texto |
+| Política de privacidade | `packages/core/src/legal/privacy-policy.ts` | C | reutilizar o texto |
 | Tabelas, RLS, `delete_my_account()` | `supabase/` | C. contrato compartilhado | mesmo uso; sem mudança de schema |
 
 Regras que o web precisa respeitar e que só o núcleo garante: um ciclo ativo (BR-FIN-013), ciclo
@@ -219,7 +220,7 @@ acontece e o erro aparece na tela.
 
 ## Stack escolhida
 
-**React 19 + Vite + TypeScript estrito (SPA)** — [ADR-020](../../adr/ADR-020-client-web-stack-e-integracao.md), status PROPOSED.
+**React 19 + Vite + TypeScript estrito (SPA)** — [ADR-020](../../adr/ADR-020-client-web-stack-e-integracao.md), status ACCEPTED.
 
 | Critério | React + Vite (SPA) | Next.js (App Router) |
 |---|---|---|
@@ -263,8 +264,8 @@ os seletores do núcleo calculam as telas; não há consultas por tela.
 
 | Opção | Avaliação |
 |---|---|
-| **Nenhuma ferramenta agora (escolhida)** | App e client independentes; raiz com `package.json` mínimo. Suficiente enquanto não há código compartilhado |
-| npm workspaces | **Próximo passo** quando `packages/core` existir (CLIENT-003). Expo SDK 52+ detecta workspaces no Metro sem config manual |
+| Nenhuma ferramenta | Situação até a CLIENT-003 (ADR-019) |
+| **npm workspaces (adotado na CLIENT-003, ADR-022)** | `packages/core` + `app` + `client`; Expo SDK 57 detecta workspaces no Metro sem config manual |
 | pnpm workspaces | Melhor isolamento, mas troca o gerenciador do app (lockfile, EAS, CI) sem ganho proporcional |
 | Turborepo / Nx | Cache de tarefas útil com muitos pacotes; aqui são 2 apps + 1 pacote |
 
@@ -533,6 +534,43 @@ e comparação · Exportação JSON/CSV e exclusão de conta.
 | Tema escuro | Sim, mobile e web | ADR-021; mobile implementado (T-031); web nasce com os dois temas |
 | Projeto Supabase | O mesmo | E2E local com usuário de teste dedicado |
 | Sync no web | Não: web lê e grava direto no Supabase | Sem outbox/cache; escrita imediata pelo núcleo (decisão 1) |
+
+## Implementação do P0 (2026-10-04)
+
+Spec [SPEC-022](../../specs/SPEC-022-client-web-mvp.md) · tasks T-032..T-040 · decisões
+[ADR-020](../../adr/ADR-020-client-web-stack-e-integracao.md) (ACCEPTED) e
+[ADR-022](../../adr/ADR-022-nucleo-compartilhado-packages-core.md). Docs de módulo:
+[core](../modules/core/index.md) e [web](../modules/web/index.md).
+
+| Fase | Entregue | Gate |
+|---|---|---|
+| 0 | `packages/core` + workspaces (app intacto); bootstrap Vite/React/TS; ESLint (camadas, sem HTML dinâmico, `localStorage` restrito); Vitest + Testing Library + Playwright; job `client` e `core` no CI | `verify` do app, do core e do client; `expo-doctor`; `expo export` |
+| 1 | `RemoteGateway` (leitura paginada das linhas vivas, upsert), `loadUserState`/`saveChanges` (`collectDirty`), auth, guarda de rota, sessão expirada | testes de repositório, store e auth |
+| 2 | Shell (sidebar/drawer < 1024px), tema Sistema/Claro/Escuro com tokens do app, 404/erro, onboarding `/comecar` | testes de componente e de paridade de tokens |
+| 3–5 | Visão geral, gastos (tabela + registrar/editar/excluir), ciclos e detalhe, análise | testes de paridade com fixture contra o núcleo |
+| 6 | CSP/cabeçalhos (`client/security/`), auditoria (security-report §6), E2E smoke local | E2E público verde; autenticado requer usuário de teste |
+
+**Desvios do plano (e motivo)**
+
+- `collectDirty`/`acknowledge`/`mapSupabaseError`/`legacyIncomeSources` foram para o core (eram puros mas
+  moravam em arquivos que ficam no app); `markAllClean` é novo (só o web usa).
+- A análise por categoria estava **na tela** do app; virou `application/category-analysis.ts` no core e a
+  tela do app passou a usá-la (mesma regra), para o web não duplicar regra.
+- Testes do core em **Vitest** (não Jest): TS nativo, sem Babel; o Jest do app transforma o pacote normalmente.
+- CSP em `client/security/headers.ts` aplicada no `vite preview` + exemplos Nginx/Caddy (em vez de
+  `public/_headers`, formato de Netlify/Cloudflare, fora do escopo de deploy).
+- CI: `npm ci` na raiz e `-w <projeto>` (lockfile único), não `working-directory: client`.
+- Componentes no padrão shadcn/ui escritos à mão sobre `radix-ui` (sem o CLI interativo).
+- React Router 7 e TanStack Table 8 (versões estáveis conhecidas; as majors seguintes eram recentes).
+- Sem métrica nova "livre após compromissos": o "disponível no ciclo" do núcleo já desconta compromissos (ADR-017).
+- Logger próprio do web (mesma lista permitida): o do app depende de `__DEV__` do React Native.
+
+**Pendências**
+
+- `eas build -p android --profile preview` em `app/` (validar instalação do EAS a partir da raiz) — dono do produto.
+- Usuário de teste dedicado para o E2E autenticado (`E2E_EMAIL`/`E2E_PASSWORD` em `client/.env`).
+- WEB-02 (CAPTCHA no Auth) e WEB-04 (texto da política para a sessão no navegador) — security-report §6.
+- Recarregar ao focar a aba (P1); hoje o web recarrega a cada ação e ao entrar.
 
 ## Dúvidas em aberto
 

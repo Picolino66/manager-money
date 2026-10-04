@@ -10,9 +10,9 @@ summary: >
   do próximo ciclo.
 keywords: [fatura, paguei a fatura, pagamento parcial, restante, encargos, juros, multa, vencimento, limite, status da fatura]
 code:
-  - app/src/domain/financial/credit-card.ts
-  - app/src/application/card.use-cases.ts
-  - app/src/application/selectors.ts
+  - packages/core/src/domain/financial/credit-card.ts
+  - packages/core/src/application/card.use-cases.ts
+  - packages/core/src/application/selectors.ts
   - app/src/store/financial.store.ts
   - app/src/screens/CardDetailScreen.tsx
   - app/src/screens/cardView.ts
@@ -22,7 +22,7 @@ code:
   - app/src/screens/cardText.ts
 symbols: [buildCardStatements, summarizeStatement, statementDueDate, payStatement, addStatementCharges, undoStatementPayment, statementPayableFrom, selectCardStatements, selectStatementPayments, selectCycleStatementInterest]
 adrs: [ADR-017, ADR-018]
-tests: [app/src/application/card-rules.test.ts, app/src/domain/financial/credit-card.test.ts, app/src/domain/financial/statement.test.ts, app/src/application/card.use-cases.test.ts, app/src/application/financial-vision.test.ts, app/src/screens/cards.screens.test.tsx]
+tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/domain/financial/credit-card.test.ts, packages/core/src/domain/financial/statement.test.ts, packages/core/src/application/card.use-cases.test.ts, packages/core/src/application/financial-vision.test.ts, app/src/screens/cards.screens.test.tsx]
 business_rules: [BR-FIN-005, BR-FIN-025, BR-FIN-026, BR-FIN-030, BR-FIN-033, BR-FIN-034]
 last_verified_commit: bfe9de6+T-028
 ---

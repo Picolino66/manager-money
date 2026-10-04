@@ -1,27 +1,31 @@
 import { create } from 'zustand';
 
-import * as cardUseCases from '../application/card.use-cases';
-import * as paymentUseCases from '../application/payment.use-cases';
-import * as useCases from '../application/cycle.use-cases';
-import { selectActiveMonth, selectClosedMonths, selectConfig } from '../application/selectors';
+import * as cardUseCases from '@manager-money/core/application/card.use-cases';
+import * as paymentUseCases from '@manager-money/core/application/payment.use-cases';
+import * as useCases from '@manager-money/core/application/cycle.use-cases';
+import {
+  selectActiveMonth,
+  selectClosedMonths,
+  selectConfig,
+} from '@manager-money/core/application/selectors';
 import {
   countPendingChanges,
   createDefaultContext,
   createEmptyState,
   LocalState,
   UseCaseContext,
-} from '../application/state';
+} from '@manager-money/core/application/state';
 import {
   ExpenseInput,
   FinancialConfig,
   FinancialConfigInput,
   FinancialMonth,
-} from '../domain/financial/financial.types';
+} from '@manager-money/core/domain/financial/financial.types';
 import { buildExportPayload, exportFileName, shareJson } from '../infrastructure/export/share-json';
 import { logger } from '../infrastructure/monitoring/logger';
 import { localStore } from '../infrastructure/storage/local-store';
 import { runSync, SyncOutcome } from '../infrastructure/sync/sync-engine';
-import { SyncRemote } from '../infrastructure/sync/types';
+import { SyncRemote } from '@manager-money/core/contract/types';
 
 type FinancialState = {
   doc: LocalState;

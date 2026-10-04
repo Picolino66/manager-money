@@ -2,13 +2,17 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { addMonths, format } from 'date-fns';
 import { Alert } from 'react-native';
 
-import { addCardPurchase, saveCreditCard } from '../application/card.use-cases';
-import { openCycle, saveConfig } from '../application/cycle.use-cases';
-import { payFixedExpense } from '../application/payment.use-cases';
-import { CardPurchaseRecord, createEmptyState, LocalState } from '../application/state';
+import { addCardPurchase, saveCreditCard } from '@manager-money/core/application/card.use-cases';
+import { openCycle, saveConfig } from '@manager-money/core/application/cycle.use-cases';
+import { payFixedExpense } from '@manager-money/core/application/payment.use-cases';
+import {
+  CardPurchaseRecord,
+  createEmptyState,
+  LocalState,
+} from '@manager-money/core/application/state';
 import { setUseCaseContextFactory, useFinancialStore } from '../store/financial.store';
 import { useSessionStore } from '../store/session.store';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency } from '@manager-money/core/utils/currency';
 import { AccountScreen } from './AccountScreen';
 import { AddExpenseScreen } from './AddExpenseScreen';
 import { CardsScreen } from './CardsScreen';

@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T16:58:33.844Z",
-  "source_commit": "455a4b1",
+  "generated_at": "2026-10-04T19:36:15.782Z",
+  "source_commit": "3b9bf25",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -151,7 +151,7 @@
         "ADR-018"
       ],
       "tests": [
-        "app/src/application/cycle.use-cases.test.ts",
+        "packages/core/src/application/cycle.use-cases.test.ts",
         "app/src/store/financial.store.test.ts"
       ],
       "spec": "SPEC-009"
@@ -161,7 +161,7 @@
       "type": "plan",
       "module": "architecture",
       "title": "Reorganização do repositório e plano do client web",
-      "summary": "Registro da separação em app/ (mobile), client/ (web, ainda não implementado) e supabase/ (backend compartilhado) e plano técnico do client web: escopo, stack, rotas, segurança, testes, deploy, backlog CLIENT-* e fases.",
+      "summary": "Registro da separação em app/ (mobile), client/ (web) e supabase/ (backend compartilhado), plano técnico do client web (escopo, stack, rotas, segurança, testes, deploy, backlog CLIENT-*, fases) e o registro da implementação do P0 com packages/core e npm workspaces.",
       "doc": "architecture/client-web-plan.md",
       "state": "implemented",
       "keywords": [
@@ -178,6 +178,7 @@
         "ADR-019",
         "ADR-020",
         "ADR-021",
+        "ADR-022",
         "ADR-004",
         "ADR-006"
       ],
@@ -289,9 +290,9 @@
         "ADR-018"
       ],
       "tests": [
-        "app/src/application/card-rules.test.ts",
-        "app/src/application/financial-vision.test.ts",
-        "app/src/application/card.use-cases.test.ts",
+        "packages/core/src/application/card-rules.test.ts",
+        "packages/core/src/application/financial-vision.test.ts",
+        "packages/core/src/application/card.use-cases.test.ts",
         "app/src/screens/cards.screens.test.tsx"
       ],
       "spec": "SPEC-019"
@@ -338,10 +339,10 @@
         "ADR-018"
       ],
       "tests": [
-        "app/src/application/card-rules.test.ts",
-        "app/src/application/card.use-cases.test.ts",
-        "app/src/application/financial-vision.test.ts",
-        "app/src/domain/financial/credit-card.test.ts",
+        "packages/core/src/application/card-rules.test.ts",
+        "packages/core/src/application/card.use-cases.test.ts",
+        "packages/core/src/application/financial-vision.test.ts",
+        "packages/core/src/domain/financial/credit-card.test.ts",
         "app/src/screens/cards.screens.test.tsx",
         "app/src/screens/screens.test.tsx"
       ],
@@ -390,9 +391,9 @@
         "ADR-017"
       ],
       "tests": [
-        "app/src/domain/financial/credit-card.test.ts",
-        "app/src/application/card.use-cases.test.ts",
-        "app/src/application/financial-vision.test.ts",
+        "packages/core/src/domain/financial/credit-card.test.ts",
+        "packages/core/src/application/card.use-cases.test.ts",
+        "packages/core/src/application/financial-vision.test.ts",
         "app/src/screens/screens.test.tsx"
       ],
       "spec": "SPEC-016"
@@ -442,11 +443,11 @@
         "ADR-018"
       ],
       "tests": [
-        "app/src/application/card-rules.test.ts",
-        "app/src/domain/financial/credit-card.test.ts",
-        "app/src/domain/financial/statement.test.ts",
-        "app/src/application/card.use-cases.test.ts",
-        "app/src/application/financial-vision.test.ts",
+        "packages/core/src/application/card-rules.test.ts",
+        "packages/core/src/domain/financial/credit-card.test.ts",
+        "packages/core/src/domain/financial/statement.test.ts",
+        "packages/core/src/application/card.use-cases.test.ts",
+        "packages/core/src/application/financial-vision.test.ts",
         "app/src/screens/cards.screens.test.tsx"
       ],
       "spec": "SPEC-019"
@@ -477,6 +478,11 @@
         "cartão",
         "fixas pagas"
       ],
+      "symbols": [
+        "selectCategorizedItems",
+        "filterCategorizedItems",
+        "summarizeByCategory"
+      ],
       "business_rules": [
         "BR-FIN-012",
         "BR-FIN-030"
@@ -504,6 +510,51 @@
       "business_rules": [
         "BR-FIN-012"
       ]
+    },
+    {
+      "id": "core",
+      "type": "module",
+      "module": "core",
+      "title": "Núcleo compartilhado (@manager-money/core)",
+      "summary": "Pacote TypeScript puro usado pelo app mobile e pelo client web: domínio financeiro, casos de uso, seletores, contrato remoto (DTOs, mappers, registros alterados, erros) e utilitários.",
+      "doc": "modules/core/index.md",
+      "state": "implemented"
+    },
+    {
+      "id": "core.shared-package",
+      "type": "feature",
+      "module": "core",
+      "title": "Pacote @manager-money/core e npm workspaces",
+      "summary": "Extração de domain, application, utils, contrato remoto e texto legal do app para packages/core, consumido como fonte TypeScript por subcaminho (Metro no app, Vite no web), com testes em Vitest.",
+      "doc": "modules/core/shared-package.md",
+      "state": "implemented",
+      "keywords": [
+        "workspaces",
+        "núcleo",
+        "pacote",
+        "compartilhado",
+        "monorepo",
+        "vitest"
+      ],
+      "symbols": [
+        "collectDirty",
+        "acknowledge",
+        "markAllClean",
+        "mapSupabaseError",
+        "selectCategorizedItems",
+        "filterCategorizedItems",
+        "summarizeByCategory"
+      ],
+      "adrs": [
+        "ADR-022",
+        "ADR-020",
+        "ADR-001"
+      ],
+      "tests": [
+        "packages/core/src/contract/dirty.test.ts",
+        "packages/core/src/application/category-analysis.test.ts"
+      ],
+      "spec": "SPEC-022"
     },
     {
       "id": "cycle",
@@ -546,8 +597,8 @@
         "ADR-018"
       ],
       "tests": [
-        "app/src/application/cycle.use-cases.test.ts",
-        "app/src/application/card-rules.test.ts"
+        "packages/core/src/application/cycle.use-cases.test.ts",
+        "packages/core/src/application/card-rules.test.ts"
       ],
       "spec": "SPEC-019"
     },
@@ -596,10 +647,10 @@
         "ADR-018"
       ],
       "tests": [
-        "app/src/application/card-rules.test.ts",
-        "app/src/application/financial-vision.test.ts",
-        "app/src/domain/financial/projection.test.ts",
-        "app/src/domain/financial/financial.calculations.test.ts",
+        "packages/core/src/application/card-rules.test.ts",
+        "packages/core/src/application/financial-vision.test.ts",
+        "packages/core/src/domain/financial/projection.test.ts",
+        "packages/core/src/domain/financial/financial.calculations.test.ts",
         "app/src/screens/screens.test.tsx"
       ],
       "spec": "SPEC-019"
@@ -659,9 +710,9 @@
         "BR-FIN-034"
       ],
       "tests": [
-        "app/src/application/cycle.use-cases.test.ts",
-        "app/src/application/financial-vision.test.ts",
-        "app/src/application/card-rules.test.ts"
+        "packages/core/src/application/cycle.use-cases.test.ts",
+        "packages/core/src/application/financial-vision.test.ts",
+        "packages/core/src/application/card-rules.test.ts"
       ],
       "spec": "SPEC-002"
     },
@@ -689,8 +740,8 @@
         "BR-FIN-034"
       ],
       "tests": [
-        "app/src/application/cycle.use-cases.test.ts",
-        "app/src/application/card-rules.test.ts"
+        "packages/core/src/application/cycle.use-cases.test.ts",
+        "packages/core/src/application/card-rules.test.ts"
       ],
       "spec": "SPEC-002"
     },
@@ -744,7 +795,7 @@
         "BR-SYNC-002"
       ],
       "tests": [
-        "app/src/application/cycle.use-cases.test.ts"
+        "packages/core/src/application/cycle.use-cases.test.ts"
       ],
       "spec": "SPEC-003"
     },
@@ -777,7 +828,7 @@
         "BR-FIN-026"
       ],
       "tests": [
-        "app/src/application/cycle.use-cases.test.ts"
+        "packages/core/src/application/cycle.use-cases.test.ts"
       ]
     },
     {
@@ -905,7 +956,7 @@
         "ADR-015"
       ],
       "tests": [
-        "app/src/application/payment.use-cases.test.ts",
+        "packages/core/src/application/payment.use-cases.test.ts",
         "app/src/screens/screens.test.tsx"
       ],
       "spec": "SPEC-014"
@@ -952,8 +1003,8 @@
         "ADR-017"
       ],
       "tests": [
-        "app/src/application/payment.use-cases.test.ts",
-        "app/src/application/financial-vision.test.ts",
+        "packages/core/src/application/payment.use-cases.test.ts",
+        "packages/core/src/application/financial-vision.test.ts",
         "app/src/screens/screens.test.tsx",
         "app/src/infrastructure/sync/sync-engine.test.ts"
       ],
@@ -1006,8 +1057,8 @@
         "ADR-017"
       ],
       "tests": [
-        "app/src/application/cycle.use-cases.test.ts",
-        "app/src/application/financial-vision.test.ts"
+        "packages/core/src/application/cycle.use-cases.test.ts",
+        "packages/core/src/application/financial-vision.test.ts"
       ],
       "spec": "SPEC-017"
     },
@@ -1050,9 +1101,9 @@
         "ADR-017"
       ],
       "tests": [
-        "app/src/application/cycle.use-cases.test.ts",
+        "packages/core/src/application/cycle.use-cases.test.ts",
         "app/src/infrastructure/storage/local-store.test.ts",
-        "app/src/infrastructure/sync/mappers.test.ts",
+        "packages/core/src/contract/mappers.test.ts",
         "app/src/screens/screens.test.tsx"
       ],
       "spec": "SPEC-017"
@@ -1082,7 +1133,7 @@
         "BR-FIN-024"
       ],
       "tests": [
-        "app/src/domain/financial/financial.calculations.test.ts"
+        "packages/core/src/domain/financial/financial.calculations.test.ts"
       ],
       "spec": "SPEC-015"
     },
@@ -1104,7 +1155,8 @@
       "doc": "quality/security-report.md",
       "state": "implemented",
       "adrs": [
-        "ADR-006"
+        "ADR-006",
+        "ADR-020"
       ]
     },
     {
@@ -1246,9 +1298,10 @@
         "ADR-018"
       ],
       "tests": [
+        "packages/core/src/contract/dirty.test.ts",
         "app/src/infrastructure/sync/sync-engine.test.ts",
         "app/src/infrastructure/sync/supabase-remote.test.ts",
-        "app/src/infrastructure/sync/mappers.test.ts"
+        "packages/core/src/contract/mappers.test.ts"
       ],
       "spec": "SPEC-006"
     },
@@ -1309,9 +1362,263 @@
       ],
       "adrs": [
         "ADR-009",
-        "ADR-010"
+        "ADR-010",
+        "ADR-022"
       ],
       "spec": "SPEC-020"
+    },
+    {
+      "id": "web",
+      "type": "module",
+      "module": "web",
+      "title": "Client web",
+      "summary": "Aplicação web (React + Vite SPA) sempre online: lê o estado do usuário do Supabase, aplica os casos de uso do núcleo e grava na hora só os registros alterados; sem sync nem dados no navegador.",
+      "doc": "modules/web/index.md",
+      "state": "implemented"
+    },
+    {
+      "id": "web.analysis",
+      "type": "feature",
+      "module": "web",
+      "title": "Análise por categoria e período (web)",
+      "summary": "Totais por categoria num período livre, com filtro de categoria e de tipos (gasto, cartão, parcelado, fixo), gráfico de barras e tabela equivalente, usando a mesma função do app.",
+      "doc": "modules/web/analysis.md",
+      "state": "implemented",
+      "keywords": [
+        "análise",
+        "categorias",
+        "período",
+        "gráfico",
+        "relatório"
+      ],
+      "symbols": [
+        "selectCategorizedItems",
+        "filterCategorizedItems",
+        "summarizeByCategory",
+        "sumCategorizedItems"
+      ],
+      "business_rules": [
+        "BR-FIN-001"
+      ],
+      "adrs": [
+        "ADR-020",
+        "ADR-022"
+      ],
+      "tests": [
+        "packages/core/src/application/category-analysis.test.ts",
+        "client/src/lib/view-models.test.ts"
+      ],
+      "spec": "SPEC-022"
+    },
+    {
+      "id": "web.auth",
+      "type": "feature",
+      "module": "web",
+      "title": "Entrar, criar conta e sair (web)",
+      "summary": "Login e cadastro com e-mail e senha (mínimo 8) no mesmo projeto Supabase, sessão do supabase-js persistida no navegador, guarda de rota e aviso de sessão expirada.",
+      "doc": "modules/web/auth.md",
+      "state": "implemented",
+      "keywords": [
+        "login",
+        "cadastro",
+        "sessão",
+        "logout",
+        "expirada",
+        "supabase auth"
+      ],
+      "symbols": [
+        "SupabaseAuthGateway",
+        "mapAuthError",
+        "useSessionStore",
+        "RequireAuth",
+        "EXPIRED_NOTICE"
+      ],
+      "business_rules": [
+        "BR-ACC-006"
+      ],
+      "adrs": [
+        "ADR-011",
+        "ADR-020",
+        "ADR-006"
+      ],
+      "tests": [
+        "client/src/infrastructure/auth.test.ts",
+        "client/src/store/session.store.test.ts",
+        "client/src/features/features.test.tsx"
+      ],
+      "spec": "SPEC-022"
+    },
+    {
+      "id": "web.cycles",
+      "type": "feature",
+      "module": "web",
+      "title": "Ciclos e detalhe do ciclo (web)",
+      "summary": "Lista de ciclos fechados com saldo inicial, gasto e resultado, filtro por ano, e detalhe por ciclo com o dia a dia (total e saldo do dia), fixas pagas, rendas avulsas e faturas.",
+      "doc": "modules/web/cycles.md",
+      "state": "implemented",
+      "keywords": [
+        "ciclos",
+        "histórico",
+        "resultado",
+        "detalhe",
+        "dia a dia"
+      ],
+      "symbols": [
+        "buildClosedCycles",
+        "buildCycleDetail"
+      ],
+      "business_rules": [
+        "BR-FIN-005",
+        "BR-FIN-006",
+        "BR-FIN-008"
+      ],
+      "adrs": [
+        "ADR-020"
+      ],
+      "tests": [
+        "client/src/lib/view-models.test.ts",
+        "client/src/features/features.test.tsx"
+      ],
+      "spec": "SPEC-022"
+    },
+    {
+      "id": "web.expenses",
+      "type": "feature",
+      "module": "web",
+      "title": "Tabela de gastos (web)",
+      "summary": "Gastos à vista de todos os ciclos com busca, filtros por ciclo, categoria e período, ordenação e paginação; registrar, editar e excluir só no ciclo ativo, pelos casos de uso do núcleo.",
+      "doc": "modules/web/expenses.md",
+      "state": "implemented",
+      "keywords": [
+        "gastos",
+        "tabela",
+        "filtro",
+        "busca",
+        "editar",
+        "excluir",
+        "registrar"
+      ],
+      "symbols": [
+        "buildExpenseRows",
+        "filterExpenseRows",
+        "ExpenseFormDialog",
+        "MoneyInput"
+      ],
+      "business_rules": [
+        "BR-FIN-001",
+        "BR-FIN-013"
+      ],
+      "adrs": [
+        "ADR-020"
+      ],
+      "tests": [
+        "client/src/lib/view-models.test.ts",
+        "client/src/features/features.test.tsx"
+      ],
+      "spec": "SPEC-022"
+    },
+    {
+      "id": "web.onboarding",
+      "type": "feature",
+      "module": "web",
+      "title": "Onboarding de conta nova (web)",
+      "summary": "Conta sem configuração vai para /comecar: fontes de renda, meta e despesas fixas, gravadas pelos casos de uso saveConfig e openCycle do núcleo, abrindo o primeiro ciclo.",
+      "doc": "modules/web/onboarding.md",
+      "state": "implemented",
+      "keywords": [
+        "onboarding",
+        "começar",
+        "configuração",
+        "primeiro ciclo",
+        "conta nova"
+      ],
+      "symbols": [
+        "OnboardingPage",
+        "toConfigInput"
+      ],
+      "business_rules": [
+        "BR-FIN-002",
+        "BR-FIN-018",
+        "BR-FIN-024",
+        "BR-ACC-002"
+      ],
+      "adrs": [
+        "ADR-020",
+        "ADR-016"
+      ],
+      "tests": [
+        "client/src/lib/onboarding.test.ts",
+        "client/src/features/features.test.tsx"
+      ],
+      "spec": "SPEC-022"
+    },
+    {
+      "id": "web.overview",
+      "type": "feature",
+      "module": "web",
+      "title": "Visão geral do ciclo ativo (web)",
+      "summary": "KPIs do ciclo ativo (ainda pode gastar hoje, limite de hoje, disponível no ciclo, gasto), gráfico de gasto diário vs. limite, compromissos reservados e limite dos cartões, todos calculados pelo núcleo.",
+      "doc": "modules/web/overview.md",
+      "state": "implemented",
+      "keywords": [
+        "dashboard",
+        "visão geral",
+        "limite diário",
+        "compromissos",
+        "kpi"
+      ],
+      "symbols": [
+        "buildOverview",
+        "OverviewPage",
+        "moneyTicks"
+      ],
+      "business_rules": [
+        "BR-FIN-004",
+        "BR-FIN-005",
+        "BR-FIN-026"
+      ],
+      "adrs": [
+        "ADR-017",
+        "ADR-020"
+      ],
+      "tests": [
+        "client/src/lib/view-models.test.ts",
+        "client/src/lib/chart.test.ts"
+      ],
+      "spec": "SPEC-022"
+    },
+    {
+      "id": "web.shell",
+      "type": "feature",
+      "module": "web",
+      "title": "Layout, navegação e tema (web)",
+      "summary": "Sidebar fixa em telas ≥ 1024px e drawer abaixo disso, cabeçalho com ciclo ativo e indicador de gravação, menu da conta com tema Sistema/Claro/Escuro, páginas de erro e 404.",
+      "doc": "modules/web/shell.md",
+      "state": "implemented",
+      "keywords": [
+        "layout",
+        "sidebar",
+        "drawer",
+        "tema escuro",
+        "navegação",
+        "404"
+      ],
+      "symbols": [
+        "AppShell",
+        "AccountMenu",
+        "useThemeStore",
+        "resolveScheme",
+        "readThemePreference"
+      ],
+      "adrs": [
+        "ADR-021",
+        "ADR-020"
+      ],
+      "tests": [
+        "client/src/store/theme.store.test.ts",
+        "client/src/styles/tokens.test.ts"
+      ],
+      "spec": "SPEC-022"
     }
   ]
 }

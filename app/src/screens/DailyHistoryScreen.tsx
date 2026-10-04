@@ -15,13 +15,13 @@ import {
   calculateDayBalance,
   calculateTodaySpent,
   normalizeCategory,
-} from '../domain/financial/financial.calculations';
-import { Expense } from '../domain/financial/financial.types';
+} from '@manager-money/core/domain/financial/financial.calculations';
+import { Expense } from '@manager-money/core/domain/financial/financial.types';
 import { spacing, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
 import { useFinancialStore } from '../store/financial.store';
-import { formatCurrency } from '../utils/currency';
-import { formatDateLabel } from '../utils/date';
+import { formatCurrency } from '@manager-money/core/utils/currency';
+import { formatDateLabel } from '@manager-money/core/utils/date';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'DailyHistory'>,

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { SupabaseRemote } from './supabase-remote';
-import { SyncError } from './types';
+import { pullSince, SupabaseRemote } from './supabase-remote';
+import { SyncError } from '@manager-money/core/contract/types';
 
 type Result = { data?: unknown; error?: { code: string; message: string } | null; count?: number };
 
@@ -105,5 +105,12 @@ describe('SupabaseRemote', () => {
         fakeClient([{ error: { code: 'PGRST301', message: 'JWT expired' } }]).client,
       ).hasData(),
     ).rejects.toMatchObject({ code: 'auth' });
+  });
+});
+
+describe('pullSince', () => {
+  it('pull usa janela de 5 s antes do cursor', () => {
+    expect(pullSince(null)).toBeNull();
+    expect(pullSince('2026-10-10T12:00:05.000Z')).toBe('2026-10-10T12:00:00.000Z');
   });
 });

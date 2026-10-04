@@ -9,11 +9,11 @@ summary: >
 keywords: [renda avulsa, entrada extra, freela, 13º, receita]
 code:
   - app/src/screens/IncomesScreen.tsx
-  - app/src/application/payment.use-cases.ts
-  - app/src/domain/financial/payments.ts
+  - packages/core/src/application/payment.use-cases.ts
+  - packages/core/src/domain/financial/payments.ts
 symbols: [addExtraIncome, deleteExtraIncome, calculateExtraIncomeTotal]
 adrs: [ADR-015]
-tests: [app/src/application/payment.use-cases.test.ts, app/src/screens/screens.test.tsx]
+tests: [packages/core/src/application/payment.use-cases.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-004, BR-FIN-023]
 last_verified_commit: c47cf18+T-025
 ---

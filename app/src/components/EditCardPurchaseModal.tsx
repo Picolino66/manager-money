@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Modal, ScrollView, Text, View } from 'react-native';
 
-import { CardPurchaseUpdate } from '../application/card.use-cases';
+import { CardPurchaseUpdate } from '@manager-money/core/application/card.use-cases';
 import { radius, spacing, typography } from '../design/theme';
 import { makeStyles } from '../design/useTheme';
-import { CardPurchase, MAX_CARD_INSTALLMENTS } from '../domain/financial/credit-card';
-import { formatDateInput, parseBRDateInput, toISODate } from '../utils/date';
+import {
+  CardPurchase,
+  MAX_CARD_INSTALLMENTS,
+} from '@manager-money/core/domain/financial/credit-card';
+import { formatDateInput, parseBRDateInput, toISODate } from '@manager-money/core/utils/date';
 import { AppButton } from './AppButton';
 import { CurrencyInput } from './CurrencyInput';
 import { SelectField } from './SelectField';

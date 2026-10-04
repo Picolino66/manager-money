@@ -2,7 +2,7 @@ import { Text, View } from 'react-native';
 
 import { radius, spacing } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
-import { MoneyCents } from '../domain/financial/financial.types';
+import { MoneyCents } from '@manager-money/core/domain/financial/financial.types';
 
 type CardLimitBarProps = {
   committed: MoneyCents;

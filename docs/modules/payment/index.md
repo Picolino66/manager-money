@@ -8,7 +8,7 @@ summary: >
   reservadas) e rendas avulsas do ciclo.
 code:
   - app/src/components/FixedExpensesCard.tsx
-last_verified_commit: 455a4b1+T-031
+last_verified_commit: 3b9bf25+T-033
 ---
 
 # Módulo: pagamentos e rendas

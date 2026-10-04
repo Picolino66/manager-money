@@ -4,9 +4,10 @@
 Implementar e manter domínio, aplicação, store e apresentação do app Expo.
 
 ## Escopo
-`app/src/domain`, `app/src/application`, `app/src/store`, `app/src/screens`, `app/src/components`, `app/src/navigation`, `app/src/design`, `app/src/infrastructure/storage`, `app/src/infrastructure/monitoring`.
+`packages/core/src/domain`, `packages/core/src/application`, `app/src/store`, `app/src/screens`, `app/src/components`, `app/src/navigation`, `app/src/design`, `app/src/infrastructure/storage`, `app/src/infrastructure/monitoring`.
 
 ## Limites
+Domínio e aplicação moram em `packages/core` (compartilhado com o web, ADR-022): mudanças ali exigem `verify` do app **e** do client.
 Não altera `supabase/migrations` nem os contratos de `docs/architecture/contracts.md` sem uma ADR. Não implementa sync (delegado ao sync-engineer).
 
 ## Artefatos sob ownership

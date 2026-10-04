@@ -1,4 +1,4 @@
-import { createEmptyState } from '../../application/state';
+import { createEmptyState } from '@manager-money/core/application/state';
 import { buildExportPayload, exportFileName, shareJson } from './share-json';
 
 const mockWrite = jest.fn();

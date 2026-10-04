@@ -4,7 +4,11 @@ import { Pressable, Text, View } from 'react-native';
 
 import { spacing } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
-import { CardPurchase, CardStatement, StatementStatus } from '../domain/financial/credit-card';
+import {
+  CardPurchase,
+  CardStatement,
+  StatementStatus,
+} from '@manager-money/core/domain/financial/credit-card';
 import {
   describeStatementComposition,
   formatMonthKey,
@@ -13,7 +17,7 @@ import {
   STATEMENT_STATUS_LABEL,
 } from '../screens/cardText';
 import { formatDayMonth } from '../screens/cardView';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency } from '@manager-money/core/utils/currency';
 import { Badge, BadgeTone } from './Badge';
 import { Card } from './Card';
 import { MetricRow } from './MetricRow';

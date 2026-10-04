@@ -1,6 +1,6 @@
 # ADR-019 — Estrutura do repositório: `app/`, `client/` e `supabase/` compartilhado
 
-- **Status:** ACCEPTED · **Fase:** F2 (evolução) · **Data:** 2026-10-04
+- **Status:** ACCEPTED (workspaces atualizados pela [ADR-022](ADR-022-nucleo-compartilhado-packages-core.md)) · **Fase:** F2 (evolução) · **Data:** 2026-10-04
 - **Sobrepõe:** `.orchestrator/context.json → scope.excluded` ("web" deixa de ser excluído: o client web
   passa a ser planejado; implementação em tarefa posterior — ver [ADR-020](ADR-020-client-web-stack-e-integracao.md)).
 - **Atualiza:** [ADR-009](ADR-009-estrutura-agentic.md) (gate `docs:check` passa a rodar na raiz) e

@@ -5,12 +5,15 @@ import {
   addCardPurchase,
   addExistingCardDebt,
   saveCreditCard,
-} from '../application/card.use-cases';
-import { openCycle, saveConfig } from '../application/cycle.use-cases';
-import { selectCardLimitUsage, selectCardStatements } from '../application/selectors';
-import { createEmptyState, LocalState } from '../application/state';
+} from '@manager-money/core/application/card.use-cases';
+import { openCycle, saveConfig } from '@manager-money/core/application/cycle.use-cases';
+import {
+  selectCardLimitUsage,
+  selectCardStatements,
+} from '@manager-money/core/application/selectors';
+import { createEmptyState, LocalState } from '@manager-money/core/application/state';
 import { confirmCardLimit } from '../components/CardLimitNotice';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency } from '@manager-money/core/utils/currency';
 import { setUseCaseContextFactory, useFinancialStore } from '../store/financial.store';
 import { CardDebtScreen } from './CardDebtScreen';
 import { CardDetailScreen } from './CardDetailScreen';

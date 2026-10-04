@@ -3,33 +3,32 @@ import {
   deleteCardPurchase,
   payStatement,
   saveCreditCard,
-} from '../../application/card.use-cases';
+} from '@manager-money/core/application/card.use-cases';
 import {
   addExtraIncome,
   payFixedExpense,
   undoFixedPayment,
-} from '../../application/payment.use-cases';
+} from '@manager-money/core/application/payment.use-cases';
 import {
   addExpense,
   deleteExpense,
   openCycle,
   receiveIncomeEarly,
   saveConfig,
-} from '../../application/cycle.use-cases';
-import { selectActiveMonth, selectCardLimitUsage } from '../../application/selectors';
+} from '@manager-money/core/application/cycle.use-cases';
+import { selectActiveMonth, selectCardLimitUsage } from '@manager-money/core/application/selectors';
 import {
   countPendingChanges,
   createEmptyState,
   LocalState,
   UseCaseContext,
-} from '../../application/state';
-import { FinancialConfigInput } from '../../domain/financial/financial.types';
+} from '@manager-money/core/application/state';
+import { FinancialConfigInput } from '@manager-money/core/domain/financial/financial.types';
 import { MemoryRemote, MemoryServer } from './memory-remote';
-import { settingsToRow } from './mappers';
+import { settingsToRow } from '@manager-money/core/contract/mappers';
+import { acknowledge, collectDirty } from '@manager-money/core/contract/dirty';
 import {
-  acknowledge,
   applyRemoteRows,
-  collectDirty,
   linkKeepingLocal,
   linkUsingRemote,
   planFirstLogin,

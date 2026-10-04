@@ -9,8 +9,10 @@ summary: >
 keywords: [análise, gráfico, período, filtro, relatório, cartão, fixas pagas]
 code:
   - app/src/screens/CategoriesScreen.tsx
+  - packages/core/src/application/category-analysis.ts
+symbols: [selectCategorizedItems, filterCategorizedItems, summarizeByCategory]
 business_rules: [BR-FIN-012, BR-FIN-030]
-last_verified_commit: 455a4b1+T-031
+last_verified_commit: 3b9bf25+T-039
 ---
 
 # Análise por categoria
@@ -25,3 +27,6 @@ last_verified_commit: 455a4b1+T-031
 - Sem dupla contagem (BR-FIN-030): a compra no cartão criada pelo pagamento de uma fixa não aparece de
   novo como "Cartão". Subtítulo: "Compras no cartão contam pela data da compra (valor total); fixas, quando pagas".
 - Gráfico: barras proporcionais à maior categoria.
+
+A montagem, o filtro e os totais moram no núcleo (`packages/core/src/application/category-analysis.ts`,
+ADR-022), usados pela tela do app e pela análise do client web ([web.analysis](../web/analysis.md)).

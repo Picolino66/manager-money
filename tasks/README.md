@@ -38,6 +38,15 @@ P1 = importante para operar; P2 = melhoria.
 | T-026 | Núcleo: pagamento parcial, encargos, total informado e invariantes | SPEC-019 | P1 | S5 | 8 |
 | T-027 | UI de faturas parciais, encargos e onboarding com total informado | SPEC-019 | P1 | S5 | 5 |
 | T-028 | Documentação: ADR-018, SPEC-019 e knowledge layer | SPEC-019 | P1 | S5 | 2 |
+| T-032 | Client web: decisão e spec (CLIENT-001) | SPEC-022 | P0 | S7 | 2 |
+| T-033 | Extrair `packages/core` com npm workspaces (CLIENT-003) | SPEC-022 | P0 | S7 | 8 |
+| T-034 | Bootstrap do client, lint, CI e testes (CLIENT-002/004/005) | SPEC-022 | P0 | S7 | 5 |
+| T-035 | Repositório Supabase, autenticação e guarda de rota (CLIENT-006/007/008) | SPEC-022 | P0 | S7 | 8 |
+| T-036 | Shell, tema e onboarding (CLIENT-009/009A) | SPEC-022 | P0 | S7 | 5 |
+| T-037 | Visão geral (CLIENT-010) | SPEC-022 | P0 | S7 | 3 |
+| T-038 | Gastos e ciclos (CLIENT-011/012/013) | SPEC-022 | P0 | S7 | 8 |
+| T-039 | Análise por categoria e período (CLIENT-014) | SPEC-022 | P0 | S7 | 3 |
+| T-040 | Hardening do MVP web (CLIENT-015) | SPEC-022 | P0 | S7 | 3 |
 
 **S1 (23 pts):** fundação e correções de dados: T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-015.
 **S2 (21 pts):** conta, sync e lojas: T-008, T-009, T-010, T-011, T-012, T-014.
@@ -50,3 +59,5 @@ P1 = importante para operar; P2 = melhoria.
 **S5 (pagamento parcial e invariantes, ADR-018):** T-026 — núcleo (concluída); T-027 — UI de faturas e onboarding; T-028 — documentação (todas concluídas; revisão financeira v2 com M1–M3, B1–B4 e B7 corrigidos).
 
 **S6 (estrutura e tema):** T-029 — reorganização em `app/`, `client/` e `supabase/` + plano do client web (ADR-019); T-030 — decisões do plano do client (ADR-020); T-031 — tema claro e escuro no mobile (ADR-021) (todas concluídas).
+
+**S7 (client web P0, ADR-020/022):** T-032 — decisão e spec; T-033 — `packages/core`; T-034 — bootstrap; T-035 — Supabase e auth; T-036 — shell, tema e onboarding; T-037 — visão geral; T-038 — gastos e ciclos; T-039 — análise; T-040 — hardening.

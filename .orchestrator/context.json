@@ -53,8 +53,9 @@
       "monetização"
     ],
     "planned": [
-      "client web online (lê/grava direto no Supabase, sem sync; P0 em docs/architecture/client-web-plan.md; implementação pendente)"
-    ]
+      "client web P1 (cartões/faturas, cadastros, ações de ciclo, projeção, exportação) e CLIENT-016 (VPS)"
+    ],
+    "included_web": "client web P0 implementado (SPEC-022, T-032..T-040): auth, onboarding, visão geral, gastos, ciclos, análise; sempre online, sem sync"
   },
   "feasibility": {
     "verdict": "VIÁVEL_COM_RISCOS",
@@ -76,7 +77,10 @@
       "monitoring": "@sentry/react-native",
       "tests": "jest-expo + @testing-library/react-native",
       "ci": "github-actions",
-      "theming": "temas claro/escuro: makeStyles/useTheme + theme.store (preferência só no aparelho) — ADR-021"
+      "theming": "temas claro/escuro: makeStyles/useTheme + theme.store (preferência só no aparelho) — ADR-021",
+      "web": "React 19.2 + Vite 8 SPA / TS 6 strict / React Router 7 / Zustand / RHF + Zod / Tailwind 4 + Radix (shadcn) / TanStack Table 8 / Recharts 3",
+      "shared_core": "@manager-money/core (packages/core, npm workspaces, TS fonte, Vitest) — ADR-022",
+      "web_tests": "Vitest + Testing Library + Playwright (E2E local)"
     },
     "security_model": "adr/ADR-006-modelo-de-seguranca.md",
     "integration_contracts": [
@@ -104,7 +108,8 @@
       "ADR-018",
       "ADR-019",
       "ADR-020",
-      "ADR-021"
+      "ADR-021",
+      "ADR-022"
     ],
     "overrides": [
       {
@@ -250,7 +255,21 @@
       "total": 112,
       "coverage_lines": 97.42
     },
-    "manual_qa": "docs/quality/manual-qa.md (planejada, não executada)"
+    "manual_qa": "docs/quality/manual-qa.md (planejada, não executada)",
+    "client_web": {
+      "tests": {
+        "core": 177,
+        "app": 137,
+        "client": 93
+      },
+      "coverage_lines": {
+        "core": 96.98,
+        "app": 96.75,
+        "client": 95.97
+      },
+      "e2e_local": "4 públicos verdes, 1 autenticado pendente (usuário de teste)",
+      "security": "docs/quality/security-report.md §6 (WEB-01..05)"
+    }
   },
   "operations": {
     "slos": [],
@@ -291,6 +310,16 @@
       "task": "T-017",
       "date": "2026-10-03",
       "status": "aguardando validação no Expo Go"
+    },
+    "active_evolution": {
+      "mode": "feature-evolution",
+      "feature": "client web P0 (CLIENT-001..015 + 009A)",
+      "spec": "SPEC-022",
+      "tasks": "T-032..T-040",
+      "started_at": "2026-10-04",
+      "phase": "F6",
+      "status": "P0 entregue; pendências: EAS build preview manual, E2E autenticado (usuário de teste), WEB-02 CAPTCHA, WEB-04 texto da política",
+      "completed_at": "2026-10-04"
     }
   },
   "ux": {

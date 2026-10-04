@@ -1,12 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { createEmptyState } from '../../application/state';
+import { createEmptyState } from '@manager-money/core/application/state';
 import { localStore, STATE_STORAGE_KEY } from './local-store';
 import {
   openCycle,
   recalculateActiveCycleBalance,
   saveConfig,
-} from '../../application/cycle.use-cases';
+} from '@manager-money/core/application/cycle.use-cases';
 import { LEGACY_STORAGE_KEYS } from './migrations';
 
 const legacyConfig = {

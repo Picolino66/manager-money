@@ -1,4 +1,4 @@
-import { SyncTable } from '../../application/state';
+import { SyncTable } from '../application/state';
 
 /** Versão do contrato remoto (docs/architecture/contracts.md). */
 export const CONTRACT_VERSION = 'v1';

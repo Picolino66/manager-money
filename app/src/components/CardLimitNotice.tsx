@@ -2,9 +2,12 @@ import { Alert, Text, View } from 'react-native';
 
 import { radius, spacing } from '../design/theme';
 import { makeStyles } from '../design/useTheme';
-import { calculateLimitExcess, CardLimitUsage } from '../domain/financial/credit-card';
-import { MoneyCents } from '../domain/financial/financial.types';
-import { formatCurrency } from '../utils/currency';
+import {
+  calculateLimitExcess,
+  CardLimitUsage,
+} from '@manager-money/core/domain/financial/credit-card';
+import { MoneyCents } from '@manager-money/core/domain/financial/financial.types';
+import { formatCurrency } from '@manager-money/core/utils/currency';
 
 /** BR-FIN-026: a compra passa do limite disponível (só aviso, nunca bloqueia). */
 export function exceedsCardLimit(usage: CardLimitUsage | null, amount: MoneyCents): boolean {

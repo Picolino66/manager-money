@@ -9,14 +9,14 @@ summary: >
 keywords: [renda, fontes de renda, salário, freela, migração, ativa, inativa]
 code:
   - app/src/screens/ConfigScreen.tsx
-  - app/src/application/cycle.use-cases.ts
-  - app/src/domain/financial/financial.calculations.ts
-  - app/src/domain/financial/financial.types.ts
+  - packages/core/src/application/cycle.use-cases.ts
+  - packages/core/src/domain/financial/financial.calculations.ts
+  - packages/core/src/domain/financial/financial.types.ts
   - app/src/infrastructure/storage/migrations.ts
-  - app/src/infrastructure/sync/mappers.ts
+  - packages/core/src/contract/mappers.ts
 symbols: [calculatePrimaryPayday, calculatePrimaryIncomeSource, saveConfig, calculateIncomeTotal, isActive, legacyIncomeSources, migrateV2ToV3, migrateV5ToV6, settingsFromRow]
 adrs: [ADR-013, ADR-016, ADR-017]
-tests: [app/src/application/cycle.use-cases.test.ts, app/src/infrastructure/storage/local-store.test.ts, app/src/infrastructure/sync/mappers.test.ts, app/src/screens/screens.test.tsx]
+tests: [packages/core/src/application/cycle.use-cases.test.ts, app/src/infrastructure/storage/local-store.test.ts, packages/core/src/contract/mappers.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-004, BR-FIN-018, BR-FIN-024]
 last_verified_commit: c47cf18+T-025
 ---

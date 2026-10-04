@@ -1,27 +1,27 @@
 import { parseISO } from 'date-fns';
 
+import { legacyIncomeSources } from '@manager-money/core/contract/mappers';
 import {
   buildCardStatements,
   CardPurchase,
   CreditCard,
   MAX_CARD_DAY,
   statementKeyForDate,
-} from '../../domain/financial/credit-card';
+} from '@manager-money/core/domain/financial/credit-card';
 import {
   buildLegacyFinancialCycleDates,
   calculateFixedExpensesTotal,
-} from '../../domain/financial/financial.calculations';
+} from '@manager-money/core/domain/financial/financial.calculations';
 import {
   DEFAULT_EXPENSE_CATEGORY,
   DEFAULT_PAYDAY,
   Expense,
   FinancialMonth,
   FixedExpense,
-  IncomeSource,
   InstallmentFixedExpense,
   PermanentFixedExpense,
-} from '../../domain/financial/financial.types';
-import { createEmptyState, LocalState, SyncMeta } from '../../application/state';
+} from '@manager-money/core/domain/financial/financial.types';
+import { createEmptyState, LocalState, SyncMeta } from '@manager-money/core/application/state';
 
 /** Chaves do formato v1 (MVP), substituídas pelo documento único v2 (ADR-003). */
 export const LEGACY_STORAGE_KEYS = {
@@ -63,13 +63,6 @@ export type LegacySnapshot = {
 };
 
 /** Renda única (v1/v2) vira a primeira fonte de renda (BR-FIN-018). */
-export function legacyIncomeSources(
-  monthlyIncome: number,
-  payday: number = DEFAULT_PAYDAY,
-): IncomeSource[] {
-  return [{ id: 'income-legacy', name: 'Renda', amount: Math.max(0, monthlyIncome), payday }];
-}
-
 function normalizeFixedExpenses(value: LegacyConfig['fixedExpenses']): FixedExpense[] {
   if (Array.isArray(value)) {
     return value.map((expense) => {

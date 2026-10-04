@@ -2,13 +2,13 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { FixedPaymentRecord } from '../application/state';
+import { FixedPaymentRecord } from '@manager-money/core/application/state';
 import { radius, spacing, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
-import { calculateFixedExpenseAmount } from '../domain/financial/financial.calculations';
-import { FixedExpense, isActive } from '../domain/financial/financial.types';
-import { PAYMENT_METHOD_LABELS } from '../domain/financial/payments';
-import { formatCurrency } from '../utils/currency';
+import { calculateFixedExpenseAmount } from '@manager-money/core/domain/financial/financial.calculations';
+import { FixedExpense, isActive } from '@manager-money/core/domain/financial/financial.types';
+import { PAYMENT_METHOD_LABELS } from '@manager-money/core/domain/financial/payments';
+import { formatCurrency } from '@manager-money/core/utils/currency';
 import { AppButton } from './AppButton';
 import { Card } from './Card';
 

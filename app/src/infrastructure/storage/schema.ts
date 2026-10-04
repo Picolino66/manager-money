@@ -4,9 +4,9 @@ import {
   MAX_CARD_DAY,
   MAX_CARD_INSTALLMENTS,
   MIN_CARD_DAY,
-} from '../../domain/financial/credit-card';
-import { MAX_PAYDAY, MIN_PAYDAY } from '../../domain/financial/financial.types';
-import { LocalState, STATE_SCHEMA_VERSION } from '../../application/state';
+} from '@manager-money/core/domain/financial/credit-card';
+import { MAX_PAYDAY, MIN_PAYDAY } from '@manager-money/core/domain/financial/financial.types';
+import { LocalState, STATE_SCHEMA_VERSION } from '@manager-money/core/application/state';
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const cents = z.number().int();

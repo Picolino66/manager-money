@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { isAfter, isBefore, parseISO, startOfDay } from 'date-fns';
+import { startOfDay } from 'date-fns';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 import { AppButton } from '../components/AppButton';
@@ -11,49 +11,31 @@ import { MetricRow } from '../components/MetricRow';
 import { Screen } from '../components/Screen';
 import { SelectField } from '../components/SelectField';
 import { TextInputField } from '../components/TextInputField';
-import { getSortedCategories, normalizeCategory } from '../domain/financial/financial.calculations';
-import { isLive } from '../application/state';
-import { DEFAULT_EXPENSE_CATEGORY } from '../domain/financial/financial.types';
+import {
+  getSortedCategories,
+  normalizeCategory,
+} from '@manager-money/core/domain/financial/financial.calculations';
+import {
+  CATEGORIZED_ITEM_LABELS,
+  CategorizedItemType,
+  filterCategorizedItems,
+  selectCategorizedItems,
+  sumCategorizedItems,
+  summarizeByCategory,
+} from '@manager-money/core/application/category-analysis';
+import { DEFAULT_EXPENSE_CATEGORY } from '@manager-money/core/domain/financial/financial.types';
 import { radius, spacing, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
 import { MainTabParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
-import { formatCurrency } from '../utils/currency';
-import { formatDateInput, parseBRDateInput, toISODate } from '../utils/date';
+import { formatCurrency } from '@manager-money/core/utils/currency';
+import { formatDateInput, parseBRDateInput, toISODate } from '@manager-money/core/utils/date';
 
 type Props = BottomTabScreenProps<MainTabParamList, 'Categories'>;
 
 const ALL_CATEGORIES = 'Todas';
 
-type CategoryTotal = {
-  category: string;
-  total: number;
-};
-
-/**
- * - expense: gasto à vista do dia a dia;
- * - card: compra no cartão de crédito (data da compra, valor total);
- * - fixed / installment: pagamento efetivo de despesa fixa / parcelamento fora do cartão.
- * Fixa paga no crédito conta uma vez só, como fixa (valor + juros); a compra que ela gerou no
- * cartão não entra de novo como "Cartão".
- */
-type CategorizedItemType = 'expense' | 'card' | 'fixed' | 'installment';
-
-type CategorizedItem = {
-  id: string;
-  type: CategorizedItemType;
-  name: string;
-  category: string;
-  amount: number;
-  date: string;
-};
-
-const itemTypeLabels: Record<CategorizedItemType, string> = {
-  expense: 'Gasto',
-  card: 'Cartão',
-  fixed: 'Fixo',
-  installment: 'Parcelamento',
-};
+const itemTypeLabels = CATEGORIZED_ITEM_LABELS;
 
 const itemTypeFilterOptions: { label: string; type: CategorizedItemType }[] = [
   { label: 'Gasto', type: 'expense' },
@@ -73,7 +55,6 @@ export function CategoriesScreen({ navigation }: Props) {
   const styles = useStyles();
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
-  const months = useFinancialStore((state) => state.months);
   const addCategory = useFinancialStore((state) => state.addCategory);
   const doc = useFinancialStore((state) => state.doc);
   const categories = getSortedCategories(config);
@@ -96,90 +77,22 @@ export function CategoriesScreen({ navigation }: Props) {
   });
   const [newCategoryName, setNewCategoryName] = useState('');
 
-  const allItems = useMemo<CategorizedItem[]>(() => {
-    const expenseItems = [
-      ...(activeMonth?.expenses ?? []),
-      ...months.flatMap((month) => month.expenses),
-    ].map((expense) => ({
-      id: expense.id,
-      type: 'expense' as const,
-      name: expense.description,
-      category: normalizeCategory(expense.category),
-      amount: expense.amount,
-      date: expense.date,
-    }));
+  const allItems = useMemo(() => selectCategorizedItems(doc), [doc]);
 
-    // Pagamentos efetivos de fixas (não a configuração), pela data do pagamento.
-    const fixedPayments = doc.fixedPayments.filter(isLive);
-    const paymentItems = fixedPayments.map((payment) => ({
-      id: payment.id,
-      type:
-        doc.fixedExpenses.find((expense) => expense.id === payment.fixedExpenseId)?.type ===
-        'installment'
-          ? ('installment' as const)
-          : ('fixed' as const),
-      name: payment.method === 'credit' ? `${payment.name} (no crédito)` : payment.name,
-      category: normalizeCategory(payment.category),
-      amount: payment.amount + payment.interest,
-      date: payment.paidAt,
-    }));
-    const purchasesFromFixed = new Set(
-      fixedPayments.flatMap((payment) => (payment.cardPurchaseId ? [payment.cardPurchaseId] : [])),
-    );
-    const cardItems = doc.cardPurchases
-      .filter((purchase) => isLive(purchase) && !purchasesFromFixed.has(purchase.id))
-      .map((purchase) => ({
-        id: purchase.id,
-        type: 'card' as const,
-        name:
-          purchase.installments > 1
-            ? `${purchase.description} (${purchase.installments}x)`
-            : purchase.description,
-        category: normalizeCategory(purchase.category),
-        amount: purchase.totalAmount,
-        date: purchase.purchaseDate,
-      }));
-
-    return [...expenseItems, ...cardItems, ...paymentItems];
-  }, [activeMonth, doc, months]);
-
-  const filteredItems = useMemo(() => {
-    const start = parseFilterDate(startDate);
-    const end = parseFilterDate(endDate);
-
-    if (!start || !end || isAfter(start, end)) {
-      return [];
-    }
-
-    return allItems.filter((item) => {
-      const matchesType = visibleItemTypes[item.type];
-      const isWithinRange =
-        !isBefore(startOfDay(parseISO(item.date)), start) &&
-        !isAfter(startOfDay(parseISO(item.date)), end);
-      const matchesCategory =
-        selectedCategory === ALL_CATEGORIES ||
-        normalizeCategory(item.category) === selectedCategory;
-
-      return matchesType && isWithinRange && matchesCategory;
-    });
-  }, [allItems, endDate, selectedCategory, startDate, visibleItemTypes]);
-
-  const categoryTotals = useMemo<CategoryTotal[]>(() => {
-    const totals = filteredItems.reduce<Record<string, number>>((result, item) => {
-      result[item.category] = (result[item.category] ?? 0) + item.amount;
-
-      return result;
-    }, {});
-
-    return Object.entries(totals)
-      .map(([category, total]) => ({ category, total }))
-      .sort((left, right) => right.total - left.total);
-  }, [filteredItems]);
-
-  const totalSpent = useMemo(
-    () => filteredItems.reduce((total, item) => total + item.amount, 0),
-    [filteredItems],
+  const filteredItems = useMemo(
+    () =>
+      filterCategorizedItems(allItems, {
+        start: parseFilterDate(startDate),
+        end: parseFilterDate(endDate),
+        category: selectedCategory === ALL_CATEGORIES ? null : selectedCategory,
+        types: visibleItemTypes,
+      }),
+    [allItems, endDate, selectedCategory, startDate, visibleItemTypes],
   );
+
+  const categoryTotals = useMemo(() => summarizeByCategory(filteredItems), [filteredItems]);
+
+  const totalSpent = useMemo(() => sumCategorizedItems(filteredItems), [filteredItems]);
   const maxCategoryTotal = categoryTotals[0]?.total ?? 0;
 
   async function handleCreateCategory() {

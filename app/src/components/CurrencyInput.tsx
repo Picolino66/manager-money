@@ -2,8 +2,8 @@ import { Text, TextInput, TextInputProps, View } from 'react-native';
 
 import { radius, spacing } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
-import { MoneyCents } from '../domain/financial/financial.types';
-import { formatCurrencyInput, parseCurrencyInputToCents } from '../utils/currency';
+import { MoneyCents } from '@manager-money/core/domain/financial/financial.types';
+import { formatCurrencyInput, parseCurrencyInputToCents } from '@manager-money/core/utils/currency';
 
 type CurrencyInputProps = {
   label: string;

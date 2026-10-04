@@ -7,11 +7,11 @@ summary: >
   Exclusão lógica de um gasto do ciclo ativo, com confirmação, propagada no sync.
 keywords: [excluir gasto, apagar lançamento, remover]
 code:
-  - app/src/application/cycle.use-cases.ts
+  - packages/core/src/application/cycle.use-cases.ts
   - app/src/screens/AddExpenseScreen.tsx
 symbols: [deleteExpense, findEditableExpense]
 business_rules: [BR-FIN-011, BR-SYNC-002]
-tests: [app/src/application/cycle.use-cases.test.ts]
+tests: [packages/core/src/application/cycle.use-cases.test.ts]
 last_verified_commit: c47cf18+T-025
 ---
 

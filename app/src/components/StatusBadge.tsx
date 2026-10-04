@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { radius, spacing, ThemeColors } from '../design/theme';
 import { useTheme } from '../design/useTheme';
-import { DayStatus } from '../domain/financial/financial.types';
+import { DayStatus } from '@manager-money/core/domain/financial/financial.types';
 
 const statusContent = (
   colors: ThemeColors,

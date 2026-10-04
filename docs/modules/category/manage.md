@@ -9,11 +9,11 @@ summary: >
 keywords: [categoria, criar categoria, personalizada]
 code:
   - app/src/screens/CategoriesScreen.tsx
-  - app/src/application/cycle.use-cases.ts
-  - app/src/domain/financial/financial.calculations.ts
+  - packages/core/src/application/cycle.use-cases.ts
+  - packages/core/src/domain/financial/financial.calculations.ts
 symbols: [addCategory, normalizeCategory, getAvailableCategories, getSortedCategories]
 business_rules: [BR-FIN-012]
-last_verified_commit: c47cf18+T-025
+last_verified_commit: 3b9bf25+T-040
 ---
 
 # Gerenciar categorias

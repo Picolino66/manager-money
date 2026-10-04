@@ -10,8 +10,8 @@ keywords: [histórico, dias, ciclos anteriores, resultado]
 code:
   - app/src/screens/DailyHistoryScreen.tsx
   - app/src/screens/PreviousMonthsScreen.tsx
-  - app/src/application/selectors.ts
-  - app/src/domain/financial/financial.calculations.ts
+  - packages/core/src/application/selectors.ts
+  - packages/core/src/domain/financial/financial.calculations.ts
 symbols: [calculateDayBalance, calculateFinalBalance, selectCycleSpending, selectCycleSpendingRange]
 business_rules: [BR-FIN-006, BR-FIN-008]
 last_verified_commit: a1af85a+ciclos-filtro

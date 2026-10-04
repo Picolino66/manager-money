@@ -1,27 +1,12 @@
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import { mapSupabaseError } from '@manager-money/core/contract/errors';
 
-import { SyncTable } from '../../application/state';
-import { RowByTable, SyncError, SyncRemote } from './types';
+import { SyncTable } from '@manager-money/core/application/state';
+import { RowByTable, SyncError, SyncRemote } from '@manager-money/core/contract/types';
 
 const PAGE_SIZE = 500;
 /** Janela de segurança do pull: cobre commits concorrentes fora de ordem (contracts.md §3). */
 const PULL_OVERLAP_MS = 5_000;
-
-export function mapSupabaseError(error: Pick<PostgrestError, 'code' | 'message'>): SyncError {
-  if (error.code === '23505' && error.message.includes('cycles_one_active_per_user')) {
-    return new SyncError('conflict-active-cycle', error.message);
-  }
-
-  if (error.code === '42501' || error.code === 'PGRST301' || error.code === 'PGRST303') {
-    return new SyncError('auth', error.message);
-  }
-
-  if (/network|fetch|timeout/i.test(error.message)) {
-    return new SyncError('network', error.message);
-  }
-
-  return new SyncError('unknown', error.message);
-}
 
 export function pullSince(cursor: string | null): string | null {
   return cursor ? new Date(new Date(cursor).getTime() - PULL_OVERLAP_MS).toISOString() : null;

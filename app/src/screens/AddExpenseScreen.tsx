@@ -23,14 +23,20 @@ import {
   splitInstallments,
   statementDueDate,
   statementKeyForDate,
-} from '../domain/financial/credit-card';
-import { getSortedCategories, normalizeCategory } from '../domain/financial/financial.calculations';
-import { selectActiveCreditCards, selectCardLimitUsage } from '../application/selectors';
-import { DEFAULT_EXPENSE_CATEGORY } from '../domain/financial/financial.types';
+} from '@manager-money/core/domain/financial/credit-card';
+import {
+  getSortedCategories,
+  normalizeCategory,
+} from '@manager-money/core/domain/financial/financial.calculations';
+import {
+  selectActiveCreditCards,
+  selectCardLimitUsage,
+} from '@manager-money/core/application/selectors';
+import { DEFAULT_EXPENSE_CATEGORY } from '@manager-money/core/domain/financial/financial.types';
 import { spacing, typography } from '../design/theme';
 import { makeStyles } from '../design/useTheme';
 import { useFinancialStore } from '../store/financial.store';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency } from '@manager-money/core/utils/currency';
 import { describeFirstInstallment } from './cardText';
 import {
   formatCycleLabel,
@@ -38,7 +44,7 @@ import {
   formatShortDate,
   parseBRDateInput,
   toISODate,
-} from '../utils/date';
+} from '@manager-money/core/utils/date';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
 

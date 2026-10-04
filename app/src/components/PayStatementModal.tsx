@@ -3,8 +3,8 @@ import { Modal, ScrollView, Text, View } from 'react-native';
 
 import { radius, spacing, typography } from '../design/theme';
 import { makeStyles } from '../design/useTheme';
-import { MoneyCents } from '../domain/financial/financial.types';
-import { formatCurrency } from '../utils/currency';
+import { MoneyCents } from '@manager-money/core/domain/financial/financial.types';
+import { formatCurrency } from '@manager-money/core/utils/currency';
 import { AppButton } from './AppButton';
 import { CurrencyInput } from './CurrencyInput';
 

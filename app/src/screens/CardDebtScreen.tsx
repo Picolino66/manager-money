@@ -3,8 +3,8 @@ import { Alert, Pressable, Switch, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { isAfter, startOfDay } from 'date-fns';
 
-import { selectCardStatements, selectCreditCards } from '../application/selectors';
-import { isLive } from '../application/state';
+import { selectCardStatements, selectCreditCards } from '@manager-money/core/application/selectors';
+import { isLive } from '@manager-money/core/application/state';
 import { AppButton } from '../components/AppButton';
 import { Card } from '../components/Card';
 import { CurrencyInput } from '../components/CurrencyInput';
@@ -21,13 +21,16 @@ import {
   MAX_CARD_INSTALLMENTS,
   statementCycleKey,
   statementDueDate,
-} from '../domain/financial/credit-card';
-import { getSortedCategories } from '../domain/financial/financial.calculations';
-import { DEFAULT_EXPENSE_CATEGORY, MoneyCents } from '../domain/financial/financial.types';
+} from '@manager-money/core/domain/financial/credit-card';
+import { getSortedCategories } from '@manager-money/core/domain/financial/financial.calculations';
+import {
+  DEFAULT_EXPENSE_CATEGORY,
+  MoneyCents,
+} from '@manager-money/core/domain/financial/financial.types';
 import { RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
-import { formatCurrency } from '../utils/currency';
-import { toISODate } from '../utils/date';
+import { formatCurrency } from '@manager-money/core/utils/currency';
+import { toISODate } from '@manager-money/core/utils/date';
 import { describeInstallmentSchedule, formatMonthKey } from './cardText';
 import { formatDayMonth } from './cardView';
 

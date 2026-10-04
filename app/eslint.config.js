@@ -17,6 +17,8 @@ module.exports = defineConfig([
     ignores: ['dist/*', 'coverage/*', '.expo/*'],
   },
   {
+    // domain/application vivem em packages/core (ADR-022), que aplica a mesma regra; aqui ela
+    // continua valendo para qualquer código puro que volte a ser criado no app.
     files: ['src/domain/**/*.ts', 'src/application/**/*.ts'],
     rules: {
       'no-restricted-imports': ['error', { paths: forbiddenInCore, patterns: ['**/infrastructure/**', '**/store/**', '**/screens/**'] }],

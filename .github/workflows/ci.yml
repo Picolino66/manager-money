@@ -12,33 +12,65 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Estrutura (ADR-019): app/ = mobile Expo · client/ = web (ainda sem implementação) ·
+# Estrutura (ADR-019/022): npm workspaces na raiz (lockfile único) com packages/core (núcleo
+# compartilhado), app/ (mobile Expo) e client/ (web). `npm ci` roda na raiz; cada job usa -w.
 # supabase/ = backend compartilhado · raiz = workspace do produto (docs, scripts).
-# Quando o client existir: adicionar job `client` (install, lint, typecheck, test, build) com
-# working-directory: client, no mesmo formato do job `app`.
 
 jobs:
-  app:
-    name: App mobile — lint, tipos, testes e cobertura
+  core:
+    name: Núcleo compartilhado — lint, tipos, testes e cobertura
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    defaults:
-      run:
-        working-directory: app
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: app/package-lock.json
       - run: npm ci
-      - run: npm run verify
+      - run: npm run verify -w @manager-money/core
+
+  app:
+    name: App mobile — lint, tipos, testes e cobertura
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run verify -w app
       - name: Validação da configuração Expo
+        working-directory: app
         run: npx expo config --type public > /dev/null
       - name: Auditoria de dependências (bloqueia crítica)
         # Altas/moderadas restantes são ferramentas de build do Expo SDK — ver docs/quality/security-report.md
-        run: npm audit --omit=dev --audit-level=critical
+        run: npm audit --omit=dev --audit-level=critical -w app
+
+  client:
+    name: Client web — lint, tipos, testes, build e auditoria
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Valores fictícios só para o build do CI (o build exige as variáveis públicas; nada se conecta).
+      VITE_SUPABASE_URL: https://ci.supabase.invalid
+      VITE_SUPABASE_ANON_KEY: ci-anon-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint -w client
+      - run: npm run typecheck -w client
+      - run: npm run test:coverage -w client
+      - run: npm run build -w client
+      - name: Auditoria de dependências (bloqueia crítica)
+        run: npm audit --omit=dev --audit-level=critical -w client
+      # E2E (Playwright) fica local: usa o projeto Supabase real com usuário de teste.
 
   docs:
     name: Knowledge layer (docs/.ai)

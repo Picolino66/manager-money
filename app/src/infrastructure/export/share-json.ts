@@ -1,8 +1,8 @@
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
-import { LocalState } from '../../application/state';
-import { toISODate } from '../../utils/date';
+import { LocalState } from '@manager-money/core/application/state';
+import { toISODate } from '@manager-money/core/utils/date';
 
 /** Conteúdo exportado: documento v2 sem nenhum dado de sessão (BR-ACC-004). */
 export function buildExportPayload(state: LocalState, now: Date = new Date()): string {

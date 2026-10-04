@@ -10,8 +10,11 @@ code:
   - supabase/migrations/20261001000000_init.sql
   - app/src/infrastructure/supabase/session-storage.ts
   - app/src/infrastructure/export/share-json.ts
-adrs: [ADR-006]
-last_verified_commit: bfe9de6+T-028r2
+  - client/security/headers.ts
+  - client/src/infrastructure/repository.ts
+  - client/src/infrastructure/monitoring/logger.ts
+adrs: [ADR-006, ADR-020]
+last_verified_commit: 3b9bf25+T-033
 ---
 
 # Relatório de segurança — F6
@@ -84,3 +87,30 @@ versionados: **0 achados**. `.env*` está no `.gitignore` (exceto `.env.example`
 | S6 | Sem recuperação de senha | Média (usabilidade) | Aceito até haver SMTP; dados locais e exportação continuam disponíveis |
 
 **Veredito:** nenhuma vulnerabilidade crítica ou alta sem mitigação no app publicado.
+
+## 6. Client web (CLIENT-015, 2026-10-04)
+
+Auditoria focada (`fullstack-security-guardian`) do `client/` (SPA React + Vite, supabase-js, sem sync).
+
+| Verificação | Resultado |
+|---|---|
+| XSS: `dangerouslySetInnerHTML`, `innerHTML`, `eval` | nenhum uso; `dangerouslySetInnerHTML` proibido por lint (`no-restricted-syntax`) |
+| CSP (`client/security/headers.ts`) | `script-src 'self'` sem `unsafe-inline`; `connect-src` só o Supabase; `frame-ancestors 'none'`; `object-src 'none'`. E2E confirma o cabeçalho no `vite preview` e nenhuma violação no console |
+| Demais cabeçalhos | `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Permissions-Policy`, COOP; HSTS nos exemplos Nginx/Caddy (só com HTTPS), testados para ficarem iguais a `headers.ts` |
+| Bundle | sem `service_role`, sem sourcemap, um único `<script>` externo; build falha sem `VITE_SUPABASE_*` |
+| Armazenamento no navegador | só a sessão do supabase-js e a preferência de tema; lint proíbe `localStorage` fora de `theme-preference.ts` e `sessionStorage`/`indexedDB`; E2E verifica as chaves |
+| Logs | logger com lista permitida (`ok`, `durationMs`, `code`, `count`, `table`); teste garante que e-mail, token, valores e descrições são descartados |
+| Autorização | RLS `(select auth.uid()) = user_id` nas 9 tabelas (mesma suíte `supabase/tests/rls.plain.sql`); `user_id` das linhas vem da sessão e o `WITH CHECK` recusa outro usuário. Guarda de rota é só UX |
+| Escrita | só via casos de uso do núcleo + `collectDirty`; lint impede telas de importar `@supabase/supabase-js`, `infrastructure` ou o contrato |
+| URLs | sem dados financeiros em URL (só `?novo=1`); redirecionamento pós-login usa estado interno do roteador (sem open redirect) |
+| Dependências de produção do client | `npm audit --omit=dev -w client`: **0 vulnerabilidades** |
+
+**Achados**
+
+| ID | Severidade | Achado | Estado |
+|---|---|---|---|
+| WEB-01 | Média | Sessão no `localStorage` exposta a XSS (inerente à SPA, ADR-020) | Aceito com mitigação (CSP estrita, sem HTML dinâmico, dependências enxutas) |
+| WEB-02 | Média | Login e cadastro sem CAPTCHA; força bruta depende do rate limit nativo do Supabase Auth, e o cadastro sem confirmação de e-mail (ADR-011) permite criar contas com qualquer e-mail | **Aberto**: decidir CAPTCHA (hCaptcha/Turnstile no Supabase Auth, exige liberar o domínio na CSP) antes da VPS |
+| WEB-03 | Baixa | `style-src 'unsafe-inline'` (Radix e sonner aplicam estilos inline) | Aceito: não executa código |
+| WEB-04 | Baixa | Texto da política de privacidade diz que a sessão fica "criptografada no aparelho" (verdade no mobile, não no navegador) | **Aberto** (revisão do dono do produto): a página web mostra uma nota explicando a diferença; o texto jurídico não foi alterado |
+| WEB-05 | Info | Sair encerra só a sessão deste navegador (`scope: 'local'`), não a do celular | Por desenho |

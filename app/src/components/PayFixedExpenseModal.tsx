@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 
-import { PayFixedExpenseInput } from '../application/payment.use-cases';
+import { PayFixedExpenseInput } from '@manager-money/core/application/payment.use-cases';
 import { radius, spacing, typography } from '../design/theme';
 import { makeStyles } from '../design/useTheme';
 import {
@@ -14,10 +14,10 @@ import {
   splitInstallments,
   statementDueDate,
   statementKeyForDate,
-} from '../domain/financial/credit-card';
+} from '@manager-money/core/domain/financial/credit-card';
 import { describeFirstInstallment } from '../screens/cardText';
-import { formatCurrency } from '../utils/currency';
-import { toISODate, formatShortDate } from '../utils/date';
+import { formatCurrency } from '@manager-money/core/utils/currency';
+import { toISODate, formatShortDate } from '@manager-money/core/utils/date';
 import { parseISO } from 'date-fns';
 import { AppButton } from './AppButton';
 import { CardLimitNotice, confirmCardLimit } from './CardLimitNotice';

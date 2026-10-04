@@ -11,12 +11,16 @@ import {
   CycleSpending,
   selectCycleSpending,
   selectCycleSpendingRange,
-} from '../application/selectors';
+} from '@manager-money/core/application/selectors';
 import { spacing, typography } from '../design/theme';
 import { makeStyles } from '../design/useTheme';
 import { useFinancialStore } from '../store/financial.store';
-import { formatCurrency, formatSignedCurrency } from '../utils/currency';
-import { formatCycleLabel, formatMonthLabel, formatShortDate } from '../utils/date';
+import { formatCurrency, formatSignedCurrency } from '@manager-money/core/utils/currency';
+import {
+  formatCycleLabel,
+  formatMonthLabel,
+  formatShortDate,
+} from '@manager-money/core/utils/date';
 
 const PHASE_BADGE: Record<
   CycleSpending['phase'],

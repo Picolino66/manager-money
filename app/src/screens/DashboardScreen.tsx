@@ -15,25 +15,28 @@ import { StatusBadge } from '../components/StatusBadge';
 import { RootStackParamList } from '../navigation/types';
 import { spacing, ThemeColors, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
-import { canCloseActiveCycle, canReceiveIncomeEarlyNow } from '../application/cycle.use-cases';
+import {
+  canCloseActiveCycle,
+  canReceiveIncomeEarlyNow,
+} from '@manager-money/core/application/cycle.use-cases';
 import {
   buildDashboardSummary,
   calculateFixedExpenseAmount,
   calculateFixedExpensesTotal,
   describeCloseCycleBlock,
-} from '../domain/financial/financial.calculations';
-import { PayFixedExpenseInput } from '../application/payment.use-cases';
+} from '@manager-money/core/domain/financial/financial.calculations';
+import { PayFixedExpenseInput } from '@manager-money/core/application/payment.use-cases';
 import {
   selectActiveCreditCards,
   selectCardLimitUsage,
   selectCycleAdjustments,
   selectCyclePayments,
-} from '../application/selectors';
-import { FixedPaymentRecord, isLive } from '../application/state';
-import { DayStatus, FixedExpense } from '../domain/financial/financial.types';
+} from '@manager-money/core/application/selectors';
+import { FixedPaymentRecord, isLive } from '@manager-money/core/application/state';
+import { DayStatus, FixedExpense } from '@manager-money/core/domain/financial/financial.types';
 import { useFinancialStore } from '../store/financial.store';
-import { formatCurrency } from '../utils/currency';
-import { clampIsoDate, toISODate } from '../utils/date';
+import { formatCurrency } from '@manager-money/core/utils/currency';
+import { clampIsoDate, toISODate } from '@manager-money/core/utils/date';
 
 type Navigation = NativeStackNavigationProp<RootStackParamList>;
 

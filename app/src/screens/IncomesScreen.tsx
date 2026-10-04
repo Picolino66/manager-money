@@ -12,11 +12,11 @@ import { Screen } from '../components/Screen';
 import { TextInputField } from '../components/TextInputField';
 import { spacing, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
-import { selectCycleExtraIncomes } from '../application/selectors';
+import { selectCycleExtraIncomes } from '@manager-money/core/application/selectors';
 import { RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
-import { formatCurrency } from '../utils/currency';
-import { clampIsoDate, formatCycleLabel, formatDateInput, parseBRDateInput, toISODate } from '../utils/date';
+import { formatCurrency } from '@manager-money/core/utils/currency';
+import { clampIsoDate, formatCycleLabel, formatDateInput, parseBRDateInput, toISODate } from '@manager-money/core/utils/date';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Incomes'>;
 

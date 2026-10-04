@@ -1,12 +1,13 @@
 # ADR-020 — Client web: stack (React + Vite SPA), acesso online direto ao Supabase e núcleo compartilhado
 
-- **Status:** PROPOSED · **Fase:** F2 (evolução) · **Data:** 2026-10-04
+- **Status:** ACCEPTED (2026-10-04, aprovação do plano de execução do P0 — T-032) · **Fase:** F2 (evolução) · **Data:** 2026-10-04
 - **Depende de:** [ADR-019](ADR-019-estrutura-do-repositorio-app-client-supabase.md),
   [ADR-001](ADR-001-padrao-arquitetural.md), [ADR-004](ADR-004-sincronizacao.md),
   [ADR-006](ADR-006-modelo-de-seguranca.md), [ADR-011](ADR-011-autenticacao-email-senha.md).
 - **Spec:** [SPEC-020](../specs/SPEC-020-reorganizacao-do-repositorio-e-plano-do-client.md) · plano completo:
   [client-web-plan](../docs/architecture/client-web-plan.md).
-- Vira ACCEPTED quando a fundação do client (CLIENT-001..005) for aprovada para execução.
+- Extração do núcleo detalhada na [ADR-022](ADR-022-nucleo-compartilhado-packages-core.md); spec do MVP:
+  [SPEC-022](../specs/SPEC-022-client-web-mvp.md).
 
 ## Contexto
 
@@ -34,7 +35,7 @@ sempre online. O sync offline-first continua exclusivo do mobile, que salva loca
 | Compartilhamento | **`packages/core` + npm workspaces** (na fundação do client) | Fonte única de regras; app e client testam o mesmo código | Ajuste no Metro/Jest do app |
 | Compartilhamento | Importar `../app/src/...` por alias | Nada a extrair | Acoplamento a caminhos internos do app; quebra o lint de camadas |
 
-## Decisão (proposta)
+## Decisão
 
 - **React 19 + Vite + TypeScript estrito, SPA**, React Router, Zustand, React Hook Form + Zod
   (mesmas libs do app), Tailwind + shadcn/ui (Radix, acessível), TanStack Table, Recharts.

@@ -7,12 +7,12 @@ import {
   canModifyCardPurchase,
   CardPurchaseUpdate,
   CreditCardInput,
-} from '../application/card.use-cases';
+} from '@manager-money/core/application/card.use-cases';
 import {
   selectCardLimitUsage,
   selectCardStatements,
   selectCreditCards,
-} from '../application/selectors';
+} from '@manager-money/core/application/selectors';
 import { AppButton } from '../components/AppButton';
 import { Badge } from '../components/Badge';
 import { Card } from '../components/Card';
@@ -31,12 +31,12 @@ import {
   CardPurchase,
   CardStatement,
   cycleKeyFromStartDate,
-} from '../domain/financial/credit-card';
-import { getSortedCategories } from '../domain/financial/financial.calculations';
-import { isActive } from '../domain/financial/financial.types';
+} from '@manager-money/core/domain/financial/credit-card';
+import { getSortedCategories } from '@manager-money/core/domain/financial/financial.calculations';
+import { isActive } from '@manager-money/core/domain/financial/financial.types';
 import { RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency } from '@manager-money/core/utils/currency';
 import {
   CARD_LIMIT_DISCLAIMER,
   describeCycleWeight,

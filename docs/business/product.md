@@ -6,8 +6,8 @@ title: Visão de produto
 summary: >
   Visão, mercado, modelo de negócio, personas e hipótese de MVP do Manager Money.
 code:
-  - app/src/domain/financial/financial.calculations.ts
-  - app/src/domain/financial/projection.ts
+  - packages/core/src/domain/financial/financial.calculations.ts
+  - packages/core/src/domain/financial/projection.ts
 last_verified_commit: bfe9de6+T-028
 ---
 

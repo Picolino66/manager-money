@@ -14,3 +14,7 @@ coverage/
 
 # supabase cli
 supabase/.temp/
+
+# playwright (E2E local do client)
+test-results/
+playwright-report/

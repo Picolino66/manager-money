@@ -16,12 +16,12 @@ code:
   - app/src/components/CardLimitBar.tsx
   - app/src/components/EditCardPurchaseModal.tsx
   - app/src/components/Badge.tsx
-  - app/src/application/card.use-cases.ts
-  - app/src/domain/financial/credit-card.ts
-  - app/src/application/selectors.ts
+  - packages/core/src/application/card.use-cases.ts
+  - packages/core/src/domain/financial/credit-card.ts
+  - packages/core/src/application/selectors.ts
 symbols: [saveCreditCard, setCreditCardActive, deleteCreditCard, updateCardPurchase, deleteCardPurchase, canModifyCardPurchase, calculateCardLimitUsage, calculateLimitExcess, selectCardLimitUsage, selectActiveCreditCards]
 adrs: [ADR-014, ADR-017, ADR-018]
-tests: [app/src/application/card-rules.test.ts, app/src/application/card.use-cases.test.ts, app/src/application/financial-vision.test.ts, app/src/domain/financial/credit-card.test.ts, app/src/screens/cards.screens.test.tsx, app/src/screens/screens.test.tsx]
+tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/application/card.use-cases.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/domain/financial/credit-card.test.ts, app/src/screens/cards.screens.test.tsx, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-020, BR-FIN-026, BR-FIN-028, BR-FIN-029]
 last_verified_commit: bfe9de6+T-028
 ---

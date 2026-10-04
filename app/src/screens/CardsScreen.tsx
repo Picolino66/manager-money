@@ -3,13 +3,13 @@ import { Alert, Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 
-import { CreditCardInput } from '../application/card.use-cases';
+import { CreditCardInput } from '@manager-money/core/application/card.use-cases';
 import {
   selectCardLimitUsage,
   selectCardStatements,
   selectCreditCards,
-} from '../application/selectors';
-import { CreditCardRecord } from '../application/state';
+} from '@manager-money/core/application/selectors';
+import { CreditCardRecord } from '@manager-money/core/application/state';
 import { AppButton } from '../components/AppButton';
 import { Badge } from '../components/Badge';
 import { Card } from '../components/Card';
@@ -20,10 +20,10 @@ import { MetricRow } from '../components/MetricRow';
 import { Screen } from '../components/Screen';
 import { spacing, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
-import { isActive } from '../domain/financial/financial.types';
+import { isActive } from '@manager-money/core/domain/financial/financial.types';
 import { RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
-import { formatCurrency } from '../utils/currency';
+import { formatCurrency } from '@manager-money/core/utils/currency';
 import { CARD_LIMIT_DISCLAIMER, STATEMENT_STATUS_LABEL } from './cardText';
 import { buildCardStatementsView, formatDayMonth, hasCardPurchases } from './cardView';
 

@@ -4,7 +4,10 @@ import { Card } from '../components/Card';
 import { Screen } from '../components/Screen';
 import { typography } from '../design/theme';
 import { makeStyles } from '../design/useTheme';
-import { PRIVACY_POLICY_SECTIONS, PRIVACY_POLICY_UPDATED_AT } from '../legal/privacy-policy';
+import {
+  PRIVACY_POLICY_SECTIONS,
+  PRIVACY_POLICY_UPDATED_AT,
+} from '@manager-money/core/legal/privacy-policy';
 
 export function PrivacyPolicyScreen() {
   const styles = useStyles();

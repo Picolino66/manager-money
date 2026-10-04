@@ -24,5 +24,6 @@ Fonte primária das decisões arquiteturais. ADRs nunca são apagadas: só passa
 | [ADR-017](ADR-017-faturas-limite-e-situacao-inicial.md) | Faturas pelo vencimento, limite do cartão e situação inicial | F3 (evolução) | ACCEPTED (pagamento atualizado pela ADR-018) |
 | [ADR-018](ADR-018-pagamento-parcial-e-total-da-fatura.md) | Pagamento parcial e total da fatura, encargos e restante transportado | F3 (evolução) | ACCEPTED |
 | [ADR-019](ADR-019-estrutura-do-repositorio-app-client-supabase.md) | Estrutura do repositório: `app/`, `client/` e `supabase/` compartilhado | F2 (evolução) | ACCEPTED |
-| [ADR-020](ADR-020-client-web-stack-e-integracao.md) | Client web: React + Vite SPA, online direto no Supabase (sem sync) e núcleo compartilhado | F2 (evolução) | PROPOSED |
+| [ADR-020](ADR-020-client-web-stack-e-integracao.md) | Client web: React + Vite SPA, online direto no Supabase (sem sync) e núcleo compartilhado | F2 (evolução) | ACCEPTED |
 | [ADR-021](ADR-021-tema-claro-e-escuro.md) | Tema claro e escuro (mobile e web) | F4 (evolução) | ACCEPTED |
+| [ADR-022](ADR-022-nucleo-compartilhado-packages-core.md) | Núcleo compartilhado em `packages/core` com npm workspaces | F2 (evolução) | ACCEPTED |

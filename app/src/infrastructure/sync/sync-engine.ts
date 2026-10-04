@@ -1,9 +1,8 @@
-import { recalculateActiveCycleBalance } from '../../application/cycle.use-cases';
+import { recalculateActiveCycleBalance } from '@manager-money/core/application/cycle.use-cases';
 import {
   createDefaultContext,
   createEmptyState,
   createEmptySyncState,
-  CycleRecord,
   hasLocalData,
   isLive,
   LocalState,
@@ -11,28 +10,20 @@ import {
   SyncMeta,
   SyncTable,
   touch,
-} from '../../application/state';
+} from '@manager-money/core/application/state';
+import { acknowledge, collectDirty } from '@manager-money/core/contract/dirty';
 import { logger } from '../monitoring/logger';
 import {
   cardPurchaseFromRow,
-  cardPurchaseToRow,
   creditCardFromRow,
-  creditCardToRow,
   cycleFromRow,
-  cycleToRow,
   expenseFromRow,
-  expenseToRow,
   extraIncomeFromRow,
-  extraIncomeToRow,
   fixedExpenseFromRow,
-  fixedExpenseToRow,
   fixedPaymentFromRow,
-  fixedPaymentToRow,
   settingsFromRow,
-  settingsToRow,
   statementPaymentFromRow,
-  statementPaymentToRow,
-} from './mappers';
+} from '@manager-money/core/contract/mappers';
 import {
   CardPurchaseRow,
   CreditCardRow,
@@ -46,7 +37,7 @@ import {
   StatementPaymentRow,
   SyncError,
   SyncRemote,
-} from './types';
+} from '@manager-money/core/contract/types';
 
 /**
  * Acesso ao estado vivo da store. O sync lê o estado atual a cada passo e aplica
@@ -59,120 +50,9 @@ export type StateAccess = {
 
 export type SyncOutcome = { ok: true } | { ok: false; code: string };
 
-type PushedRef = { id: string; updatedAt: string };
-
 // ---------------------------------------------------------------------------
 // Funções puras
 // ---------------------------------------------------------------------------
-
-/** Registros pendentes de envio. Em `cycles`, fechados antes de ativos (índice único). */
-export function collectDirty(
-  state: LocalState,
-  table: SyncTable,
-  userId: string,
-): { refs: PushedRef[]; rows: RemoteRow[] } {
-  switch (table) {
-    case 'settings': {
-      const record = state.settings?.dirty ? state.settings : null;
-      return record
-        ? {
-            refs: [{ id: 'settings', updatedAt: record.updatedAt }],
-            rows: [settingsToRow(record, userId)],
-          }
-        : { refs: [], rows: [] };
-    }
-    case 'fixed_expenses': {
-      const records = state.fixedExpenses.filter((record) => record.dirty);
-      return {
-        refs: records.map(ref),
-        rows: records.map((record) => fixedExpenseToRow(record, userId)),
-      };
-    }
-    case 'credit_cards': {
-      const records = state.creditCards.filter((record) => record.dirty);
-      return {
-        refs: records.map(ref),
-        rows: records.map((record) => creditCardToRow(record, userId)),
-      };
-    }
-    case 'card_purchases': {
-      const records = state.cardPurchases.filter((record) => record.dirty);
-      return {
-        refs: records.map(ref),
-        rows: records.map((record) => cardPurchaseToRow(record, userId)),
-      };
-    }
-    case 'fixed_payments': {
-      const records = state.fixedPayments.filter((record) => record.dirty);
-      return {
-        refs: records.map(ref),
-        rows: records.map((record) => fixedPaymentToRow(record, userId)),
-      };
-    }
-    case 'extra_incomes': {
-      const records = state.extraIncomes.filter((record) => record.dirty);
-      return {
-        refs: records.map(ref),
-        rows: records.map((record) => extraIncomeToRow(record, userId)),
-      };
-    }
-    case 'statement_payments': {
-      const records = state.statementPayments.filter((record) => record.dirty);
-      return {
-        refs: records.map(ref),
-        rows: records.map((record) => statementPaymentToRow(record, userId)),
-      };
-    }
-    case 'cycles': {
-      const order = (cycle: CycleRecord) => (cycle.status === 'closed' || cycle.deletedAt ? 0 : 1);
-      const records = state.cycles
-        .filter((record) => record.dirty)
-        .sort((a, b) => order(a) - order(b));
-      return { refs: records.map(ref), rows: records.map((record) => cycleToRow(record, userId)) };
-    }
-    case 'expenses': {
-      const records = state.expenses.filter((record) => record.dirty);
-      return {
-        refs: records.map(ref),
-        rows: records.map((record) => expenseToRow(record, userId)),
-      };
-    }
-  }
-}
-
-function ref(record: { id: string } & SyncMeta): PushedRef {
-  return { id: record.id, updatedAt: record.updatedAt };
-}
-
-/** Marca como limpos os registros enviados que não mudaram desde o envio. */
-export function acknowledge(state: LocalState, table: SyncTable, pushed: PushedRef[]): LocalState {
-  const sent = new Map(pushed.map((item) => [item.id, item.updatedAt]));
-  const clean = <T extends { id: string } & SyncMeta>(record: T): T =>
-    record.dirty && sent.get(record.id) === record.updatedAt ? { ...record, dirty: false } : record;
-
-  switch (table) {
-    case 'settings':
-      return state.settings && sent.get('settings') === state.settings.updatedAt
-        ? { ...state, settings: { ...state.settings, dirty: false } }
-        : state;
-    case 'fixed_expenses':
-      return { ...state, fixedExpenses: state.fixedExpenses.map(clean) };
-    case 'credit_cards':
-      return { ...state, creditCards: state.creditCards.map(clean) };
-    case 'card_purchases':
-      return { ...state, cardPurchases: state.cardPurchases.map(clean) };
-    case 'fixed_payments':
-      return { ...state, fixedPayments: state.fixedPayments.map(clean) };
-    case 'extra_incomes':
-      return { ...state, extraIncomes: state.extraIncomes.map(clean) };
-    case 'statement_payments':
-      return { ...state, statementPayments: state.statementPayments.map(clean) };
-    case 'cycles':
-      return { ...state, cycles: state.cycles.map(clean) };
-    case 'expenses':
-      return { ...state, expenses: state.expenses.map(clean) };
-  }
-}
 
 function mergeRecords<T extends { id: string } & SyncMeta>(local: T[], remote: T[]): T[] {
   const result = [...local];
