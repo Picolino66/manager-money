@@ -16,6 +16,7 @@ import { CategoriesScreen } from './CategoriesScreen';
 import { ConfigScreen } from './ConfigScreen';
 import { IncomesScreen } from './IncomesScreen';
 import { DashboardScreen } from './DashboardScreen';
+import { PreviousMonthsScreen } from './PreviousMonthsScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -891,5 +892,38 @@ describe('AccountScreen', () => {
     fireEvent.press(screen.getByText('Entrar'));
     expect(alert).toHaveBeenCalledWith('E-mail inválido', expect.any(String));
     expect(signUp).not.toHaveBeenCalled();
+  });
+});
+
+describe('Ciclos: filtro de mês e ano', () => {
+  it('abre no ciclo atual com a fatura que vence nele e as fixas pendentes', async () => {
+    const doc = docWithFixed(true);
+    const start = doc.cycles[0]!.startDate;
+    await seed(
+      addCardPurchase(
+        doc,
+        {
+          cardId: doc.creditCards[0]!.id,
+          description: 'TV',
+          category: 'Lazer',
+          totalAmount: 90000,
+          installments: 3,
+          date: start,
+        },
+        { now: new Date(), newId: (p) => `${p}-${Math.random()}` },
+      ),
+    );
+    render(<PreviousMonthsScreen />);
+    expect(screen.getByText('Ciclo atual')).toBeTruthy();
+    expect(screen.getByText('Fixas pendentes')).toBeTruthy();
+    expect(screen.getByText('Aluguel')).toBeTruthy();
+    expect(screen.queryByText('Sem dados neste ciclo')).toBeNull();
+  });
+
+  it('sem nenhum dado no ciclo exibe "Sem dados neste ciclo"', async () => {
+    await seed({ ...createEmptyState() });
+    render(<PreviousMonthsScreen />);
+    expect(screen.getByText('Sem dados neste ciclo')).toBeTruthy();
+    expect(screen.getByText('Ciclos fechados ficam salvos aqui.')).toBeTruthy();
   });
 });

@@ -8,7 +8,11 @@ import {
   CardInstallment,
   CardLimitUsage,
   CardStatement,
+  addCycleKeys,
   cycleKeyFromStartDate,
+  cycleKeyOffset,
+  listEffectiveInstallments,
+  statementDueDate,
 } from '../domain/financial/credit-card';
 import {
   calculateDefaultCycleStartDate,
@@ -24,11 +28,17 @@ import {
   MoneyCents,
 } from '../domain/financial/financial.types';
 import { calculateExtraIncomeTotal, calculatePaidFixedAmount } from '../domain/financial/payments';
-import { CycleProjection, projectCycles } from '../domain/financial/projection';
+import {
+  CycleProjection,
+  projectCycles,
+  projectFixedExpenseAmount,
+} from '../domain/financial/projection';
 import { toISODate } from '../utils/date';
 import {
+  CardPurchaseRecord,
   CreditCardRecord,
   CycleRecord,
+  ExpenseRecord,
   ExtraIncomeRecord,
   FixedPaymentRecord,
   isLive,
@@ -300,4 +310,200 @@ export function selectStatementsToCarry(
       return amount > 0 ? [{ cardId: card.id, statementKey: statement.key, amount }] : [];
     }),
   );
+}
+
+// ---------------------------------------------------------------------------
+// Gastos por ciclo (filtro de mês e ano da tela Ciclos)
+// ---------------------------------------------------------------------------
+
+export type CycleSpendingItem = {
+  id: string;
+  description: string;
+  /** "3/10" em compra parcelada; vazio em compra à vista. */
+  installmentLabel: string;
+  amount: MoneyCents;
+};
+
+export type CycleSpendingStatement = {
+  cardId: string;
+  cardName: string;
+  statementKey: string;
+  dueDate: string;
+  total: MoneyCents;
+  items: CycleSpendingItem[];
+};
+
+export type CycleSpending = {
+  cycleKey: string;
+  /** closed/active: ciclo registrado; future: ainda não aberto; empty: passado sem registro. */
+  phase: 'closed' | 'active' | 'future' | 'empty';
+  startDate: string | null;
+  endDate: string | null;
+  expenses: ExpenseRecord[];
+  expensesTotal: MoneyCents;
+  /** Fixas pagas à vista; as pagas no crédito aparecem na fatura. */
+  fixedPaid: FixedPaymentRecord[];
+  fixedPaidTotal: MoneyCents;
+  /** Fixas que ainda vão sair: pendentes (ciclo ativo) ou previstas (ciclo futuro). */
+  fixedPlanned: { id: string; name: string; amount: MoneyCents }[];
+  fixedPlannedTotal: MoneyCents;
+  statements: CycleSpendingStatement[];
+  cardTotal: MoneyCents;
+  statementCharges: MoneyCents;
+  total: MoneyCents;
+  isEmpty: boolean;
+};
+
+function findCycleByKey(state: LocalState, cycleKey: string): CycleRecord | null {
+  return (
+    state.cycles
+      .filter((cycle) => isLive(cycle) && cycleKeyFromStartDate(cycle.startDate) === cycleKey)
+      .sort((left, right) => right.startedAt.localeCompare(left.startedAt))[0] ?? null
+  );
+}
+
+/** Ciclo de referência: o ativo ou, sem ele, o ciclo padrão que contém hoje. */
+function referenceCycleKey(state: LocalState, now: Date): string {
+  const active = selectActiveCycle(state);
+  const config = selectConfig(state);
+
+  if (active) {
+    return cycleKeyFromStartDate(active.startDate);
+  }
+
+  return config
+    ? cycleKeyFromStartDate(toISODate(calculateDefaultCycleStartDate(now, config.payday)))
+    : cycleKeyFromStartDate(toISODate(now));
+}
+
+/**
+ * Janela navegável do filtro: do ciclo mais antigo registrado até o último ciclo com parcela de
+ * cartão, mais 3 ciclos de margem à frente do ciclo de referência.
+ */
+export function selectCycleSpendingRange(
+  state: LocalState,
+  now: Date,
+): { min: string; max: string; current: string } {
+  const current = referenceCycleKey(state, now);
+  const keys = state.cycles
+    .filter(isLive)
+    .map((cycle) => cycleKeyFromStartDate(cycle.startDate))
+    .concat(current);
+  const lastInstallment = state.cardPurchases
+    .filter(isLive)
+    .flatMap((purchase) => calculateCardInstallmentsForCycleRange(purchase))
+    .reduce((max, key) => (key > max ? key : max), current);
+  const margin = addCycleKeys(current, 3);
+
+  return {
+    min: keys.reduce((min, key) => (key < min ? key : min), current),
+    max: lastInstallment > margin ? lastInstallment : margin,
+    current,
+  };
+}
+
+function calculateCardInstallmentsForCycleRange(purchase: CardPurchaseRecord): string[] {
+  return listEffectiveInstallments([purchase]).map((installment) => installment.cycleKey);
+}
+
+/**
+ * O que pesa no ciclo `cycleKey` (yyyy-MM do início): gastos, fixas pagas à vista, faturas que
+ * vencem nele (com as compras e parcelas) e encargos. Ciclo futuro mostra as parcelas já
+ * comprometidas e as fixas previstas (BR-FIN-031), sem inventar gastos.
+ */
+export function selectCycleSpending(state: LocalState, cycleKey: string, now: Date): CycleSpending {
+  const cycle = findCycleByKey(state, cycleKey);
+  const reference = referenceCycleKey(state, now);
+  const phase: CycleSpending['phase'] = cycle
+    ? cycle.status === 'active'
+      ? 'active'
+      : 'closed'
+    : cycleKey > reference
+      ? 'future'
+      : 'empty';
+  const expenses = cycle
+    ? state.expenses
+        .filter((expense) => isLive(expense) && expense.cycleId === cycle.id)
+        .sort((left, right) => right.date.localeCompare(left.date))
+    : [];
+  const fixedPaid = cycle
+    ? selectCyclePayments(state, cycle.id).filter((payment) => payment.method !== 'credit')
+    : [];
+  const cards = selectCreditCards(state);
+  const statements = cards.flatMap((card) => {
+    const byStatement = new Map<string, CardInstallment[]>();
+
+    for (const installment of selectCardInstallments(state, cycleKey)) {
+      if (installment.purchase.cardId === card.id && installment.amount > 0) {
+        byStatement.set(installment.statementKey, [
+          ...(byStatement.get(installment.statementKey) ?? []),
+          installment,
+        ]);
+      }
+    }
+
+    return [...byStatement.entries()].map(([statementKey, installments]) => ({
+      cardId: card.id,
+      cardName: card.name,
+      statementKey,
+      dueDate: toISODate(statementDueDate(statementKey, card)),
+      total: installments.reduce((total, installment) => total + installment.amount, 0),
+      items: installments.map((installment) => ({
+        id: `${installment.purchase.id}:${installment.number}`,
+        description: installment.purchase.description,
+        installmentLabel:
+          installment.purchase.installments > 1
+            ? `${installment.number}/${installment.purchase.installments}`
+            : '',
+        amount: installment.amount,
+      })),
+    }));
+  });
+  const config = selectConfig(state);
+  const fixedPlanned: CycleSpending['fixedPlanned'] =
+    phase === 'active' && cycle
+      ? selectPendingFixedExpenses(state, cycle.id).map((expense) => ({
+          id: expense.id,
+          name: expense.name,
+          amount: calculateFixedExpenseAmount(expense),
+        }))
+      : phase === 'future' && config
+        ? config.fixedExpenses
+            .map((expense) => ({
+              id: expense.id,
+              name: expense.name,
+              amount: projectFixedExpenseAmount(expense, cycleKeyOffset(reference, cycleKey)),
+            }))
+            .filter((item) => item.amount > 0)
+        : [];
+  const statementCharges = cycle ? selectCycleStatementInterest(state, cycle.id) : 0;
+  const sum = (values: MoneyCents[]) => values.reduce((total, value) => total + value, 0);
+  const expensesTotal = sum(expenses.map((expense) => expense.amount));
+  const fixedPaidTotal = sum(fixedPaid.map((payment) => payment.amount));
+  const fixedPlannedTotal = sum(fixedPlanned.map((item) => item.amount));
+  const cardTotal = sum(statements.map((statement) => statement.total));
+  const total = expensesTotal + fixedPaidTotal + fixedPlannedTotal + cardTotal + statementCharges;
+
+  return {
+    cycleKey,
+    phase,
+    startDate: cycle?.startDate ?? null,
+    endDate: cycle?.endDate ?? null,
+    expenses,
+    expensesTotal,
+    fixedPaid,
+    fixedPaidTotal,
+    fixedPlanned,
+    fixedPlannedTotal,
+    statements,
+    cardTotal,
+    statementCharges,
+    total,
+    isEmpty:
+      expenses.length === 0 &&
+      fixedPaid.length === 0 &&
+      fixedPlanned.length === 0 &&
+      statements.length === 0 &&
+      statementCharges === 0,
+  };
 }

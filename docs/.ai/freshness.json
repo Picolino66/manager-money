@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T15:03:22.056Z",
-  "source_commit": "a1af85a",
+  "generated_at": "2026-10-04T15:22:02.283Z",
+  "source_commit": "1ce01fc",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -35,7 +35,7 @@
     },
     "business/business-rules.md": {
       "id": "business.rules",
-      "last_verified_commit": "bfe9de6+T-028r2",
+      "last_verified_commit": "a1af85a+ciclos-filtro",
       "state": "fresh",
       "source_hashes": {
         "src/domain/financial/financial.calculations.ts": "sha256:0fb6818bf1545e09507d30db849d5ec26b12b4e768d5fe7fdcafd53745393a40",
@@ -43,7 +43,7 @@
         "src/domain/financial/projection.ts": "sha256:7281251bca2fd852a84e01b609bf7493dc56d25872afbe52ab0c7fb9f19d0da3",
         "src/application/cycle.use-cases.ts": "sha256:0e5cf78acb2c78c3aa49fb161269ee0b2b5873411a8715d52902497c516cace5",
         "src/application/card.use-cases.ts": "sha256:b5148eda579faf6c1b3fb2c5a0c6e5700854c90714afe9ec311c9fed83ad37d7",
-        "src/application/selectors.ts": "sha256:95b8e9099ef8cdb8fbaddda7e07c5199c4346ee65f74304eabe729d01eb84bc0",
+        "src/application/selectors.ts": "sha256:936d6821d68afdc31449a426ee55e65619d8a5345b6c60371740694c64528e32",
         "src/infrastructure/sync/sync-engine.ts": "sha256:0f611428ebd4610ab0c023cb96031da605d923ccbddc1b3cd4ece991c775f995"
       }
     },
@@ -274,11 +274,13 @@
     },
     "modules/cycle/history.md": {
       "id": "cycle.history",
-      "last_verified_commit": "52be7e8",
+      "last_verified_commit": "a1af85a+ciclos-filtro",
       "state": "fresh",
       "source_hashes": {
         "calculateDayBalance": "sha256:fb42174e932181cea938be6113183edf45901abc8f7d10f68d2aac8abb581179",
-        "calculateFinalBalance": "sha256:08e27d475c050f0048b26cd3923d5077be41593ef96cd26a5e5f4bef6892a049"
+        "calculateFinalBalance": "sha256:08e27d475c050f0048b26cd3923d5077be41593ef96cd26a5e5f4bef6892a049",
+        "selectCycleSpending": "sha256:626abbbe13d1783b3765ac479f3add7dc6d51118a695a276c458fa900a6cc7af",
+        "selectCycleSpendingRange": "sha256:54eaddaf0204136ad7287879523d8b325e91a519422a191dc665a6190ae595d4"
       }
     },
     "modules/cycle/index.md": {

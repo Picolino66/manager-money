@@ -13,7 +13,7 @@ code:
   - src/application/card.use-cases.ts
   - src/application/selectors.ts
   - src/infrastructure/sync/sync-engine.ts
-last_verified_commit: bfe9de6+T-028r2
+last_verified_commit: a1af85a+ciclos-filtro
 ---
 
 # Regras de negócio

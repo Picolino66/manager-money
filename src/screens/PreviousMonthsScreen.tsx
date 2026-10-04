@@ -1,21 +1,156 @@
-import { useMemo } from 'react';
-import { StyleSheet, Text } from 'react-native';
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { useMemo, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { MainTabParamList } from '../navigation/types';
+import { Badge } from '../components/Badge';
 import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
 import { MetricRow } from '../components/MetricRow';
 import { Screen } from '../components/Screen';
-import { colors, typography } from '../design/theme';
+import { SelectField } from '../components/SelectField';
+import {
+  CycleSpending,
+  selectCycleSpending,
+  selectCycleSpendingRange,
+} from '../application/selectors';
+import { colors, spacing, typography } from '../design/theme';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency, formatSignedCurrency } from '../utils/currency';
-import { formatCycleLabel } from '../utils/date';
+import { formatCycleLabel, formatMonthLabel, formatShortDate } from '../utils/date';
 
-type Props = BottomTabScreenProps<MainTabParamList, 'PreviousMonths'>;
+const PHASE_BADGE: Record<
+  CycleSpending['phase'],
+  { label: string; tone: 'info' | 'neutral' | 'positive' | 'warning' } | null
+> = {
+  active: { label: 'Ciclo atual', tone: 'info' },
+  closed: { label: 'Fechado', tone: 'neutral' },
+  future: { label: 'Previsto', tone: 'warning' },
+  empty: null,
+};
 
-export function PreviousMonthsScreen({ navigation }: Props) {
+function monthOptions() {
+  return Array.from({ length: 12 }, (_, index) => ({
+    value: String(index + 1).padStart(2, '0'),
+    label: formatMonthLabel(2000, index + 1).split('/')[0]!,
+  }));
+}
+
+function CycleSpendingCard({ spending }: { spending: CycleSpending }) {
+  const badge = PHASE_BADGE[spending.phase];
+  const planned = spending.phase === 'future';
+
+  if (spending.isEmpty) {
+    return (
+      <EmptyState
+        iconName="file-tray-outline"
+        message="Não há gastos nem faturas neste ciclo."
+        title="Sem dados neste ciclo"
+      />
+    );
+  }
+
+  return (
+    <Card>
+      <View style={styles.headerRow}>
+        <Text style={styles.monthTitle}>
+          {spending.startDate && spending.endDate
+            ? formatCycleLabel(spending.startDate, spending.endDate)
+            : formatMonthLabel(
+                Number(spending.cycleKey.slice(0, 4)),
+                Number(spending.cycleKey.slice(5, 7)),
+              )}
+        </Text>
+        {badge ? <Badge label={badge.label} tone={badge.tone} /> : null}
+      </View>
+      <MetricRow
+        label={planned ? 'Total previsto' : 'Total do ciclo'}
+        value={formatCurrency(spending.total)}
+      />
+
+      {spending.expenses.length > 0 ? (
+        <View style={styles.section}>
+          <MetricRow label="Gastos do dia a dia" value={formatCurrency(spending.expensesTotal)} />
+          {spending.expenses.map((expense) => (
+            <MetricRow
+              indent
+              key={expense.id}
+              label={`${formatShortDate(expense.date)} · ${expense.description || expense.category}`}
+              value={formatCurrency(expense.amount)}
+            />
+          ))}
+        </View>
+      ) : null}
+
+      {spending.fixedPaid.length > 0 ? (
+        <View style={styles.section}>
+          <MetricRow label="Fixas pagas à vista" value={formatCurrency(spending.fixedPaidTotal)} />
+          {spending.fixedPaid.map((payment) => (
+            <MetricRow
+              indent
+              key={payment.id}
+              label={payment.name}
+              value={formatCurrency(payment.amount)}
+            />
+          ))}
+        </View>
+      ) : null}
+
+      {spending.fixedPlanned.length > 0 ? (
+        <View style={styles.section}>
+          <MetricRow
+            label={planned ? 'Fixas previstas' : 'Fixas pendentes'}
+            value={formatCurrency(spending.fixedPlannedTotal)}
+          />
+          {spending.fixedPlanned.map((item) => (
+            <MetricRow indent key={item.id} label={item.name} value={formatCurrency(item.amount)} />
+          ))}
+        </View>
+      ) : null}
+
+      {spending.statements.map((statement) => (
+        <View key={`${statement.cardId}:${statement.statementKey}`} style={styles.section}>
+          <MetricRow
+            label={`Fatura ${statement.cardName} · vence ${formatShortDate(statement.dueDate)}`}
+            value={formatCurrency(statement.total)}
+          />
+          {statement.items.map((item) => (
+            <MetricRow
+              indent
+              key={item.id}
+              label={
+                item.installmentLabel
+                  ? `${item.description} (${item.installmentLabel})`
+                  : item.description
+              }
+              value={formatCurrency(item.amount)}
+            />
+          ))}
+        </View>
+      ))}
+
+      {spending.statementCharges > 0 ? (
+        <View style={styles.section}>
+          <MetricRow
+            label="Juros e multas de faturas"
+            value={formatCurrency(spending.statementCharges)}
+          />
+        </View>
+      ) : null}
+    </Card>
+  );
+}
+
+export function PreviousMonthsScreen() {
   const months = useFinancialStore((state) => state.months);
+  const doc = useFinancialStore((state) => state.doc);
+  const now = new Date();
+  const range = selectCycleSpendingRange(doc, now);
+  const [selectedKey, setSelectedKey] = useState(range.current);
+  const [selectedYear, selectedMonth] = selectedKey.split('-') as [string, string];
+  const years = Array.from(
+    { length: Number(range.max.slice(0, 4)) - Number(range.min.slice(0, 4)) + 1 },
+    (_, index) => String(Number(range.min.slice(0, 4)) + index),
+  );
+  const spending = selectCycleSpending(doc, selectedKey, now);
   const closedMonths = useMemo(
     () =>
       [...months]
@@ -24,39 +159,64 @@ export function PreviousMonthsScreen({ navigation }: Props) {
     [months],
   );
 
-  if (closedMonths.length === 0) {
-    return (
-      <Screen>
-        <EmptyState
-          actionLabel="Ir para hoje"
-          iconName="archive-outline"
-          message="Ciclos fechados ficam salvos aqui."
-          onActionPress={() => navigation.navigate('Dashboard')}
-          title="Sem ciclos anteriores"
-        />
-      </Screen>
-    );
+  function handleChange(year: string, month: string) {
+    const key = `${year}-${month}`;
+
+    setSelectedKey(key < range.min ? range.min : key > range.max ? range.max : key);
   }
 
   return (
     <Screen>
-      <Text style={styles.title}>Ciclos anteriores</Text>
-      {closedMonths.map((month) => {
-        const finalBalance = month.finalBalance ?? 0;
+      <Text style={styles.title}>Ciclos</Text>
+      <View style={styles.filters}>
+        <View style={styles.filter}>
+          <SelectField
+            label="Mês"
+            onChange={(month) => handleChange(selectedYear, month)}
+            options={monthOptions()}
+            value={selectedMonth}
+          />
+        </View>
+        <View style={styles.filter}>
+          <SelectField
+            label="Ano"
+            onChange={(year) => handleChange(year, selectedMonth)}
+            options={years.map((year) => ({ value: year, label: year }))}
+            value={selectedYear}
+          />
+        </View>
+      </View>
 
-        return (
-          <Card key={month.id}>
-            <Text style={styles.monthTitle}>{formatCycleLabel(month.startDate, month.endDate)}</Text>
-            <MetricRow
-              label="Resultado"
-              tone={finalBalance < 0 ? 'negative' : finalBalance > 0 ? 'positive' : 'default'}
-              value={formatSignedCurrency(finalBalance)}
-            />
-            <MetricRow label="Saldo inicial" value={formatCurrency(month.initialAvailableAmount)} />
-            <MetricRow label="Gastos registrados" value={String(month.expenses.length)} />
-          </Card>
-        );
-      })}
+      <CycleSpendingCard spending={spending} />
+
+      {closedMonths.length === 0 ? (
+        <Text style={styles.hint}>Ciclos fechados ficam salvos aqui.</Text>
+      ) : (
+        <>
+          <Text style={styles.subtitle}>Ciclos anteriores</Text>
+          {closedMonths.map((month) => {
+            const finalBalance = month.finalBalance ?? 0;
+
+            return (
+              <Card key={month.id}>
+                <Text style={styles.monthTitle}>
+                  {formatCycleLabel(month.startDate, month.endDate)}
+                </Text>
+                <MetricRow
+                  label="Resultado"
+                  tone={finalBalance < 0 ? 'negative' : finalBalance > 0 ? 'positive' : 'default'}
+                  value={formatSignedCurrency(finalBalance)}
+                />
+                <MetricRow
+                  label="Saldo inicial"
+                  value={formatCurrency(month.initialAvailableAmount)}
+                />
+                <MetricRow label="Gastos registrados" value={String(month.expenses.length)} />
+              </Card>
+            );
+          })}
+        </>
+      )}
     </Screen>
   );
 }
@@ -66,6 +226,31 @@ const styles = StyleSheet.create({
     color: colors.ink,
     fontSize: typography.title,
     fontWeight: '900',
+  },
+  subtitle: {
+    color: colors.ink,
+    fontSize: typography.sectionTitle,
+    fontWeight: '900',
+  },
+  hint: {
+    color: colors.muted,
+    fontSize: 13,
+  },
+  filters: {
+    flexDirection: 'row',
+    gap: spacing.md,
+  },
+  filter: {
+    flex: 1,
+  },
+  headerRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
+  section: {
+    gap: spacing.xs,
   },
   monthTitle: {
     color: colors.ink,
