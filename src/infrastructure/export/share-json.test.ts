@@ -7,20 +7,35 @@ const mockDelete = jest.fn();
 
 jest.mock('expo-file-system', () => ({
   Paths: { cache: 'cache://' },
-  File: jest.fn().mockImplementation((dir: string, name: string) => ({ uri: `${dir}${name}`, create: mockCreate, write: mockWrite, delete: mockDelete })),
+  File: jest.fn().mockImplementation((dir: string, name: string) => ({
+    uri: `${dir}${name}`,
+    create: mockCreate,
+    write: mockWrite,
+    delete: mockDelete,
+  })),
 }));
 jest.mock('expo-sharing', () => ({
   isAvailableAsync: jest.fn().mockResolvedValue(true),
   shareAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
-const Sharing = jest.requireMock('expo-sharing') as { isAvailableAsync: jest.Mock; shareAsync: jest.Mock };
+const Sharing = jest.requireMock('expo-sharing') as {
+  isAvailableAsync: jest.Mock;
+  shareAsync: jest.Mock;
+};
 
 describe('exportação (BR-ACC-004)', () => {
   it('payload sem identificadores de sessão', () => {
-    const state = { ...createEmptyState(), sync: { ...createEmptyState().sync, userId: 'u-1', lastSyncAt: 'ontem' } };
+    const state = {
+      ...createEmptyState(),
+      sync: { ...createEmptyState().sync, userId: 'u-1', lastSyncAt: 'ontem' },
+    };
     const payload = JSON.parse(buildExportPayload(state, new Date('2026-10-10T00:00:00Z')));
-    expect(payload).toMatchObject({ app: 'manager-money', schemaVersion: 7, sync: { lastSyncAt: 'ontem' } });
+    expect(payload).toMatchObject({
+      app: 'manager-money',
+      schemaVersion: 8,
+      sync: { lastSyncAt: 'ontem' },
+    });
     expect(JSON.stringify(payload)).not.toContain('u-1');
     expect(exportFileName(new Date(2026, 9, 10))).toBe('manager-money-2026-10-10.json');
   });
@@ -29,7 +44,10 @@ describe('exportação (BR-ACC-004)', () => {
     await shareJson('a.json', '{}');
     expect(mockCreate).toHaveBeenCalledWith({ overwrite: true });
     expect(mockWrite).toHaveBeenCalledWith('{}');
-    expect(Sharing.shareAsync).toHaveBeenCalledWith('cache://a.json', expect.objectContaining({ mimeType: 'application/json' }));
+    expect(Sharing.shareAsync).toHaveBeenCalledWith(
+      'cache://a.json',
+      expect.objectContaining({ mimeType: 'application/json' }),
+    );
     expect(mockDelete).toHaveBeenCalled();
   });
 

@@ -8,7 +8,7 @@ summary: >
 code:
   - src/domain/financial/financial.calculations.ts
   - src/domain/financial/projection.ts
-last_verified_commit: c47cf18+T-025
+last_verified_commit: bfe9de6+T-028
 ---
 
 # Visão de produto — Manager Money
@@ -44,7 +44,7 @@ usuário costuma confundir:
 | O app mostra | O que é | O que não é |
 |---|---|---|
 | **Ainda pode gastar hoje** | Dinheiro do ciclo, depois de meta, fixas, faturas do ciclo e dívida | — |
-| **Limite disponível do cartão** | Quanto o banco ainda aceita no cartão (limite − parcelas em faturas não pagas) | **Não é dinheiro disponível**: gastar no cartão compromete ciclos futuros |
+| **Limite disponível do cartão** | Quanto o banco ainda aceita no cartão (limite − parcelas ainda não amortizadas; pagamento parcial libera parcial) | **Não é dinheiro disponível**: gastar no cartão compromete ciclos futuros |
 
 Para não haver surpresa, a tela Hoje mostra os **próximos compromissos** (faturas a pagar e fixas
 pendentes) e a **projeção** dos próximos ciclos: renda − meta − fixas − faturas já contratadas =

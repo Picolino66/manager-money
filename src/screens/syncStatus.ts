@@ -19,7 +19,9 @@ export function describeSyncStatus(input: SyncStatusInput): string {
   if (input.lastError === 'network') return 'Sem conexão — tentaremos de novo';
   if (input.lastError) return 'Falha ao sincronizar — tentaremos de novo';
   if (input.pendingChanges > 0) {
-    return input.pendingChanges === 1 ? '1 alteração pendente' : `${input.pendingChanges} alterações pendentes`;
+    return input.pendingChanges === 1
+      ? '1 alteração pendente'
+      : `${input.pendingChanges} alterações pendentes`;
   }
   if (input.lastSyncAt) return `Sincronizado às ${format(parseISO(input.lastSyncAt), 'HH:mm')}`;
   return 'Aguardando a primeira sincronização';

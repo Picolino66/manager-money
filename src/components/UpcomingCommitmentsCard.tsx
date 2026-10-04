@@ -8,18 +8,23 @@ import { Card } from './Card';
 
 type UpcomingCommitmentsCardProps = {
   commitments: UpcomingCommitment[];
+  /** Ids (`cartão:fatura`) das faturas com pagamento parcial: o valor é o restante (BR-FIN-033). */
+  partialStatementIds?: ReadonlySet<string>;
 };
 
-function describeCommitment(item: UpcomingCommitment): string {
+function describeCommitment(item: UpcomingCommitment, partial: boolean): string {
   if (item.kind === 'statement') {
-    return `${item.label} · ${item.overdue ? 'venceu' : 'vence'} ${formatShortDate(item.dueDate)}`;
+    return `${item.label}${partial ? ' (restante)' : ''} · ${item.overdue ? 'venceu' : 'vence'} ${formatShortDate(item.dueDate)}`;
   }
 
   return `${item.label} · fixa pendente`;
 }
 
 /** SPEC-018: o que ainda vai sair neste ciclo (faturas e fixas pendentes). */
-export function UpcomingCommitmentsCard({ commitments }: UpcomingCommitmentsCardProps) {
+export function UpcomingCommitmentsCard({
+  commitments,
+  partialStatementIds,
+}: UpcomingCommitmentsCardProps) {
   return (
     <Card>
       <Text style={styles.title}>Próximos compromissos</Text>
@@ -29,17 +34,21 @@ export function UpcomingCommitmentsCard({ commitments }: UpcomingCommitmentsCard
         <>
           {commitments.map((item) => {
             const overdue = item.kind === 'statement' && item.overdue;
+            const description = describeCommitment(
+              item,
+              item.kind === 'statement' && (partialStatementIds?.has(item.id) ?? false),
+            );
 
             return (
               <View
-                accessibilityLabel={`${describeCommitment(item)}, ${formatCurrency(item.amount)}${
+                accessibilityLabel={`${description}, ${formatCurrency(item.amount)}${
                   overdue ? ', vencida' : ''
                 }`}
                 key={`${item.kind}-${item.id}`}
                 style={[styles.row, overdue && styles.rowOverdue]}
               >
                 <View style={styles.rowText}>
-                  <Text style={styles.label}>{describeCommitment(item)}</Text>
+                  <Text style={styles.label}>{description}</Text>
                   {overdue ? <Text style={styles.overdue}>Vencida</Text> : null}
                 </View>
                 <Text style={[styles.amount, overdue && styles.amountOverdue]}>

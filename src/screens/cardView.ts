@@ -15,12 +15,15 @@ import { isLive, LocalState } from '../application/state';
 
 /** Faturas do cartão organizadas para a tela (BR-FIN-025/026). */
 export type CardStatementsView = {
-  /** Fatura que pede atenção agora: a fechada/vencida mais antiga não paga; senão, a aberta. */
+  /**
+   * Fatura que pede atenção agora: a fechada/vencida/parcial mais antiga não quitada; senão, a
+   * aberta.
+   */
   current: CardStatement;
   next: CardStatement;
   /** Demais faturas não pagas (outras fechadas/vencidas e as futuras), em ordem. */
   future: CardStatement[];
-  /** Outras faturas pagas no ciclo ativo (o pagamento ainda pode ser desfeito). */
+  /** Outras faturas quitadas com lançamento no ciclo ativo (ainda podem ser desfeitos). */
   paidInActiveCycle: CardStatement[];
 };
 
@@ -46,8 +49,12 @@ function findOrEmpty(
       dueDate: format(statementDueDate(key, card), 'yyyy-MM-dd'),
       amount: 0,
       installments: [],
+      knownTotal: null,
+      charges: 0,
+      paid: 0,
+      remaining: 0,
       status: statusFor(key, card, today),
-      payment: null,
+      payments: [],
     }
   );
 }
@@ -59,7 +66,10 @@ export function buildCardStatementsView(
   activeCycleId: string | null,
 ): CardStatementsView {
   const pending = statements.find(
-    (statement) => statement.status === 'closed' || statement.status === 'overdue',
+    (statement) =>
+      statement.status === 'closed' ||
+      statement.status === 'overdue' ||
+      statement.status === 'partial',
   );
   const current = pending ?? findOrEmpty(statements, currentStatementKey(card, today), card, today);
   const next = findOrEmpty(statements, addCycleKeys(current.key, 1), card, today);
@@ -75,9 +85,9 @@ export function buildCardStatementsView(
       (statement) =>
         statement.key !== current.key &&
         statement.key !== next.key &&
-        statement.payment !== null &&
+        statement.status === 'paid' &&
         activeCycleId !== null &&
-        statement.payment.cycleId === activeCycleId,
+        statement.payments.some((payment) => payment.cycleId === activeCycleId),
     ),
   };
 }
@@ -104,8 +114,9 @@ export function statementCycleKeys(
 }
 
 /**
- * Quanto as parcelas do cartão pesam em cada ciclo, do ciclo ativo em diante (BR-FIN-025). Pagar a
- * fatura libera o limite, mas não tira o peso do orçamento do ciclo.
+ * Quanto as parcelas do cartão pesam em cada ciclo, do ciclo ativo em diante (BR-FIN-025). Usa o
+ * valor efetivo da parcela (`amount`): a parcela já incluída no total informado pesa 0 (BR-FIN-032).
+ * Pagar a fatura libera o limite, mas não tira o peso do orçamento do ciclo.
  */
 export function weightByCycle(
   statements: CardStatement[],

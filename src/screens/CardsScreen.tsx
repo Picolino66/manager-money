@@ -171,8 +171,8 @@ export function CardsScreen({ navigation }: Props) {
               <MetricRow label="Limite disponível do cartão" value="Limite não informado" />
             )}
             <MetricRow
-              label={`Fatura atual (${STATEMENT_STATUS_LABEL[current.status].toLowerCase()}) · vence ${formatDayMonth(current.dueDate)}`}
-              value={formatCurrency(current.amount)}
+              label={`Fatura atual (${STATEMENT_STATUS_LABEL[current.status].toLowerCase()}${current.status === 'partial' ? ', restante' : ''}) · vence ${formatDayMonth(current.dueDate)}`}
+              value={formatCurrency(current.status === 'open' ? current.amount : current.remaining)}
             />
 
             <View style={styles.actions}>

@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { isAfter, startOfDay } from 'date-fns';
 
 import { selectCardStatements, selectCreditCards } from '../application/selectors';
+import { isLive } from '../application/state';
 import { AppButton } from '../components/AppButton';
 import { Card } from '../components/Card';
 import { CurrencyInput } from '../components/CurrencyInput';
@@ -40,8 +41,9 @@ function toCount(value: string): number {
 }
 
 /**
- * SPEC-017 / BR-FIN-027: situação inicial do cartão — fatura em aberto ou parcelamento que já
- * existia antes do app. Gera a agenda das parcelas restantes.
+ * SPEC-017/019 / BR-FIN-027/032: situação inicial do cartão — total da fatura em aberto (como o
+ * banco mostra) ou parcelamento que já existia antes do app. Gera a agenda das parcelas restantes;
+ * a parcela que já está no total informado só compõe esse total.
  */
 export function CardDebtScreen({ navigation, route }: Props) {
   const doc = useFinancialStore((state) => state.doc);
@@ -55,6 +57,7 @@ export function CardDebtScreen({ navigation, route }: Props) {
   const [totalText, setTotalText] = useState('');
   const [remainingText, setRemainingText] = useState('');
   const [chosenKey, setChosenKey] = useState('');
+  const [includeInBalance, setIncludeInBalance] = useState(true);
   const [errors, setErrors] = useState<Errors>({});
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
@@ -93,7 +96,8 @@ export function CardDebtScreen({ navigation, route }: Props) {
   const openKey = currentStatementKey(card, today);
   const paidKeys = new Set(
     selectCardStatements(doc, cardId, today)
-      .filter((statement) => statement.status === 'paid')
+      // Fatura com qualquer lançamento (pago ou parcial) não recebe compras anteriores.
+      .filter((statement) => statement.payments.length > 0)
       .map((statement) => statement.key),
   );
   // Faturas ainda não vencidas: a fechada aguardando vencimento (se houver) e a aberta.
@@ -108,6 +112,15 @@ export function CardDebtScreen({ navigation, route }: Props) {
     statementOptions[0]?.value ??
     openKey;
   const isInstallments = mode === 'installments';
+  // BR-FIN-032: total da fatura já informado para a fatura escolhida (um por cartão + fatura).
+  const balance = doc.cardPurchases.find(
+    (purchase) =>
+      isLive(purchase) &&
+      purchase.cardId === cardId &&
+      purchase.kind === 'statement-balance' &&
+      purchase.firstStatementKey === selectedKey,
+  );
+  const included = isInstallments && balance !== undefined && includeInBalance;
   const total = isInstallments ? toCount(totalText) : 1;
   const remaining = isInstallments ? toCount(remainingText) : 1;
   const isValidCount =
@@ -121,6 +134,7 @@ export function CardDebtScreen({ navigation, route }: Props) {
 
   function selectMode(next: Mode) {
     setMode(next);
+    setIncludeInBalance(true);
     setErrors({});
     setLastSaved(null);
   }
@@ -157,6 +171,8 @@ export function CardDebtScreen({ navigation, route }: Props) {
         totalInstallments: total,
         remainingInstallments: remaining,
         nextStatementKey: selectedKey,
+        ...(isInstallments ? {} : { statementBalance: true }),
+        ...(included ? { includedInStatementBalance: true } : {}),
       });
       setLastSaved(finalDescription);
       setDescription('');
@@ -216,6 +232,11 @@ export function CardDebtScreen({ navigation, route }: Props) {
           onChangeValue={setAmount}
           value={amount}
         />
+        {!isInstallments ? (
+          <Text style={styles.hint}>
+            Informe o total que aparece no app do banco para essa fatura.
+          </Text>
+        ) : null}
         {isInstallments ? (
           <>
             <TextInputField
@@ -246,6 +267,28 @@ export function CardDebtScreen({ navigation, route }: Props) {
             value={selectedKey}
           />
         ) : null}
+        {!isInstallments && balance ? (
+          <Text style={styles.warning}>
+            Já existe um total informado para a fatura {formatMonthKey(selectedKey)} (
+            {formatCurrency(balance.totalAmount)}).
+          </Text>
+        ) : null}
+        {isInstallments && balance ? (
+          <View style={styles.switchRow}>
+            <Text style={styles.switchLabel}>
+              Esta parcela já está no total da fatura informada (
+              {formatCurrency(balance.totalAmount)})
+            </Text>
+            <Switch
+              accessibilityLabel="Esta parcela já está no total da fatura informada"
+              accessibilityRole="switch"
+              onValueChange={setIncludeInBalance}
+              thumbColor={colors.surface}
+              trackColor={{ false: colors.disabled, true: colors.primary }}
+              value={includeInBalance}
+            />
+          </View>
+        ) : null}
 
         {amount > 0 && isValidCount ? (
           <View accessibilityLiveRegion="polite" style={styles.preview}>
@@ -257,11 +300,19 @@ export function CardDebtScreen({ navigation, route }: Props) {
                 addCycleKeys(selectedKey, remaining - 1),
               )}
             </Text>
+            {included ? (
+              <Text style={styles.hint}>
+                {remaining > 1
+                  ? `A parcela de ${formatMonthKey(selectedKey)} já está no total; as próximas ${remaining - 1} serão somadas às faturas seguintes.`
+                  : `A parcela de ${formatMonthKey(selectedKey)} já está no total.`}
+              </Text>
+            ) : null}
             <Text style={styles.hint}>
               {remaining > 1
                 ? `Pesa nos ciclos de ${formatMonthKey(firstCycleKey)} a ${formatMonthKey(lastCycleKey)}.`
                 : `Pesa no ciclo de ${formatMonthKey(firstCycleKey)}.`}{' '}
-              Compromete {formatCurrency(amount * remaining)} do limite do cartão.
+              Compromete {formatCurrency(amount * (included ? remaining - 1 : remaining))} do limite
+              do cartão.
             </Text>
             {total - remaining > 0 ? (
               <Text style={styles.hint}>
@@ -321,6 +372,23 @@ const styles = StyleSheet.create({
   hint: {
     color: colors.muted,
     fontSize: 13,
+  },
+  warning: {
+    color: colors.warning,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  switchRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+    minHeight: 44,
+  },
+  switchLabel: {
+    color: colors.text,
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
   },
   chips: {
     flexDirection: 'row',

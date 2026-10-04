@@ -1,4 +1,6 @@
-import { StatementStatus } from '../domain/financial/credit-card';
+import { CardStatement, StatementPayment, StatementStatus } from '../domain/financial/credit-card';
+import { MoneyCents } from '../domain/financial/financial.types';
+import { formatCurrency } from '../utils/currency';
 
 /** Texto de em qual ciclo cai a 1ª parcela de uma compra no crédito (BR-FIN-019). */
 export function describeFirstInstallment(cyclesAhead: number): string {
@@ -17,6 +19,7 @@ export const STATEMENT_STATUS_LABEL: Record<StatementStatus, string> = {
   open: 'Aberta',
   closed: 'Fechada',
   overdue: 'Vencida',
+  partial: 'Parcial',
   paid: 'Paga',
 };
 
@@ -48,3 +51,43 @@ export const PURCHASE_LOCKED_REASON =
 /** Distinção obrigatória: limite do cartão não é dinheiro para gastar. */
 export const CARD_LIMIT_DISCLAIMER =
   'O limite do cartão não é dinheiro para gastar. O que você pode gastar está em "Hoje".';
+
+/** Soma nominal das parcelas que já estão dentro do total informado da fatura (BR-FIN-032). */
+export function knownItemsTotal(statement: Pick<CardStatement, 'installments'>): MoneyCents {
+  return statement.installments
+    .filter((installment) => installment.includedInBalance)
+    .reduce((total, installment) => total + installment.nominalAmount, 0);
+}
+
+/**
+ * Composição do total informado (BR-FIN-032). Sem itens conhecidos, mostra só o total: nunca
+ * inventa composição.
+ */
+export function describeStatementComposition(
+  knownTotal: MoneyCents,
+  knownItems: MoneyCents,
+): string {
+  if (knownItems <= 0) return `Total informado ${formatCurrency(knownTotal)}`;
+
+  return (
+    `Total informado ${formatCurrency(knownTotal)} · itens conhecidos ${formatCurrency(knownItems)}` +
+    ` · não detalhado ${formatCurrency(Math.max(0, knownTotal - knownItems))}`
+  );
+}
+
+/** Lançamento de fatura em uma linha (BR-FIN-033): pagamento, encargos e data. */
+export function describeStatementEntry(
+  payment: Pick<StatementPayment, 'paidAmount' | 'charges'>,
+  dayMonth: string,
+): string {
+  const parts: string[] = [];
+
+  if (payment.paidAmount > 0) parts.push(`Pagamento ${formatCurrency(payment.paidAmount)}`);
+  if (payment.charges > 0) {
+    parts.push(
+      `${payment.paidAmount > 0 ? 'encargos' : 'Juros/multa'} ${formatCurrency(payment.charges)}`,
+    );
+  }
+
+  return [...parts, dayMonth].join(' · ');
+}

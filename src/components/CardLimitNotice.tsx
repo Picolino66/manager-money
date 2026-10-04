@@ -1,7 +1,7 @@
 import { Alert, StyleSheet, Text, View } from 'react-native';
 
 import { colors, radius, spacing } from '../design/theme';
-import { CardLimitUsage } from '../domain/financial/credit-card';
+import { calculateLimitExcess, CardLimitUsage } from '../domain/financial/credit-card';
 import { MoneyCents } from '../domain/financial/financial.types';
 import { formatCurrency } from '../utils/currency';
 
@@ -10,28 +10,35 @@ export function exceedsCardLimit(usage: CardLimitUsage | null, amount: MoneyCent
   return usage !== null && usage.available !== null && amount > usage.available;
 }
 
+/** Texto do alerta de compra acima do limite disponível cadastrado (BR-FIN-026). */
+export function describeLimitExcess(excess: MoneyCents): string {
+  return (
+    `Esta compra excede em ${formatCurrency(excess)} o limite disponível cadastrado deste cartão. ` +
+    'O banco pode ter autorizado um limite diferente. Deseja registrar mesmo assim?'
+  );
+}
+
 /**
  * Pede confirmação quando a compra passa do limite disponível do cartão. Resolve `true` se não
- * passar ou se a pessoa escolher continuar (decisão do dono: avisar e permitir).
+ * passar ou se a pessoa escolher registrar mesmo assim (decisão do dono: avisar e permitir).
  */
 export function confirmCardLimit(
   usage: CardLimitUsage | null,
   amount: MoneyCents,
 ): Promise<boolean> {
-  const available = usage?.available ?? null;
+  const excess = calculateLimitExcess(usage?.available ?? null, amount);
 
-  if (available === null || amount <= available) {
+  if (excess <= 0) {
     return Promise.resolve(true);
   }
 
   return new Promise((resolve) => {
     Alert.alert(
       'Passa do limite do cartão',
-      `Esta compra de ${formatCurrency(amount)} passa do limite disponível do cartão ` +
-        `(${formatCurrency(available)}). Continuar mesmo assim?`,
+      describeLimitExcess(excess),
       [
         { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
-        { text: 'Continuar', onPress: () => resolve(true) },
+        { text: 'Registrar mesmo assim', onPress: () => resolve(true) },
       ],
       { cancelable: true, onDismiss: () => resolve(false) },
     );

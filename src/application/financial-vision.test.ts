@@ -308,20 +308,17 @@ describe('fatura e limite (BR-FIN-026)', () => {
     expect(() =>
       payStatement(state, { cardId: cardId(state), statementKey: '2026-10' }, ctx),
     ).toThrow('Informe o valor pago');
-    expect(() =>
-      payStatement(
-        state,
-        { cardId: cardId(state), statementKey: '2026-10', paidAmount: 50000 },
-        ctx,
-      ),
-    ).toThrow('menor que o valor');
 
     const paid = payStatement(
       state,
       { cardId: cardId(state), statementKey: '2026-10', paidAmount: 61500 },
       ctx,
     );
-    expect(paid.statementPayments[0]).toMatchObject({ statementAmount: 60000, paidAmount: 61500 });
+    expect(paid.statementPayments[0]).toMatchObject({
+      statementAmount: 60000,
+      paidAmount: 61500,
+      charges: 1500,
+    });
     expect(initial(paid)).toBe(initial(state) - 1500);
     expect(limitOf(paid).available).toBe(600000);
   });
@@ -689,19 +686,29 @@ describe('regressões da revisão financeira', () => {
     ).toBe('Aluguel de outubro');
   });
 
-  it('A2: o pagamento de fatura tem id único por cartão e fatura, e pagar de novo após desfazer reaproveita o registro', () => {
+  it('A2: uma fatura aceita vários lançamentos, e desfazer remove só o lançamento escolhido', () => {
     const state = purchase(base(), '2026-10-16', 60000);
     const ctx = at(10, 25);
-    const paid = payStatement(state, { cardId: cardId(state), statementKey: '2026-10' }, ctx);
-    const id = `statement-${cardId(state)}-2026-10`;
-    const repaid = payStatement(
-      undoStatementPayment(paid, id, ctx),
-      { cardId: cardId(state), statementKey: '2026-10' },
+    const partial = payStatement(
+      state,
+      { cardId: cardId(state), statementKey: '2026-10', paidAmount: 20000 },
       ctx,
     );
+    const settled = payStatement(partial, { cardId: cardId(state), statementKey: '2026-10' }, ctx);
 
-    expect(paid.statementPayments.map((payment) => payment.id)).toEqual([id]);
-    expect(repaid.statementPayments).toEqual([expect.objectContaining({ id, deletedAt: null })]);
+    expect(settled.statementPayments.map((payment) => payment.paidAmount)).toEqual([20000, 40000]);
+    expect(selectCardStatements(settled, cardId(state), ctx.now)[0]).toMatchObject({
+      status: 'paid',
+      remaining: 0,
+    });
+
+    const undone = undoStatementPayment(settled, settled.statementPayments[1]!.id, ctx);
+    expect(selectCardStatements(undone, cardId(state), ctx.now)[0]).toMatchObject({
+      status: 'partial',
+      paid: 20000,
+      remaining: 40000,
+    });
+    expect(limitOf(undone).committed).toBe(40000);
   });
 
   it('M3: aumentar o fechamento depois de pagar a fatura não bloqueia compras novas', () => {

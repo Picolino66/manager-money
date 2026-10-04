@@ -8,7 +8,7 @@ summary: >
   análise de viabilidade e métricas de sucesso.
 code:
   - src/store/financial.store.ts
-last_verified_commit: c47cf18+T-025r4
+last_verified_commit: bfe9de6+T-028
 ---
 
 # Requisitos, escopo, viabilidade e métricas — v1.0 (lojas)
@@ -40,11 +40,14 @@ last_verified_commit: c47cf18+T-025r4
 | RF-21 | **Lançar rendas avulsas** no ciclo ativo | BR-FIN-023 | **novo** |
 | RF-22 | **Limite do cartão:** informar o limite total e ver comprometido e "Limite disponível do cartão" (separado do dinheiro para gastar); avisar, sem bloquear, compra acima do disponível | BR-FIN-026, BR-FIN-028 | **novo** (SPEC-016) |
 | RF-23 | **Faturas do cartão:** ver as faturas (aberta, fechada, vencida, paga, futuras) com fechamento, vencimento, valor e parcelas; a fatura pesa no ciclo do vencimento | BR-FIN-025 | **novo** (SPEC-016) |
-| RF-24 | **Pagar fatura** ("Paguei a fatura"): libera o limite; depois do vencimento pede o valor pago e lança os juros no ciclo ativo; desfazer no ciclo ativo | BR-FIN-026 | **novo** (SPEC-016) |
+| RF-24 | **Pagar fatura** ("Paguei a fatura"): libera o limite pelo valor amortizado; depois do vencimento pede o valor pago; desfazer cada lançamento no ciclo ativo (pagamento parcial e encargos: RF-29/RF-30) | BR-FIN-026, BR-FIN-033 | **novo** (SPEC-016; alterado pela SPEC-019) |
 | RF-25 | **Situação inicial do cartão:** cadastrar fatura em aberto e parcelamentos existentes, sem contar parcelas já pagas | BR-FIN-027 | **novo** (SPEC-017) |
 | RF-26 | **Ativar/desativar** cartões, fontes de renda e despesas fixas sem apagar o histórico | BR-FIN-018, BR-FIN-024, BR-FIN-028 | **novo** (SPEC-017) |
 | RF-27 | **Projeção dos próximos ciclos:** "livre antes de novos gastos" de cada um dos próximos 3 ciclos | BR-FIN-031 | **novo** (SPEC-018) |
-| RF-28 | **Próximos compromissos:** faturas a pagar e fixas pendentes do ciclo, na tela Hoje | BR-FIN-004, BR-FIN-026, BR-FIN-030 | **novo** (SPEC-018) |
+| RF-28 | **Próximos compromissos:** faturas a pagar (pelo **restante**) e fixas pendentes do ciclo, na tela Hoje | BR-FIN-004, BR-FIN-026, BR-FIN-030 | **novo** (SPEC-018) |
+| RF-29 | **Pagamento parcial da fatura:** pagar parte da fatura; libera o limite só do que foi pago; o restante segue em próximos compromissos e, ao fechar o ciclo, vira dívida do próximo ciclo até ser quitado | BR-FIN-026, BR-FIN-033, BR-FIN-034 | **novo** (SPEC-019) |
+| RF-30 | **Encargos da fatura:** registrar juros/multa no pagamento (valor acima do restante) ou depois; pesam no ciclo ativo e não ocupam limite | BR-FIN-005, BR-FIN-033 | **novo** (SPEC-019) |
+| RF-31 | **Total informado da fatura** na situação inicial, com a opção "Esta parcela já está no total da fatura informada" para parcelamentos (sem somar duas vezes) | BR-FIN-027, BR-FIN-032 | **novo** (SPEC-019) |
 
 ## 2. Requisitos não funcionais
 
@@ -82,7 +85,8 @@ last_verified_commit: c47cf18+T-025r4
 | RF-01 a RF-12, RF-17 | Entregues e cobertos por testes automatizados |
 | RF-13 a RF-16, RF-18 | Entregues e testados com servidor em memória; **ativação depende das variáveis do Supabase** (sem elas o app roda em modo local) |
 | RF-19 a RF-21 | Entregues (S3), cobertos por testes; RF-19/20 ajustados pela ADR-017 |
-| RF-22 a RF-28 | Núcleo (domínio, aplicação, documento v7, sync e migration) entregue e testado em T-022; **telas em andamento** (T-023, T-024) |
+| RF-22 a RF-28 | Entregues (S4): núcleo em T-022, telas em T-023/T-024 |
+| RF-29 a RF-31 | Núcleo (domínio, aplicação, documento v8, sync e migration) entregue e testado em T-026; telas entregues em T-027 |
 | DEF-001 a DEF-009 | Corrigidos, com teste de regressão (ver `src/application/cycle.use-cases.test.ts`, `src/infrastructure/storage/local-store.test.ts`) |
 
 ## 4. Escopo

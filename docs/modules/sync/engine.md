@@ -13,11 +13,11 @@ code:
   - src/infrastructure/sync/mappers.ts
   - src/infrastructure/sync/types.ts
   - src/store/financial.store.ts
-symbols: [runSync, collectDirty, acknowledge, applyRemoteRows, adoptRemoteActiveCycle, mapSupabaseError, scheduleSync, statementPaymentToRow, statementPaymentFromRow, cardPurchaseFromRow]
+symbols: [runSync, collectDirty, acknowledge, applyRemoteRows, adoptRemoteActiveCycle, mapSupabaseError, scheduleSync, statementPaymentFromRow, cardPurchaseFromRow, cycleFromRow]
 business_rules: [BR-SYNC-001, BR-SYNC-002, BR-SYNC-003, BR-FIN-013]
-adrs: [ADR-004, ADR-008, ADR-017]
+adrs: [ADR-004, ADR-008, ADR-017, ADR-018]
 tests: [src/infrastructure/sync/sync-engine.test.ts, src/infrastructure/sync/supabase-remote.test.ts, src/infrastructure/sync/mappers.test.ts]
-last_verified_commit: c47cf18+T-025r4
+last_verified_commit: bfe9de6+T-028
 ---
 
 # Motor de sincronização
@@ -32,12 +32,16 @@ Spec: [SPEC-006](../../../specs/SPEC-006-sync.md) · contrato: [contracts](../..
   sobrescrito; linha excluída desconhecida não é inserida.
 - **Conflito 23505** (ciclo ativo): pull de ciclos, adota o remoto, move para ele os gastos, pagamentos de fixas,
   rendas avulsas e pagamentos de fatura do ciclo local duplicado e exclui o local; 1 retry.
-- **Pagamento de fatura:** id determinístico `statement-<cardId>-<yyyy-MM>`; dois aparelhos que pagam a mesma
-  fatura gravam o mesmo registro (LWW) e não violam o índice único.
+- **Lançamentos de fatura (ADR-018):** vários por fatura, id gerado no cliente; o índice único da ADR-017 foi
+  removido. Dois aparelhos que registram o mesmo pagamento offline geram dois lançamentos: o amortizado é limitado
+  ao principal (o limite nunca é liberado a mais) e o pagamento não mexe no orçamento; o usuário desfaz o duplicado.
 - **Gatilhos:** escrita (+2 s), abertura, primeiro plano, reconexão; backoff 2 s → 60 s.
 - Commits do sync são descartados se a conta mudar durante a rede.
 - **Contrato v1 aditivo (ADR-017):** `credit_cards.credit_limit`/`active`, `card_purchases.first_statement_key`/`settled_installments`/`origin`,
   `fixed_expenses.active` e `income_sources[].active`. Linha antiga sem `first_statement_key` deriva a fatura da data e do
   fechamento do cartão local (`cardPurchaseFromRow`); sem `active` = ativo; sem `settled_installments` = 0.
+- **Contrato v1 aditivo (ADR-018):** `card_purchases.kind`/`included_in_balance`, `statement_payments.charges` (nulável e sem default no
+  servidor: linha sem `charges` ou nula → `max(0, paid − statement)`), `cycles.carried_statement_debt`/`carried_statements` (jsonb com
+  `card_id`/`statement_key`/`amount`; 0 e `[]` no remoto = ausente no local).
 - `replaceRemoteWithLocal` marca `statement_payments` como excluídas primeiro (ordem inversa das dependências).
 - Testes com `MemoryRemote` (`src/infrastructure/sync/memory-remote.ts`) que reproduz RLS, cursor e índice único.

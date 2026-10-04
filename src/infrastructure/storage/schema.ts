@@ -70,6 +70,12 @@ const cycleSchema = z.object({
   status: z.enum(['active', 'closed']),
   initialAvailableAmount: cents,
   previousMonthDebt: cents.min(0),
+  carriedStatementDebt: cents.min(0).optional(),
+  carriedStatements: z
+    .array(
+      z.object({ cardId: z.string().min(1), statementKey: monthKey, amount: cents.positive() }),
+    )
+    .optional(),
   finalBalance: cents.optional(),
 });
 
@@ -107,6 +113,8 @@ const cardPurchaseSchema = z.object({
   firstCycleKey: monthKey,
   settledInstallments: z.number().int().min(0),
   origin: z.literal('existing').optional(),
+  kind: z.literal('statement-balance').optional(),
+  includedInStatementBalance: z.boolean().optional(),
   createdAt: z.string(),
 });
 
@@ -118,6 +126,7 @@ const statementPaymentSchema = z.object({
   cycleId: z.string().min(1),
   statementAmount: cents.min(0),
   paidAmount: cents.min(0),
+  charges: cents.min(0),
   paidAt: isoDate,
 });
 

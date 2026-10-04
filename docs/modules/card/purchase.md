@@ -18,7 +18,7 @@ symbols: [addCardPurchase, buildCardPurchase, calculateFirstCycleKey, statementK
 adrs: [ADR-014, ADR-017]
 tests: [src/domain/financial/credit-card.test.ts, src/application/card.use-cases.test.ts, src/application/financial-vision.test.ts, src/screens/screens.test.tsx]
 business_rules: [BR-FIN-005, BR-FIN-019, BR-FIN-020, BR-FIN-025, BR-FIN-026, BR-FIN-030]
-last_verified_commit: c47cf18+T-025r4
+last_verified_commit: bfe9de6+T-028
 ---
 
 # Compra parcelada no crédito
@@ -28,7 +28,8 @@ Specs: [SPEC-013](../../../specs/SPEC-013-cartoes-de-credito.md), [SPEC-016](../
 - **Formulário:** "Forma de pagamento" = **À vista** ou **Cartão de crédito**; no crédito pede cartão (só
   **ativos**) e parcelas (1–48) e rotula o valor como "Valor total (com juros)". Mostra "Nx de R$ …", a fatura
   e o vencimento da 1ª parcela. Compra acima do "Limite disponível do cartão" mostra o aviso (`CardLimitNotice`) e pede confirmação
-  (`confirmCardLimit`) — **avisa e permite**, nunca bloqueia.
+  (`confirmCardLimit`: alerta "Passa do limite do cartão" com quanto excede, `calculateLimitExcess`, e os botões
+  "Cancelar" / **"Registrar mesmo assim"**) — **avisa e permite**, nunca bloqueia.
 - **Fatura (BR-FIN-025):** primeiro fechamento em ou depois da data (no dia do fechamento = mesma fatura);
   chave `yyyy-MM` do mês de fechamento (`statementKeyForDate`). Vencimento = próximo `dueDay` depois do
   fechamento (`statementDueDate`: mesmo mês se `dueDay > closingDay`; senão, mês seguinte).
@@ -37,12 +38,14 @@ Specs: [SPEC-013](../../../specs/SPEC-013-cartoes-de-credito.md), [SPEC-016](../
   gravadas na compra; a parcela *n* fica em `chave + (n − 1)` meses (`listInstallments`), atravessando anos.
 - **Validações (`buildCardPurchase`):** configuração e ciclo ativo; cartão vivo e ativo; descrição; valor > 0;
   data **dentro do ciclo ativo** (compras anteriores entram pela [situação inicial](existing-debt.md));
-  compra retroativa em fatura **já paga e fechada** é recusada; se o fechamento foi aumentado depois do pagamento
+  compra retroativa em fatura **fechada com lançamento** (pagamento, mesmo parcial, ou encargo) é recusada; se o fechamento foi aumentado depois do lançamento
   e a fatura paga ainda está "aberta" pelo dia novo, a compra vai para a fatura seguinte (BR-FIN-028). Compras feitas no app não têm `origin` (só a situação inicial grava
   `origin = 'existing'`).
-- **Saldo:** `initialAvailableAmount` do ciclo = base − dívida − parcelas do ciclo − juros de faturas do ciclo.
+- **Saldo:** `initialAvailableAmount` do ciclo = base − dívida − parcelas do ciclo − encargos de faturas lançados no
+  ciclo − restante de faturas parciais transportado (BR-FIN-005/034).
   É recalculado ao registrar/editar/excluir compra, ao salvar a configuração e ao abrir cada ciclo.
-- **Limite:** a compra compromete o valor total na hora (todas as parcelas em faturas não pagas).
+- **Limite:** a compra compromete o valor total na hora (todas as parcelas); cada pagamento de fatura libera só o
+  que amortizou (BR-FIN-026). Acima do disponível: alerta forte + confirmação (`calculateLimitExcess`).
 - A compra não vira gasto diário (BR-FIN-030): é um compromisso do ciclo do vencimento. Não aparece na lista
   de gastos; aparece em Cartões, nas faturas e nos próximos compromissos do Hoje.
 - **Limitação conhecida:** num ciclo antecipado ("Já recebi"), fatura com vencimento entre o início antecipado e o

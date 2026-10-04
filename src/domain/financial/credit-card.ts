@@ -39,6 +39,16 @@ export type CardPurchase = {
   settledInstallments: number;
   /** `existing` = cadastrada na situação inicial (BR-FIN-027); ausente = compra feita no app. */
   origin?: 'existing';
+  /**
+   * `statement-balance` = total da fatura informado na situação inicial: é a fonte de verdade
+   * daquela fatura (BR-FIN-032). Ausente = compra comum.
+   */
+  kind?: 'statement-balance';
+  /**
+   * Situação inicial: a parcela atual (a 1ª não quitada) já está dentro do total informado da sua
+   * fatura. Ela só compõe o total, sem somar de novo (BR-FIN-032).
+   */
+  includedInStatementBalance?: boolean;
   createdAt: string;
 };
 
@@ -46,39 +56,59 @@ export type CardInstallment = {
   purchase: CardPurchase;
   /** 1-based. */
   number: number;
+  /** Valor que pesa no orçamento e no limite (0 quando já incluída no total informado). */
   amount: MoneyCents;
+  /** Valor nominal da parcela. */
+  nominalAmount: MoneyCents;
+  /** Parcela que só compõe o total informado da fatura (BR-FIN-032). */
+  includedInBalance: boolean;
   statementKey: string;
   cycleKey: string;
 };
 
-/** Pagamento de uma fatura (BR-FIN-026). Libera o limite; juros por atraso pesam no ciclo ativo. */
+/**
+ * Lançamento numa fatura (BR-FIN-033): pagamento (`paidAmount`) e/ou encargos reconhecidos
+ * (`charges`: juros, multa). O pagamento amortiza a fatura e libera o limite; encargos pesam no
+ * orçamento do ciclo em que são registrados. Uma fatura pode ter vários lançamentos.
+ */
 export type StatementPayment = {
   id: string;
   cardId: string;
-  /** Fatura paga: `yyyy-MM` do mês de fechamento. */
+  /** Fatura: `yyyy-MM` do mês de fechamento. */
   statementKey: string;
-  /** Ciclo ativo no momento do pagamento (recebe os juros). */
+  /** Ciclo ativo no momento do lançamento (recebe os encargos). */
   cycleId: string;
-  /** Valor da fatura no momento do pagamento. */
+  /** Valor da fatura no momento do lançamento (informativo). */
   statementAmount: MoneyCents;
-  /** Valor efetivamente pago (≥ valor da fatura). */
+  /** Valor pago neste lançamento (pode ser parcial; 0 = só encargos). */
   paidAmount: MoneyCents;
-  /** Data do pagamento (yyyy-MM-dd). */
+  /** Juros/multa reconhecidos neste lançamento. */
+  charges: MoneyCents;
+  /** Data do lançamento (yyyy-MM-dd). */
   paidAt: string;
 };
 
-export type StatementStatus = 'open' | 'closed' | 'overdue' | 'paid';
+export type StatementStatus = 'open' | 'closed' | 'overdue' | 'partial' | 'paid';
 
-/** Fatura derivada das compras: nunca é gravada, só o pagamento é (BR-FIN-025). */
+/** Fatura derivada das compras: nunca é gravada, só os lançamentos são (BR-FIN-025). */
 export type CardStatement = {
   cardId: string;
   key: string;
   closingDate: string;
   dueDate: string;
+  /** Principal da fatura: soma das parcelas que pesam (total informado + itens não incluídos). */
   amount: MoneyCents;
   installments: CardInstallment[];
+  /** Total informado na situação inicial, se houver (BR-FIN-032). */
+  knownTotal: MoneyCents | null;
+  /** Encargos reconhecidos. */
+  charges: MoneyCents;
+  /** Total pago. */
+  paid: MoneyCents;
+  /** Ainda a pagar: principal + encargos − pago (nunca negativo). */
+  remaining: MoneyCents;
   status: StatementStatus;
-  payment: StatementPayment | null;
+  payments: StatementPayment[];
 };
 
 export type CardLimitUsage = {
@@ -193,15 +223,43 @@ export function calculateFirstCycleKey(
 // Parcelas
 // ---------------------------------------------------------------------------
 
-/** Todas as parcelas da compra, com fatura e ciclo de cada uma. */
+/** Todas as parcelas da compra, com fatura e ciclo de cada uma (valores nominais). */
 export function listInstallments(purchase: CardPurchase): CardInstallment[] {
   return splitInstallments(purchase.totalAmount, purchase.installments).map((amount, index) => ({
     purchase,
     number: index + 1,
     amount,
+    nominalAmount: amount,
+    includedInBalance: false,
     statementKey: addCycleKeys(purchase.firstStatementKey, index),
     cycleKey: addCycleKeys(purchase.firstCycleKey, index),
   }));
+}
+
+const balanceKey = (cardId: string, statementKey: string) => `${cardId}|${statementKey}`;
+
+/**
+ * BR-FIN-032: parcelas em aberto com o valor que efetivamente pesa. A parcela atual de um
+ * parcelamento marcado como "já incluído" conta zero enquanto existir o total informado da sua
+ * fatura; sem o total, volta a contar (nada some, nada duplica).
+ */
+export function listEffectiveInstallments(purchases: CardPurchase[]): CardInstallment[] {
+  const balances = new Set(
+    purchases
+      .filter((purchase) => purchase.kind === 'statement-balance')
+      .map((purchase) => balanceKey(purchase.cardId, purchase.firstStatementKey)),
+  );
+
+  return purchases.flatMap((purchase) =>
+    listOpenInstallments(purchase).map((installment) => {
+      const included =
+        purchase.includedInStatementBalance === true &&
+        installment.number === purchase.settledInstallments + 1 &&
+        balances.has(balanceKey(purchase.cardId, installment.statementKey));
+
+      return included ? { ...installment, amount: 0, includedInBalance: true } : installment;
+    }),
+  );
 }
 
 /** Parcelas que ainda não foram pagas fora do app (BR-FIN-027). */
@@ -223,15 +281,14 @@ export function calculateInstallmentForCycle(
   return listInstallments(purchase)[index] ?? null;
 }
 
+/** Parcelas que pesam no ciclo, com o valor efetivo (BR-FIN-025/032). */
 export function calculateCardInstallmentsForCycle(
   purchases: CardPurchase[],
   cycleKey: string,
 ): CardInstallment[] {
-  return purchases.flatMap((purchase) => {
-    const installment = calculateInstallmentForCycle(purchase, cycleKey);
-
-    return installment ? [installment] : [];
-  });
+  return listEffectiveInstallments(purchases).filter(
+    (installment) => installment.cycleKey === cycleKey,
+  );
 }
 
 export function calculateCardChargesForCycle(
@@ -261,11 +318,11 @@ export function lastInstallmentCycleKey(purchase: CardPurchase): string {
 function statementStatus(
   key: string,
   card: Pick<CreditCard, 'closingDay' | 'dueDay'>,
-  payment: StatementPayment | null,
+  totals: { paid: MoneyCents; remaining: MoneyCents },
   today: Date,
 ): StatementStatus {
-  if (payment) {
-    return 'paid';
+  if (totals.paid > 0) {
+    return totals.remaining > 0 ? 'partial' : 'paid';
   }
 
   const day = startOfDay(today);
@@ -277,6 +334,23 @@ function statementStatus(
   return isAfter(day, statementDueDate(key, card)) ? 'overdue' : 'closed';
 }
 
+/** Totais de uma fatura a partir das parcelas efetivas e dos lançamentos (BR-FIN-033). */
+export function summarizeStatement(
+  amount: MoneyCents,
+  payments: Pick<StatementPayment, 'paidAmount' | 'charges'>[],
+): { charges: MoneyCents; paid: MoneyCents; remaining: MoneyCents; amortized: MoneyCents } {
+  const charges = payments.reduce((total, payment) => total + payment.charges, 0);
+  const paid = payments.reduce((total, payment) => total + payment.paidAmount, 0);
+
+  return {
+    charges,
+    paid,
+    remaining: Math.max(0, amount + charges - paid),
+    // O pagamento amortiza primeiro o principal: é ele que libera o limite (BR-FIN-026).
+    amortized: Math.min(paid, amount),
+  };
+}
+
 /** Faturas do cartão com parcelas em aberto, em ordem de fechamento. */
 export function buildCardStatements(
   card: CreditCard,
@@ -286,32 +360,40 @@ export function buildCardStatements(
 ): CardStatement[] {
   const byKey = new Map<string, CardInstallment[]>();
 
-  for (const purchase of purchases) {
-    if (purchase.cardId !== card.id) continue;
-
-    for (const installment of listOpenInstallments(purchase)) {
-      byKey.set(installment.statementKey, [
-        ...(byKey.get(installment.statementKey) ?? []),
-        installment,
-      ]);
-    }
+  for (const installment of listEffectiveInstallments(
+    purchases.filter((purchase) => purchase.cardId === card.id),
+  )) {
+    byKey.set(installment.statementKey, [
+      ...(byKey.get(installment.statementKey) ?? []),
+      installment,
+    ]);
   }
 
   return [...byKey.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([key, installments]) => {
-      const payment =
-        payments.find((item) => item.cardId === card.id && item.statementKey === key) ?? null;
+      const statementPayments = payments.filter(
+        (item) => item.cardId === card.id && item.statementKey === key,
+      );
+      const amount = installments.reduce((total, installment) => total + installment.amount, 0);
+      const totals = summarizeStatement(amount, statementPayments);
+      const balance = installments.find(
+        (installment) => installment.purchase.kind === 'statement-balance',
+      );
 
       return {
         cardId: card.id,
         key,
         closingDate: format(statementClosingDate(key, card.closingDay), 'yyyy-MM-dd'),
         dueDate: format(statementDueDate(key, card), 'yyyy-MM-dd'),
-        amount: installments.reduce((total, installment) => total + installment.amount, 0),
+        amount,
         installments,
-        status: statementStatus(key, card, payment, today),
-        payment,
+        knownTotal: balance ? balance.amount : null,
+        charges: totals.charges,
+        paid: totals.paid,
+        remaining: totals.remaining,
+        status: statementStatus(key, card, totals, today),
+        payments: statementPayments,
       };
     });
 }
@@ -322,22 +404,20 @@ export function currentStatementKey(card: Pick<CreditCard, 'closingDay'>, today:
 }
 
 /**
- * BR-FIN-026: o limite comprometido é a soma das parcelas em faturas ainda não pagas (inclusive
- * futuras). A compra compromete o valor total na hora; a fatura paga libera o limite.
+ * BR-FIN-026: o limite comprometido é a soma das parcelas que pesam (inclusive futuras) menos o que
+ * já foi amortizado em cada fatura. A compra compromete o valor total na hora; cada pagamento libera
+ * só o que amortizou (pagamento parcial libera parcial). Encargos não ocupam limite.
  */
 export function calculateCardLimitUsage(
   card: CreditCard,
   purchases: CardPurchase[],
   payments: StatementPayment[],
 ): CardLimitUsage {
-  const paid = new Set(
-    payments.filter((payment) => payment.cardId === card.id).map((payment) => payment.statementKey),
+  const committed = buildCardStatements(card, purchases, payments, new Date(0)).reduce(
+    (total, statement) =>
+      total + statement.amount - summarizeStatement(statement.amount, statement.payments).amortized,
+    0,
   );
-  const committed = purchases
-    .filter((purchase) => purchase.cardId === card.id)
-    .flatMap(listOpenInstallments)
-    .filter((installment) => !paid.has(installment.statementKey))
-    .reduce((total, installment) => total + installment.amount, 0);
 
   return {
     creditLimit: card.creditLimit,
@@ -346,14 +426,7 @@ export function calculateCardLimitUsage(
   };
 }
 
-/** Id do pagamento de uma fatura: um por cartão e fatura, igual em todos os aparelhos (BR-FIN-026). */
-export function statementPaymentId(cardId: string, statementKey: string): string {
-  return `statement-${cardId}-${statementKey}`;
-}
-
-/** Juros por atraso de uma fatura paga (BR-FIN-026). */
-export function calculateStatementInterest(
-  payment: Pick<StatementPayment, 'paidAmount' | 'statementAmount'>,
-): MoneyCents {
-  return Math.max(0, payment.paidAmount - payment.statementAmount);
+/** Quanto a compra excede o limite disponível (0 quando cabe ou sem limite informado). */
+export function calculateLimitExcess(available: MoneyCents | null, amount: MoneyCents): MoneyCents {
+  return available === null ? 0 : Math.max(0, amount - available);
 }

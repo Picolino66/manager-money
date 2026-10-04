@@ -16,7 +16,7 @@ import {
   receiveIncomeEarly,
   saveConfig,
 } from '../../application/cycle.use-cases';
-import { selectActiveMonth } from '../../application/selectors';
+import { selectActiveMonth, selectCardLimitUsage } from '../../application/selectors';
 import {
   countPendingChanges,
   createEmptyState,
@@ -409,11 +409,16 @@ describe('runSync (SPEC-006)', () => {
     expect(await b.sync()).toEqual({ ok: true });
     await a.sync();
 
+    // Dois lançamentos convergem nos dois aparelhos; o principal amortizado nunca passa da fatura.
     expect(
       server.store(USER).statement_payments.filter((row) => row.deleted_at === null),
-    ).toHaveLength(1);
-    expect(a.state.statementPayments.map((payment) => payment.id)).toEqual(
-      b.state.statementPayments.map((payment) => payment.id),
+    ).toHaveLength(2);
+    expect(selectCardLimitUsage(a.state, a.state.creditCards[0]!.id)?.committed).toBe(0);
+    expect(selectActiveMonth(a.state)?.initialAvailableAmount).toBe(
+      selectActiveMonth(b.state)?.initialAvailableAmount,
+    );
+    expect(a.state.statementPayments.map((payment) => payment.id).sort()).toEqual(
+      b.state.statementPayments.map((payment) => payment.id).sort(),
     );
   });
 

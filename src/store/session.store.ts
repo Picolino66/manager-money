@@ -63,7 +63,8 @@ function friendlyAuthError(message: string): string {
   if (/email not confirmed/i.test(message)) {
     return 'Confirme o cadastro pelo e-mail recebido e depois entre.';
   }
-  if (/rate|too many|seconds/i.test(message)) return 'Muitas tentativas. Aguarde um minuto e tente novamente.';
+  if (/rate|too many|seconds/i.test(message))
+    return 'Muitas tentativas. Aguarde um minuto e tente novamente.';
   return 'Não foi possível concluir. Verifique a conexão e tente novamente.';
 }
 
@@ -215,9 +216,12 @@ export const useSessionStore = create<SessionState>((set, get) => {
         await remote.deleteAccount();
       } catch (error) {
         logger.event('account.delete', { ok: false });
-        throw new Error('Não foi possível excluir a conta agora. Nada foi apagado. Tente novamente.', {
-          cause: error,
-        });
+        throw new Error(
+          'Não foi possível excluir a conta agora. Nada foi apagado. Tente novamente.',
+          {
+            cause: error,
+          },
+        );
       }
 
       logger.event('account.delete', { ok: true });

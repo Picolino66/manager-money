@@ -8,7 +8,7 @@ import {
   MoneyCents,
 } from '../domain/financial/financial.types';
 
-export const STATE_SCHEMA_VERSION = 7;
+export const STATE_SCHEMA_VERSION = 8;
 
 /** Metadados de sincronização presentes em todo registro persistido (ADR-004). */
 export type SyncMeta = {

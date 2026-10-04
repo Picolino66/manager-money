@@ -62,7 +62,7 @@ describe('localStore (SPEC-004)', () => {
     expect(result).toEqual({ status: 'ok', state: createEmptyState(), migrated: false });
   });
 
-  it('migra v1 → v7 sem perda, incluindo formatos legados', async () => {
+  it('migra v1 → v8 sem perda, incluindo formatos legados', async () => {
     await AsyncStorage.multiSet([
       [LEGACY_STORAGE_KEYS.config, JSON.stringify(legacyConfig)],
       [LEGACY_STORAGE_KEYS.months, JSON.stringify([legacyCalendarMonth])],
@@ -94,7 +94,7 @@ describe('localStore (SPEC-004)', () => {
     // Chaves v1 removidas somente após gravar a v2.
     expect(await AsyncStorage.getItem(LEGACY_STORAGE_KEYS.config)).toBeNull();
     expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(
-      7,
+      8,
     );
 
     const reloaded = await localStore.load();
@@ -128,7 +128,7 @@ describe('localStore (SPEC-004)', () => {
     ]);
   });
 
-  it('migra documento v2 → v7: renda vira fonte e settings fica pendente de envio', async () => {
+  it('migra documento v2 → v8: renda vira fonte e settings fica pendente de envio', async () => {
     const v2 = {
       ...createEmptyState(),
       schemaVersion: 2,
@@ -148,18 +148,18 @@ describe('localStore (SPEC-004)', () => {
     if (result.status !== 'ok') throw new Error('falhou');
 
     expect(result.migrated).toBe(true);
-    expect(result.state.schemaVersion).toBe(7);
+    expect(result.state.schemaVersion).toBe(8);
     expect(result.state.settings).toMatchObject({
       monthlyIncome: 880000,
       incomeSources: [{ id: 'income-legacy', name: 'Renda', amount: 880000, payday: 7 }],
       dirty: true,
     });
     expect(JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').schemaVersion).toBe(
-      7,
+      8,
     );
   });
 
-  it('migra v3 → v7: acrescenta cartões, compras, pagamentos e rendas vazios e os cursores', async () => {
+  it('migra v3 → v8: acrescenta cartões, compras, pagamentos e rendas vazios e os cursores', async () => {
     const { creditCards, cardPurchases, ...rest } = createEmptyState();
     const { credit_cards, card_purchases, ...cursors } = rest.sync.cursors;
     void creditCards;
@@ -180,7 +180,7 @@ describe('localStore (SPEC-004)', () => {
 
     expect(result.migrated).toBe(true);
     expect(result.state).toMatchObject({
-      schemaVersion: 7,
+      schemaVersion: 8,
       creditCards: [],
       cardPurchases: [],
       fixedPayments: [],
@@ -197,7 +197,7 @@ describe('localStore (SPEC-004)', () => {
     });
   });
 
-  it('migra v4 → v7: v4→v5 devolve as fixas e o recálculo ao carregar volta a reservá-las (BR-FIN-004)', async () => {
+  it('migra v4 → v8: v4→v5 devolve as fixas e o recálculo ao carregar volta a reservá-las (BR-FIN-004)', async () => {
     const ctx = { now: new Date(2026, 9, 10, 12), newId: (prefix: string) => `${prefix}-1` };
     const config = {
       incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 7 }],
@@ -257,7 +257,7 @@ describe('localStore (SPEC-004)', () => {
 
     expect(result.migrated).toBe(true);
     expect(result.state).toMatchObject({
-      schemaVersion: 7,
+      schemaVersion: 8,
       fixedPayments: [],
       extraIncomes: [],
       sync: { cursors: { fixed_payments: null, extra_incomes: null } },
@@ -281,7 +281,7 @@ describe('localStore (SPEC-004)', () => {
     if (result.status === 'ok') expect(result.state.cycles).toEqual([]);
   });
 
-  it('migra v5 → v7: cada fonte herda o dia de pagamento global e settings fica pendente (BR-FIN-024)', async () => {
+  it('migra v5 → v8: cada fonte herda o dia de pagamento global e settings fica pendente (BR-FIN-024)', async () => {
     const v5 = {
       ...createEmptyState(),
       schemaVersion: 5,
@@ -305,7 +305,7 @@ describe('localStore (SPEC-004)', () => {
     if (result.status !== 'ok') throw new Error('falhou');
 
     expect(result.migrated).toBe(true);
-    expect(result.state.schemaVersion).toBe(7);
+    expect(result.state.schemaVersion).toBe(8);
     expect(result.state.settings).toMatchObject({
       payday: 15,
       incomeSources: [
@@ -316,7 +316,7 @@ describe('localStore (SPEC-004)', () => {
     });
   });
 
-  it('migra v6 → v7: cartões ganham limite e ativo; compras ganham fatura sem mudar o ciclo (ADR-017)', async () => {
+  it('migra v6 → v8: cartões ganham limite e ativo; compras ganham fatura sem mudar o ciclo (ADR-017)', async () => {
     const meta = { updatedAt: '2026-10-01T00:00:00.000Z', deletedAt: null, dirty: false };
     const { statementPayments, ...rest } = createEmptyState();
     const { statement_payments, ...cursors } = rest.sync.cursors;
@@ -373,7 +373,7 @@ describe('localStore (SPEC-004)', () => {
     if (result.status !== 'ok') throw new Error('falhou');
 
     expect(result.state).toMatchObject({
-      schemaVersion: 7,
+      schemaVersion: 8,
       creditCards: [{ id: 'k1', creditLimit: null, active: true, dirty: false }],
       // 22/10 é depois do fechamento (20): fatura de novembro; o ciclo gravado não muda.
       cardPurchases: [
@@ -413,7 +413,7 @@ describe('localStore (SPEC-004)', () => {
     });
   });
 
-  it('migra v6 → v7 sem mexer no saldo; o recálculo reserva só as fixas vivas pendentes no ciclo ativo (BR-FIN-004)', async () => {
+  it('migra v6 → v8 sem mexer no saldo; o recálculo reserva só as fixas vivas pendentes no ciclo ativo (BR-FIN-004)', async () => {
     const meta = { updatedAt: '2026-10-01T00:00:00.000Z', deletedAt: null, dirty: false };
     const { statementPayments, ...rest } = createEmptyState();
     const { statement_payments, ...cursors } = rest.sync.cursors;

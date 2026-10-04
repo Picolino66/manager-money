@@ -12,9 +12,9 @@ code:
   - src/domain/financial/financial.calculations.ts
   - src/screens/DashboardScreen.tsx
 symbols: [receiveIncomeEarly, canReceiveIncomeEarlyNow, canReceiveIncomeEarlyForCycle]
-business_rules: [BR-FIN-003, BR-FIN-016]
-tests: [src/application/cycle.use-cases.test.ts]
-last_verified_commit: c47cf18+T-025
+business_rules: [BR-FIN-003, BR-FIN-016, BR-FIN-034]
+tests: [src/application/cycle.use-cases.test.ts, src/application/card-rules.test.ts]
+last_verified_commit: bfe9de6+T-028
 ---
 
 # Recebimento antecipado
@@ -22,3 +22,5 @@ last_verified_commit: c47cf18+T-025
 - Botão visível só quando BR-FIN-016 é satisfeita: hoje < payday, ciclo ativo termina antes do
   pagamento deste mês e começou antes de hoje — impede o duplo acionamento (DEF-001).
 - O ciclo fechado tem `endDate` = véspera; gastos com data ≥ hoje migram para o novo ciclo.
+- Restante de faturas parciais (BR-FIN-034): como em [close.md](close.md), `selectStatementsToCarry` soma o
+  restante ao `finalBalance` do ciclo fechado (`carriedStatements`) e o novo ciclo nasce com `carriedStatementDebt`.

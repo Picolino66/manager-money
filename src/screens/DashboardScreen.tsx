@@ -27,6 +27,8 @@ import { PayFixedExpenseInput } from '../application/payment.use-cases';
 import {
   selectActiveCreditCards,
   selectCardLimitUsage,
+  selectCardStatements,
+  selectCreditCards,
   selectCycleAdjustments,
   selectCycleProjections,
   selectCyclePayments,
@@ -66,6 +68,14 @@ export function DashboardScreen() {
     doc.cardPurchases.filter(isLive).map((purchase) => [purchase.id, purchase.installments]),
   );
   const commitments = activeMonth ? selectUpcomingCommitments(doc, today) : [];
+  // Faturas com pagamento parcial: o compromisso mostra o restante (BR-FIN-033).
+  const partialStatementIds = new Set(
+    selectCreditCards(doc).flatMap((card) =>
+      selectCardStatements(doc, card.id, today)
+        .filter((statement) => statement.status === 'partial')
+        .map((statement) => `${card.id}:${statement.key}`),
+    ),
+  );
   const projections = selectCycleProjections(doc, today, 3);
   const activeCards = selectActiveCreditCards(doc);
   const cardLimits = Object.fromEntries(
@@ -263,7 +273,10 @@ export function DashboardScreen() {
         <MetricRow label="Meta de economia (guardada)" value={formatCurrency(config.savingGoal)} />
       </Card>
 
-      <UpcomingCommitmentsCard commitments={commitments} />
+      <UpcomingCommitmentsCard
+        commitments={commitments}
+        partialStatementIds={partialStatementIds}
+      />
 
       <FixedExpensesCard
         expenses={config.fixedExpenses}

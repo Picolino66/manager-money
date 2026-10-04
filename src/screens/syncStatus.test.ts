@@ -1,6 +1,12 @@
 import { describeSyncStatus } from './syncStatus';
 
-const base = { sessionStatus: 'signed-in' as const, isSyncing: false, pendingChanges: 0, lastSyncAt: null, lastError: null };
+const base = {
+  sessionStatus: 'signed-in' as const,
+  isSyncing: false,
+  pendingChanges: 0,
+  lastSyncAt: null,
+  lastError: null,
+};
 
 describe('describeSyncStatus', () => {
   it.each([
@@ -18,6 +24,8 @@ describe('describeSyncStatus', () => {
   });
 
   it('mostra o horário da última sincronização', () => {
-    expect(describeSyncStatus({ ...base, lastSyncAt: '2026-10-10T14:32:00' })).toBe('Sincronizado às 14:32');
+    expect(describeSyncStatus({ ...base, lastSyncAt: '2026-10-10T14:32:00' })).toBe(
+      'Sincronizado às 14:32',
+    );
   });
 });

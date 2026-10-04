@@ -20,7 +20,8 @@ type CyclePlanCardProps = {
 
 /**
  * Como o saldo do ciclo foi montado (BR-FIN-004/005): renda − fixas reservadas (pagas à vista +
- * pendentes) − meta − faturas do ciclo − juros de atraso − dívida herdada. Nasce recolhido.
+ * pendentes) − meta − faturas do ciclo − juros/multas de faturas − fatura pendente do ciclo
+ * anterior (BR-FIN-034) − dívida herdada. Nasce recolhido.
  */
 export function CyclePlanCard({
   monthlyIncome,
@@ -75,9 +76,16 @@ export function CyclePlanCard({
           />
           {adjustments.statementInterest > 0 ? (
             <MetricRow
-              label="− Juros de faturas atrasadas"
+              label="− Juros/multas de faturas"
               tone="negative"
               value={formatCurrency(adjustments.statementInterest)}
+            />
+          ) : null}
+          {adjustments.carriedStatementDebt > 0 ? (
+            <MetricRow
+              label="− Fatura pendente do ciclo anterior"
+              tone="negative"
+              value={formatCurrency(adjustments.carriedStatementDebt)}
             />
           ) : null}
           {previousMonthDebt > 0 ? (

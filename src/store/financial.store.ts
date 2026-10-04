@@ -48,6 +48,7 @@ type FinancialState = {
   updateCardPurchase: (purchaseId: string, input: cardUseCases.CardPurchaseUpdate) => Promise<void>;
   deleteCardPurchase: (purchaseId: string) => Promise<void>;
   payStatement: (input: cardUseCases.PayStatementInput) => Promise<void>;
+  addStatementCharges: (input: cardUseCases.StatementChargesInput) => Promise<void>;
   undoStatementPayment: (paymentId: string) => Promise<void>;
   payFixedExpense: (input: paymentUseCases.PayFixedExpenseInput) => Promise<void>;
   undoFixedPayment: (paymentId: string) => Promise<void>;
@@ -173,6 +174,8 @@ export const useFinancialStore = create<FinancialState>((set, get) => {
       run((doc, ctx) => cardUseCases.updateCardPurchase(doc, id, input, ctx)),
     deleteCardPurchase: (id) => run((doc, ctx) => cardUseCases.deleteCardPurchase(doc, id, ctx)),
     payStatement: (input) => run((doc, ctx) => cardUseCases.payStatement(doc, input, ctx)),
+    addStatementCharges: (input) =>
+      run((doc, ctx) => cardUseCases.addStatementCharges(doc, input, ctx)),
     undoStatementPayment: (id) =>
       run((doc, ctx) => cardUseCases.undoStatementPayment(doc, id, ctx)),
     payFixedExpense: (input) => run((doc, ctx) => paymentUseCases.payFixedExpense(doc, input, ctx)),

@@ -1,6 +1,9 @@
 # ADR-017 — Faturas pelo vencimento, limite do cartão e situação inicial
 
 - **Status:** ACCEPTED · **Fase:** F3 (evolução) · **Data:** 2026-10-03
+- **Atualizada por:** [ADR-018](ADR-018-pagamento-parcial-e-total-da-fatura.md) (vários lançamentos por fatura,
+  pagamento parcial, encargos separados e restante transportado; substitui o item 3 e o id determinístico / índice
+  único do item 8).
 - **Substitui em parte:** [ADR-014](ADR-014-cartoes-de-credito.md) ("o vencimento é informativo; o ciclo vem do
   fechamento") e [ADR-015](ADR-015-pagamento-de-fixas-e-renda-avulsa.md) ("fixa pendente não reserva saldo").
 - **Atualiza:** [ADR-003](ADR-003-persistencia-local.md) (documento v7), [ADR-004](ADR-004-sincronizacao.md)

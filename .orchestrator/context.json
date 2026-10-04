@@ -98,7 +98,8 @@
       "ADR-010",
       "ADR-011",
       "ADR-012",
-      "ADR-017"
+      "ADR-017",
+      "ADR-018"
     ],
     "overrides": [
       {
@@ -123,6 +124,12 @@
         "section": "contracts.schemas / BR-FIN-004",
         "change": "documento local v7 + tabela statement_payments (contrato v1 aditivo); fatura pelo vencimento (substitui parte da ADR-014); fixas pendentes reservadas (sobrepõe parte da ADR-015); specs SPEC-016, SPEC-017, SPEC-018",
         "date": "2026-10-03"
+      },
+      {
+        "adr": "ADR-018",
+        "section": "contracts.schemas / BR-FIN-026",
+        "change": "documento local v8 + colunas card_purchases.kind/included_in_balance, statement_payments.charges (índice único removido; vários lançamentos por fatura), cycles.carried_statement_debt/carried_statements (contrato v1 aditivo); pagamento parcial com restante transportado ao próximo ciclo, encargos separados, total informado da fatura e invariantes INV-01..INV-10; spec SPEC-019",
+        "date": "2026-10-04"
       }
     ]
   },

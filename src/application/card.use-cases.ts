@@ -8,6 +8,7 @@ import {
   cycleKeyOffset,
   firstCountedCycleKey,
   isMonthKey,
+  listEffectiveInstallments,
   lastInstallmentCycleKey,
   listOpenInstallments,
   MAX_CARD_DAY,
@@ -17,7 +18,6 @@ import {
   statementCycleKey,
   statementDueDate,
   statementKeyForDate,
-  statementPaymentId,
 } from '../domain/financial/credit-card';
 import { normalizeCategory } from '../domain/financial/financial.calculations';
 import { FinancialConfig, isActive } from '../domain/financial/financial.types';
@@ -68,8 +68,9 @@ export type CardPurchaseInput = {
 };
 
 /**
- * Situação inicial (BR-FIN-027): fatura em aberto ou parcelamento que já existia antes do app.
- * Uma fatura em aberto é `totalInstallments = remainingInstallments = 1`.
+ * Situação inicial (BR-FIN-027/032): total da fatura em aberto ou parcelamento que já existia
+ * antes do app. O total da fatura é `statementBalance: true` com `totalInstallments =
+ * remainingInstallments = 1`.
  */
 export type ExistingCardDebtInput = {
   cardId: string;
@@ -81,6 +82,10 @@ export type ExistingCardDebtInput = {
   remainingInstallments: number;
   /** Fatura (`yyyy-MM` do fechamento) da próxima parcela a pagar; ainda não vencida. */
   nextStatementKey: string;
+  /** Total da fatura como o banco mostra: fonte de verdade daquela fatura (BR-FIN-032). */
+  statementBalance?: boolean;
+  /** Parcelamento: a parcela atual já está dentro do total informado da fatura (BR-FIN-032). */
+  includedInStatementBalance?: boolean;
 };
 
 export type CardPurchaseUpdate = Omit<CardPurchaseInput, 'cardId'>;
@@ -88,8 +93,18 @@ export type CardPurchaseUpdate = Omit<CardPurchaseInput, 'cardId'>;
 export type PayStatementInput = {
   cardId: string;
   statementKey: string;
-  /** Valor pago, obrigatório depois do vencimento (≥ valor da fatura; a diferença são juros). */
+  /**
+   * Valor pago. Ausente = quita o que falta (só até o vencimento). Menor que o restante = pagamento
+   * parcial; maior = a diferença são encargos (BR-FIN-033).
+   */
   paidAmount?: number;
+};
+
+export type StatementChargesInput = {
+  cardId: string;
+  statementKey: string;
+  /** Juros/multa informados pelo banco, em centavos. */
+  amount: number;
 };
 
 /** Quantas faturas à frente a situação inicial aceita para a próxima parcela. */
@@ -164,6 +179,7 @@ function findLivePurchase(state: LocalState, purchaseId: string): CardPurchaseRe
   return purchase;
 }
 
+/** Fatura com algum lançamento (pagamento ou encargo): não recebe compras retroativas. */
 function isStatementPaid(state: LocalState, cardId: string, statementKey: string): boolean {
   return selectStatementPayments(state).some(
     (payment) => payment.cardId === cardId && payment.statementKey === statementKey,
@@ -433,6 +449,69 @@ export function addExistingCardDebt(
     );
   }
 
+  const balances = state.cardPurchases.filter(
+    (purchase) =>
+      isLive(purchase) &&
+      purchase.cardId === card.id &&
+      purchase.kind === 'statement-balance' &&
+      purchase.firstStatementKey === input.nextStatementKey,
+  );
+
+  if (input.statementBalance) {
+    if (input.totalInstallments !== 1 || input.remainingInstallments !== 1) {
+      throw new DomainError('O total da fatura é um valor único.');
+    }
+
+    if (balances.length > 0) {
+      throw new DomainError(
+        `Já existe um total informado para a fatura ${formatMonthKey(input.nextStatementKey)}.`,
+      );
+    }
+
+    // Parcelas já marcadas como incluídas voltam a compor este total: ele precisa cobri-las.
+    const pendingIncluded = state.cardPurchases
+      .filter(
+        (purchase) =>
+          isLive(purchase) &&
+          purchase.cardId === card.id &&
+          purchase.includedInStatementBalance === true,
+      )
+      .flatMap((purchase) => listOpenInstallments(purchase).slice(0, 1))
+      .filter((installment) => installment.statementKey === input.nextStatementKey)
+      .reduce((total, installment) => total + installment.nominalAmount, 0);
+
+    if (pendingIncluded > input.installmentAmount) {
+      throw new DomainError(
+        'As parcelas incluídas nesta fatura somam mais que o total informado. Confira os valores.',
+      );
+    }
+  }
+
+  // BR-FIN-032: a parcela incluída só compõe o total; os itens incluídos não podem passar dele.
+  const included = !input.statementBalance && input.includedInStatementBalance === true;
+  const balance = balances[0];
+
+  if (included && !balance) {
+    throw new DomainError('Informe antes o total desta fatura para incluir a parcela nele.');
+  }
+
+  if (included && balance) {
+    const alreadyIncluded = listEffectiveInstallments(
+      state.cardPurchases.filter((purchase) => isLive(purchase) && purchase.cardId === card.id),
+    )
+      .filter(
+        (installment) =>
+          installment.includedInBalance && installment.statementKey === input.nextStatementKey,
+      )
+      .reduce((total, installment) => total + installment.nominalAmount, 0);
+
+    if (alreadyIncluded + input.installmentAmount > balance.totalAmount) {
+      throw new DomainError(
+        'As parcelas incluídas somam mais que o total informado da fatura. Confira os valores.',
+      );
+    }
+  }
+
   const settled = input.totalInstallments - input.remainingInstallments;
   const nextCycleKey = statementCycleKey(input.nextStatementKey, card, config.payday);
   const activeKey = referenceCycleKey(state, ctx.now);
@@ -449,6 +528,8 @@ export function addExistingCardDebt(
     firstCycleKey: addCycleKeys(nextCycleKey > activeKey ? nextCycleKey : activeKey, -settled),
     settledInstallments: settled,
     origin: 'existing',
+    ...(input.statementBalance ? { kind: 'statement-balance' as const } : {}),
+    ...(included ? { includedInStatementBalance: true } : {}),
     createdAt: ctx.now.toISOString(),
     updatedAt: ctx.now.toISOString(),
     deletedAt: null,
@@ -596,60 +677,39 @@ export function deleteCardPurchase(
 // Faturas (BR-FIN-026)
 // ---------------------------------------------------------------------------
 
-/**
- * BR-FIN-026: marca a fatura como paga e libera o limite. Só vale para fatura já fechada. Até o
- * vencimento, o valor pago é o da fatura; depois, o usuário informa o valor pago e a diferença
- * (juros) pesa no ciclo ativo.
- */
-export function payStatement(
-  state: LocalState,
-  input: PayStatementInput,
-  ctx: UseCaseContext,
-): LocalState {
-  const cycle = requireActiveCycle(
-    state,
-    'Nenhum ciclo ativo para registrar o pagamento da fatura.',
-  );
-  const card = findLiveCard(state, input.cardId);
-  const statement = selectCardStatements(state, card.id, ctx.now).find(
-    (item) => item.key === input.statementKey,
+function findPayableStatement(state: LocalState, cardId: string, statementKey: string, now: Date) {
+  const card = findLiveCard(state, cardId);
+  const statement = selectCardStatements(state, card.id, now).find(
+    (item) => item.key === statementKey,
   );
 
   if (!statement || statement.amount <= 0) {
     throw new DomainError('Fatura não encontrada.');
   }
 
-  if (statement.status === 'paid') {
-    throw new DomainError('Esta fatura já foi paga.');
-  }
-
   if (statement.status === 'open') {
     throw new DomainError('A fatura ainda está aberta. Ela pode ser paga depois do fechamento.');
   }
 
-  let paidAmount = statement.amount;
+  return { card, statement };
+}
 
-  if (statement.status === 'overdue') {
-    if (input.paidAmount === undefined) {
-      throw new DomainError('A fatura venceu. Informe o valor pago, com juros.');
-    }
-
-    if (!Number.isInteger(input.paidAmount) || input.paidAmount < statement.amount) {
-      throw new DomainError('O valor pago não pode ser menor que o valor da fatura.');
-    }
-
-    paidAmount = input.paidAmount;
-  }
-
-  // Id determinístico: dois aparelhos que pagam a mesma fatura convergem no mesmo registro.
-  const id = statementPaymentId(card.id, statement.key);
-  const payment: StatementPaymentRecord = {
-    id,
-    cardId: card.id,
-    statementKey: statement.key,
+function addStatementEntry(
+  state: LocalState,
+  entry: Pick<
+    StatementPaymentRecord,
+    'cardId' | 'statementKey' | 'statementAmount' | 'paidAmount' | 'charges'
+  >,
+  ctx: UseCaseContext,
+): LocalState {
+  const cycle = requireActiveCycle(
+    state,
+    'Nenhum ciclo ativo para registrar o pagamento da fatura.',
+  );
+  const record: StatementPaymentRecord = {
+    id: ctx.newId('statement-payment'),
+    ...entry,
     cycleId: cycle.id,
-    statementAmount: statement.amount,
-    paidAmount,
     paidAt: toISODate(ctx.now),
     updatedAt: ctx.now.toISOString(),
     deletedAt: null,
@@ -657,15 +717,96 @@ export function payStatement(
   };
 
   return recalculateActiveCycleBalance(
+    { ...state, statementPayments: [...state.statementPayments, record] },
+    ctx,
+  );
+}
+
+/**
+ * BR-FIN-026/033: registra um pagamento da fatura (depois do fechamento). O principal já estava
+ * reservado no ciclo do vencimento, então pagar não desconta de novo: só libera o limite do que
+ * amortizou. Pagamento menor que o restante é parcial (o resto segue devido e é transportado ao
+ * fechar o ciclo, BR-FIN-034); maior que o restante reconhece a diferença como encargos, que pesam
+ * no ciclo ativo. Depois do vencimento o valor pago precisa ser informado.
+ */
+export function payStatement(
+  state: LocalState,
+  input: PayStatementInput,
+  ctx: UseCaseContext,
+): LocalState {
+  requireActiveCycle(state, 'Nenhum ciclo ativo para registrar o pagamento da fatura.');
+  const { card, statement } = findPayableStatement(
+    state,
+    input.cardId,
+    input.statementKey,
+    ctx.now,
+  );
+
+  if (statement.status === 'paid') {
+    throw new DomainError('Esta fatura já foi paga.');
+  }
+
+  const overdue = isAfter(startOfDay(ctx.now), startOfDay(parseISO(statement.dueDate)));
+
+  if (input.paidAmount === undefined && overdue) {
+    throw new DomainError('A fatura venceu. Informe o valor pago, com juros se houver.');
+  }
+
+  const paidAmount = input.paidAmount ?? statement.remaining;
+
+  if (!Number.isInteger(paidAmount) || paidAmount <= 0) {
+    throw new DomainError('Informe um valor pago maior que zero.');
+  }
+
+  return addStatementEntry(
+    state,
     {
-      ...state,
-      statementPayments: [...state.statementPayments.filter((record) => record.id !== id), payment],
+      cardId: card.id,
+      statementKey: statement.key,
+      statementAmount: statement.amount,
+      paidAmount,
+      charges: Math.max(0, paidAmount - statement.remaining),
     },
     ctx,
   );
 }
 
-/** Desfaz o pagamento de fatura feito no ciclo ativo; o limite volta a ficar comprometido. */
+/**
+ * BR-FIN-033: registra juros/multa informados pelo banco numa fatura já fechada. Aumentam o que
+ * falta pagar e pesam no orçamento do ciclo ativo (o ciclo em que foram reconhecidos).
+ */
+export function addStatementCharges(
+  state: LocalState,
+  input: StatementChargesInput,
+  ctx: UseCaseContext,
+): LocalState {
+  requireActiveCycle(state, 'Nenhum ciclo ativo para registrar encargos da fatura.');
+  const { card, statement } = findPayableStatement(
+    state,
+    input.cardId,
+    input.statementKey,
+    ctx.now,
+  );
+
+  assertPositiveCents(input.amount, 'Informe o valor dos juros ou da multa.');
+
+  return addStatementEntry(
+    state,
+    {
+      cardId: card.id,
+      statementKey: statement.key,
+      statementAmount: statement.amount,
+      paidAmount: 0,
+      charges: input.amount,
+    },
+    ctx,
+  );
+}
+
+/**
+ * Desfaz um lançamento de fatura (pagamento ou encargo) feito no ciclo ativo: o limite volta a ficar
+ * comprometido pelo que ele havia amortizado e os encargos saem do orçamento.
+ */
 export function undoStatementPayment(
   state: LocalState,
   paymentId: string,
@@ -677,7 +818,7 @@ export function undoStatementPayment(
   );
 
   if (!payment || payment.cycleId !== cycle.id) {
-    throw new DomainError('Só é possível desfazer pagamentos de fatura feitos no ciclo ativo.');
+    throw new DomainError('Só é possível desfazer lançamentos de fatura feitos no ciclo ativo.');
   }
 
   return recalculateActiveCycleBalance(
@@ -697,5 +838,3 @@ export function undoStatementPayment(
 export function statementPayableFrom(key: string, closingDay: number): string {
   return toISODate(addDays(statementClosingDate(key, closingDay), 1));
 }
-
-export { statementPaymentId };

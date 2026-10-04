@@ -128,13 +128,15 @@ export type CycleAdjustments = {
   paidFixedExpenses?: MoneyCents;
   /** Despesas fixas ativas ainda não pagas no ciclo: ficam reservadas (BR-FIN-004). */
   pendingFixedExpenses?: MoneyCents;
-  /** Juros de faturas pagas com atraso no ciclo (BR-FIN-026). */
+  /** Encargos (juros/multa) de faturas reconhecidos no ciclo (BR-FIN-033). */
   statementInterest?: MoneyCents;
+  /** Restante de faturas parciais transportado do ciclo anterior (BR-FIN-034). */
+  carriedStatementDebt?: MoneyCents;
 };
 
 /**
- * BR-FIN-005: saldo inicial = saldo base − dívida herdada − parcelas de cartão do ciclo − juros de
- * faturas pagas com atraso no ciclo.
+ * BR-FIN-005: saldo inicial = saldo base − dívida herdada − parcelas de cartão do ciclo − encargos
+ * de faturas reconhecidos no ciclo − restante de faturas parciais transportado (BR-FIN-034).
  */
 export function calculateInitialAvailableAmount(
   config: Pick<FinancialConfig, 'monthlyIncome' | 'savingGoal'>,
@@ -145,7 +147,8 @@ export function calculateInitialAvailableAmount(
     calculateBaseAvailableAmount(config, adjustments) -
     previousMonthDebt -
     (adjustments.cardCharges ?? 0) -
-    (adjustments.statementInterest ?? 0)
+    (adjustments.statementInterest ?? 0) -
+    (adjustments.carriedStatementDebt ?? 0)
   );
 }
 

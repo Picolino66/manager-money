@@ -99,8 +99,22 @@ export type FinancialMonth = {
   status: MonthStatus;
   initialAvailableAmount: MoneyCents;
   previousMonthDebt: MoneyCents;
+  /**
+   * Restante de faturas pagas parcialmente que veio do ciclo anterior e fica reservado neste
+   * (BR-FIN-034). Ausente = 0.
+   */
+  carriedStatementDebt?: MoneyCents;
+  /** Ciclo fechado: restante de faturas parciais transportado para o próximo ciclo (BR-FIN-034). */
+  carriedStatements?: CarriedStatement[];
   finalBalance?: MoneyCents;
   expenses: Expense[];
+};
+
+/** Restante de uma fatura paga parcialmente, transportado de um ciclo para o seguinte. */
+export type CarriedStatement = {
+  cardId: string;
+  statementKey: string;
+  amount: MoneyCents;
 };
 
 export type DashboardSummary = {

@@ -5,7 +5,9 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing } from '../design/theme';
 import { CardPurchase, CardStatement, StatementStatus } from '../domain/financial/credit-card';
 import {
+  describeStatementComposition,
   formatMonthKey,
+  knownItemsTotal,
   PURCHASE_LOCKED_REASON,
   STATEMENT_STATUS_LABEL,
 } from '../screens/cardText';
@@ -19,6 +21,7 @@ const STATUS_TONE: Record<StatementStatus, BadgeTone> = {
   open: 'info',
   closed: 'warning',
   overdue: 'critical',
+  partial: 'warning',
   paid: 'positive',
 };
 
@@ -29,14 +32,17 @@ type StatementCardProps = {
   /** Ex.: "pesa no ciclo de 10/2026". */
   cycleText: string;
   defaultExpanded?: boolean;
-  /** Área de pagamento ("Paguei a fatura", "Paga em…", "Desfazer"). */
+  /** Área de lançamentos e ações ("Paguei a fatura", "Registrar juros/multa", "Desfazer"). */
   footer?: ReactNode;
   isPurchaseLocked: (purchase: CardPurchase) => boolean;
   onEditPurchase: (purchase: CardPurchase) => void;
   onDeletePurchase: (purchase: CardPurchase) => void;
 };
 
-/** BR-FIN-025/026/029: fatura com valor, datas, status, ciclo em que pesa e compras. */
+/**
+ * BR-FIN-025/026/029/032/033: fatura com principal, encargos, pago e restante, composição do total
+ * informado, datas, status, ciclo em que pesa e compras.
+ */
 export function StatementCard({
   title,
   statement,
@@ -64,7 +70,23 @@ export function StatementCard({
           tone={STATUS_TONE[statement.status]}
         />
       </View>
-      <Text style={styles.amount}>{formatCurrency(statement.amount)}</Text>
+      <Text style={styles.meta}>Restante</Text>
+      <Text
+        accessibilityLabel={`Restante ${formatCurrency(statement.remaining)}`}
+        style={styles.amount}
+      >
+        {formatCurrency(statement.remaining)}
+      </Text>
+      <MetricRow label="Fatura" value={formatCurrency(statement.amount)} />
+      {statement.charges > 0 ? (
+        <MetricRow label="Encargos" tone="negative" value={formatCurrency(statement.charges)} />
+      ) : null}
+      <MetricRow label="Pago" value={formatCurrency(statement.paid)} />
+      {statement.knownTotal !== null ? (
+        <Text style={styles.composition}>
+          {describeStatementComposition(statement.knownTotal, knownItemsTotal(statement))}
+        </Text>
+      ) : null}
       <MetricRow label="Fechamento" value={formatDayMonth(statement.closingDate)} />
       <MetricRow label="Vencimento" value={formatDayMonth(statement.dueDate)} />
       {cycleText ? <Text style={styles.cycle}>{cycleText}</Text> : null}
@@ -94,15 +116,16 @@ export function StatementCard({
       {expanded
         ? statement.installments.map((item) => {
             const locked = isPurchaseLocked(item.purchase);
+            const isBalance = item.purchase.kind === 'statement-balance';
+            const detail = isBalance
+              ? `Total informado · ${formatCurrency(item.amount)}`
+              : `Parcela ${item.number}/${item.purchase.installments} · ${formatCurrency(item.nominalAmount)}${item.includedInBalance ? ' · já no total' : ''}`;
 
             return (
               <View key={`${item.purchase.id}-${item.number}`} style={styles.row}>
                 <View style={styles.rowText}>
                   <Text style={styles.rowTitle}>{item.purchase.description}</Text>
-                  <Text style={styles.meta}>
-                    Parcela {item.number}/{item.purchase.installments} ·{' '}
-                    {formatCurrency(item.amount)}
-                  </Text>
+                  <Text style={styles.meta}>{detail}</Text>
                 </View>
                 {locked ? (
                   <View
@@ -166,6 +189,11 @@ const styles = StyleSheet.create({
   },
   meta: {
     color: colors.muted,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  composition: {
+    color: colors.text,
     fontSize: 13,
     fontWeight: '700',
   },

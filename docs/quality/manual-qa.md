@@ -8,7 +8,7 @@ summary: >
   críticos antes da publicação nas lojas.
 code:
   - src/navigation/AppNavigator.tsx
-last_verified_commit: c47cf18+T-025
+last_verified_commit: bfe9de6+T-028
 ---
 
 # Campanha de QA manual — v1.0
@@ -74,11 +74,30 @@ last_verified_commit: c47cf18+T-025
 | D07.02 | Alta | Registrar no crédito R$ 600,00 em 6x, data antes do fechamento | Disponível do cartão cai R$ 600,00 na hora; só a parcela da fatura que vence neste ciclo reduz o saldo |
 | D07.03 | Alta | Registrar no crédito valor acima do limite disponível | Aviso de limite; a compra é registrada e o disponível fica negativo |
 | D07.04 | Alta | Depois do fechamento, fatura fechada → **Paguei a fatura** | Fatura "Paga"; limite liberado no valor da fatura; saldo do ciclo não muda |
-| D07.05 | Alta | Fatura vencida → Paguei a fatura → valor pago R$ 20,00 acima | Pede o valor pago; recusa valor menor que a fatura; a diferença (juros) reduz o saldo do ciclo |
+| D07.05 | Alta | Fatura vencida → Paguei a fatura → valor pago R$ 20,00 acima | Pede o valor pago; a diferença (encargos) reduz o saldo do ciclo; valor menor que a fatura é pagamento parcial (ADR-018, ver D08.09) |
 | D07.06 | Alta | Cartões → Situação inicial: parcelamento 10x de R$ 100,00, 4 restantes, próxima fatura atual | Comprometido sobe R$ 400,00; parcelas pagas não pesam; próximos ciclos mostram as parcelas |
 | D07.07 | Média | Tentar excluir cartão com compras | Pede para desativar; desativado some de Registrar gasto e as parcelas continuam |
 | D07.08 | Média | Configuração → desativar uma fonte de renda e uma despesa fixa | Renda e fixas totais excluem as inativas; desativar a única fonte ativa é recusado |
 | D07.09 | Alta | Hoje → Próximos compromissos e Próximos ciclos | Faturas a pagar e fixas pendentes listadas; "Livre antes de novos gastos" por ciclo |
 | D07.10 | Alta | Atualizar o app por cima da versão anterior com ciclo ativo e fixas pendentes | Ao abrir, "Saldo inicial" cai no total das fixas pendentes (agora reservadas); compras antigas mantêm o ciclo; faturas que já tinham vencido aparecem pagas (sem juros) |
 | D07.11 | Alta | Pagar uma fixa no crédito → Cartões → excluir a compra gerada | A fixa volta a Pendente e reservada; editar valor/parcelas/data dessa compra pede "Desfaça o pagamento" |
-| D07.12 | Média | Dois aparelhos com a mesma conta marcam "Paguei a fatura" da mesma fatura | Após sincronizar, há um único pagamento; sync sem erro |
+| D07.12 | Média | Dois aparelhos com a mesma conta marcam "Paguei a fatura" da mesma fatura | Sync sem erro; desde a ADR-018 ficam dois lançamentos (ver D08.18) |
+| **Dia 8 — pagamento parcial, encargos, total informado e invariantes (ADR-018, SPEC-019)** ||||
+| D08.01 | Alta | Cartão com limite R$ 5.000,00 → compra de R$ 3.000,00 em 10x | Comprometido R$ 3.000,00; "Limite disponível do cartão" R$ 2.000,00 (cenário 1) |
+| D08.02 | Alta | Depois do fechamento, pagar a 1ª fatura (R$ 300,00); no ciclo seguinte, pagar a 2ª | Disponível sobe R$ 300,00 a cada pagamento, não R$ 3.000,00 (cenário 2) |
+| D08.03 | Alta | Desfazer o último pagamento de fatura | Disponível volta a cair R$ 300,00 (cenário 3) |
+| D08.04 | Alta | Compra de R$ 1.200,00 à vista no cartão cuja fatura vence neste ciclo, antes do fechamento | Fatura "Aberta"; "Saldo inicial"/"Ainda pode gastar hoje" já caem R$ 1.200,00 (cenário 4) |
+| D08.05 | Alta | Depois do fechamento, pagar essa fatura inteira | Fatura "Paga"; o saldo do ciclo **não muda** (cenário 5) |
+| D08.06 | Alta | Nova compra de R$ 200,00 na mesma fatura aberta | Fatura passa de R$ 800,00 para R$ 1.000,00; disponível do ciclo cai R$ 200,00 na hora (cenário 6) |
+| D08.07 | Alta | Compra depois do fechamento, numa fatura que vence no próximo ciclo | Saldo do ciclo atual não muda; "Próximos ciclos" mostra a fatura no ciclo seguinte (cenário 7) |
+| D08.08 | Alta | Situação inicial: "Total da fatura" R$ 1.350,00 → parcelamento 10x de R$ 300,00 (6 restantes) na mesma fatura | Aparece "Esta parcela já está no total da fatura informada" **marcada**; fatura fica R$ 1.350,00 (parcela listada sem somar); sem total informado a opção não aparece (cenário 8) |
+| D08.09 | Alta | Fatura de R$ 2.000,00 fechada → pagar R$ 1.200,00 | Status "Parcial"; restante R$ 800,00 em "Próximos compromissos"; limite libera só R$ 1.200,00; saldo do ciclo não muda (cenário 9) |
+| D08.10 | Alta | Fatura vencida de R$ 1.000,00 → pagar R$ 1.080,00 | R$ 80,00 de encargos; só eles reduzem o saldo do ciclo; limite libera R$ 1.000,00 (cenário 10) |
+| D08.11 | Alta | Compra que passa do limite disponível | Alerta "Passa do limite do cartão" com quanto excede + "Registrar mesmo assim"; confirmada, fica registrada e o disponível fica negativo (cenário 11) |
+| D08.12 | Média | Alterar o limite do cartão de R$ 5.000,00 para R$ 7.000,00 | Só o "Limite disponível do cartão" muda; renda, saldo do ciclo e limite diário iguais (cenário 12) |
+| D08.13 | Média | Compra de R$ 100,00 em 3x | Parcelas R$ 33,34 + R$ 33,33 + R$ 33,33 = R$ 100,00 (cenário 13) |
+| D08.14 | Alta | Com a fatura parcial de D08.09, fechar o ciclo e abrir o próximo | Ciclo fechado com resultado incluindo os R$ 800,00; novo ciclo mostra "− Fatura pendente do ciclo anterior" R$ 800,00 no plano e desconta do saldo; pagar os R$ 800,00 não desconta de novo |
+| D08.15 | Média | Fatura vencida sem nenhum pagamento (nenhum lançamento ou só juros/multa) → fechar o ciclo | Nada é transportado; a fatura segue vencida e comprometendo o limite |
+| D08.16 | Média | Lançar juros/multa de R$ 50,00 numa fatura já paga parcialmente | Restante aumenta R$ 50,00; "− Juros/multas de faturas" no plano; saldo do ciclo cai R$ 50,00; limite não muda |
+| D08.17 | Média | Excluir o "Total da fatura" informado | A parcela marcada "já incluída" volta a somar na fatura, no orçamento e no limite |
+| D08.18 | Baixa | Dois aparelhos offline registram o mesmo pagamento e sincronizam | Dois lançamentos na fatura; limite não libera além da fatura; saldo inalterado; desfazer um deles |

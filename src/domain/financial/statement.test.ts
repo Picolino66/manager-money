@@ -5,7 +5,6 @@ import {
   calculateCardLimitUsage,
   calculateFirstCycleKey,
   calculateInstallmentForCycle,
-  calculateStatementInterest,
   CardPurchase,
   CreditCard,
   currentStatementKey,
@@ -15,6 +14,7 @@ import {
   statementDueDate,
   statementKeyForDate,
   StatementPayment,
+  summarizeStatement,
 } from './credit-card';
 
 const card: CreditCard = {
@@ -151,6 +151,7 @@ describe('faturas e limite (BR-FIN-026)', () => {
     cycleId: 'c1',
     statementAmount: 20000,
     paidAmount: 20000,
+    charges: 0,
     paidAt: '2026-10-25',
   };
 
@@ -166,7 +167,7 @@ describe('faturas e limite (BR-FIN-026)', () => {
       'closed',
     );
     expect(buildCardStatements(card, purchases, [payment], new Date(2026, 9, 28))[0]).toMatchObject(
-      { status: 'paid', payment },
+      { status: 'paid', payments: [payment], paid: 20000, remaining: 0 },
     );
   });
 
@@ -186,8 +187,18 @@ describe('faturas e limite (BR-FIN-026)', () => {
     });
   });
 
-  it('juros = valor pago − valor da fatura (nunca negativo)', () => {
-    expect(calculateStatementInterest({ statementAmount: 20000, paidAmount: 21000 })).toBe(1000);
-    expect(calculateStatementInterest({ statementAmount: 20000, paidAmount: 20000 })).toBe(0);
+  it('resumo da fatura: encargos aumentam o devido; o pagamento amortiza primeiro o principal', () => {
+    expect(summarizeStatement(100000, [{ paidAmount: 108000, charges: 8000 }])).toEqual({
+      charges: 8000,
+      paid: 108000,
+      remaining: 0,
+      amortized: 100000,
+    });
+    expect(summarizeStatement(200000, [{ paidAmount: 120000, charges: 0 }])).toEqual({
+      charges: 0,
+      paid: 120000,
+      remaining: 80000,
+      amortized: 120000,
+    });
   });
 });

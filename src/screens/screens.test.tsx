@@ -393,7 +393,7 @@ describe('Despesas fixas do ciclo (BR-FIN-021/022)', () => {
       ),
     );
     const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
-      buttons?.find((button) => button.text === 'Continuar')?.onPress?.();
+      buttons?.find((button) => button.text === 'Registrar mesmo assim')?.onPress?.();
     });
     render(<DashboardScreen />);
     expandFixed();
@@ -525,6 +525,45 @@ describe('Hoje: próximos compromissos e próximos ciclos (SPEC-018)', () => {
       screen.getByLabelText(/^Fatura Nubank · venceu \d{2}\/\d{2}, R\$ 400,00, vencida$/),
     ).toBeTruthy();
     expect(screen.getByText('Aluguel · fixa pendente')).toBeTruthy();
+  });
+
+  it('fatura parcial mostra o restante e o plano traz a fatura pendente do ciclo anterior', async () => {
+    const doc = docWithFixed(true);
+    const cycle = doc.cycles[0]!;
+    const purchase = overduePurchase(doc.creditCards[0]!.id);
+    const now = new Date().toISOString();
+    await seed({
+      ...doc,
+      cycles: [{ ...cycle, carriedStatementDebt: 5000 }],
+      cardPurchases: [purchase],
+      statementPayments: [
+        {
+          id: 'lancamento-parcial',
+          cardId: purchase.cardId,
+          statementKey: purchase.firstStatementKey,
+          cycleId: cycle.id,
+          statementAmount: 40000,
+          paidAmount: 10000,
+          charges: 1500,
+          paidAt: now.slice(0, 10),
+          updatedAt: now,
+          deletedAt: null,
+          dirty: false,
+        },
+      ],
+    });
+    render(<DashboardScreen />);
+    expect(screen.getByText(/^Fatura Nubank \(restante\) · venceu \d{2}\/\d{2}$/)).toBeTruthy();
+    expect(
+      screen.getByLabelText(
+        /^Fatura Nubank \(restante\) · venceu \d{2}\/\d{2}, R\$ 315,00, vencida$/,
+      ),
+    ).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('Mostrar ou ocultar o plano do ciclo'));
+    expect(screen.getByText('− Juros/multas de faturas')).toBeTruthy();
+    expect(screen.getByText('− Fatura pendente do ciclo anterior')).toBeTruthy();
+    expect(screen.getByText('R$ 50,00')).toBeTruthy();
   });
 
   it('sem compromissos mostra mensagem vazia', async () => {
@@ -750,7 +789,8 @@ describe('AddExpenseScreen (FLOW-registrar-gasto)', () => {
     await waitFor(() =>
       expect(alertSpy).toHaveBeenCalledWith(
         'Passa do limite do cartão',
-        expect.stringContaining('Continuar mesmo assim?'),
+        `Esta compra excede em ${formatCurrency(10000)} o limite disponível cadastrado deste cartão. ` +
+          'O banco pode ter autorizado um limite diferente. Deseja registrar mesmo assim?',
         expect.any(Array),
         expect.any(Object),
       ),
@@ -758,7 +798,7 @@ describe('AddExpenseScreen (FLOW-registrar-gasto)', () => {
     expect(useFinancialStore.getState().doc.cardPurchases).toHaveLength(0);
     expect(mockGoBack).not.toHaveBeenCalled();
 
-    choice = 'Continuar';
+    choice = 'Registrar mesmo assim';
     fireEvent.press(screen.getByText('Salvar compra no crédito'));
     await waitFor(() => expect(mockGoBack).toHaveBeenCalled());
     expect(useFinancialStore.getState().doc.cardPurchases[0]).toMatchObject({ totalAmount: 30000 });

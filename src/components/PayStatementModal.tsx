@@ -10,32 +10,48 @@ import { CurrencyInput } from './CurrencyInput';
 type PayStatementModalProps = {
   /** Ex.: "Fatura Nubank 10/2026". */
   title: string;
+  /** Principal da fatura. */
   amount: MoneyCents;
+  /** Encargos já reconhecidos. */
+  charges: MoneyCents;
+  /** Total já pago. */
+  paid: MoneyCents;
+  /** Ainda a pagar (principal + encargos − pago). */
+  remaining: MoneyCents;
   /** Vencimento já formatado (dd/MM). */
   dueLabel: string;
-  onConfirm: (paidAmount: MoneyCents) => Promise<void>;
+  /** Passou do vencimento: o valor pago passa a ser obrigatório (BR-FIN-033). */
+  overdue: boolean;
+  /** `undefined` = quitar o restante (só antes do vencimento). */
+  onConfirm: (paidAmount: MoneyCents | undefined) => Promise<void>;
   onClose: () => void;
 };
 
 /**
- * BR-FIN-026: pagamento de fatura vencida. Pede o valor efetivamente pago (≥ valor da fatura); a
- * diferença são juros e pesa no ciclo atual.
+ * BR-FIN-033/034: pagamento de fatura. Valor menor que o restante é parcial (o resto vira dívida do
+ * próximo ciclo se não for pago até o fim do ciclo); maior que o restante registra a diferença como
+ * juros/encargos no ciclo atual.
  */
 export function PayStatementModal({
   title,
   amount,
+  charges,
+  paid,
+  remaining,
   dueLabel,
+  overdue,
   onConfirm,
   onClose,
 }: PayStatementModalProps) {
-  const [paidAmount, setPaidAmount] = useState<MoneyCents>(amount);
+  const [paidAmount, setPaidAmount] = useState<MoneyCents>(remaining);
   const [error, setError] = useState<string | undefined>();
   const [isSaving, setIsSaving] = useState(false);
-  const interest = Math.max(0, paidAmount - amount);
+  const shortfall = paidAmount > 0 ? Math.max(0, remaining - paidAmount) : 0;
+  const excess = Math.max(0, paidAmount - remaining);
 
-  async function handleConfirm() {
-    if (paidAmount < amount) {
-      setError('O valor pago não pode ser menor que o valor da fatura.');
+  async function submit(value: MoneyCents | undefined) {
+    if (value !== undefined && value <= 0) {
+      setError('Informe um valor pago maior que zero.');
       return;
     }
 
@@ -43,7 +59,7 @@ export function PayStatementModal({
     setIsSaving(true);
 
     try {
-      await onConfirm(paidAmount);
+      await onConfirm(value);
     } finally {
       setIsSaving(false);
     }
@@ -55,22 +71,50 @@ export function PayStatementModal({
         <View style={styles.sheet}>
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
             <Text style={styles.title}>{title}</Text>
-            <Text style={styles.hint}>
-              A fatura de {formatCurrency(amount)} venceu em {dueLabel}. Informe quanto você pagou,
-              com os juros. A diferença para o valor da fatura são juros e pesa no ciclo atual.
+            <Text style={styles.summary}>
+              Fatura {formatCurrency(amount)}
+              {charges > 0 ? ` · Encargos ${formatCurrency(charges)}` : ''} · Já pago{' '}
+              {formatCurrency(paid)} · Restante {formatCurrency(remaining)}
             </Text>
+            <Text style={styles.hint}>
+              {overdue
+                ? `A fatura venceu em ${dueLabel}. Informe quanto você pagou, com juros se houver.`
+                : `Vence em ${dueLabel}. Informe quanto você pagou.`}
+            </Text>
+            {!overdue ? (
+              <AppButton
+                iconName="checkmark-done-outline"
+                isLoading={isSaving}
+                onPress={() => void submit(undefined)}
+                title={`Pagar o restante (${formatCurrency(remaining)})`}
+              />
+            ) : null}
             <CurrencyInput
               error={error}
-              label="Valor pago (com juros)"
+              label="Valor pago"
               onChangeValue={setPaidAmount}
               value={paidAmount}
             />
-            <Text style={styles.interest}>Juros: {formatCurrency(interest)}</Text>
+            <View accessibilityLiveRegion="polite">
+              {shortfall > 0 ? (
+                <Text style={styles.warning}>
+                  Pagamento parcial: {formatCurrency(shortfall)} continuam devidos. Se a fatura pesa
+                  no ciclo atual, o que faltar ao fechar o ciclo vira dívida do próximo.
+                </Text>
+              ) : null}
+              {excess > 0 ? (
+                <Text style={styles.warning}>
+                  {formatCurrency(excess)} serão registrados como juros/encargos e saem do orçamento
+                  deste ciclo.
+                </Text>
+              ) : null}
+            </View>
             <AppButton
               iconName="checkmark-circle-outline"
               isLoading={isSaving}
-              onPress={() => void handleConfirm()}
+              onPress={() => void submit(paidAmount)}
               title="Confirmar pagamento"
+              variant={overdue ? 'primary' : 'secondary'}
             />
             <AppButton onPress={onClose} title="Cancelar" variant="ghost" />
           </ScrollView>
@@ -101,12 +145,17 @@ const styles = StyleSheet.create({
     fontSize: typography.sectionTitle,
     fontWeight: '900',
   },
+  summary: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: '800',
+  },
   hint: {
     color: colors.muted,
     fontSize: 14,
     lineHeight: 20,
   },
-  interest: {
+  warning: {
     color: colors.warning,
     fontSize: 14,
     fontWeight: '800',

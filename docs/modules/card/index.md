@@ -5,17 +5,20 @@ module: card
 title: Cartões de crédito
 summary: >
   Cartões (nome, fechamento, vencimento, limite, ativo), compras parceladas no crédito, faturas
-  derivadas com pagamento e liberação de limite, e situação inicial (dívidas anteriores ao app).
+  derivadas com vários lançamentos (pagamento total ou parcial, encargos) e liberação proporcional
+  do limite, e situação inicial (total informado da fatura e parcelamentos anteriores ao app).
 code:
   - src/domain/financial/credit-card.ts
   - src/application/card.use-cases.ts
-last_verified_commit: c47cf18+T-025r4
+last_verified_commit: bfe9de6+T-028r2
 ---
 
 # Módulo: cartões de crédito
 
-Decisões: [ADR-014](../../../adr/ADR-014-cartoes-de-credito.md) e [ADR-017](../../../adr/ADR-017-faturas-limite-e-situacao-inicial.md)
-(fatura pelo vencimento, limite, situação inicial).
+Decisões: [ADR-014](../../../adr/ADR-014-cartoes-de-credito.md), [ADR-017](../../../adr/ADR-017-faturas-limite-e-situacao-inicial.md)
+(fatura pelo vencimento, limite, situação inicial) e [ADR-018](../../../adr/ADR-018-pagamento-parcial-e-total-da-fatura.md)
+(pagamento parcial, encargos, total informado da fatura, restante transportado). Invariantes: INV-01..INV-10 em
+[business-rules](../../business/business-rules.md).
 
 | Feature | Doc |
 |---|---|

@@ -8,7 +8,7 @@ summary: >
   recebimento antecipado, fechamento e histórico.
 code:
   - src/domain/financial/financial.calculations.ts
-last_verified_commit: c47cf18+T-025
+last_verified_commit: bfe9de6+T-028
 ---
 
 # Módulo: ciclo

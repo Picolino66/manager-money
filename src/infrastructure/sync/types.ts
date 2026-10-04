@@ -64,6 +64,9 @@ export type CardPurchaseRow = RowMeta & {
   settled_installments?: number;
   /** `existing` = situação inicial; nulo/ausente = compra feita no app. */
   origin?: 'existing' | null;
+  /** Contrato v1 aditivo (ADR-018). */
+  kind?: 'statement-balance' | null;
+  included_in_balance?: boolean;
   created_at: string;
 };
 
@@ -74,6 +77,8 @@ export type StatementPaymentRow = RowMeta & {
   cycle_id: string;
   statement_amount: number;
   paid_amount: number;
+  /** Contrato v1 aditivo (ADR-018): ausente em linhas antigas = pago − fatura. */
+  charges?: number | null;
   paid_at: string;
 };
 
@@ -108,6 +113,9 @@ export type CycleRow = RowMeta & {
   status: 'active' | 'closed';
   initial_available_amount: number;
   previous_month_debt: number;
+  /** Contrato v1 aditivo (ADR-018). */
+  carried_statement_debt?: number;
+  carried_statements?: { card_id: string; statement_key: string; amount: number }[];
   final_balance: number | null;
 };
 

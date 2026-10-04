@@ -1,4 +1,9 @@
-import { formatCurrency, formatCurrencyInput, formatSignedCurrency, parseCurrencyInputToCents } from './currency';
+import {
+  formatCurrency,
+  formatCurrencyInput,
+  formatSignedCurrency,
+  parseCurrencyInputToCents,
+} from './currency';
 import {
   formatCycleLabel,
   formatDateInput,

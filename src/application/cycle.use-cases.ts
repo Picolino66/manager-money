@@ -15,6 +15,7 @@ import {
   normalizeCategory,
 } from '../domain/financial/financial.calculations';
 import {
+  CarriedStatement,
   ExpenseInput,
   FinancialConfig,
   FinancialConfigInput,
@@ -30,6 +31,7 @@ import {
   selectClosedMonths,
   selectConfig,
   selectCycleAdjustments,
+  selectStatementsToCarry,
   toFinancialMonth,
 } from './selectors';
 import {
@@ -150,6 +152,7 @@ function createCycle(
   startDate: Date,
   previousMonthDebt: number,
   ctx: UseCaseContext,
+  carriedStatementDebt = 0,
 ): CycleRecord {
   const config = configFrom(state, fixedExpenses);
   const dates = buildFinancialCycleDates(startDate, config.payday);
@@ -164,13 +167,21 @@ function createCycle(
       config,
       previousMonthDebt,
       // Reserva das fixas pendentes com as parcelas já avançadas (BR-FIN-004/010).
-      selectCycleAdjustments({ ...state, fixedExpenses }, { id, startDate: dates.startDate }),
+      selectCycleAdjustments(
+        { ...state, fixedExpenses },
+        { id, startDate: dates.startDate, carriedStatementDebt },
+      ),
     ),
     previousMonthDebt,
+    ...(carriedStatementDebt > 0 ? { carriedStatementDebt } : {}),
     updatedAt: ctx.now.toISOString(),
     deletedAt: null,
     dirty: true,
   };
+}
+
+function sumCarried(items: CarriedStatement[] | undefined): number {
+  return (items ?? []).reduce((total, item) => total + item.amount, 0);
 }
 
 export function assertDateWithinCycle(cycle: CycleRecord, date: string, subject = 'gasto') {
@@ -367,10 +378,18 @@ export function openCycle(state: LocalState, ctx: UseCaseContext): LocalState {
     throw new DomainError('Já existe um ciclo ativo.');
   }
 
-  const previousMonthDebt = calculatePreviousMonthDebt(selectClosedMonths(state)[0]);
+  const lastClosed = selectClosedMonths(state)[0];
+  const previousMonthDebt = calculatePreviousMonthDebt(lastClosed);
   const startDate = calculateNextCycleStartDate(state, ctx.now);
   const advanced = advanceInstallments(state.fixedExpenses, ctx.now);
-  const cycle = createCycle(state, advanced, startDate, previousMonthDebt, ctx);
+  const cycle = createCycle(
+    state,
+    advanced,
+    startDate,
+    previousMonthDebt,
+    ctx,
+    sumCarried(lastClosed?.carriedStatements),
+  );
 
   return {
     ...state,
@@ -411,19 +430,30 @@ export function receiveIncomeEarly(state: LocalState, ctx: UseCaseContext): Loca
   const closedExpenses = toFinancialMonth(state, activeCycle).expenses.filter(
     (expense) => !newCycleExpenses.has(expense.id),
   );
+  const carriedStatements = selectStatementsToCarry(state, activeCycle, ctx.now);
   const closedCycle: CycleRecord = touch(
     {
       ...activeCycle,
       endDate: toISODate(addDays(receivedAt, -1)),
       status: 'closed',
       closedAt: ctx.now.toISOString(),
-      finalBalance: calculateFinalBalance({ ...activeCycle, expenses: closedExpenses }),
+      finalBalance:
+        calculateFinalBalance({ ...activeCycle, expenses: closedExpenses }) +
+        sumCarried(carriedStatements),
+      ...(carriedStatements.length > 0 ? { carriedStatements } : {}),
     },
     ctx.now,
   );
   const previousMonthDebt = calculatePreviousMonthDebt({ ...closedCycle, expenses: [] });
   const advanced = advanceInstallments(state.fixedExpenses, ctx.now);
-  const nextCycle = createCycle(state, advanced, receivedAt, previousMonthDebt, ctx);
+  const nextCycle = createCycle(
+    state,
+    advanced,
+    receivedAt,
+    previousMonthDebt,
+    ctx,
+    sumCarried(carriedStatements),
+  );
 
   return {
     ...state,
@@ -454,12 +484,17 @@ export function closeCycle(state: LocalState, ctx: UseCaseContext): LocalState {
     throw new DomainError(describeCloseCycleBlock(activeCycle));
   }
 
+  // BR-FIN-034: o restante de faturas parciais volta ao resultado deste ciclo e segue reservado no
+  // próximo.
+  const carriedStatements = selectStatementsToCarry(state, activeCycle, ctx.now);
   const closedCycle: CycleRecord = touch(
     {
       ...activeCycle,
       status: 'closed',
       closedAt: ctx.now.toISOString(),
-      finalBalance: calculateFinalBalance(toFinancialMonth(state, activeCycle)),
+      finalBalance:
+        calculateFinalBalance(toFinancialMonth(state, activeCycle)) + sumCarried(carriedStatements),
+      ...(carriedStatements.length > 0 ? { carriedStatements } : {}),
     },
     ctx.now,
   );

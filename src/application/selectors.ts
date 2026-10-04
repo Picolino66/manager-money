@@ -1,11 +1,10 @@
-import { parseISO, startOfDay } from 'date-fns';
+import { isAfter, parseISO, startOfDay } from 'date-fns';
 
 import {
   buildCardStatements,
   calculateCardChargesForCycle,
   calculateCardInstallmentsForCycle,
   calculateCardLimitUsage,
-  calculateStatementInterest,
   CardInstallment,
   CardLimitUsage,
   CardStatement,
@@ -17,6 +16,7 @@ import {
   CycleAdjustments,
 } from '../domain/financial/financial.calculations';
 import {
+  CarriedStatement,
   FinancialConfig,
   FinancialMonth,
   FixedExpense,
@@ -105,17 +105,17 @@ export function selectStatementPayments(state: LocalState): StatementPaymentReco
   return state.statementPayments.filter(isLive);
 }
 
-/** Juros de faturas pagas com atraso durante o ciclo (BR-FIN-026). */
+/** Encargos (juros/multa) de faturas reconhecidos durante o ciclo (BR-FIN-033). */
 export function selectCycleStatementInterest(state: LocalState, cycleId: string): MoneyCents {
   return selectStatementPayments(state)
     .filter((payment) => payment.cycleId === cycleId)
-    .reduce((total, payment) => total + calculateStatementInterest(payment), 0);
+    .reduce((total, payment) => total + payment.charges, 0);
 }
 
 /** Ajustes do saldo do ciclo: parcelas de cartão, rendas avulsas, fixas pagas à vista e juros. */
 export function selectCycleAdjustments(
   state: LocalState,
-  cycle: Pick<CycleRecord, 'id' | 'startDate'>,
+  cycle: Pick<CycleRecord, 'id' | 'startDate'> & Pick<Partial<CycleRecord>, 'carriedStatementDebt'>,
 ): Required<CycleAdjustments> {
   return {
     cardCharges: selectCardCharges(state, cycleKeyFromStartDate(cycle.startDate)),
@@ -126,6 +126,7 @@ export function selectCycleAdjustments(
       0,
     ),
     statementInterest: selectCycleStatementInterest(state, cycle.id),
+    carriedStatementDebt: cycle.carriedStatementDebt ?? 0,
   };
 }
 
@@ -214,15 +215,17 @@ export function selectUpcomingCommitments(state: LocalState, today: Date): Upcom
       .filter(
         (statement) =>
           statement.status !== 'paid' &&
+          statement.remaining > 0 &&
           (statement.status !== 'open' || startOfDay(parseISO(statement.dueDate)) <= horizon),
       )
       .map((statement) => ({
         kind: 'statement' as const,
         id: `${card.id}:${statement.key}`,
         label: `Fatura ${card.name}`,
-        amount: statement.amount,
+        // Fatura parcial mostra só o que falta pagar (BR-FIN-033).
+        amount: statement.remaining,
         dueDate: statement.dueDate,
-        overdue: statement.status === 'overdue',
+        overdue: isAfter(startOfDay(today), startOfDay(parseISO(statement.dueDate))),
       })),
   );
   const fixed: UpcomingCommitment[] = cycle
@@ -253,4 +256,48 @@ export function selectCycleProjections(state: LocalState, now: Date, count = 3):
     : cycleKeyFromStartDate(toISODate(calculateDefaultCycleStartDate(now, config.payday)));
 
   return projectCycles(config, state.cardPurchases.filter(isLive), referenceKey, count);
+}
+
+/**
+ * BR-FIN-034: restante de faturas parciais que o ciclo transporta ao fechar. Entra a fatura que
+ * pesou neste ciclo (vence nele ou veio transportada) e tem lançamento registrado; o valor nunca
+ * passa do que este ciclo reservou para ela. Fatura sem nenhum lançamento não é transportada.
+ */
+export function selectStatementsToCarry(
+  state: LocalState,
+  cycle: Pick<CycleRecord, 'id' | 'startDate'>,
+  now: Date,
+): CarriedStatement[] {
+  const cycleKey = cycleKeyFromStartDate(cycle.startDate);
+  const carriedIn = selectClosedMonths(state)[0]?.carriedStatements ?? [];
+
+  return selectCreditCards(state).flatMap((card) =>
+    selectCardStatements(state, card.id, now).flatMap((statement) => {
+      const reservedHere = statement.installments
+        .filter((installment) => installment.cycleKey === cycleKey)
+        .reduce((total, installment) => total + installment.amount, 0);
+      // Parcelas da mesma fatura que ainda vão pesar em ciclos seguintes já serão reservadas lá.
+      const reservedLater = statement.installments
+        .filter((installment) => installment.cycleKey > cycleKey)
+        .reduce((total, installment) => total + installment.amount, 0);
+      const carried =
+        carriedIn.find((item) => item.cardId === card.id && item.statementKey === statement.key)
+          ?.amount ?? 0;
+      const chargesHere = statement.payments
+        .filter((payment) => payment.cycleId === cycle.id)
+        .reduce((total, payment) => total + payment.charges, 0);
+      // Só fatura com pagamento registrado (parcial) é transportada; encargos sozinhos não bastam.
+      const counts =
+        carried > 0 ||
+        (reservedHere > 0 && statement.payments.some((payment) => payment.paidAmount > 0));
+      const amount = counts
+        ? Math.min(
+            Math.max(0, statement.remaining - reservedLater),
+            reservedHere + carried + chargesHere,
+          )
+        : 0;
+
+      return amount > 0 ? [{ cardId: card.id, statementKey: statement.key, amount }] : [];
+    }),
+  );
 }

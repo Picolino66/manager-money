@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T00:41:48.750Z",
-  "source_commit": "c47cf18",
+  "generated_at": "2026-10-04T14:30:19.687Z",
+  "source_commit": "bfe9de6",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -136,18 +136,19 @@
       "symbols": [
         "recalculateActiveCycleBalance",
         "saveConfig",
-        "addCategory",
         "addExpense",
         "updateExpense",
         "selectActiveMonth",
         "selectClosedMonths",
         "selectCycleAdjustments",
+        "selectStatementsToCarry",
         "touch",
         "commit"
       ],
       "adrs": [
         "ADR-001",
-        "ADR-008"
+        "ADR-008",
+        "ADR-018"
       ],
       "tests": [
         "src/application/cycle.use-cases.test.ts",
@@ -160,14 +161,15 @@
       "type": "integration",
       "module": "architecture",
       "title": "Contratos de dados e API (v1)",
-      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 7).",
+      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 8).",
       "doc": "architecture/contracts.md",
       "state": "implemented",
       "adrs": [
         "ADR-003",
         "ADR-004",
         "ADR-008",
-        "ADR-017"
+        "ADR-017",
+        "ADR-018"
       ]
     },
     {
@@ -220,7 +222,7 @@
       "type": "module",
       "module": "card",
       "title": "Cartões de crédito",
-      "summary": "Cartões (nome, fechamento, vencimento, limite, ativo), compras parceladas no crédito, faturas derivadas com pagamento e liberação de limite, e situação inicial (dívidas anteriores ao app).",
+      "summary": "Cartões (nome, fechamento, vencimento, limite, ativo), compras parceladas no crédito, faturas derivadas com vários lançamentos (pagamento total ou parcial, encargos) e liberação proporcional do limite, e situação inicial (total informado da fatura e parcelamentos anteriores ao app).",
       "doc": "modules/card/index.md",
       "state": "implemented"
     },
@@ -229,7 +231,7 @@
       "type": "feature",
       "module": "card",
       "title": "Situação inicial do cartão",
-      "summary": "Cadastro de fatura em aberto ou parcelamento que já existia antes do app; gera a agenda das parcelas restantes e marca as já pagas como quitadas, sem pesar no orçamento nem no limite.",
+      "summary": "Cadastro do total da fatura em aberto (fonte de verdade da fatura) ou de parcelamento que já existia antes do app; a parcela atual pode estar \"já incluída\" no total informado, sem somar de novo; as parcelas já pagas não pesam no orçamento nem no limite.",
       "doc": "modules/card/existing-debt.md",
       "state": "implemented",
       "keywords": [
@@ -237,29 +239,35 @@
         "compra anterior",
         "parcelamento existente",
         "fatura em aberto",
+        "total da fatura",
+        "já incluída",
         "parcelas pagas",
         "limite já usado"
       ],
       "symbols": [
         "addExistingCardDebt",
         "listOpenInstallments",
+        "listEffectiveInstallments",
         "calculateInstallmentForCycle",
         "firstCountedCycleKey",
         "updateCardPurchase"
       ],
       "business_rules": [
         "BR-FIN-027",
-        "BR-FIN-029"
+        "BR-FIN-029",
+        "BR-FIN-032"
       ],
       "adrs": [
-        "ADR-017"
+        "ADR-017",
+        "ADR-018"
       ],
       "tests": [
+        "src/application/card-rules.test.ts",
         "src/application/financial-vision.test.ts",
         "src/application/card.use-cases.test.ts",
         "src/screens/cards.screens.test.tsx"
       ],
-      "spec": "SPEC-017"
+      "spec": "SPEC-019"
     },
     {
       "id": "card.manage",
@@ -287,8 +295,8 @@
         "deleteCardPurchase",
         "canModifyCardPurchase",
         "calculateCardLimitUsage",
+        "calculateLimitExcess",
         "selectCardLimitUsage",
-        "selectCreditCards",
         "selectActiveCreditCards"
       ],
       "business_rules": [
@@ -299,16 +307,18 @@
       ],
       "adrs": [
         "ADR-014",
-        "ADR-017"
+        "ADR-017",
+        "ADR-018"
       ],
       "tests": [
+        "src/application/card-rules.test.ts",
         "src/application/card.use-cases.test.ts",
         "src/application/financial-vision.test.ts",
         "src/domain/financial/credit-card.test.ts",
         "src/screens/cards.screens.test.tsx",
         "src/screens/screens.test.tsx"
       ],
-      "spec": "SPEC-016"
+      "spec": "SPEC-019"
     },
     {
       "id": "card.purchase",
@@ -364,26 +374,28 @@
       "id": "card.statement",
       "type": "feature",
       "module": "card",
-      "title": "Faturas e \"Paguei a fatura",
-      "summary": "Faturas derivadas das compras (aberta, fechada, vencida, paga) com fechamento, vencimento e parcelas; \"Paguei a fatura\" libera o limite e, depois do vencimento, registra o valor pago com juros, que pesam no ciclo ativo.",
+      "title": "Faturas, pagamento parcial e encargos",
+      "summary": "Faturas derivadas das compras (aberta, fechada, vencida, parcial, paga) com vários lançamentos: pagamento total ou parcial e encargos (juros/multa). Pagar não desconta de novo do orçamento, só libera o limite do que amortizou; encargos pesam no ciclo ativo; o restante parcial vira dívida do próximo ciclo.",
       "doc": "modules/card/statement.md",
       "state": "implemented",
       "keywords": [
         "fatura",
         "paguei a fatura",
-        "vencimento",
-        "fechamento",
+        "pagamento parcial",
+        "restante",
+        "encargos",
         "juros",
-        "atraso",
+        "multa",
+        "vencimento",
         "limite",
         "status da fatura"
       ],
       "symbols": [
         "buildCardStatements",
-        "statementPaymentId",
+        "summarizeStatement",
         "statementDueDate",
-        "calculateStatementInterest",
         "payStatement",
+        "addStatementCharges",
         "undoStatementPayment",
         "statementPayableFrom",
         "selectCardStatements",
@@ -394,19 +406,23 @@
         "BR-FIN-005",
         "BR-FIN-025",
         "BR-FIN-026",
-        "BR-FIN-030"
+        "BR-FIN-030",
+        "BR-FIN-033",
+        "BR-FIN-034"
       ],
       "adrs": [
-        "ADR-017"
+        "ADR-017",
+        "ADR-018"
       ],
       "tests": [
+        "src/application/card-rules.test.ts",
         "src/domain/financial/credit-card.test.ts",
         "src/domain/financial/statement.test.ts",
         "src/application/card.use-cases.test.ts",
         "src/application/financial-vision.test.ts",
         "src/screens/cards.screens.test.tsx"
       ],
-      "spec": "SPEC-016"
+      "spec": "SPEC-019"
     },
     {
       "id": "category",
@@ -476,28 +492,37 @@
       "type": "feature",
       "module": "cycle",
       "title": "Fechar ciclo",
-      "summary": "Fecha o ciclo ativo após o fim do período, gravando o saldo final que gera dívida herdada quando negativo.",
+      "summary": "Fecha o ciclo ativo após o fim do período, gravando o saldo final (que gera dívida herdada quando negativo) e transportando ao próximo ciclo o restante de faturas pagas parcialmente.",
       "doc": "modules/cycle/close.md",
       "state": "implemented",
       "keywords": [
         "fechar ciclo",
         "encerrar mês",
-        "saldo final"
+        "saldo final",
+        "restante da fatura",
+        "dívida de fatura",
+        "transporte"
       ],
       "symbols": [
         "closeCycle",
         "canCloseActiveCycle",
         "canCloseCycle",
-        "describeCloseCycleBlock"
+        "describeCloseCycleBlock",
+        "selectStatementsToCarry"
       ],
       "business_rules": [
         "BR-FIN-006",
-        "BR-FIN-017"
+        "BR-FIN-017",
+        "BR-FIN-034"
+      ],
+      "adrs": [
+        "ADR-018"
       ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts"
+        "src/application/cycle.use-cases.test.ts",
+        "src/application/card-rules.test.ts"
       ],
-      "spec": "SPEC-002"
+      "spec": "SPEC-019"
     },
     {
       "id": "cycle.dashboard",
@@ -535,18 +560,22 @@
         "BR-FIN-008",
         "BR-FIN-009",
         "BR-FIN-030",
-        "BR-FIN-031"
+        "BR-FIN-031",
+        "BR-FIN-033",
+        "BR-FIN-034"
       ],
       "adrs": [
-        "ADR-017"
+        "ADR-017",
+        "ADR-018"
       ],
       "tests": [
+        "src/application/card-rules.test.ts",
         "src/application/financial-vision.test.ts",
         "src/domain/financial/projection.test.ts",
         "src/domain/financial/financial.calculations.test.ts",
         "src/screens/screens.test.tsx"
       ],
-      "spec": "SPEC-018"
+      "spec": "SPEC-019"
     },
     {
       "id": "cycle.history",
@@ -576,7 +605,7 @@
       "type": "feature",
       "module": "cycle",
       "title": "Abrir ciclo",
-      "summary": "Abre o ciclo do período atual com prévia de saldo, dias e limite; avança parcelas e herda dívida do último ciclo fechado, sem sobrepor períodos.",
+      "summary": "Abre o ciclo do período atual com prévia de saldo, dias e limite; avança parcelas, herda dívida do último ciclo fechado e reserva o restante de faturas parciais transportado, sem sobrepor períodos.",
       "doc": "modules/cycle/open.md",
       "state": "implemented",
       "keywords": [
@@ -597,11 +626,13 @@
         "BR-FIN-010",
         "BR-FIN-013",
         "BR-FIN-017",
-        "BR-FIN-025"
+        "BR-FIN-025",
+        "BR-FIN-034"
       ],
       "tests": [
         "src/application/cycle.use-cases.test.ts",
-        "src/application/financial-vision.test.ts"
+        "src/application/financial-vision.test.ts",
+        "src/application/card-rules.test.ts"
       ],
       "spec": "SPEC-002"
     },
@@ -625,10 +656,12 @@
       ],
       "business_rules": [
         "BR-FIN-003",
-        "BR-FIN-016"
+        "BR-FIN-016",
+        "BR-FIN-034"
       ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts"
+        "src/application/cycle.use-cases.test.ts",
+        "src/application/card-rules.test.ts"
       ],
       "spec": "SPEC-002"
     },
@@ -1072,7 +1105,7 @@
       "type": "module",
       "module": "storage",
       "title": "Persistência local",
-      "summary": "Documento local único versionado (schemaVersion 7) com migrações encadeadas desde o formato do MVP.",
+      "summary": "Documento local único versionado (schemaVersion 8) com migrações encadeadas desde o formato do MVP.",
       "doc": "modules/storage/index.md",
       "state": "implemented"
     },
@@ -1095,6 +1128,7 @@
         "migrateV1ToV2",
         "migrateV2ToV3",
         "migrateV6ToV7",
+        "migrateV7ToV8",
         "migrateDocument",
         "legacyIncomeSources",
         "normalizeLegacyMonth",
@@ -1107,10 +1141,12 @@
         "ADR-014",
         "ADR-015",
         "ADR-016",
-        "ADR-017"
+        "ADR-017",
+        "ADR-018"
       ],
       "tests": [
-        "src/infrastructure/storage/local-store.test.ts"
+        "src/infrastructure/storage/local-store.test.ts",
+        "src/infrastructure/storage/migrations.v8.test.ts"
       ],
       "spec": "SPEC-004"
     },
@@ -1147,9 +1183,9 @@
         "adoptRemoteActiveCycle",
         "mapSupabaseError",
         "scheduleSync",
-        "statementPaymentToRow",
         "statementPaymentFromRow",
-        "cardPurchaseFromRow"
+        "cardPurchaseFromRow",
+        "cycleFromRow"
       ],
       "business_rules": [
         "BR-SYNC-001",
@@ -1160,7 +1196,8 @@
       "adrs": [
         "ADR-004",
         "ADR-008",
-        "ADR-017"
+        "ADR-017",
+        "ADR-018"
       ],
       "tests": [
         "src/infrastructure/sync/sync-engine.test.ts",

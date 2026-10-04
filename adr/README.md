@@ -21,4 +21,5 @@ Fonte primária das decisões arquiteturais. ADRs nunca são apagadas: só passa
 | [ADR-014](ADR-014-cartoes-de-credito.md) | Cartões de crédito e compras parceladas | F3 (evolução) | ACCEPTED (ciclo da fatura substituído pela ADR-017) |
 | [ADR-015](ADR-015-pagamento-de-fixas-e-renda-avulsa.md) | Pagamento de despesas fixas e renda avulsa | F3 (evolução) | ACCEPTED (reserva de fixas pendentes pela ADR-017) |
 | [ADR-016](ADR-016-dia-de-pagamento-por-fonte.md) | Dia de pagamento por fonte de renda | F3 (evolução) | ACCEPTED |
-| [ADR-017](ADR-017-faturas-limite-e-situacao-inicial.md) | Faturas pelo vencimento, limite do cartão e situação inicial | F3 (evolução) | ACCEPTED |
+| [ADR-017](ADR-017-faturas-limite-e-situacao-inicial.md) | Faturas pelo vencimento, limite do cartão e situação inicial | F3 (evolução) | ACCEPTED (pagamento atualizado pela ADR-018) |
+| [ADR-018](ADR-018-pagamento-parcial-e-total-da-fatura.md) | Pagamento parcial e total da fatura, encargos e restante transportado | F3 (evolução) | ACCEPTED |

@@ -80,8 +80,15 @@ select pg_temp.expect_error($q$update public.card_purchases set origin='importad
 insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,paid_at,client_updated_at)
 values ('sp1','k1','2026-10','c1',100000,105000,'2026-11-08',now());
 do $$ begin assert (select count(*) from public.statement_payments)=1; raise notice 'ok - A grava pagamento de fatura com juros'; end $$;
-select pg_temp.expect_error($q$insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,paid_at,client_updated_at) values ('sp2','k1','2026-10','c1',100000,100000,'2026-11-08',now())$q$,'23505','BR-FIN-026 segundo pagamento vigente da mesma fatura rejeitado');
-select pg_temp.expect_error($q$insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,paid_at,client_updated_at) values ('sp3','k1','2026-11','c1',100000,90000,'2026-12-08',now())$q$,'23514','valor pago menor que a fatura rejeitado');
+insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,charges,paid_at,client_updated_at) values ('sp2','k1','2026-11','c1',200000,120000,0,'2026-12-08',now());
+insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,charges,paid_at,client_updated_at) values ('sp5','k1','2026-11','c1',200000,0,3000,'2026-12-09',now());
+do $$ begin assert (select count(*) from public.statement_payments where statement_key='2026-11')=2; raise notice 'ok - BR-FIN-033 pagamento parcial e encargos na mesma fatura'; end $$;
+select pg_temp.expect_error($q$insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,charges,paid_at,client_updated_at) values ('sp3','k1','2026-11','c1',100000,0,0,'2026-12-08',now())$q$,'23514','lançamento sem valor pago nem encargos rejeitado');
+select pg_temp.expect_error($q$insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,charges,paid_at,client_updated_at) values ('sp6','k1','2026-11','c1',100000,10,-1,'2026-12-08',now())$q$,'23514','encargos negativos rejeitados');
+update public.card_purchases set kind='statement-balance', included_in_balance=false where id='p6';
+select pg_temp.expect_error($q$update public.card_purchases set kind='outro' where id='p6'$q$,'23514','kind inválido rejeitado');
+update public.cycles set carried_statement_debt=80000, carried_statements='[{"card_id":"k1","statement_key":"2026-11","amount":80000}]' where id='c1';
+select pg_temp.expect_error($q$update public.cycles set carried_statement_debt=-1 where id='c1'$q$,'23514','BR-FIN-034 dívida transportada negativa rejeitada');
 select pg_temp.expect_error($q$insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,paid_at,client_updated_at) values ('sp4','inexistente','2026-11','c1',1,1,'2026-12-08',now())$q$,'23503','pagamento de fatura exige cartão existente');
 select pg_temp.expect_error($q$delete from public.statement_payments where id='sp1'$q$,'42501','DELETE físico de pagamento de fatura negado');
 update public.fixed_expenses set active=false where id='nenhuma';

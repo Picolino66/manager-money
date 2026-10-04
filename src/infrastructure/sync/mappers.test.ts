@@ -168,6 +168,7 @@ describe('mappers (contracts.md §2): ida e volta sem perda', () => {
       cycleId: 'c1',
       statementAmount: 10000,
       paidAmount: 10500,
+      charges: 500,
       paidAt: '2026-11-08',
     };
     const row = statementPaymentToRow(payment, 'u');

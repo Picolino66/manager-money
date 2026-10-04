@@ -4,26 +4,33 @@ type: feature
 module: card
 title: Situação inicial do cartão
 summary: >
-  Cadastro de fatura em aberto ou parcelamento que já existia antes do app; gera a agenda das
-  parcelas restantes e marca as já pagas como quitadas, sem pesar no orçamento nem no limite.
-keywords: [situação inicial, compra anterior, parcelamento existente, fatura em aberto, parcelas pagas, limite já usado]
+  Cadastro do total da fatura em aberto (fonte de verdade da fatura) ou de parcelamento que já
+  existia antes do app; a parcela atual pode estar "já incluída" no total informado, sem somar de
+  novo; as parcelas já pagas não pesam no orçamento nem no limite.
+keywords: [situação inicial, compra anterior, parcelamento existente, fatura em aberto, total da fatura, já incluída, parcelas pagas, limite já usado]
 code:
   - src/application/card.use-cases.ts
   - src/domain/financial/credit-card.ts
   - src/screens/CardDebtScreen.tsx
   - src/screens/CardsScreen.tsx
-symbols: [addExistingCardDebt, listOpenInstallments, calculateInstallmentForCycle, firstCountedCycleKey, updateCardPurchase]
-adrs: [ADR-017]
-tests: [src/application/financial-vision.test.ts, src/application/card.use-cases.test.ts, src/screens/cards.screens.test.tsx]
-business_rules: [BR-FIN-027, BR-FIN-029]
-last_verified_commit: c47cf18+T-025r4
+symbols: [addExistingCardDebt, listOpenInstallments, listEffectiveInstallments, calculateInstallmentForCycle, firstCountedCycleKey, updateCardPurchase]
+adrs: [ADR-017, ADR-018]
+tests: [src/application/card-rules.test.ts, src/application/financial-vision.test.ts, src/application/card.use-cases.test.ts, src/screens/cards.screens.test.tsx]
+business_rules: [BR-FIN-027, BR-FIN-029, BR-FIN-032]
+last_verified_commit: bfe9de6+T-028r2
 ---
 
 # Situação inicial do cartão
 
-Spec: [SPEC-017](../../../specs/SPEC-017-situacao-inicial-e-ativo-inativo.md) · decisão: [ADR-017](../../../adr/ADR-017-faturas-limite-e-situacao-inicial.md).
+Specs: [SPEC-017](../../../specs/SPEC-017-situacao-inicial-e-ativo-inativo.md), [SPEC-019](../../../specs/SPEC-019-pagamento-parcial-total-da-fatura-e-invariantes.md) · decisões: [ADR-017](../../../adr/ADR-017-faturas-limite-e-situacao-inicial.md), [ADR-018](../../../adr/ADR-018-pagamento-parcial-e-total-da-fatura.md).
 UI: rota `CardDebt { cardId }` — **"Compras anteriores ao app"** (`CardDebtScreen`), aberta pelo detalhe do cartão ou logo
 após cadastrar um cartão ([T-023](../../../tasks/done/T-023.md)). Tipos: "Fatura em aberto" ou "Parcelamento em andamento".
+Em "Fatura em aberto" o valor informado é o **total da fatura** (`statementBalance`); se a fatura já tem total, a tela
+avisa "Já existe um total informado…". Em "Parcelamento em andamento", quando a fatura escolhida tem total informado,
+aparece o interruptor **"Esta parcela já está no total da fatura informada (R$ …)"**, **ligado por padrão** (volta a
+ligar ao trocar de modo); sem total, ele não aparece. A prévia mostra o limite comprometido sem a parcela incluída.
+As opções de fatura são só as não vencidas (a fechada aguardando vencimento e a aberta) e **sem nenhum lançamento**
+(pago ou parcial). UI da [T-027](../../../tasks/done/T-027.md).
 
 ## Descrição
 Quem chega ao app com fatura aberta ou parcelamentos em curso registra essa dívida sem datas retroativas:
@@ -31,28 +38,40 @@ Quem chega ao app com fatura aberta ou parcelamentos em curso registra essa dív
 
 ## Entrada
 `ExistingCardDebtInput { cardId, description, category, installmentAmount, totalInstallments,
-remainingInstallments, nextStatementKey }`. Fatura em aberto = `totalInstallments = remainingInstallments = 1`.
+remainingInstallments, nextStatementKey, statementBalance?, includedInStatementBalance? }`. Total da fatura em aberto =
+`statementBalance: true` com `totalInstallments = remainingInstallments = 1`.
 
 ## Saída
 Compra com `origin = 'existing'`, `totalAmount = installmentAmount × totalInstallments`, `settledInstallments = total − restantes`,
 `firstStatementKey = nextStatementKey − quitadas`, `purchaseDate` sintética (fechamento da 1ª fatura) e
 `firstCycleKey` alinhado ao ciclo do vencimento da próxima parcela (nunca antes do ciclo ativo ou do próximo
-a abrir). Saldo do ciclo ativo recalculado.
+a abrir). `statementBalance` grava `kind: 'statement-balance'`; `includedInStatementBalance` (só em parcelamento)
+grava `includedInStatementBalance: true`. Saldo do ciclo ativo recalculado.
 
 ## Regras de negócio
 - BR-FIN-027: parcelas quitadas **não pesam** no orçamento (`calculateInstallmentForCycle`) nem no limite
   (`listOpenInstallments`); as restantes comprometem o limite e caem uma por fatura/ciclo.
+- **Total informado (BR-FIN-032):** a compra `kind: 'statement-balance'` é a fonte de verdade da fatura; um por
+  cartão + fatura; precisa ser 1 de 1.
+- **Parcela já incluída (BR-FIN-032):** exige o total informado daquela fatura; a parcela atual aparece na fatura
+  com `nominalAmount` e `amount = 0` (`listEffectiveInstallments`) — não soma ao total, ao orçamento nem ao limite;
+  as seguintes contam normalmente. A soma dos itens incluídos não pode passar do total. Excluir o total faz a
+  parcela voltar a contar. Sem marcar, a parcela soma ao total (escolha explícita do usuário). Cadastrar o total
+  **depois** de parcelas já marcadas como incluídas naquela fatura também é recusado se elas somarem mais que ele.
 - Exige configuração; aceita cartão inativo e cadastro antes do primeiro ciclo.
-- `nextStatementKey`: `yyyy-MM`, fatura ainda **não vencida**, até 12 faturas à frente da atual e não paga.
+- `nextStatementKey`: `yyyy-MM`, fatura ainda **não vencida**, até 12 faturas à frente da atual e sem lançamento.
 - BR-FIN-029: por ser `origin = 'existing'`, só **descrição e categoria** podem mudar depois (`updateCardPurchase`),
   qualquer que seja a data; exclusão segue `canModifyCardPurchase`.
 
 ## Fluxo resumido
 Cartões → cartão → Compras anteriores ao app → Fatura em aberto ou Parcelamento em andamento → valor da parcela, total, restantes,
-fatura da próxima parcela → Salvar → limite comprometido e próximos ciclos atualizados.
+fatura da próxima parcela (e, se a fatura tem total informado, "já incluída") → Salvar → limite comprometido e
+próximos ciclos atualizados.
 
 ## Possíveis erros
 "Configure a base financeira antes de cadastrar compras anteriores." · "Informe o valor da parcela." · "As
 parcelas restantes devem ficar entre 1 e o total de parcelas." · "Escolha a fatura da próxima parcela." · "A
 próxima parcela precisa estar em uma fatura que ainda não venceu." · "A fatura MM/AAAA deste cartão já foi paga."
-· "Em compras anteriores ao app, só a descrição e a categoria podem mudar."
+· "O total da fatura é um valor único." · "Já existe um total informado para a fatura MM/AAAA." · "Informe antes o
+total desta fatura para incluir a parcela nele." · "As parcelas incluídas somam mais que o total informado da fatura.
+Confira os valores." · "As parcelas incluídas nesta fatura somam mais que o total informado. Confira os valores." · "Em compras anteriores ao app, só a descrição e a categoria podem mudar."

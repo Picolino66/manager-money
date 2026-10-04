@@ -6,7 +6,6 @@ import {
   CreditCard,
   MAX_CARD_DAY,
   statementKeyForDate,
-  statementPaymentId,
 } from '../../domain/financial/credit-card';
 import {
   buildLegacyFinancialCycleDates,
@@ -377,7 +376,7 @@ export function migrateV6ToV7(raw: unknown, now: Date): unknown {
         )
           .filter((statement) => statement.status === 'overdue')
           .map((statement) => ({
-            id: statementPaymentId(statement.cardId, statement.key),
+            id: `statement-${statement.cardId}-${statement.key}`,
             cardId: statement.cardId,
             statementKey: statement.key,
             cycleId: anchorCycleId,
@@ -403,6 +402,26 @@ export function migrateV6ToV7(raw: unknown, now: Date): unknown {
       ...sync,
       cursors: { ...sync.cursors, statement_payments: null },
     },
+  };
+}
+
+/**
+ * Migração v7 → v8 (documento bruto, ADR-018): pagamentos de fatura passam a separar o valor pago
+ * dos encargos. O excedente gravado antes (pago − fatura) vira `charges`; nenhum valor muda.
+ */
+export function migrateV7ToV8(raw: unknown): unknown {
+  const document = raw as { statementPayments?: Record<string, unknown>[] };
+
+  return {
+    ...document,
+    schemaVersion: 8,
+    statementPayments: (document.statementPayments ?? []).map((payment) => ({
+      ...payment,
+      charges: Math.max(
+        0,
+        (Number(payment.paidAmount) || 0) - (Number(payment.statementAmount) || 0),
+      ),
+    })),
   };
 }
 
@@ -434,6 +453,11 @@ export function migrateDocument(raw: unknown, now: Date): unknown | null {
   if (version === 6) {
     document = migrateV6ToV7(document, now);
     version = 7;
+  }
+
+  if (version === 7) {
+    document = migrateV7ToV8(document);
+    version = 8;
   }
 
   return document === raw ? null : document;

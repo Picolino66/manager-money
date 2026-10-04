@@ -146,6 +146,12 @@ export function cycleToRow(record: CycleRecord, userId: string): CycleRow {
     status: record.status,
     initial_available_amount: record.initialAvailableAmount,
     previous_month_debt: record.previousMonthDebt,
+    carried_statement_debt: record.carriedStatementDebt ?? 0,
+    carried_statements: (record.carriedStatements ?? []).map((item) => ({
+      card_id: item.cardId,
+      statement_key: item.statementKey,
+      amount: item.amount,
+    })),
     final_balance: record.finalBalance ?? null,
     client_updated_at: record.updatedAt,
     deleted_at: record.deletedAt,
@@ -163,6 +169,18 @@ export function cycleFromRow(row: CycleRow): CycleRecord {
     status: row.status,
     initialAvailableAmount: Number(row.initial_available_amount),
     previousMonthDebt: Number(row.previous_month_debt),
+    ...(Number(row.carried_statement_debt ?? 0) > 0
+      ? { carriedStatementDebt: Number(row.carried_statement_debt) }
+      : {}),
+    ...(row.carried_statements && row.carried_statements.length > 0
+      ? {
+          carriedStatements: row.carried_statements.map((item) => ({
+            cardId: item.card_id,
+            statementKey: item.statement_key,
+            amount: Number(item.amount),
+          })),
+        }
+      : {}),
     ...(row.final_balance !== null ? { finalBalance: Number(row.final_balance) } : {}),
     updatedAt: row.client_updated_at,
     deletedAt: row.deleted_at,
@@ -243,6 +261,8 @@ export function cardPurchaseToRow(record: CardPurchaseRecord, userId: string): C
     first_statement_key: record.firstStatementKey,
     settled_installments: record.settledInstallments,
     origin: record.origin ?? null,
+    kind: record.kind ?? null,
+    included_in_balance: record.includedInStatementBalance === true,
     created_at: record.createdAt,
     client_updated_at: record.updatedAt,
     deleted_at: record.deletedAt,
@@ -271,6 +291,8 @@ export function cardPurchaseFromRow(
       statementKeyForDate(parseISO(row.purchase_date), closingDayOf(row.card_id) ?? MAX_CARD_DAY),
     settledInstallments: row.settled_installments ?? 0,
     ...(row.origin === 'existing' ? { origin: 'existing' as const } : {}),
+    ...(row.kind === 'statement-balance' ? { kind: 'statement-balance' as const } : {}),
+    ...(row.included_in_balance ? { includedInStatementBalance: true } : {}),
     createdAt: row.created_at,
     updatedAt: row.client_updated_at,
     deletedAt: row.deleted_at,
@@ -352,6 +374,7 @@ export function statementPaymentToRow(
     cycle_id: record.cycleId,
     statement_amount: record.statementAmount,
     paid_amount: record.paidAmount,
+    charges: record.charges,
     paid_at: record.paidAt,
     client_updated_at: record.updatedAt,
     deleted_at: record.deletedAt,
@@ -366,6 +389,10 @@ export function statementPaymentFromRow(row: StatementPaymentRow): StatementPaym
     cycleId: row.cycle_id,
     statementAmount: Number(row.statement_amount),
     paidAmount: Number(row.paid_amount),
+    charges:
+      row.charges === undefined || row.charges === null
+        ? Math.max(0, Number(row.paid_amount) - Number(row.statement_amount))
+        : Number(row.charges),
     paidAt: row.paid_at,
     updatedAt: row.client_updated_at,
     deletedAt: row.deleted_at,

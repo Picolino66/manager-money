@@ -22,7 +22,7 @@ symbols: [payFixedExpense, undoFixedPayment, calculatePaidFixedAmount, calculate
 adrs: [ADR-015, ADR-014, ADR-017]
 tests: [src/application/payment.use-cases.test.ts, src/application/financial-vision.test.ts, src/screens/screens.test.tsx, src/infrastructure/sync/sync-engine.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-021, BR-FIN-022, BR-FIN-030]
-last_verified_commit: c47cf18+T-025r2
+last_verified_commit: bfe9de6+T-028
 ---
 
 # Pagar despesas fixas do ciclo
@@ -44,7 +44,7 @@ Specs: [SPEC-014](../../../specs/SPEC-014-pagamento-de-fixas-e-renda-avulsa.md),
   mostra `CardLimitNotice` e o Alert "Continuar mesmo assim?" (avisa, não bloqueia). Sem cartão: atalho para cadastrar.
 - Um pagamento vigente por despesa e ciclo; a data do pagamento é hoje, limitada ao período do ciclo.
 - **Desfazer** (ciclo ativo): remove o pagamento (a fixa volta a ficar reservada) e, no crédito, a compra no
-  cartão — bloqueado se a compra já pesou em ciclo fechado ou fatura paga (BR-FIN-029).
+  cartão — bloqueado se a compra já pesou em ciclo fechado ou em fatura com lançamento (BR-FIN-029).
 - **Excluir a compra no cartão** gerada por essa fixa (em Cartões) exclui junto o pagamento: a fixa volta a
   Pendente e reservada (BR-FIN-030); bloqueado se o pagamento for de ciclo encerrado. Editar valor, parcelas ou
   data dessa compra é bloqueado ("Desfaça o pagamento"); descrição e categoria podem mudar.

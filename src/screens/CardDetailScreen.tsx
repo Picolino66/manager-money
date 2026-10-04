@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { isAfter, parseISO, startOfDay } from 'date-fns';
 
 import {
   canModifyCardPurchase,
@@ -23,9 +24,9 @@ import { MetricRow } from '../components/MetricRow';
 import { PayStatementModal } from '../components/PayStatementModal';
 import { Screen } from '../components/Screen';
 import { StatementCard } from '../components/StatementCard';
+import { StatementChargesModal } from '../components/StatementChargesModal';
 import { colors, spacing, typography } from '../design/theme';
 import {
-  calculateStatementInterest,
   CardPurchase,
   CardStatement,
   cycleKeyFromStartDate,
@@ -35,7 +36,12 @@ import { isActive } from '../domain/financial/financial.types';
 import { RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '../utils/currency';
-import { CARD_LIMIT_DISCLAIMER, describeCycleWeight, formatMonthKey } from './cardText';
+import {
+  CARD_LIMIT_DISCLAIMER,
+  describeCycleWeight,
+  describeStatementEntry,
+  formatMonthKey,
+} from './cardText';
 import {
   buildCardStatementsView,
   formatDayMonth,
@@ -49,7 +55,10 @@ function showError(title: string, error: unknown) {
   Alert.alert(title, error instanceof Error ? error.message : 'Tente novamente.');
 }
 
-/** SPEC-016: visão do cartão — limite, faturas, compras e pagamento de fatura (BR-FIN-025/026/029). */
+/**
+ * SPEC-016/019: visão do cartão — limite, faturas, compras, pagamentos (inclusive parciais) e
+ * juros/multas de fatura (BR-FIN-025/026/029/032/033).
+ */
 export function CardDetailScreen({ navigation, route }: Props) {
   const doc = useFinancialStore((state) => state.doc);
   const config = useFinancialStore((state) => state.config);
@@ -57,11 +66,13 @@ export function CardDetailScreen({ navigation, route }: Props) {
   const saveCreditCard = useFinancialStore((state) => state.saveCreditCard);
   const setCreditCardActive = useFinancialStore((state) => state.setCreditCardActive);
   const payStatement = useFinancialStore((state) => state.payStatement);
+  const addStatementCharges = useFinancialStore((state) => state.addStatementCharges);
   const undoStatementPayment = useFinancialStore((state) => state.undoStatementPayment);
   const updateCardPurchase = useFinancialStore((state) => state.updateCardPurchase);
   const deleteCardPurchase = useFinancialStore((state) => state.deleteCardPurchase);
   const [isEditingCard, setIsEditingCard] = useState(false);
-  const [overdueStatement, setOverdueStatement] = useState<CardStatement | null>(null);
+  const [payingStatement, setPayingStatement] = useState<CardStatement | null>(null);
+  const [chargingStatement, setChargingStatement] = useState<CardStatement | null>(null);
   const [editingPurchase, setEditingPurchase] = useState<CardPurchase | null>(null);
   const card = selectCreditCards(doc).find((item) => item.id === route.params.cardId);
 
@@ -92,6 +103,8 @@ export function CardDetailScreen({ navigation, route }: Props) {
     describeCycleWeight(
       statementCycleKeys(statement, card, config?.payday ?? null, activeCycleKey),
     );
+  const isOverdue = (statement: CardStatement) =>
+    isAfter(startOfDay(today), startOfDay(parseISO(statement.dueDate)));
   const isLocked = (purchase: CardPurchase) => !canModifyCardPurchase(doc, purchase);
   /** Espelha o caso de uso: compra feita no app (não da situação inicial), no ciclo ativo (BR-FIN-029). */
   const canEditAmounts = (purchase: CardPurchase) =>
@@ -117,43 +130,35 @@ export function CardDetailScreen({ navigation, route }: Props) {
     );
   }
 
-  function handlePay(statement: CardStatement) {
-    if (statement.status === 'overdue') {
-      setOverdueStatement(statement);
-      return;
-    }
-
-    Alert.alert(
-      'Confirmar pagamento?',
-      `Fatura ${formatMonthKey(statement.key)} de ${formatCurrency(statement.amount)}. O limite do cartão será liberado.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Paguei',
-          onPress: () => {
-            payStatement({ cardId, statementKey: statement.key }).catch((error: unknown) =>
-              showError('Não foi possível registrar o pagamento', error),
-            );
-          },
-        },
-      ],
-    );
-  }
-
-  async function handlePayOverdue(paidAmount: number) {
-    if (!overdueStatement) return;
+  async function handleConfirmPay(paidAmount: number | undefined) {
+    if (!payingStatement) return;
 
     try {
-      await payStatement({ cardId, statementKey: overdueStatement.key, paidAmount });
-      setOverdueStatement(null);
+      await payStatement({
+        cardId,
+        statementKey: payingStatement.key,
+        ...(paidAmount === undefined ? {} : { paidAmount }),
+      });
+      setPayingStatement(null);
     } catch (error) {
       showError('Não foi possível registrar o pagamento', error);
     }
   }
 
+  async function handleConfirmCharges(amount: number) {
+    if (!chargingStatement) return;
+
+    try {
+      await addStatementCharges({ cardId, statementKey: chargingStatement.key, amount });
+      setChargingStatement(null);
+    } catch (error) {
+      showError('Não foi possível registrar os juros/multa', error);
+    }
+  }
+
   function handleUndo(paymentId: string) {
     undoStatementPayment(paymentId).catch((error: unknown) =>
-      showError('Não foi possível desfazer o pagamento', error),
+      showError('Não foi possível desfazer o lançamento', error),
     );
   }
 
@@ -187,32 +192,47 @@ export function CardDetailScreen({ navigation, route }: Props) {
     );
   }
 
+  function renderEntries(statement: CardStatement) {
+    if (statement.payments.length === 0) return null;
+
+    const monthLabel = formatMonthKey(statement.key);
+
+    return (
+      <View style={styles.entries}>
+        <Text style={styles.entriesTitle}>Lançamentos</Text>
+        {statement.payments.map((payment) => {
+          const text = describeStatementEntry(payment, formatDayMonth(payment.paidAt));
+
+          return (
+            <View key={payment.id} style={styles.entryRow}>
+              <Text style={styles.entryText}>{text}</Text>
+              {payment.cycleId === activeMonth?.id ? (
+                <AppButton
+                  accessibilityLabel={`Desfazer lançamento ${text} da fatura ${monthLabel}`}
+                  iconName="arrow-undo-outline"
+                  onPress={() => handleUndo(payment.id)}
+                  title="Desfazer"
+                  variant="ghost"
+                />
+              ) : null}
+            </View>
+          );
+        })}
+      </View>
+    );
+  }
+
   function renderPaymentArea(statement: CardStatement) {
-    if (statement.payment) {
-      const interest = calculateStatementInterest(statement.payment);
-      const canUndo = statement.payment.cycleId === activeMonth?.id;
-      const paymentId = statement.payment.id;
+    const entries = renderEntries(statement);
+    const monthLabel = formatMonthKey(statement.key);
+
+    if (statement.status === 'paid') {
+      const last = statement.payments[statement.payments.length - 1];
 
       return (
         <View style={styles.paymentArea}>
-          <Text style={styles.paid}>
-            Paga em {formatDayMonth(statement.payment.paidAt)} ·{' '}
-            {formatCurrency(statement.payment.paidAmount)}
-          </Text>
-          {interest > 0 ? (
-            <Text style={styles.hint}>
-              Juros de {formatCurrency(interest)} no ciclo do pagamento.
-            </Text>
-          ) : null}
-          {canUndo ? (
-            <AppButton
-              accessibilityLabel={`Desfazer pagamento da fatura ${formatMonthKey(statement.key)}`}
-              iconName="arrow-undo-outline"
-              onPress={() => handleUndo(paymentId)}
-              title="Desfazer"
-              variant="ghost"
-            />
-          ) : null}
+          <Text style={styles.paid}>Quitada{last ? ` em ${formatDayMonth(last.paidAt)}` : ''}</Text>
+          {entries}
         </View>
       );
     }
@@ -225,7 +245,7 @@ export function CardDetailScreen({ navigation, route }: Props) {
       );
     }
 
-    if (statement.amount <= 0) return null;
+    if (statement.remaining <= 0) return entries;
 
     if (!activeMonth) {
       return (
@@ -238,23 +258,38 @@ export function CardDetailScreen({ navigation, route }: Props) {
             title="Iniciar ciclo"
             variant="secondary"
           />
+          {entries}
         </View>
       );
     }
 
     return (
       <View style={styles.paymentArea}>
-        {statement.status === 'overdue' ? (
+        {isOverdue(statement) ? (
           <Text style={styles.overdue}>
-            Venceu em {formatDayMonth(statement.dueDate)}. Ao marcar como paga, informe o valor com
-            juros.
+            Venceu em {formatDayMonth(statement.dueDate)}. Ao registrar o pagamento, informe o valor
+            pago, com juros se houver.
           </Text>
         ) : null}
+        {statement.status === 'partial' ? (
+          <Text style={styles.partial}>
+            Pagamento parcial: faltam {formatCurrency(statement.remaining)}. O restante continua
+            devido; se a fatura pesa no ciclo atual, o que faltar ao fechar vira dívida do próximo.
+          </Text>
+        ) : null}
+        {entries}
         <AppButton
-          accessibilityLabel={`Paguei a fatura ${formatMonthKey(statement.key)}`}
+          accessibilityLabel={`Paguei a fatura ${monthLabel}`}
           iconName="checkmark-done-outline"
-          onPress={() => handlePay(statement)}
+          onPress={() => setPayingStatement(statement)}
           title="Paguei a fatura"
+        />
+        <AppButton
+          accessibilityLabel={`Registrar juros/multa da fatura ${monthLabel}`}
+          iconName="add-circle-outline"
+          onPress={() => setChargingStatement(statement)}
+          title="Registrar juros/multa"
+          variant="secondary"
         />
       </View>
     );
@@ -325,8 +360,8 @@ export function CardDetailScreen({ navigation, route }: Props) {
           </Text>
         )}
         <Text style={styles.hint}>
-          Comprometido = parcelas em faturas ainda não pagas, inclusive futuras. O limite só volta
-          quando você marca &quot;Paguei a fatura&quot;.
+          Comprometido = parcelas das faturas, inclusive futuras, menos o que já foi pago de cada
+          fatura. Pagamento parcial libera parte do limite; juros e multas não ocupam limite.
         </Text>
         <Text style={styles.disclaimer}>{CARD_LIMIT_DISCLAIMER}</Text>
       </Card>
@@ -401,7 +436,7 @@ export function CardDetailScreen({ navigation, route }: Props) {
 
       {view.paidInActiveCycle.length > 0 ? (
         <>
-          <Text style={styles.sectionTitle}>Pagas neste ciclo</Text>
+          <Text style={styles.sectionTitle}>Quitadas neste ciclo</Text>
           {view.paidInActiveCycle.map((statement) => (
             <StatementCard
               {...statementProps}
@@ -425,13 +460,25 @@ export function CardDetailScreen({ navigation, route }: Props) {
         Fatura em aberto ou parcelamento que já existia antes de você usar o app.
       </Text>
 
-      {overdueStatement ? (
+      {payingStatement ? (
         <PayStatementModal
-          amount={overdueStatement.amount}
-          dueLabel={formatDayMonth(overdueStatement.dueDate)}
-          onClose={() => setOverdueStatement(null)}
-          onConfirm={handlePayOverdue}
-          title={`Fatura ${card.name} ${formatMonthKey(overdueStatement.key)}`}
+          amount={payingStatement.amount}
+          charges={payingStatement.charges}
+          dueLabel={formatDayMonth(payingStatement.dueDate)}
+          onClose={() => setPayingStatement(null)}
+          onConfirm={handleConfirmPay}
+          overdue={isOverdue(payingStatement)}
+          paid={payingStatement.paid}
+          remaining={payingStatement.remaining}
+          title={`Fatura ${card.name} ${formatMonthKey(payingStatement.key)}`}
+        />
+      ) : null}
+
+      {chargingStatement ? (
+        <StatementChargesModal
+          onClose={() => setChargingStatement(null)}
+          onConfirm={handleConfirmCharges}
+          title={`Juros/multa da fatura ${card.name} ${formatMonthKey(chargingStatement.key)}`}
         />
       ) : null}
 
@@ -493,6 +540,31 @@ const styles = StyleSheet.create({
     color: colors.healthy,
     fontSize: 14,
     fontWeight: '800',
+  },
+  partial: {
+    color: colors.warning,
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  entries: {
+    gap: spacing.xs,
+  },
+  entriesTitle: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  entryRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
+  entryText: {
+    color: colors.text,
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
   },
   overdue: {
     color: colors.critical,

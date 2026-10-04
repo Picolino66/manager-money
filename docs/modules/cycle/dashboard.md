@@ -17,10 +17,10 @@ code:
   - src/domain/financial/projection.ts
   - src/application/selectors.ts
 symbols: [buildDashboardSummary, calculateDailyLimitForDate, calculateDayStatus, calculateRemainingDays, selectUpcomingCommitments, selectCycleProjections, projectCycles, selectCycleAdjustments]
-adrs: [ADR-017]
-tests: [src/application/financial-vision.test.ts, src/domain/financial/projection.test.ts, src/domain/financial/financial.calculations.test.ts, src/screens/screens.test.tsx]
-business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-007, BR-FIN-008, BR-FIN-009, BR-FIN-030, BR-FIN-031]
-last_verified_commit: c47cf18+T-025r2
+adrs: [ADR-017, ADR-018]
+tests: [src/application/card-rules.test.ts, src/application/financial-vision.test.ts, src/domain/financial/projection.test.ts, src/domain/financial/financial.calculations.test.ts, src/screens/screens.test.tsx]
+business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-007, BR-FIN-008, BR-FIN-009, BR-FIN-030, BR-FIN-031, BR-FIN-033, BR-FIN-034]
+last_verified_commit: bfe9de6+T-028
 ---
 
 # Painel do dia (Hoje)
@@ -31,28 +31,35 @@ Spec: [SPEC-018](../../../specs/SPEC-018-hoje-compromissos-e-projecao.md) · UI 
 
 ## Descrição
 Responde "quanto posso gastar hoje **e continuar atingindo minha meta**?". O saldo do ciclo já desconta a
-meta, as fixas pendentes (reservadas), as parcelas de cartão do ciclo e os juros de faturas pagas com atraso.
+meta, as fixas pendentes (reservadas), as parcelas de cartão do ciclo, os encargos de faturas lançados no ciclo e
+o restante de faturas parciais transportado do ciclo anterior.
 
 ## Saída (blocos, nesta ordem)
 1. **Hero:** "Ainda pode gastar hoje" = saldo do dia (BR-FIN-008) com selo de status (BR-FIN-009), "já gastou"
    e o limite previsto de hoje (BR-FIN-007). Nunca mistura o limite do cartão com esse valor.
 2. **Ações:** Registrar e Renda (rendas avulsas).
 3. **Resumo curto:** dias restantes, "Dinheiro disponível no ciclo" e "Meta de economia (guardada)".
-4. **Próximos compromissos** (`UpcomingCommitmentsCard` ← `selectUpcomingCommitments`): faturas não pagas já
-   fechadas ou que vencem até o fim do ciclo, com "vence dd/MM" e as **vencidas em destaque**; depois as fixas
-   ativas pendentes. Vazio: "Nenhuma fatura ou despesa fixa pendente neste ciclo."
+4. **Próximos compromissos** (`UpcomingCommitmentsCard` ← `selectUpcomingCommitments`): faturas com **restante > 0**
+   já fechadas ou que vencem até o fim do ciclo, pelo **restante** (fatura parcial mostra só o que falta), com
+   "vence dd/MM" (fatura parcial com o sufixo "(restante)") e as **vencidas em destaque** (`overdue` = passou do vencimento sem quitar, mesmo parcial); depois
+   as fixas ativas pendentes. Vazio: "Nenhuma fatura ou despesa fixa pendente neste ciclo."
 5. **Despesas fixas do ciclo** (`FixedExpensesCard`): Pagar/Desfazer ([payment.fixed-expense](../payment/fixed-expense.md)).
 6. **Próximos ciclos** (`ProjectionCard` ← `selectCycleProjections`, 3 ciclos, **recolhido** mostrando o
    "Livre antes de novos gastos"): por ciclo, renda − meta − fixas − faturas (BR-FIN-031), com aviso quando
    negativo.
 7. **Plano do ciclo** (`CyclePlanCard`, **recolhido**, mostra o saldo inicial): renda (fontes ativas), rendas
-   avulsas, fixas reservadas/pagas, meta, faturas do ciclo, juros de atraso e dívida herdada (`selectCycleAdjustments`).
+   avulsas, fixas reservadas/pagas, meta, faturas do ciclo, encargos de faturas (`statementInterest`), **dívida de
+   fatura transportada** (`carriedStatementDebt`, BR-FIN-034) e dívida herdada (`selectCycleAdjustments`). Rótulos:
+   "− Faturas de cartão do ciclo", "− Juros/multas de faturas", "− Fatura pendente do ciclo anterior", "− Dívida
+   herdada", "= Saldo inicial do ciclo" (UI da [T-027](../../../tasks/done/T-027.md)).
 8. **Fim da tela:** **Já recebi** ([receive-early.md](receive-early.md)) e **Fechar ciclo** ([close.md](close.md)),
    conforme BR-FIN-016/017.
 
 ## Regras de negócio
-- BR-FIN-004/005: fixas ativas pendentes reservadas; juros de faturas pagas com atraso no ciclo descontam.
-- BR-FIN-030: cada saída conta uma vez (dia, reserva, fatura no ciclo do vencimento, juros no ciclo do pagamento).
+- BR-FIN-004/005: fixas ativas pendentes reservadas; encargos de faturas lançados no ciclo e o restante de faturas
+  parciais transportado (BR-FIN-034) descontam.
+- BR-FIN-030: cada saída conta uma vez (dia, reserva, fatura no ciclo do vencimento, encargos no ciclo do
+  lançamento, restante parcial no ciclo seguinte); pagar a fatura reservada não desconta de novo (INV-05).
 - A projeção é a partir do ciclo ativo (ou do próximo a abrir) e não inclui dívida, juros nem gastos variáveis.
 
 ## Possíveis estados

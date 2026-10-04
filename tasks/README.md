@@ -35,6 +35,9 @@ P1 = importante para operar; P2 = melhoria.
 | T-023 | Telas de cartão: limite, faturas, situação inicial e ativo/inativo | SPEC-016/017 | P1 | S4 | 5 |
 | T-024 | Hoje enxuta, Registrar gasto, Configuração e Categorias | SPEC-018 | P1 | S4 | 5 |
 | T-025 | Documentação: ADR-017, specs e knowledge layer | SPEC-016/017/018 | P1 | S4 | 2 |
+| T-026 | Núcleo: pagamento parcial, encargos, total informado e invariantes | SPEC-019 | P1 | S5 | 8 |
+| T-027 | UI de faturas parciais, encargos e onboarding com total informado | SPEC-019 | P1 | S5 | 5 |
+| T-028 | Documentação: ADR-018, SPEC-019 e knowledge layer | SPEC-019 | P1 | S5 | 2 |
 
 **S1 (23 pts):** fundação e correções de dados: T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-015.
 **S2 (21 pts):** conta, sync e lojas: T-008, T-009, T-010, T-011, T-012, T-014.
@@ -43,3 +46,5 @@ P1 = importante para operar; P2 = melhoria.
 **S3 (evolução):** T-016 — login por e-mail e senha (ADR-011), concluída; T-018 — múltiplas fontes de renda (SPEC-012); T-019 — cartões de crédito (SPEC-013); T-020 — pagamento de fixas e renda avulsa (SPEC-014); T-021 — dia de pagamento por fonte (SPEC-015).
 
 **S4 (visão de produto, ADR-017):** T-022 — núcleo de faturas, limite, situação inicial e projeção (concluída); T-023 — telas de cartão; T-024 — Hoje, Registrar, Configuração e Categorias; T-025 — documentação (todas concluídas; revisão financeira A1, A2, M1–M3, M5–M7 corrigida).
+
+**S5 (pagamento parcial e invariantes, ADR-018):** T-026 — núcleo (concluída); T-027 — UI de faturas e onboarding; T-028 — documentação (todas concluídas; revisão financeira v2 com M1–M3, B1–B4 e B7 corrigidos).
