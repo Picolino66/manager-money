@@ -11,16 +11,18 @@ code:
   - client/src/features/cards/CardsPage.tsx
   - client/src/features/cards/CardDetailPage.tsx
   - client/src/features/cards/CardFormDialog.tsx
+  - client/src/features/cards/CardDebtPage.tsx
+  - packages/core/src/application/card-debt.ts
   - client/src/features/cards/StatementPanel.tsx
   - client/src/features/cards/StatementDialogs.tsx
   - client/src/components/LimitBar.tsx
   - packages/core/src/application/card-view.ts
   - packages/core/src/application/card-text.ts
-symbols: [buildCardStatementsView, statementCycleKeys, weightByCycle, hasCardPurchases, describeStatementEntry, CardFormDialog, StatementPanel, PayStatementDialog, StatementChargesDialog, LimitBar]
+symbols: [CardDebtPage, selectStatementChoices, buildCardStatementsView, statementCycleKeys, weightByCycle, hasCardPurchases, CardFormDialog, StatementPanel, PayStatementDialog]
 business_rules: [BR-FIN-019, BR-FIN-025, BR-FIN-026, BR-FIN-028, BR-FIN-029, BR-FIN-033, BR-FIN-034]
 adrs: [ADR-018, ADR-020, ADR-022]
-tests: [packages/core/src/application/card-view.test.ts, client/src/features/settings.test.tsx]
-last_verified_commit: 7903717+T-041
+tests: [packages/core/src/application/card-view.test.ts, packages/core/src/application/card-debt.test.ts, client/src/features/settings.test.tsx]
+last_verified_commit: 7903717+T-041b
 ---
 
 # Cartões (CLIENT-017)
@@ -38,5 +40,6 @@ last_verified_commit: 7903717+T-041
 - Compras: lápis (`CardPurchaseFormDialog` → `updateCardPurchase`) e lixeira (`deleteCardPurchase`); compra já
   contada em ciclo fechado ou fatura paga aparece "Bloqueada" (BR-FIN-029). Compra anterior ao app só muda
   descrição e categoria.
-- Fora desta entrega: situação inicial ("Compras anteriores ao app") e registrar compra nova no cartão.
+- **Compras anteriores ao app** (`/ajustes/cartoes/:id/compras-anteriores`, `CardDebtPage` → `addExistingCardDebt`): modos "Fatura em aberto" (total que o banco mostra) e "Parcelamento em andamento" (valor, total e restantes), faturas ainda não vencidas e sem lançamento (`selectStatementChoices`), aviso de total já informado, opção "esta parcela já está no total" e prévia da agenda e do limite comprometido (`card-debt`, núcleo, igual ao app). Botão no detalhe do cartão e oferta ao cadastrar um cartão novo. Ver [card.existing-debt](../card/existing-debt.md).
+- Fora desta entrega: registrar compra nova no cartão.
 - `card-view` e `card-text` moram no núcleo (antes em `app/src/screens`); app e web usam as mesmas.

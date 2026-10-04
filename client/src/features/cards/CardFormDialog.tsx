@@ -5,7 +5,8 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 
 import { saveCreditCard } from '@manager-money/core/application/card.use-cases';
-import { CreditCardRecord } from '@manager-money/core/application/state';
+import { selectCreditCards } from '@manager-money/core/application/selectors';
+import { createEmptyState, CreditCardRecord } from '@manager-money/core/application/state';
 import { MAX_CARD_DAY, MIN_CARD_DAY } from '@manager-money/core/domain/financial/credit-card';
 
 import { Button } from '@/components/ui/button';
@@ -14,6 +15,8 @@ import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { MoneyInput } from '@/components/ui/money-input';
 import { useDataStore } from '@/store/data.store';
+
+const emptyDoc = createEmptyState();
 
 const dayMessage = `Informe um dia entre ${MIN_CARD_DAY} e ${MAX_CARD_DAY}.`;
 const day = z.number().int().min(MIN_CARD_DAY, dayMessage).max(MAX_CARD_DAY, dayMessage);
@@ -33,10 +36,12 @@ type Props = {
   onOpenChange: (open: boolean) => void;
   /** Ausente = novo cartão. */
   card?: CreditCardRecord;
+  /** Chamado depois de cadastrar um cartão novo (o web oferece a situação inicial). */
+  onCreated?: (card: CreditCardRecord) => void;
 };
 
 /** Cadastrar/editar cartão (BR-FIN-019/026/028) pelo caso de uso `saveCreditCard` do núcleo. */
-export function CardFormDialog({ open, onOpenChange, card }: Props) {
+export function CardFormDialog({ open, onOpenChange, card, onCreated }: Props) {
   const run = useDataStore((state) => state.run);
   const [error, setError] = useState<string | null>(null);
   const {
@@ -72,6 +77,14 @@ export function CardFormDialog({ open, onOpenChange, card }: Props) {
       );
       toast.success(card ? 'Cartão atualizado.' : 'Cartão cadastrado.');
       onOpenChange(false);
+
+      if (!card && onCreated) {
+        const name = values.name.trim().toLowerCase();
+        const saved = selectCreditCards(useDataStore.getState().doc ?? emptyDoc).find(
+          (item) => item.name.toLowerCase() === name,
+        );
+        if (saved) onCreated(saved);
+      }
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'Não foi possível salvar.');
     }

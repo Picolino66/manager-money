@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { isAfter, parseISO, startOfDay } from 'date-fns';
-import { ArrowLeft, Pencil, Power } from 'lucide-react';
+import { ArrowLeft, History, Pencil, Power } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { toast } from 'sonner';
 
@@ -369,6 +369,17 @@ export function CardDetailPage() {
           )}
           <p className="text-xs text-muted">
             Cada fatura pesa no ciclo em que vence e já sai do que você pode gastar nesse ciclo.
+          </p>
+        </Card>
+
+        <Card className="flex flex-col items-start gap-2">
+          <Button variant="secondary" asChild>
+            <Link to={`/ajustes/cartoes/${card.id}/compras-anteriores`}>
+              <History aria-hidden className="h-4 w-4" /> Compras anteriores ao app
+            </Link>
+          </Button>
+          <p className="text-sm text-muted">
+            Fatura em aberto ou parcelamento que já existia antes de você usar o app.
           </p>
         </Card>
 

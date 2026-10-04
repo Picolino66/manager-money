@@ -1,13 +1,13 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T22:25:31.850Z",
-  "source_commit": "b57c4f8",
+  "generated_at": "2026-10-04T22:56:12.652Z",
+  "source_commit": "3b70dac",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
     "architecture/client-web-plan.md": {
       "id": "architecture.client-web-plan",
-      "last_verified_commit": "7903717+T-041",
+      "last_verified_commit": "7903717+T-041b",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:052fc5534bf1bee397ee1cca5da2ddeb609ced41ce4952d767661ee49e2e91eb",
@@ -163,9 +163,12 @@
     },
     "modules/card/existing-debt.md": {
       "id": "card.existing-debt",
-      "last_verified_commit": "bfe9de6+T-028r2",
+      "last_verified_commit": "7903717+T-041b",
       "state": "fresh",
       "source_hashes": {
+        "selectStatementChoices": "sha256:25b767f7bf490b6d94c7742e8558a4111462f4fa2d175a7cf99817b926a715fb",
+        "findStatementBalance": "sha256:6585a9a6a136ccd4c36f789689951f177cc887fbd2f1ba8e7f17d2fc71f98b16",
+        "existingDebtCycleRange": "sha256:64a250d2a66580ace08cf2588f1a4b1c36ed7a576029f76d3a94fe3cb40b667b",
         "addExistingCardDebt": "sha256:453eebb3e0781d4cb2d0f8dc9f8a4c641e87d292693a20cb60235e3a74e7fcc9",
         "listOpenInstallments": "sha256:cad4e957d88a602e55126bc081a37089035d1c14b4bf35e564bfa2b72d157b3d",
         "listEffectiveInstallments": "sha256:cf492b9086b427773164452dfe5b6472ec89e67e1fabb96134b8a28ab81e5679",
@@ -274,7 +277,7 @@
     },
     "modules/core/shared-package.md": {
       "id": "core.shared-package",
-      "last_verified_commit": "7903717+T-041",
+      "last_verified_commit": "7903717+T-041b",
       "state": "fresh",
       "source_hashes": {
         "collectDirty": "sha256:57814d10f566ec59d056debf253507a28ff02c581c7cfc990dcb791e63476b72",
@@ -627,19 +630,18 @@
     },
     "modules/web/cards.md": {
       "id": "web.cards",
-      "last_verified_commit": "7903717+T-041",
+      "last_verified_commit": "7903717+T-041b",
       "state": "fresh",
       "source_hashes": {
+        "CardDebtPage": "sha256:016176e2c22e5324f2d0c83a9e0f9942b38623f2f2567c053e8c75cfaa88eec6",
+        "selectStatementChoices": "sha256:25b767f7bf490b6d94c7742e8558a4111462f4fa2d175a7cf99817b926a715fb",
         "buildCardStatementsView": "sha256:d7f408606144ab1cf19acb7044e9c02c99f5f861744e4eee7a35e9d96dc66d96",
         "statementCycleKeys": "sha256:96810833a0d805dc7c5e6f08112377a9496fa4949ad4a355d1c532e90bf944d8",
         "weightByCycle": "sha256:dcc9baf730d08463c08b178b66518a0eb1f7e84adc83174ecd69443f0e904091",
         "hasCardPurchases": "sha256:d5186b4cc1aedbb3098062ba70e22d5d3238eeba57a98d00717365bb3b406fc6",
-        "describeStatementEntry": "sha256:1a2b58b89f56305fd9756a18e875b2f33f3e86400b4ac862bb6184cb5bc3599a",
-        "CardFormDialog": "sha256:db61299ef6f8b4830eab57066b0539d99ccbb838270978c907647de32a604cdc",
+        "CardFormDialog": "sha256:7c5ba9f49bb7cbbf4b273ecd6279ad8d3e4dce9f12d4d0e2f798e1d4e11c7db4",
         "StatementPanel": "sha256:746c9ccb322188e5fe84acbb1f26baa2438114f108c76dac4956c88edf4d0d8f",
-        "PayStatementDialog": "sha256:d17f025464e0f7f730b33887d575369abe13f2a9767a21d01eff356ad7438a73",
-        "StatementChargesDialog": "sha256:762d376a6e81333a8bb49ff409b23c7c408606c318c59fcc1e2d05a61086e9d3",
-        "LimitBar": "sha256:f8617728b290313e67ace433979b5e3c5c7e6357c6911f6fc0f6103018942a5b"
+        "PayStatementDialog": "sha256:d17f025464e0f7f730b33887d575369abe13f2a9767a21d01eff356ad7438a73"
       }
     },
     "modules/web/cycles.md": {
@@ -667,13 +669,13 @@
     },
     "modules/web/index.md": {
       "id": "web",
-      "last_verified_commit": "7903717+T-041",
+      "last_verified_commit": "7903717+T-041b",
       "state": "fresh",
       "source_hashes": {
         "client/package.json": "sha256:9eb428390a6a4f198656e7b3a853bfda81aba80a777ef2f791d8bec153890315",
         "client/vite.config.ts": "sha256:fbe8e4462d698ecf33bdf017c0633ca0920635e3ced71c845e64185d13060d63",
         "client/eslint.config.js": "sha256:8f4084021a82d0e08764f88267984237f828e820ca123e6d59ed5044ddc61f71",
-        "client/src/router.tsx": "sha256:779a8db46bcbef12cfe9c9d9747ad73650fa307b393f28167c57990693cab396"
+        "client/src/router.tsx": "sha256:9239bd2cfbf2a1c2a7cac68e0b1d97b819a56085b018587e8ac6ca2beb38f720"
       }
     },
     "modules/web/onboarding.md": {

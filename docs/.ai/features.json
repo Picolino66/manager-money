@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T22:25:31.850Z",
-  "source_commit": "b57c4f8",
+  "generated_at": "2026-10-04T22:56:12.652Z",
+  "source_commit": "3b70dac",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -273,6 +273,9 @@
         "limite já usado"
       ],
       "symbols": [
+        "selectStatementChoices",
+        "findStatementBalance",
+        "existingDebtCycleRange",
         "addExistingCardDebt",
         "listOpenInstallments",
         "listEffectiveInstallments",
@@ -293,7 +296,9 @@
         "packages/core/src/application/card-rules.test.ts",
         "packages/core/src/application/financial-vision.test.ts",
         "packages/core/src/application/card.use-cases.test.ts",
-        "app/src/screens/cards.screens.test.tsx"
+        "app/src/screens/cards.screens.test.tsx",
+        "packages/core/src/application/card-debt.test.ts",
+        "client/src/features/settings.test.tsx"
       ],
       "spec": "SPEC-019"
     },
@@ -1478,16 +1483,15 @@
         "parcelas"
       ],
       "symbols": [
+        "CardDebtPage",
+        "selectStatementChoices",
         "buildCardStatementsView",
         "statementCycleKeys",
         "weightByCycle",
         "hasCardPurchases",
-        "describeStatementEntry",
         "CardFormDialog",
         "StatementPanel",
-        "PayStatementDialog",
-        "StatementChargesDialog",
-        "LimitBar"
+        "PayStatementDialog"
       ],
       "business_rules": [
         "BR-FIN-019",
@@ -1505,6 +1509,7 @@
       ],
       "tests": [
         "packages/core/src/application/card-view.test.ts",
+        "packages/core/src/application/card-debt.test.ts",
         "client/src/features/settings.test.tsx"
       ],
       "spec": "SPEC-023"

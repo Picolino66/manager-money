@@ -11,19 +11,22 @@ keywords: [situação inicial, compra anterior, parcelamento existente, fatura e
 code:
   - packages/core/src/application/card.use-cases.ts
   - packages/core/src/domain/financial/credit-card.ts
+  - packages/core/src/application/card-debt.ts
   - app/src/screens/CardDebtScreen.tsx
+  - client/src/features/cards/CardDebtPage.tsx
   - app/src/screens/CardsScreen.tsx
-symbols: [addExistingCardDebt, listOpenInstallments, listEffectiveInstallments, calculateInstallmentForCycle, firstCountedCycleKey, updateCardPurchase]
+symbols: [selectStatementChoices, findStatementBalance, existingDebtCycleRange, addExistingCardDebt, listOpenInstallments, listEffectiveInstallments, calculateInstallmentForCycle, firstCountedCycleKey, updateCardPurchase]
 adrs: [ADR-017, ADR-018]
-tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/application/card.use-cases.test.ts, app/src/screens/cards.screens.test.tsx]
+tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/application/card.use-cases.test.ts, app/src/screens/cards.screens.test.tsx, packages/core/src/application/card-debt.test.ts, client/src/features/settings.test.tsx]
 business_rules: [BR-FIN-027, BR-FIN-029, BR-FIN-032]
-last_verified_commit: bfe9de6+T-028r2
+last_verified_commit: 7903717+T-041b
 ---
 
 # Situação inicial do cartão
 
 Specs: [SPEC-017](../../../specs/SPEC-017-situacao-inicial-e-ativo-inativo.md), [SPEC-019](../../../specs/SPEC-019-pagamento-parcial-total-da-fatura-e-invariantes.md) · decisões: [ADR-017](../../../adr/ADR-017-faturas-limite-e-situacao-inicial.md), [ADR-018](../../../adr/ADR-018-pagamento-parcial-e-total-da-fatura.md).
-UI: rota `CardDebt { cardId }` — **"Compras anteriores ao app"** (`CardDebtScreen`), aberta pelo detalhe do cartão ou logo
+As contas puras da tela (faturas disponíveis, total já informado, ciclos da agenda, validade das parcelas e limite comprometido) moram no núcleo (`card-debt.ts`) e valem para o app e para o web. Web: `/ajustes/cartoes/:id/compras-anteriores` (`CardDebtPage`), botão no detalhe do cartão e oferta ao cadastrar um cartão novo ([web.cards](../web/cards.md)).
+UI do app: rota `CardDebt { cardId }` — **"Compras anteriores ao app"** (`CardDebtScreen`), aberta pelo detalhe do cartão ou logo
 após cadastrar um cartão ([T-023](../../../tasks/done/T-023.md)). Tipos: "Fatura em aberto" ou "Parcelamento em andamento".
 Em "Fatura em aberto" o valor informado é o **total da fatura** (`statementBalance`); se a fatura já tem total, a tela
 avisa "Já existe um total informado…". Em "Parcelamento em andamento", quando a fatura escolhida tem total informado,

@@ -11,7 +11,7 @@ code:
   - client/vite.config.ts
   - client/eslint.config.js
   - client/src/router.tsx
-last_verified_commit: 7903717+T-041
+last_verified_commit: 7903717+T-041b
 ---
 
 # Módulo: client web
@@ -29,7 +29,7 @@ Specs [SPEC-022](../../../specs/SPEC-022-client-web-mvp.md) e [SPEC-023](../../.
 | `web.cycles` | `/ciclos`, `/ciclos/:id` | [cycles.md](cycles.md) |
 | `web.analysis` | `/analise` | [analysis.md](analysis.md) |
 | `web.settings` | `/ajustes`, `/ajustes/configuracao`, `/ajustes/exportar` | [settings.md](settings.md) |
-| `web.cards` | `/ajustes/cartoes`, `/ajustes/cartoes/:id` | [cards.md](cards.md) |
+| `web.cards` | `/ajustes/cartoes`, `/ajustes/cartoes/:id`, `/ajustes/cartoes/:id/compras-anteriores` | [cards.md](cards.md) |
 
 ## Camadas (`client/src`)
 

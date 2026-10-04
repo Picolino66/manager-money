@@ -76,6 +76,12 @@ export const routes = [
             }),
           },
           {
+            path: 'ajustes/cartoes/:id/compras-anteriores',
+            lazy: async () => ({
+              Component: (await import('./features/cards/CardDebtPage')).CardDebtPage,
+            }),
+          },
+          {
             path: 'ajustes/cartoes/:id',
             lazy: async () => ({
               Component: (await import('./features/cards/CardDetailPage')).CardDetailPage,

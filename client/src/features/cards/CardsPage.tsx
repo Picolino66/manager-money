@@ -44,6 +44,7 @@ export function CardsPage() {
   const saving = useDataStore((state) => state.saving);
   const [form, setForm] = useState<'new' | CreditCardRecord | null>(null);
   const [deleting, setDeleting] = useState<CreditCardRecord | null>(null);
+  const [created, setCreated] = useState<CreditCardRecord | null>(null);
 
   if (!doc) return null;
 
@@ -81,6 +82,26 @@ export function CardsPage() {
           </Button>
         }
       />
+
+      {created ? (
+        <Card className="mb-4 flex flex-col items-start gap-2 bg-primary-soft">
+          <p className="text-sm font-semibold text-ink">Cartão {created.name} cadastrado</p>
+          <p className="text-sm text-text">
+            Ele já tem fatura em aberto ou parcelamentos de antes do app? Cadastre agora para o
+            limite e os próximos ciclos ficarem certos.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild>
+              <Link to={`/ajustes/cartoes/${created.id}/compras-anteriores`}>
+                Cadastrar compras anteriores
+              </Link>
+            </Button>
+            <Button variant="ghost" onClick={() => setCreated(null)}>
+              Agora não
+            </Button>
+          </div>
+        </Card>
+      ) : null}
 
       {cards.length === 0 ? (
         <EmptyState
@@ -201,6 +222,7 @@ export function CardsPage() {
         open={form !== null}
         onOpenChange={(open) => !open && setForm(null)}
         card={form && form !== 'new' ? form : undefined}
+        onCreated={setCreated}
       />
       <ConfirmDialog
         open={deleting !== null}

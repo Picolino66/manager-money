@@ -1,10 +1,17 @@
 import { useState } from 'react';
 import { Alert, Pressable, Switch, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { isAfter, startOfDay } from 'date-fns';
+import { startOfDay } from 'date-fns';
 
-import { selectCardStatements, selectCreditCards } from '@manager-money/core/application/selectors';
-import { isLive } from '@manager-money/core/application/state';
+import {
+  existingDebtCommitted,
+  existingDebtCycleRange,
+  findStatementBalance,
+  isValidInstallmentCount,
+  resolveChosenStatement,
+  selectStatementChoices,
+} from '@manager-money/core/application/card-debt';
+import { selectCreditCards } from '@manager-money/core/application/selectors';
 import { AppButton } from '../components/AppButton';
 import { Card } from '../components/Card';
 import { CurrencyInput } from '../components/CurrencyInput';
@@ -16,11 +23,7 @@ import { radius, spacing, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
 import {
   addCycleKeys,
-  currentStatementKey,
-  cycleKeyFromStartDate,
   MAX_CARD_INSTALLMENTS,
-  statementCycleKey,
-  statementDueDate,
 } from '@manager-money/core/domain/financial/credit-card';
 import { getSortedCategories } from '@manager-money/core/domain/financial/financial.calculations';
 import {
@@ -30,8 +33,10 @@ import {
 import { RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '@manager-money/core/utils/currency';
-import { toISODate } from '@manager-money/core/utils/date';
-import { describeInstallmentSchedule, formatMonthKey } from '@manager-money/core/application/card-text';
+import {
+  describeInstallmentSchedule,
+  formatMonthKey,
+} from '@manager-money/core/application/card-text';
 import { formatDayMonth } from '@manager-money/core/application/card-view';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CardDebt'>;
@@ -99,43 +104,26 @@ export function CardDebtScreen({ navigation, route }: Props) {
 
   const cardId = card.id;
   const today = startOfDay(new Date());
-  const openKey = currentStatementKey(card, today);
-  const paidKeys = new Set(
-    selectCardStatements(doc, cardId, today)
-      // Fatura com qualquer lançamento (pago ou parcial) não recebe compras anteriores.
-      .filter((statement) => statement.payments.length > 0)
-      .map((statement) => statement.key),
-  );
-  // Faturas ainda não vencidas: a fechada aguardando vencimento (se houver) e a aberta.
-  const statementOptions = [addCycleKeys(openKey, -1), openKey]
-    .filter((key) => !isAfter(today, statementDueDate(key, card)) && !paidKeys.has(key))
-    .map((key) => ({
-      value: key,
-      label: `Fatura ${formatMonthKey(key)} · ${key === openKey ? 'aberta' : 'fechada'} · vence ${formatDayMonth(toISODate(statementDueDate(key, card)))}`,
-    }));
-  const selectedKey =
-    statementOptions.find((option) => option.value === chosenKey)?.value ??
-    statementOptions[0]?.value ??
-    openKey;
+  const choices = selectStatementChoices(doc, card, today);
+  const statementOptions = choices.map((choice) => ({
+    value: choice.key,
+    label: `Fatura ${formatMonthKey(choice.key)} · ${choice.status === 'open' ? 'aberta' : 'fechada'} · vence ${formatDayMonth(choice.dueDate)}`,
+  }));
+  const selectedKey = resolveChosenStatement(choices, chosenKey, card, today);
   const isInstallments = mode === 'installments';
   // BR-FIN-032: total da fatura já informado para a fatura escolhida (um por cartão + fatura).
-  const balance = doc.cardPurchases.find(
-    (purchase) =>
-      isLive(purchase) &&
-      purchase.cardId === cardId &&
-      purchase.kind === 'statement-balance' &&
-      purchase.firstStatementKey === selectedKey,
-  );
+  const balance = findStatementBalance(doc, cardId, selectedKey);
   const included = isInstallments && balance !== undefined && includeInBalance;
   const total = isInstallments ? toCount(totalText) : 1;
   const remaining = isInstallments ? toCount(remainingText) : 1;
-  const isValidCount =
-    total >= 1 && total <= MAX_CARD_INSTALLMENTS && remaining >= 1 && remaining <= total;
-  const activeCycleKey = activeMonth ? cycleKeyFromStartDate(activeMonth.startDate) : null;
-  const dueCycleKey = statementCycleKey(selectedKey, card, config.payday);
-  const firstCycleKey =
-    activeCycleKey && activeCycleKey > dueCycleKey ? activeCycleKey : dueCycleKey;
-  const lastCycleKey = addCycleKeys(firstCycleKey, remaining - 1);
+  const isValidCount = isValidInstallmentCount(total, remaining);
+  const { firstCycleKey, lastCycleKey } = existingDebtCycleRange(
+    card,
+    config.payday,
+    activeMonth?.startDate ?? null,
+    selectedKey,
+    remaining,
+  );
   const categoryOptions = getSortedCategories(config).map((value) => ({ label: value, value }));
 
   function selectMode(next: Mode) {
@@ -317,8 +305,8 @@ export function CardDebtScreen({ navigation, route }: Props) {
               {remaining > 1
                 ? `Pesa nos ciclos de ${formatMonthKey(firstCycleKey)} a ${formatMonthKey(lastCycleKey)}.`
                 : `Pesa no ciclo de ${formatMonthKey(firstCycleKey)}.`}{' '}
-              Compromete {formatCurrency(amount * (included ? remaining - 1 : remaining))} do limite
-              do cartão.
+              Compromete {formatCurrency(existingDebtCommitted(amount, remaining, included))} do
+              limite do cartão.
             </Text>
             {total - remaining > 0 ? (
               <Text style={styles.hint}>
