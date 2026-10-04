@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T23:44:37.635Z",
-  "source_commit": "f9eaa87",
+  "generated_at": "2026-10-04T00:41:48.750Z",
+  "source_commit": "c47cf18",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "stack": [
@@ -16,13 +16,13 @@
   "artifacts": {
     "features": {
       "path": ".ai/features.json",
-      "count": 51,
-      "hash": "sha256:05390795e485a717d83ada5f91dcede1a02e330b0525de848d7143a87af9f140"
+      "count": 53,
+      "hash": "sha256:23f640a79c6410f451160ec8d63b502ff81c7eae573e68f19931b4724ec172a7"
     },
     "freshness": {
       "path": ".ai/freshness.json",
-      "count": 51,
-      "hash": "sha256:d13c687ee252c850693059aae5c1d997270a8833c177ac914f004b68d8845f8f"
+      "count": 53,
+      "hash": "sha256:9fb82aa29142dfc897013f24b2f2c5114a984e72f77185cd536b74b4538d4e8c"
     },
     "retrieval_tests": {
       "path": ".ai/retrieval-tests.json",
@@ -57,7 +57,7 @@
       "id": "card",
       "title": "Cartões de crédito",
       "doc": "modules/card/index.md",
-      "features": 2
+      "features": 4
     },
     {
       "id": "category",
@@ -127,7 +127,7 @@
     }
   ],
   "health": {
-    "fresh": 51,
+    "fresh": 53,
     "stale": 0,
     "stale_critical": 0,
     "planned": 0,

@@ -4,10 +4,18 @@ export type RootStackParamList = {
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   Config: undefined;
   StartMonth: undefined;
-  AddExpense: {
-    expenseId?: string;
-  } | undefined;
+  AddExpense:
+    | {
+        expenseId?: string;
+      }
+    | undefined;
   Cards: undefined;
+  CardDetail: {
+    cardId: string;
+  };
+  CardDebt: {
+    cardId: string;
+  };
   Incomes: undefined;
   Account: undefined;
   PrivacyPolicy: undefined;

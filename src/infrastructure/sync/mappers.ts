@@ -7,10 +7,23 @@ import {
   FixedExpenseRecord,
   FixedPaymentRecord,
   SettingsRecord,
+  StatementPaymentRecord,
 } from '../../application/state';
-import { IncomeSource } from '../../domain/financial/financial.types';
+import { MAX_CARD_DAY, statementKeyForDate } from '../../domain/financial/credit-card';
+import { parseISO } from 'date-fns';
+import { IncomeSource, isActive } from '../../domain/financial/financial.types';
 import { legacyIncomeSources } from '../storage/migrations';
-import { CardPurchaseRow, CreditCardRow, ExtraIncomeRow, FixedPaymentRow, CycleRow, ExpenseRow, FixedExpenseRow, SettingsRow } from './types';
+import {
+  CardPurchaseRow,
+  CreditCardRow,
+  ExtraIncomeRow,
+  FixedPaymentRow,
+  CycleRow,
+  ExpenseRow,
+  FixedExpenseRow,
+  SettingsRow,
+  StatementPaymentRow,
+} from './types';
 
 /** Mapeamento registro local ↔ linha remota (contracts.md §2). */
 
@@ -36,6 +49,7 @@ function incomeSourcesFromRow(row: SettingsRow): IncomeSource[] {
       amount: Number(source.amount),
       // Linhas gravadas antes do dia por fonte herdam o dia global da linha.
       payday: source.payday ?? row.payday,
+      ...(source.active === false ? { active: false } : {}),
     }));
   }
 
@@ -62,6 +76,7 @@ export function fixedExpenseToRow(record: FixedExpenseRecord, userId: string): F
     kind: record.type,
     name: record.name,
     category: record.category,
+    active: isActive(record),
     client_updated_at: record.updatedAt,
     deleted_at: record.deletedAt,
   };
@@ -88,7 +103,12 @@ export function fixedExpenseToRow(record: FixedExpenseRecord, userId: string): F
 }
 
 export function fixedExpenseFromRow(row: FixedExpenseRow): FixedExpenseRecord {
-  const meta = { updatedAt: row.client_updated_at, deletedAt: row.deleted_at, dirty: false };
+  const meta = {
+    updatedAt: row.client_updated_at,
+    deletedAt: row.deleted_at,
+    dirty: false,
+    ...(row.active === false ? { active: false } : {}),
+  };
 
   if (row.kind === 'installment') {
     return {
@@ -187,6 +207,8 @@ export function creditCardToRow(record: CreditCardRecord, userId: string): Credi
     name: record.name,
     closing_day: record.closingDay,
     due_day: record.dueDay,
+    credit_limit: record.creditLimit,
+    active: record.active,
     client_updated_at: record.updatedAt,
     deleted_at: record.deletedAt,
   };
@@ -198,6 +220,9 @@ export function creditCardFromRow(row: CreditCardRow): CreditCardRecord {
     name: row.name,
     closingDay: row.closing_day,
     dueDay: row.due_day,
+    creditLimit:
+      row.credit_limit === null || row.credit_limit === undefined ? null : Number(row.credit_limit),
+    active: row.active ?? true,
     updatedAt: row.client_updated_at,
     deletedAt: row.deleted_at,
     dirty: false,
@@ -215,13 +240,23 @@ export function cardPurchaseToRow(record: CardPurchaseRecord, userId: string): C
     installments: record.installments,
     purchase_date: record.purchaseDate,
     first_cycle_key: record.firstCycleKey,
+    first_statement_key: record.firstStatementKey,
+    settled_installments: record.settledInstallments,
+    origin: record.origin ?? null,
     created_at: record.createdAt,
     client_updated_at: record.updatedAt,
     deleted_at: record.deletedAt,
   };
 }
 
-export function cardPurchaseFromRow(row: CardPurchaseRow): CardPurchaseRecord {
+/**
+ * Linhas antigas (sem `first_statement_key`) derivam a fatura da data e do fechamento do cartão.
+ * `closingDayOf` vem do estado local; sem o cartão, usa o maior fechamento possível.
+ */
+export function cardPurchaseFromRow(
+  row: CardPurchaseRow,
+  closingDayOf: (cardId: string) => number | undefined = () => undefined,
+): CardPurchaseRecord {
   return {
     id: row.id,
     cardId: row.card_id,
@@ -231,6 +266,11 @@ export function cardPurchaseFromRow(row: CardPurchaseRow): CardPurchaseRecord {
     installments: row.installments,
     purchaseDate: row.purchase_date,
     firstCycleKey: row.first_cycle_key,
+    firstStatementKey:
+      row.first_statement_key ??
+      statementKeyForDate(parseISO(row.purchase_date), closingDayOf(row.card_id) ?? MAX_CARD_DAY),
+    settledInstallments: row.settled_installments ?? 0,
+    ...(row.origin === 'existing' ? { origin: 'existing' as const } : {}),
     createdAt: row.created_at,
     updatedAt: row.client_updated_at,
     deletedAt: row.deleted_at,
@@ -294,6 +334,39 @@ export function extraIncomeFromRow(row: ExtraIncomeRow): ExtraIncomeRecord {
     name: row.name,
     amount: Number(row.amount),
     date: row.date,
+    updatedAt: row.client_updated_at,
+    deletedAt: row.deleted_at,
+    dirty: false,
+  };
+}
+
+export function statementPaymentToRow(
+  record: StatementPaymentRecord,
+  userId: string,
+): StatementPaymentRow {
+  return {
+    user_id: userId,
+    id: record.id,
+    card_id: record.cardId,
+    statement_key: record.statementKey,
+    cycle_id: record.cycleId,
+    statement_amount: record.statementAmount,
+    paid_amount: record.paidAmount,
+    paid_at: record.paidAt,
+    client_updated_at: record.updatedAt,
+    deleted_at: record.deletedAt,
+  };
+}
+
+export function statementPaymentFromRow(row: StatementPaymentRow): StatementPaymentRecord {
+  return {
+    id: row.id,
+    cardId: row.card_id,
+    statementKey: row.statement_key,
+    cycleId: row.cycle_id,
+    statementAmount: Number(row.statement_amount),
+    paidAmount: Number(row.paid_amount),
+    paidAt: row.paid_at,
     updatedAt: row.client_updated_at,
     deletedAt: row.deleted_at,
     dirty: false,

@@ -7,7 +7,8 @@ summary: >
   Visão, mercado, modelo de negócio, personas e hipótese de MVP do Manager Money.
 code:
   - src/domain/financial/financial.calculations.ts
-last_verified_commit: 6fd4838+T-021
+  - src/domain/financial/projection.ts
+last_verified_commit: c47cf18+T-025
 ---
 
 # Visão de produto — Manager Money
@@ -21,7 +22,8 @@ Quem recebe uma renda mensal fixa tem dificuldade em transformar "quanto sobra n
 decisão diária concreta. Planilhas e apps de controle financeiro mostram **o passado** (quanto foi
 gasto por categoria), mas não respondem a pergunta que importa na hora da compra:
 
-> **"Quanto eu ainda posso gastar hoje sem comprometer o resto do mês?"**
+> **"Quanto eu ainda posso gastar hoje sem comprometer o resto do mês — e continuar atingindo minha
+> meta financeira?"**
 
 ## 2. Proposta de valor
 
@@ -31,9 +33,24 @@ Um único número diário, recalculado automaticamente a cada gasto:
 limite de hoje = (saldo disponível do ciclo − gastos anteriores a hoje) ÷ dias restantes do ciclo
 ```
 
-Gastar menos hoje aumenta o limite dos próximos dias; gastar mais reduz. A meta de economia e as
-despesas fixas e parcelamentos pagos (à vista, ou nas faturas do cartão) são descontados do ciclo,
-rendas avulsas somam, e a dívida de um ciclo negativo é herdada pelo próximo.
+Gastar menos hoje aumenta o limite dos próximos dias; gastar mais reduz. O saldo do ciclo já nasce
+sem a **meta de economia** e sem as **despesas fixas** do ciclo (as pendentes ficam reservadas até o
+pagamento); rendas avulsas somam, e a dívida de um ciclo negativo é herdada pelo próximo.
+
+O cartão de crédito é tratado como **compromisso futuro**: cada compra entra numa fatura, e a fatura
+pesa no ciclo em que **vence** — não no dia da compra. Por isso o app separa duas coisas que o
+usuário costuma confundir:
+
+| O app mostra | O que é | O que não é |
+|---|---|---|
+| **Ainda pode gastar hoje** | Dinheiro do ciclo, depois de meta, fixas, faturas do ciclo e dívida | — |
+| **Limite disponível do cartão** | Quanto o banco ainda aceita no cartão (limite − parcelas em faturas não pagas) | **Não é dinheiro disponível**: gastar no cartão compromete ciclos futuros |
+
+Para não haver surpresa, a tela Hoje mostra os **próximos compromissos** (faturas a pagar e fixas
+pendentes) e a **projeção** dos próximos ciclos: renda − meta − fixas − faturas já contratadas =
+"livre antes de novos gastos" ([SPEC-018](../../specs/SPEC-018-hoje-compromissos-e-projecao.md),
+[ADR-017](../../adr/ADR-017-faturas-limite-e-situacao-inicial.md)). Quem já chega com fatura aberta
+ou parcelamentos registra a **situação inicial** do cartão, sem contar de novo o que já pagou.
 
 ## 3. Contexto de mercado
 
@@ -45,7 +62,8 @@ rendas avulsas somam, e a dívida de um ciclo negativo é herdada pelo próximo.
 | Planilhas | Google Sheets, Excel | Atrito alto no celular; sem recálculo diário automático |
 
 **Diferencial:** simplicidade radical (um número), ciclo alinhado ao dia do pagamento, suporte
-nativo a parcelamento no cartão (hábito brasileiro) e funcionamento offline.
+nativo a parcelamento no cartão (hábito brasileiro), com faturas, limite e projeção dos próximos
+ciclos, e funcionamento offline.
 
 ## 4. Modelo de negócio
 

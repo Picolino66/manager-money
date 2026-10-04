@@ -14,7 +14,13 @@ type RowMeta = {
 export type SettingsRow = RowMeta & {
   monthly_income: number;
   /** Fontes de renda (contrato v1, aditivo). Ausente em linhas antigas. */
-  income_sources?: { id: string; name: string; amount: number; payday?: number }[];
+  income_sources?: {
+    id: string;
+    name: string;
+    amount: number;
+    payday?: number;
+    active?: boolean;
+  }[];
   saving_goal: number;
   payday: number;
   custom_categories: string[];
@@ -30,6 +36,8 @@ export type FixedExpenseRow = RowMeta & {
   total_installments: number | null;
   remaining_installments: number | null;
   started_at_cycle_id: string | null;
+  /** Contrato v1 aditivo (ADR-017): ausente em linhas antigas = ativa. */
+  active?: boolean;
 };
 
 export type CreditCardRow = RowMeta & {
@@ -37,6 +45,9 @@ export type CreditCardRow = RowMeta & {
   name: string;
   closing_day: number;
   due_day: number;
+  /** Contrato v1 aditivo (ADR-017): ausente/nulo em linhas antigas. */
+  credit_limit?: number | null;
+  active?: boolean;
 };
 
 export type CardPurchaseRow = RowMeta & {
@@ -48,7 +59,22 @@ export type CardPurchaseRow = RowMeta & {
   installments: number;
   purchase_date: string;
   first_cycle_key: string;
+  /** Contrato v1 aditivo (ADR-017): nulo em linhas antigas. */
+  first_statement_key?: string | null;
+  settled_installments?: number;
+  /** `existing` = situação inicial; nulo/ausente = compra feita no app. */
+  origin?: 'existing' | null;
   created_at: string;
+};
+
+export type StatementPaymentRow = RowMeta & {
+  id: string;
+  card_id: string;
+  statement_key: string;
+  cycle_id: string;
+  statement_amount: number;
+  paid_amount: number;
+  paid_at: string;
 };
 
 export type FixedPaymentRow = RowMeta & {
@@ -104,6 +130,7 @@ export type RowByTable = {
   card_purchases: CardPurchaseRow;
   fixed_payments: FixedPaymentRow;
   extra_incomes: ExtraIncomeRow;
+  statement_payments: StatementPaymentRow;
 };
 
 export type RemoteRow = RowByTable[SyncTable];

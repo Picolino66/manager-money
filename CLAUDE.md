@@ -41,10 +41,11 @@
 ## Dinheiro e datas
 - Valores monetários **sempre em centavos inteiros** (BR-FIN-001); nunca ponto flutuante em cálculo de domínio. Formatação em `src/utils/currency.ts`.
 - Ciclo financeiro ancorado no dia de pagamento configurável (1–28); datas em `src/utils/date.ts` (date-fns). Superávit não é transferido; dívida é herdada (BR-FIN-005/006).
+- Cartão: a fatura pesa no ciclo do **vencimento**; limite do cartão nunca é dinheiro disponível; fixas pendentes ficam reservadas (ADR-017, BR-FIN-004/025/026).
 - Textos de UI em português.
 
 ## Persistência local e Sync
-- Documento local único versionado (v2) em `src/infrastructure/storage/`; mudança de esquema exige migração em `migrations.ts` e atualização de `schema.ts`.
+- Documento local único versionado (v7) em `src/infrastructure/storage/`; mudança de esquema exige migração em `migrations.ts` e atualização de `schema.ts`.
 - Sync offline-first: outbox + pull incremental em `sync/sync-engine.ts`; `memory-remote.ts` é o remoto fake para testes. Falha de rede nunca perde pendência (retry com backoff).
 - Sessão Supabase armazenada criptografada (`supabase/session-storage.ts`); nunca logar tokens, e-mails ou valores (use `monitoring/logger.ts`).
 

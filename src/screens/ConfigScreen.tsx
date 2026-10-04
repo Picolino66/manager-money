@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -47,9 +47,14 @@ const configSchema = z.object({
           .int()
           .min(MIN_PAYDAY, 'Informe um dia entre 1 e 28.')
           .max(MAX_PAYDAY, 'Informe um dia entre 1 e 28.'),
+        active: z.boolean().optional(),
       }),
     )
-    .min(1, 'Informe ao menos uma fonte de renda.'),
+    .min(1, 'Informe ao menos uma fonte de renda.')
+    // BR-FIN-018: ao menos uma fonte ativa (o domínio também valida).
+    .refine((sources) => sources.some((source) => source.active !== false), {
+      message: 'Mantenha ao menos uma fonte de renda ativa.',
+    }),
   permanentExpenses: z.array(
     z.object({
       id: z.string().min(1),
@@ -57,6 +62,7 @@ const configSchema = z.object({
       name: z.string().trim().min(1, 'Informe o nome da despesa.'),
       category: z.string().trim().min(1),
       amount: z.number().int().min(0, 'Valor não pode ser negativo.'),
+      active: z.boolean().optional(),
     }),
   ),
   installmentExpenses: z.array(
@@ -69,12 +75,23 @@ const configSchema = z.object({
       totalInstallments: z.number().int().min(1, 'Informe ao menos uma parcela.'),
       remainingInstallments: z.number().int().min(0),
       startedAtCycleId: z.string().optional(),
+      active: z.boolean().optional(),
     }),
   ),
   savingGoal: z.number().int().min(0, 'Meta não pode ser negativa.'),
 });
 
 type ConfigForm = z.infer<typeof configSchema>;
+
+/** Grava `active: false` só quando desligado; ligado = campo ausente (compatível com dados antigos). */
+function withActiveFlag<T extends { active?: boolean }>({
+  active,
+  ...item
+}: T): Omit<T, 'active'> & {
+  active?: false;
+} {
+  return active === false ? { ...item, active: false } : item;
+}
 
 function createIncomeSource(name = '', payday: number = DEFAULT_PAYDAY): IncomeSource {
   return {
@@ -137,6 +154,8 @@ export function ConfigScreen({ navigation }: Props) {
   });
   // useWatch é seguro para o React Compiler (watch() não pode ser memoizado).
   const incomeSources = useWatch({ control, name: 'incomeSources' });
+  const incomeSourcesError =
+    errors.incomeSources?.message ?? errors.incomeSources?.root?.message ?? null;
   const incomeTotal = useMemo(() => calculateIncomeTotal(incomeSources), [incomeSources]);
   const primarySource = calculatePrimaryIncomeSource(incomeSources);
   const permanentExpenses = useWatch({ control, name: 'permanentExpenses' });
@@ -195,27 +214,30 @@ export function ConfigScreen({ navigation }: Props) {
 
   async function save(values: ConfigForm) {
     await saveConfig({
-      incomeSources: values.incomeSources.map((source) => ({
-        ...source,
-        name: source.name.trim(),
-      })),
+      incomeSources: values.incomeSources.map((source) =>
+        withActiveFlag({ ...source, name: source.name.trim() }),
+      ),
       savingGoal: values.savingGoal,
       customCategories: config?.customCategories ?? [],
       fixedExpenses: [
-        ...values.permanentExpenses.map((expense) => ({
-          ...expense,
-          name: expense.name.trim(),
-          category: normalizeCategory(expense.category),
-        })),
-        ...values.installmentExpenses.map((expense) => ({
-          ...expense,
-          name: expense.name.trim(),
-          category: normalizeCategory(expense.category),
-          remainingInstallments: Math.min(
-            expense.remainingInstallments,
-            expense.totalInstallments,
-          ),
-        })),
+        ...values.permanentExpenses.map((expense) =>
+          withActiveFlag({
+            ...expense,
+            name: expense.name.trim(),
+            category: normalizeCategory(expense.category),
+          }),
+        ),
+        ...values.installmentExpenses.map((expense) =>
+          withActiveFlag({
+            ...expense,
+            name: expense.name.trim(),
+            category: normalizeCategory(expense.category),
+            remainingInstallments: Math.min(
+              expense.remainingInstallments,
+              expense.totalInstallments,
+            ),
+          }),
+        ),
       ],
     });
     navigation.navigate(activeMonth ? 'MainTabs' : 'StartMonth');
@@ -228,20 +250,16 @@ export function ConfigScreen({ navigation }: Props) {
       }) + values.savingGoal;
 
     if (plannedOutflow > calculateIncomeTotal(values.incomeSources)) {
-      Alert.alert(
-        'Plano acima da renda',
-        'Despesas fixas e meta passam da renda mensal.',
-        [
-          { text: 'Revisar', style: 'cancel' },
-          {
-            text: 'Salvar mesmo assim',
-            style: 'destructive',
-            onPress: () => {
-              void persist(values);
-            },
+      Alert.alert('Plano acima da renda', 'Despesas fixas e meta passam da renda mensal.', [
+        { text: 'Revisar', style: 'cancel' },
+        {
+          text: 'Salvar mesmo assim',
+          style: 'destructive',
+          onPress: () => {
+            void persist(values);
           },
-        ],
-      );
+        },
+      ]);
       return;
     }
 
@@ -279,12 +297,13 @@ export function ConfigScreen({ navigation }: Props) {
         {primarySource && primarySource.payday >= MIN_PAYDAY ? (
           <Text style={styles.hint}>
             O ciclo usa o dia {primarySource.payday}
-            {primarySource.name.trim() ? ` (${primarySource.name.trim()}, a fonte de maior valor)` : ''}.
+            {primarySource.name.trim()
+              ? ` (${primarySource.name.trim()}, a fonte de maior valor)`
+              : ''}
+            .
           </Text>
         ) : null}
-        {errors.incomeSources?.message ? (
-          <Text style={styles.errorText}>{errors.incomeSources.message}</Text>
-        ) : null}
+        {incomeSourcesError ? <Text style={styles.errorText}>{incomeSourcesError}</Text> : null}
         {incomeSourceFields.map((field, index) => (
           <View key={field.fieldKey} style={styles.fixedExpenseItem}>
             <Controller
@@ -325,8 +344,22 @@ export function ConfigScreen({ navigation }: Props) {
                   label="Dia do pagamento (1 a 28)"
                   maxLength={2}
                   onBlur={itemField.onBlur}
-                  onChangeText={(value) => itemField.onChange(Number(value.replace(/\D/g, '')) || 0)}
+                  onChangeText={(value) =>
+                    itemField.onChange(Number(value.replace(/\D/g, '')) || 0)
+                  }
                   value={itemField.value ? String(itemField.value) : ''}
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name={`incomeSources.${index}.active`}
+              render={({ field: itemField }) => (
+                <ActiveToggle
+                  accessibilityLabel={`Fonte de renda ${index + 1} ativa`}
+                  inactiveHint="Não soma na renda nem define o dia do ciclo."
+                  onChange={itemField.onChange}
+                  value={itemField.value !== false}
                 />
               )}
             />
@@ -434,6 +467,18 @@ export function ConfigScreen({ navigation }: Props) {
                     />
                   )}
                 />
+                <Controller
+                  control={control}
+                  name={`permanentExpenses.${index}.active`}
+                  render={({ field: itemField }) => (
+                    <ActiveToggle
+                      accessibilityLabel={`Despesa fixa ${index + 1} ativa`}
+                      inactiveHint="Não reserva dinheiro no ciclo nem aparece para pagar."
+                      onChange={itemField.onChange}
+                      value={itemField.value !== false}
+                    />
+                  )}
+                />
                 <AppButton
                   iconName="trash-outline"
                   onPress={() => removePermanentExpense(index)}
@@ -462,10 +507,10 @@ export function ConfigScreen({ navigation }: Props) {
           </Pressable>
           <View style={styles.sectionMetaRow}>
             <Text numberOfLines={1} style={styles.sectionSubtitle}>
-              Cartão de crédito por ciclo
+              Fora do cartão, por ciclo
             </Text>
             <AppButton
-              iconName="card-outline"
+              iconName="calendar-outline"
               onPress={handleAddInstallmentExpense}
               style={styles.addButton}
               title="Adicionar"
@@ -473,6 +518,12 @@ export function ConfigScreen({ navigation }: Props) {
             />
           </View>
         </View>
+
+        <Text style={styles.hint}>
+          Parcelamentos do cartão de crédito são cadastrados no próprio cartão (em Cartões,
+          &quot;Compras anteriores ao app&quot;). Aqui ficam carnês, financiamentos e outros
+          parcelamentos fora do cartão.
+        </Text>
 
         {isInstallmentExpanded ? (
           <>
@@ -559,6 +610,18 @@ export function ConfigScreen({ navigation }: Props) {
                     />
                   )}
                 />
+                <Controller
+                  control={control}
+                  name={`installmentExpenses.${index}.active`}
+                  render={({ field: itemField }) => (
+                    <ActiveToggle
+                      accessibilityLabel={`Parcelamento ${index + 1} ativo`}
+                      inactiveHint="Não reserva dinheiro no ciclo e as parcelas ficam pausadas."
+                      onChange={itemField.onChange}
+                      value={itemField.value !== false}
+                    />
+                  )}
+                />
                 <AppButton
                   iconName="trash-outline"
                   onPress={() => removeInstallmentExpense(index)}
@@ -574,7 +637,49 @@ export function ConfigScreen({ navigation }: Props) {
   );
 }
 
+type ActiveToggleProps = {
+  accessibilityLabel: string;
+  inactiveHint: string;
+  value: boolean;
+  onChange: (value: boolean) => void;
+};
+
+/** Interruptor Ativa/Inativa (BR-FIN-018 e despesas fixas): inativo fica guardado, mas não pesa. */
+function ActiveToggle({ accessibilityLabel, inactiveHint, value, onChange }: ActiveToggleProps) {
+  return (
+    <View style={styles.activeRow}>
+      <View style={styles.activeText}>
+        <Text style={styles.activeLabel}>{value ? 'Ativa' : 'Inativa'}</Text>
+        {!value ? <Text style={styles.hint}>{inactiveHint}</Text> : null}
+      </View>
+      <Switch
+        accessibilityLabel={accessibilityLabel}
+        accessibilityRole="switch"
+        onValueChange={onChange}
+        thumbColor={colors.surface}
+        trackColor={{ false: colors.disabled, true: colors.primary }}
+        value={value}
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  activeRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+    minHeight: 44,
+  },
+  activeText: {
+    flex: 1,
+    gap: 2,
+  },
+  activeLabel: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '800',
+  },
   title: {
     color: colors.ink,
     fontSize: typography.title,

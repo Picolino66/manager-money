@@ -4,10 +4,11 @@ type: module
 module: cycle
 title: Ciclo financeiro
 summary: >
-  Ciclo de renda do usuário: abertura, painel do dia, recebimento antecipado, fechamento e histórico.
+  Ciclo de renda do usuário: abertura, painel do dia (com próximos compromissos e projeção),
+  recebimento antecipado, fechamento e histórico.
 code:
   - src/domain/financial/financial.calculations.ts
-last_verified_commit: 6fd4838+T-021
+last_verified_commit: c47cf18+T-025
 ---
 
 # Módulo: ciclo

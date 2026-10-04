@@ -4,6 +4,8 @@ features: [card.manage, card.purchase]
 ---
 # SPEC-013 — Cartões de crédito e compras parceladas
 
+> **Atualizada pela [SPEC-016](SPEC-016-faturas-e-limite-do-cartao.md) (ADR-017):** a fatura pesa no ciclo do **vencimento** (não mais do fechamento), o cartão ganha limite e ativo/inativo, e cartão com compras é desativado em vez de excluído.
+
 ## Objetivo
 Cadastrar cartões (nome, fechamento, vencimento) e registrar compras no crédito parceladas, cujas parcelas abatem o saldo dos ciclos em que caem.
 

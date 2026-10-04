@@ -134,7 +134,7 @@ describe('addCardPurchase (BR-FIN-019/020)', () => {
 describe('exclusões', () => {
   it('excluir a compra devolve o saldo; cartão com compras não pode ser excluído', () => {
     const state = addCardPurchase(withCard(), purchaseInput, at(2026, 10, 20));
-    expect(() => deleteCreditCard(state, cardIdOf(state), at(2026, 10, 21))).toThrow('Exclua as compras');
+    expect(() => deleteCreditCard(state, cardIdOf(state), at(2026, 10, 21))).toThrow('Desative-o');
 
     const without = deleteCardPurchase(state, state.cardPurchases[0]!.id, at(2026, 10, 21));
     expect(initialOf(without)).toBe(500000);
@@ -151,7 +151,7 @@ describe('exclusões', () => {
     const purchase = state.cardPurchases[0]!;
 
     expect(canDeleteCardPurchase(state, purchase)).toBe(false);
-    expect(() => deleteCardPurchase(state, purchase.id, at(2026, 11, 8))).toThrow('ciclos fechados');
+    expect(() => deleteCardPurchase(state, purchase.id, at(2026, 11, 8))).toThrow('ciclo fechado');
     expect(() => deleteCardPurchase(state, 'nada', at(2026, 11, 8))).toThrow('não encontrada');
   });
 });

@@ -1,8 +1,13 @@
 import { calculateFixedExpenseAmount } from '../domain/financial/financial.calculations';
+import { isActive } from '../domain/financial/financial.types';
 import { PAYMENT_METHODS, PaymentMethod } from '../domain/financial/payments';
 import { clampIsoDate, toISODate } from '../utils/date';
-import { buildCardPurchase, canDeleteCardPurchase } from './card.use-cases';
-import { assertDateWithinCycle, recalculateActiveCycleBalance, requireActiveCycle } from './cycle.use-cases';
+import { buildCardPurchase, canModifyCardPurchase } from './card.use-cases';
+import {
+  assertDateWithinCycle,
+  recalculateActiveCycleBalance,
+  requireActiveCycle,
+} from './cycle.use-cases';
 import { DomainError } from './errors';
 import { selectConfig, selectCyclePayments } from './selectors';
 import {
@@ -67,6 +72,10 @@ export function payFixedExpense(
     throw new DomainError('Despesa fixa não encontrada.');
   }
 
+  if (!isActive(fixed)) {
+    throw new DomainError('Esta despesa fixa está inativa.');
+  }
+
   const amount = calculateFixedExpenseAmount(fixed);
 
   if (amount <= 0) {
@@ -127,7 +136,10 @@ export function payFixedExpense(
     {
       ...state,
       cardPurchases: [...state.cardPurchases, purchase],
-      fixedPayments: [...state.fixedPayments, { ...payment, interest, cardPurchaseId: purchase.id }],
+      fixedPayments: [
+        ...state.fixedPayments,
+        { ...payment, interest, cardPurchaseId: purchase.id },
+      ],
     },
     ctx,
   );
@@ -150,8 +162,10 @@ export function undoFixedPayment(
     ? state.cardPurchases.find((record) => record.id === payment.cardPurchaseId && isLive(record))
     : undefined;
 
-  if (purchase && !canDeleteCardPurchase(state, purchase)) {
-    throw new DomainError('A compra no cartão deste pagamento já tem parcelas em ciclos fechados.');
+  if (purchase && !canModifyCardPurchase(state, purchase)) {
+    throw new DomainError(
+      'A compra no cartão deste pagamento já pesou em um ciclo fechado ou em uma fatura paga.',
+    );
   }
 
   const deletedAt = ctx.now.toISOString();
@@ -200,7 +214,10 @@ export function addExtraIncome(
     dirty: true,
   };
 
-  return recalculateActiveCycleBalance({ ...state, extraIncomes: [...state.extraIncomes, income] }, ctx);
+  return recalculateActiveCycleBalance(
+    { ...state, extraIncomes: [...state.extraIncomes, income] },
+    ctx,
+  );
 }
 
 export function deleteExtraIncome(
@@ -219,10 +236,11 @@ export function deleteExtraIncome(
     {
       ...state,
       extraIncomes: state.extraIncomes.map((record) =>
-        record.id === income.id ? touch({ ...record, deletedAt: ctx.now.toISOString() }, ctx.now) : record,
+        record.id === income.id
+          ? touch({ ...record, deletedAt: ctx.now.toISOString() }, ctx.now)
+          : record,
       ),
     },
     ctx,
   );
 }
-

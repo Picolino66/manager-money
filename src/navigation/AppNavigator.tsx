@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../design/theme';
 import { AccountScreen } from '../screens/AccountScreen';
 import { AddExpenseScreen } from '../screens/AddExpenseScreen';
+import { CardDebtScreen } from '../screens/CardDebtScreen';
+import { CardDetailScreen } from '../screens/CardDetailScreen';
 import { CardsScreen } from '../screens/CardsScreen';
 import { CategoriesScreen } from '../screens/CategoriesScreen';
 import { ConfigScreen } from '../screens/ConfigScreen';
@@ -56,9 +58,21 @@ function MainTabs() {
       })}
     >
       <Tab.Screen component={DashboardScreen} name="Dashboard" options={{ title: 'Hoje' }} />
-      <Tab.Screen component={DailyHistoryScreen} name="DailyHistory" options={{ title: 'Histórico' }} />
-      <Tab.Screen component={PreviousMonthsScreen} name="PreviousMonths" options={{ title: 'Ciclos' }} />
-      <Tab.Screen component={CategoriesScreen} name="Categories" options={{ title: 'Categorias' }} />
+      <Tab.Screen
+        component={DailyHistoryScreen}
+        name="DailyHistory"
+        options={{ title: 'Histórico' }}
+      />
+      <Tab.Screen
+        component={PreviousMonthsScreen}
+        name="PreviousMonths"
+        options={{ title: 'Ciclos' }}
+      />
+      <Tab.Screen
+        component={CategoriesScreen}
+        name="Categories"
+        options={{ title: 'Categorias' }}
+      />
       <Tab.Screen component={SettingsScreen} name="Settings" options={{ title: 'Ajustes' }} />
     </Tab.Navigator>
   );
@@ -78,10 +92,32 @@ export function AppNavigator() {
       >
         <Stack.Screen component={MainTabs} name="MainTabs" options={{ headerShown: false }} />
         <Stack.Screen component={ConfigScreen} name="Config" options={{ title: 'Configuração' }} />
-        <Stack.Screen component={StartMonthScreen} name="StartMonth" options={{ title: 'Iniciar ciclo' }} />
-        <Stack.Screen component={AddExpenseScreen} name="AddExpense" options={{ title: 'Registrar gasto' }} />
-        <Stack.Screen component={IncomesScreen} name="Incomes" options={{ title: 'Rendas do ciclo' }} />
+        <Stack.Screen
+          component={StartMonthScreen}
+          name="StartMonth"
+          options={{ title: 'Iniciar ciclo' }}
+        />
+        <Stack.Screen
+          component={AddExpenseScreen}
+          name="AddExpense"
+          options={{ title: 'Registrar gasto' }}
+        />
+        <Stack.Screen
+          component={IncomesScreen}
+          name="Incomes"
+          options={{ title: 'Rendas do ciclo' }}
+        />
         <Stack.Screen component={CardsScreen} name="Cards" options={{ title: 'Cartões' }} />
+        <Stack.Screen
+          component={CardDetailScreen}
+          name="CardDetail"
+          options={{ title: 'Cartão' }}
+        />
+        <Stack.Screen
+          component={CardDebtScreen}
+          name="CardDebt"
+          options={{ title: 'Compras anteriores ao app' }}
+        />
         <Stack.Screen component={AccountScreen} name="Account" options={{ title: 'Conta' }} />
         <Stack.Screen
           component={PrivacyPolicyScreen}

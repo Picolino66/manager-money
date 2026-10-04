@@ -4,39 +4,50 @@ type: feature
 module: payment
 title: Pagar despesas fixas do ciclo
 summary: >
-  O Hoje lista as despesas fixas do ciclo como pendentes ou pagas; Pagar abre a escolha de Pix,
-  dinheiro, débito ou crédito (cartão, parcelas e juros) e desconta o saldo do ciclo.
-keywords: [pagar, despesa fixa, pix, dinheiro, débito, crédito, juros, pendente, desfazer]
+  O Hoje lista as despesas fixas ativas do ciclo como pendentes (reservadas no saldo) ou pagas;
+  Pagar à vista confirma a saída já reservada e Pagar no crédito (cartão, parcelas e juros) tira a
+  reserva e leva o valor para as faturas.
+keywords: [pagar, despesa fixa, à vista, pix, crédito, juros, pendente, reservada, desfazer, inativa]
 code:
   - src/components/FixedExpensesCard.tsx
   - src/components/PayFixedExpenseModal.tsx
+  - src/components/CardLimitNotice.tsx
+  - src/components/UpcomingCommitmentsCard.tsx
   - src/screens/DashboardScreen.tsx
   - src/application/payment.use-cases.ts
   - src/domain/financial/payments.ts
   - src/domain/financial/financial.calculations.ts
   - src/application/selectors.ts
-symbols: [payFixedExpense, undoFixedPayment, calculatePaidFixedAmount, calculateInitialAvailableAmount, selectCycleAdjustments]
-adrs: [ADR-015, ADR-014]
-tests: [src/application/payment.use-cases.test.ts, src/screens/screens.test.tsx, src/infrastructure/sync/sync-engine.test.ts]
-business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-021, BR-FIN-022]
-last_verified_commit: f9eaa87+T-023
+symbols: [payFixedExpense, undoFixedPayment, calculatePaidFixedAmount, calculateBaseAvailableAmount, calculateInitialAvailableAmount, selectCycleAdjustments, selectPendingFixedExpenses]
+adrs: [ADR-015, ADR-014, ADR-017]
+tests: [src/application/payment.use-cases.test.ts, src/application/financial-vision.test.ts, src/screens/screens.test.tsx, src/infrastructure/sync/sync-engine.test.ts]
+business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-021, BR-FIN-022, BR-FIN-030]
+last_verified_commit: c47cf18+T-025r2
 ---
 
 # Pagar despesas fixas do ciclo
 
-Spec: [SPEC-014](../../../specs/SPEC-014-pagamento-de-fixas-e-renda-avulsa.md).
+Specs: [SPEC-014](../../../specs/SPEC-014-pagamento-de-fixas-e-renda-avulsa.md), [SPEC-018](../../../specs/SPEC-018-hoje-compromissos-e-projecao.md) (reserva de pendentes, ADR-017).
 
 - **Lista:** "Despesas fixas do ciclo" no Hoje, **encolhida por padrão** (só o título, "Pagas … · Pendentes …" e a seta); ao tocar, expande. Cada linha: nome (e parcela `n/N` dos
   parcelamentos), categoria, valor, **Pendente** ou **Pago · forma**, e **Pagar**/**Desfazer**.
-  Resumo "Pagas … · Pendentes …". Pendente **não desconta** o saldo (BR-FIN-004).
+  Resumo "Pagas … · Pendentes …". Só fixas **ativas** e com valor no ciclo contam como pendentes (`selectPendingFixedExpenses` ignora parcelamento quitado).
+- **Reserva (BR-FIN-004, ADR-017):** fixa ativa pendente **já desconta** o saldo do ciclo
+  (`pendingFixedExpenses` em `calculateBaseAvailableAmount`): o limite diário nasce realista. As pendentes
+  também aparecem em "Próximos compromissos" do Hoje ([cycle.dashboard](../cycle/dashboard.md)).
 - **Pagar:** duas formas, como em Registrar gasto: **À vista (Pix, dinheiro ou débito)** e **Cartão de crédito**. À vista não abre outro menu e é gravada como `cash` (`pix`/`debit` seguem válidos em dados antigos); a lista mostra "Pago · À vista".
-- **Pagar (à vista):** desconta o valor da renda do ciclo agora
-  (`paidFixedExpenses` em `calculateInitialAvailableAmount`).
-- **Pagar (crédito):** escolhe cartão, parcelas e juros (R$). Cria compra no cartão de `valor +
-  juros` (BR-FIN-019/020); só as parcelas descontam, no ciclo do fechamento da fatura. A prévia
-  mostra "Total … em Nx de … · 1ª parcela entra neste ciclo / no próximo". Sem cartão: atalho
-  para cadastrar.
+- **Pagar (à vista):** o valor passa de "pendente" para "pago à vista" (`paidFixedExpenses`); o **saldo não
+  muda**, porque já estava reservado.
+- **Pagar (crédito):** escolhe cartão (ativo), parcelas e juros (R$). Cria compra no cartão de `valor +
+  juros` (BR-FIN-020/025): a fixa **sai da reserva** e só as parcelas descontam, no ciclo do **vencimento** de
+  cada fatura (BR-FIN-030, sem dupla contagem). Só cartões ativos; se `valor + juros` passar do limite disponível,
+  mostra `CardLimitNotice` e o Alert "Continuar mesmo assim?" (avisa, não bloqueia). Sem cartão: atalho para cadastrar.
 - Um pagamento vigente por despesa e ciclo; a data do pagamento é hoje, limitada ao período do ciclo.
-- **Desfazer** (ciclo ativo): remove o pagamento e, no crédito, a compra no cartão.
+- **Desfazer** (ciclo ativo): remove o pagamento (a fixa volta a ficar reservada) e, no crédito, a compra no
+  cartão — bloqueado se a compra já pesou em ciclo fechado ou fatura paga (BR-FIN-029).
+- **Excluir a compra no cartão** gerada por essa fixa (em Cartões) exclui junto o pagamento: a fixa volta a
+  Pendente e reservada (BR-FIN-030); bloqueado se o pagamento for de ciclo encerrado. Editar valor, parcelas ou
+  data dessa compra é bloqueado ("Desfaça o pagamento"); descrição e categoria podem mudar.
+- **Fixa inativa:** não reserva, não aparece como pendente e não pode ser paga ("Esta despesa fixa está inativa.").
 - No ciclo seguinte as fixas voltam a Pendente; pagamentos de ciclos fechados ficam no histórico.
 - O pagamento guarda foto do nome e da categoria, então editar a despesa não muda o histórico.

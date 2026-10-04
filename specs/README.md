@@ -22,3 +22,6 @@ O frontmatter `features:` declara os IDs estáveis cobertos; o gerador da knowle
 | [SPEC-013](SPEC-013-cartoes-de-credito.md) | card.manage, card.purchase | RF-19 |
 | [SPEC-014](SPEC-014-pagamento-de-fixas-e-renda-avulsa.md) | payment.fixed-expense, payment.extra-income | RF-20, RF-21 |
 | [SPEC-015](SPEC-015-dia-de-pagamento-por-fonte.md) | planning.income-sources, planning.payday | RF-12 |
+| [SPEC-016](SPEC-016-faturas-e-limite-do-cartao.md) | card.manage, card.purchase, card.statement | RF-19, RF-22, RF-23, RF-24 |
+| [SPEC-017](SPEC-017-situacao-inicial-e-ativo-inativo.md) | card.existing-debt, planning.configure, planning.income-sources | RF-01, RF-25, RF-26 |
+| [SPEC-018](SPEC-018-hoje-compromissos-e-projecao.md) | cycle.dashboard, payment.fixed-expense | RF-04, RF-20, RF-27, RF-28 |

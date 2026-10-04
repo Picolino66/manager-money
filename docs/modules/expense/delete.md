@@ -12,7 +12,7 @@ code:
 symbols: [deleteExpense, findEditableExpense]
 business_rules: [BR-FIN-011, BR-SYNC-002]
 tests: [src/application/cycle.use-cases.test.ts]
-last_verified_commit: 359de21
+last_verified_commit: c47cf18+T-025
 ---
 
 # Excluir gasto

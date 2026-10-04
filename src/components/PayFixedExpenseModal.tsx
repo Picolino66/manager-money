@@ -5,23 +5,31 @@ import { PayFixedExpenseInput } from '../application/payment.use-cases';
 import { colors, radius, spacing, typography } from '../design/theme';
 import {
   calculateFirstCycleKey,
+  CardLimitUsage,
   CreditCard,
   cycleKeyFromStartDate,
   cycleKeyOffset,
   MAX_CARD_INSTALLMENTS,
   splitInstallments,
+  statementDueDate,
+  statementKeyForDate,
 } from '../domain/financial/credit-card';
 import { describeFirstInstallment } from '../screens/cardText';
 import { formatCurrency } from '../utils/currency';
+import { toISODate, formatShortDate } from '../utils/date';
 import { parseISO } from 'date-fns';
 import { AppButton } from './AppButton';
+import { CardLimitNotice, confirmCardLimit } from './CardLimitNotice';
 import { CurrencyInput } from './CurrencyInput';
 import { TextInputField } from './TextInputField';
 
 type PayFixedExpenseModalProps = {
   name: string;
   amount: number;
+  /** Só cartões ativos (BR-FIN-028). */
   cards: CreditCard[];
+  /** Uso do limite por cartão (BR-FIN-026), para mostrar o disponível e avisar estouro. */
+  cardLimits: Record<string, CardLimitUsage | null>;
   /** Início do ciclo ativo (yyyy-MM-dd) e dia de pagamento, para prever o ciclo da 1ª parcela. */
   cycleStartDate: string;
   payday: number;
@@ -37,6 +45,7 @@ export function PayFixedExpenseModal({
   name,
   amount,
   cards,
+  cardLimits,
   cycleStartDate,
   payday,
   paymentDate,
@@ -59,16 +68,31 @@ export function PayFixedExpenseModal({
         cycleKeyFromStartDate(cycleStartDate),
         calculateFirstCycleKey(
           parseISO(paymentDate),
-          card.closingDay,
+          card,
           payday,
           cycleKeyFromStartDate(cycleStartDate),
         ),
       )
     : 0;
-  const firstInstallment = hasValidInstallments ? (splitInstallments(total, installments)[0] ?? 0) : 0;
+  const firstInstallment = hasValidInstallments
+    ? (splitInstallments(total, installments)[0] ?? 0)
+    : 0;
+  const statementDue = card
+    ? formatShortDate(
+        toISODate(
+          statementDueDate(statementKeyForDate(parseISO(paymentDate), card.closingDay), card),
+        ),
+      )
+    : '';
+  const limitUsage = card ? (cardLimits[card.id] ?? null) : null;
   const canConfirm = !isCredit || (card !== null && hasValidInstallments);
 
   async function handleConfirm() {
+    // BR-FIN-026: estouro do limite só avisa; a pessoa decide continuar.
+    if (isCredit && !(await confirmCardLimit(limitUsage, total))) {
+      return;
+    }
+
     setIsSaving(true);
 
     try {
@@ -92,8 +116,16 @@ export function PayFixedExpenseModal({
 
             <Text style={styles.label}>Forma de pagamento</Text>
             <View style={styles.chips}>
-              <Chip label="À vista (Pix, dinheiro ou débito)" onPress={() => setKind('cash')} selected={!isCredit} />
-              <Chip label="Cartão de crédito" onPress={() => setKind('credit')} selected={isCredit} />
+              <Chip
+                label="À vista (Pix, dinheiro ou débito)"
+                onPress={() => setKind('cash')}
+                selected={!isCredit}
+              />
+              <Chip
+                label="Cartão de crédito"
+                onPress={() => setKind('credit')}
+                selected={isCredit}
+              />
             </View>
 
             {isCredit && cards.length === 0 ? (
@@ -133,17 +165,25 @@ export function PayFixedExpenseModal({
                   onChangeValue={setInterest}
                   value={interest}
                 />
+                <CardLimitNotice amount={total} usage={limitUsage} />
                 {hasValidInstallments ? (
                   <Text style={styles.hint}>
                     Total {formatCurrency(total)} em {installments}x de{' '}
-                    {formatCurrency(firstInstallment)} · {describeFirstInstallment(cyclesAhead)}.
+                    {formatCurrency(firstInstallment)} · entra na fatura que vence {statementDue} ·{' '}
+                    {describeFirstInstallment(cyclesAhead)}.
                   </Text>
                 ) : null}
+                <Text style={styles.hint}>
+                  No crédito, a reserva sai deste ciclo e o valor pesa pela fatura do cartão.
+                </Text>
               </>
             ) : null}
 
             {!isCredit ? (
-              <Text style={styles.hint}>O valor sai da renda deste ciclo agora.</Text>
+              <Text style={styles.hint}>
+                O valor já estava reservado no saldo do ciclo: pagar à vista não muda o quanto você
+                pode gastar.
+              </Text>
             ) : null}
 
             <AppButton
@@ -161,7 +201,15 @@ export function PayFixedExpenseModal({
   );
 }
 
-function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+function Chip({
+  label,
+  selected,
+  onPress,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
   return (
     <Pressable
       accessibilityLabel={label}

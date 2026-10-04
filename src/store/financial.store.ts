@@ -42,8 +42,13 @@ type FinancialState = {
   deleteExpense: (expenseId: string) => Promise<void>;
   saveCreditCard: (card: cardUseCases.CreditCardInput) => Promise<void>;
   deleteCreditCard: (cardId: string) => Promise<void>;
+  setCreditCardActive: (cardId: string, active: boolean) => Promise<void>;
   addCardPurchase: (purchase: cardUseCases.CardPurchaseInput) => Promise<void>;
+  addExistingCardDebt: (input: cardUseCases.ExistingCardDebtInput) => Promise<void>;
+  updateCardPurchase: (purchaseId: string, input: cardUseCases.CardPurchaseUpdate) => Promise<void>;
   deleteCardPurchase: (purchaseId: string) => Promise<void>;
+  payStatement: (input: cardUseCases.PayStatementInput) => Promise<void>;
+  undoStatementPayment: (paymentId: string) => Promise<void>;
   payFixedExpense: (input: paymentUseCases.PayFixedExpenseInput) => Promise<void>;
   undoFixedPayment: (paymentId: string) => Promise<void>;
   addExtraIncome: (input: paymentUseCases.ExtraIncomeInput) => Promise<void>;
@@ -87,7 +92,10 @@ export const useFinancialStore = create<FinancialState>((set, get) => {
    * Aplica uma atualização sobre o documento mais recente, grava (1 setItem, ADR-003) e
    * publica o novo estado. Escritas são serializadas para não perder atualizações.
    */
-  function commit(update: (doc: LocalState) => LocalState, options = { sync: true }): Promise<void> {
+  function commit(
+    update: (doc: LocalState) => LocalState,
+    options = { sync: true },
+  ): Promise<void> {
     const task = writeQueue.then(async () => {
       const next = update(get().doc);
 
@@ -122,16 +130,27 @@ export const useFinancialStore = create<FinancialState>((set, get) => {
         const result = await localStore.load();
 
         if (result.status === 'corrupted') {
-          set({ isLoading: false, loadError: 'Não foi possível ler os dados salvos neste aparelho.' });
+          set({
+            isLoading: false,
+            loadError: 'Não foi possível ler os dados salvos neste aparelho.',
+          });
           return;
         }
 
-        set({ ...derive(result.state), isLoading: false });
+        // O saldo do ciclo ativo é derivado: recalcula com as regras atuais (migração, ADR-017).
+        const state = useCases.recalculateActiveCycleBalance(result.state, contextFactory());
+
+        if (state !== result.state) await localStore.save(state);
+
+        set({ ...derive(state), isLoading: false });
         logger.event('app.load', { ok: true, durationMs: Date.now() - startedAt });
         get().scheduleSync(0);
       } catch (error) {
         logger.error(error);
-        set({ isLoading: false, loadError: 'Não foi possível ler os dados salvos neste aparelho.' });
+        set({
+          isLoading: false,
+          loadError: 'Não foi possível ler os dados salvos neste aparelho.',
+        });
       }
     },
 
@@ -145,8 +164,17 @@ export const useFinancialStore = create<FinancialState>((set, get) => {
     closeActiveMonth: () => run((doc, ctx) => useCases.closeCycle(doc, ctx)),
     saveCreditCard: (input) => run((doc, ctx) => cardUseCases.saveCreditCard(doc, input, ctx)),
     deleteCreditCard: (id) => run((doc, ctx) => cardUseCases.deleteCreditCard(doc, id, ctx)),
+    setCreditCardActive: (id, active) =>
+      run((doc, ctx) => cardUseCases.setCreditCardActive(doc, id, active, ctx)),
     addCardPurchase: (input) => run((doc, ctx) => cardUseCases.addCardPurchase(doc, input, ctx)),
+    addExistingCardDebt: (input) =>
+      run((doc, ctx) => cardUseCases.addExistingCardDebt(doc, input, ctx)),
+    updateCardPurchase: (id, input) =>
+      run((doc, ctx) => cardUseCases.updateCardPurchase(doc, id, input, ctx)),
     deleteCardPurchase: (id) => run((doc, ctx) => cardUseCases.deleteCardPurchase(doc, id, ctx)),
+    payStatement: (input) => run((doc, ctx) => cardUseCases.payStatement(doc, input, ctx)),
+    undoStatementPayment: (id) =>
+      run((doc, ctx) => cardUseCases.undoStatementPayment(doc, id, ctx)),
     payFixedExpense: (input) => run((doc, ctx) => paymentUseCases.payFixedExpense(doc, input, ctx)),
     undoFixedPayment: (id) => run((doc, ctx) => paymentUseCases.undoFixedPayment(doc, id, ctx)),
     addExtraIncome: (input) => run((doc, ctx) => paymentUseCases.addExtraIncome(doc, input, ctx)),

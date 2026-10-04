@@ -31,7 +31,9 @@ export function pullSince(cursor: string | null): string | null {
 export class SupabaseRemote implements SyncRemote {
   constructor(private readonly client: SupabaseClient) {}
 
-  private async run<T>(promise: PromiseLike<{ data: T; error: PostgrestError | null }>): Promise<T> {
+  private async run<T>(
+    promise: PromiseLike<{ data: T; error: PostgrestError | null }>,
+  ): Promise<T> {
     let result: { data: T; error: PostgrestError | null };
 
     try {
@@ -88,6 +90,7 @@ export class SupabaseRemote implements SyncRemote {
 
   async markAllDeleted(nowIso: string): Promise<void> {
     for (const table of [
+      'statement_payments',
       'extra_incomes',
       'fixed_payments',
       'card_purchases',

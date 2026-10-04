@@ -5,18 +5,18 @@ import { useNavigation } from '@react-navigation/native';
 
 import { AppButton } from '../components/AppButton';
 import { Card } from '../components/Card';
+import { CyclePlanCard } from '../components/CyclePlanCard';
 import { EmptyState } from '../components/EmptyState';
 import { FixedExpensesCard } from '../components/FixedExpensesCard';
 import { MetricRow } from '../components/MetricRow';
 import { PayFixedExpenseModal } from '../components/PayFixedExpenseModal';
+import { ProjectionCard } from '../components/ProjectionCard';
 import { Screen } from '../components/Screen';
 import { StatusBadge } from '../components/StatusBadge';
+import { UpcomingCommitmentsCard } from '../components/UpcomingCommitmentsCard';
 import { RootStackParamList } from '../navigation/types';
 import { colors, spacing, typography } from '../design/theme';
-import {
-  canCloseActiveCycle,
-  canReceiveIncomeEarlyNow,
-} from '../application/cycle.use-cases';
+import { canCloseActiveCycle, canReceiveIncomeEarlyNow } from '../application/cycle.use-cases';
 import {
   buildDashboardSummary,
   calculateFixedExpenseAmount,
@@ -24,7 +24,14 @@ import {
   describeCloseCycleBlock,
 } from '../domain/financial/financial.calculations';
 import { PayFixedExpenseInput } from '../application/payment.use-cases';
-import { selectCycleAdjustments, selectCyclePayments } from '../application/selectors';
+import {
+  selectActiveCreditCards,
+  selectCardLimitUsage,
+  selectCycleAdjustments,
+  selectCycleProjections,
+  selectCyclePayments,
+  selectUpcomingCommitments,
+} from '../application/selectors';
 import { FixedPaymentRecord, isLive } from '../application/state';
 import { DayStatus, FixedExpense } from '../domain/financial/financial.types';
 import { useFinancialStore } from '../store/financial.store';
@@ -57,6 +64,12 @@ export function DashboardScreen() {
   const cyclePayments = activeMonth ? selectCyclePayments(doc, activeMonth.id) : [];
   const installmentsByPurchaseId = Object.fromEntries(
     doc.cardPurchases.filter(isLive).map((purchase) => [purchase.id, purchase.installments]),
+  );
+  const commitments = activeMonth ? selectUpcomingCommitments(doc, today) : [];
+  const projections = selectCycleProjections(doc, today, 3);
+  const activeCards = selectActiveCreditCards(doc);
+  const cardLimits = Object.fromEntries(
+    activeCards.map((card) => [card.id, selectCardLimitUsage(doc, card.id)]),
   );
 
   const summary = useMemo(() => {
@@ -206,7 +219,7 @@ export function DashboardScreen() {
 
       <Card style={[styles.heroCard, heroColors]}>
         <View style={styles.heroTop}>
-          <Text style={styles.heroLabel}>Ainda pode gastar</Text>
+          <Text style={styles.heroLabel}>Ainda pode gastar hoje</Text>
           <StatusBadge status={summary.dayStatus} />
         </View>
         <Text adjustsFontSizeToFit numberOfLines={1} style={styles.heroValue}>
@@ -214,11 +227,11 @@ export function DashboardScreen() {
         </Text>
         <View style={styles.heroMetrics}>
           <View style={styles.heroMetric}>
-            <Text style={styles.heroMetricLabel}>Você já gastou</Text>
+            <Text style={styles.heroMetricLabel}>Já gastou hoje</Text>
             <Text style={styles.heroMetricValue}>{formatCurrency(summary.todaySpent)}</Text>
           </View>
           <View style={styles.heroMetric}>
-            <Text style={styles.heroMetricLabel}>Hoje você pode gastar</Text>
+            <Text style={styles.heroMetricLabel}>Limite previsto para hoje</Text>
             <Text style={styles.heroMetricValue}>{formatCurrency(summary.currentDailyLimit)}</Text>
           </View>
         </View>
@@ -241,12 +254,16 @@ export function DashboardScreen() {
       </View>
 
       <Card>
-        <Text style={styles.sectionTitle}>Resumo do ciclo</Text>
-        <MetricRow label="Saldo inicial" value={formatCurrency(summary.initialAvailableAmount)} />
-        <MetricRow label="Saldo restante" value={formatCurrency(summary.remainingAvailableAmount)} />
-        <MetricRow label="Total gasto" value={formatCurrency(summary.totalSpent)} />
         <MetricRow label="Dias restantes" value={String(summary.remainingDays)} />
+        <MetricRow
+          label="Dinheiro disponível no ciclo"
+          tone={summary.remainingAvailableAmount < 0 ? 'negative' : 'default'}
+          value={formatCurrency(summary.remainingAvailableAmount)}
+        />
+        <MetricRow label="Meta de economia (guardada)" value={formatCurrency(config.savingGoal)} />
       </Card>
+
+      <UpcomingCommitmentsCard commitments={commitments} />
 
       <FixedExpensesCard
         expenses={config.fixedExpenses}
@@ -256,15 +273,17 @@ export function DashboardScreen() {
         payments={cyclePayments}
       />
 
-      <Card>
-        <Text style={styles.sectionTitle}>Plano do ciclo</Text>
-        <MetricRow label="Renda mensal" value={fixedMetrics?.[0][1] ?? ''} />
-        <MetricRow label="Rendas avulsas" value={formatCurrency(adjustments?.extraIncome ?? 0)} />
-        <MetricRow label="Despesas fixas pagas" value={formatCurrency(adjustments?.paidFixedExpenses ?? 0)} />
-        <MetricRow label="Meta de economia" value={fixedMetrics?.[2][1] ?? ''} />
-        <MetricRow label="Faturas de cartão" value={formatCurrency(adjustments?.cardCharges ?? 0)} />
-        <MetricRow label="Dívida herdada" value={formatCurrency(activeMonth.previousMonthDebt)} />
-      </Card>
+      <ProjectionCard projections={projections} />
+
+      {adjustments ? (
+        <CyclePlanCard
+          adjustments={adjustments}
+          initialAvailableAmount={activeMonth.initialAvailableAmount}
+          monthlyIncome={config.monthlyIncome}
+          previousMonthDebt={activeMonth.previousMonthDebt}
+          savingGoal={config.savingGoal}
+        />
+      ) : null}
 
       {showReceiveEarly ? (
         <AppButton
@@ -293,7 +312,8 @@ export function DashboardScreen() {
       {payingExpense ? (
         <PayFixedExpenseModal
           amount={calculateFixedExpenseAmount(payingExpense)}
-          cards={doc.creditCards.filter(isLive)}
+          cardLimits={cardLimits}
+          cards={activeCards}
           cycleStartDate={activeMonth.startDate}
           name={payingExpense.name}
           onClose={() => setPayingExpense(null)}

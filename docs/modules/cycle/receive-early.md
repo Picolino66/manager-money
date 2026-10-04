@@ -14,7 +14,7 @@ code:
 symbols: [receiveIncomeEarly, canReceiveIncomeEarlyNow, canReceiveIncomeEarlyForCycle]
 business_rules: [BR-FIN-003, BR-FIN-016]
 tests: [src/application/cycle.use-cases.test.ts]
-last_verified_commit: 359de21
+last_verified_commit: c47cf18+T-025
 ---
 
 # Recebimento antecipado

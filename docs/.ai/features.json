@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-03T23:44:37.635Z",
-  "source_commit": "f9eaa87",
+  "generated_at": "2026-10-04T00:41:48.750Z",
+  "source_commit": "c47cf18",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -141,6 +141,7 @@
         "updateExpense",
         "selectActiveMonth",
         "selectClosedMonths",
+        "selectCycleAdjustments",
         "touch",
         "commit"
       ],
@@ -159,13 +160,14 @@
       "type": "integration",
       "module": "architecture",
       "title": "Contratos de dados e API (v1)",
-      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 6).",
+      "summary": "Schema remoto Supabase, operações PostgREST e RPC usadas pelo sync, DTOs de linha e documento local versionado (schemaVersion 7).",
       "doc": "architecture/contracts.md",
       "state": "implemented",
       "adrs": [
         "ADR-003",
         "ADR-004",
-        "ADR-008"
+        "ADR-008",
+        "ADR-017"
       ]
     },
     {
@@ -218,52 +220,102 @@
       "type": "module",
       "module": "card",
       "title": "Cartões de crédito",
-      "summary": "Cartões (nome, fechamento, vencimento), compras parceladas no crédito e faturas por ciclo.",
+      "summary": "Cartões (nome, fechamento, vencimento, limite, ativo), compras parceladas no crédito, faturas derivadas com pagamento e liberação de limite, e situação inicial (dívidas anteriores ao app).",
       "doc": "modules/card/index.md",
       "state": "implemented"
+    },
+    {
+      "id": "card.existing-debt",
+      "type": "feature",
+      "module": "card",
+      "title": "Situação inicial do cartão",
+      "summary": "Cadastro de fatura em aberto ou parcelamento que já existia antes do app; gera a agenda das parcelas restantes e marca as já pagas como quitadas, sem pesar no orçamento nem no limite.",
+      "doc": "modules/card/existing-debt.md",
+      "state": "implemented",
+      "keywords": [
+        "situação inicial",
+        "compra anterior",
+        "parcelamento existente",
+        "fatura em aberto",
+        "parcelas pagas",
+        "limite já usado"
+      ],
+      "symbols": [
+        "addExistingCardDebt",
+        "listOpenInstallments",
+        "calculateInstallmentForCycle",
+        "firstCountedCycleKey",
+        "updateCardPurchase"
+      ],
+      "business_rules": [
+        "BR-FIN-027",
+        "BR-FIN-029"
+      ],
+      "adrs": [
+        "ADR-017"
+      ],
+      "tests": [
+        "src/application/financial-vision.test.ts",
+        "src/application/card.use-cases.test.ts",
+        "src/screens/cards.screens.test.tsx"
+      ],
+      "spec": "SPEC-017"
     },
     {
       "id": "card.manage",
       "type": "feature",
       "module": "card",
-      "title": "Cadastrar cartões e ver faturas",
-      "summary": "Tela Cartões: cria, edita e exclui cartões (nome, dia de fechamento e de vencimento) e mostra a fatura do ciclo atual e do próximo, com as parcelas e a exclusão de compras.",
+      "title": "Cadastrar cartões, limite e ativo/inativo",
+      "summary": "Tela Cartões: cria e edita cartões (nome, fechamento, vencimento, limite opcional), ativa ou desativa, mostra limite comprometido e disponível e permite editar ou excluir compras ainda não contadas em ciclo fechado nem em fatura paga.",
       "doc": "modules/card/manage.md",
       "state": "implemented",
       "keywords": [
         "cartão",
         "crédito",
-        "fatura",
+        "limite",
+        "limite disponível",
         "fechamento",
         "vencimento",
-        "parcelas"
+        "desativar",
+        "inativo"
       ],
       "symbols": [
         "saveCreditCard",
+        "setCreditCardActive",
         "deleteCreditCard",
+        "updateCardPurchase",
         "deleteCardPurchase",
-        "canDeleteCardPurchase",
-        "selectCardInstallments"
+        "canModifyCardPurchase",
+        "calculateCardLimitUsage",
+        "selectCardLimitUsage",
+        "selectCreditCards",
+        "selectActiveCreditCards"
       ],
       "business_rules": [
-        "BR-FIN-019",
-        "BR-FIN-020"
+        "BR-FIN-020",
+        "BR-FIN-026",
+        "BR-FIN-028",
+        "BR-FIN-029"
       ],
       "adrs": [
-        "ADR-014"
+        "ADR-014",
+        "ADR-017"
       ],
       "tests": [
         "src/application/card.use-cases.test.ts",
+        "src/application/financial-vision.test.ts",
+        "src/domain/financial/credit-card.test.ts",
+        "src/screens/cards.screens.test.tsx",
         "src/screens/screens.test.tsx"
       ],
-      "spec": "SPEC-013"
+      "spec": "SPEC-016"
     },
     {
       "id": "card.purchase",
       "type": "feature",
       "module": "card",
       "title": "Compra parcelada no crédito",
-      "summary": "Em Registrar gasto, a forma de pagamento \"Cartão de crédito\" cria uma compra parcelada cuja 1ª parcela cai no ciclo do fechamento da fatura e que reduz o saldo inicial de cada ciclo.",
+      "summary": "Em Registrar gasto, a forma de pagamento \"Cartão de crédito\" cria uma compra parcelada que entra na fatura do próximo fechamento e pesa no ciclo do vencimento dessa fatura, reduzindo o saldo inicial do ciclo e comprometendo o limite do cartão.",
       "doc": "modules/card/purchase.md",
       "state": "implemented",
       "keywords": [
@@ -272,30 +324,89 @@
         "juros",
         "fatura",
         "fechamento",
-        "saldo"
+        "vencimento",
+        "saldo",
+        "limite"
       ],
       "symbols": [
         "addCardPurchase",
+        "buildCardPurchase",
         "calculateFirstCycleKey",
-        "calculateInvoiceClosingDate",
+        "statementKeyForDate",
+        "statementDueDate",
+        "statementCycleKey",
         "splitInstallments",
+        "listInstallments",
         "calculateCardChargesForCycle",
         "recalculateActiveCycleBalance"
       ],
       "business_rules": [
         "BR-FIN-005",
         "BR-FIN-019",
-        "BR-FIN-020"
+        "BR-FIN-020",
+        "BR-FIN-025",
+        "BR-FIN-026",
+        "BR-FIN-030"
       ],
       "adrs": [
-        "ADR-014"
+        "ADR-014",
+        "ADR-017"
       ],
       "tests": [
         "src/domain/financial/credit-card.test.ts",
         "src/application/card.use-cases.test.ts",
+        "src/application/financial-vision.test.ts",
         "src/screens/screens.test.tsx"
       ],
-      "spec": "SPEC-013"
+      "spec": "SPEC-016"
+    },
+    {
+      "id": "card.statement",
+      "type": "feature",
+      "module": "card",
+      "title": "Faturas e \"Paguei a fatura",
+      "summary": "Faturas derivadas das compras (aberta, fechada, vencida, paga) com fechamento, vencimento e parcelas; \"Paguei a fatura\" libera o limite e, depois do vencimento, registra o valor pago com juros, que pesam no ciclo ativo.",
+      "doc": "modules/card/statement.md",
+      "state": "implemented",
+      "keywords": [
+        "fatura",
+        "paguei a fatura",
+        "vencimento",
+        "fechamento",
+        "juros",
+        "atraso",
+        "limite",
+        "status da fatura"
+      ],
+      "symbols": [
+        "buildCardStatements",
+        "statementPaymentId",
+        "statementDueDate",
+        "calculateStatementInterest",
+        "payStatement",
+        "undoStatementPayment",
+        "statementPayableFrom",
+        "selectCardStatements",
+        "selectStatementPayments",
+        "selectCycleStatementInterest"
+      ],
+      "business_rules": [
+        "BR-FIN-005",
+        "BR-FIN-025",
+        "BR-FIN-026",
+        "BR-FIN-030"
+      ],
+      "adrs": [
+        "ADR-017"
+      ],
+      "tests": [
+        "src/domain/financial/credit-card.test.ts",
+        "src/domain/financial/statement.test.ts",
+        "src/application/card.use-cases.test.ts",
+        "src/application/financial-vision.test.ts",
+        "src/screens/cards.screens.test.tsx"
+      ],
+      "spec": "SPEC-016"
     },
     {
       "id": "category",
@@ -311,7 +422,7 @@
       "type": "feature",
       "module": "category",
       "title": "Análise por categoria",
-      "summary": "Filtra gastos, fixos e parcelamentos por período, categoria e tipo, e mostra o total, o gráfico de barras por categoria e a lista de itens.",
+      "summary": "Filtra gastos, compras no cartão e pagamentos de fixas e parcelamentos por período, categoria e tipo, e mostra o total, o gráfico de barras por categoria e a lista de itens.",
       "doc": "modules/category/analysis.md",
       "state": "implemented",
       "keywords": [
@@ -319,10 +430,13 @@
         "gráfico",
         "período",
         "filtro",
-        "relatório"
+        "relatório",
+        "cartão",
+        "fixas pagas"
       ],
       "business_rules": [
-        "BR-FIN-012"
+        "BR-FIN-012",
+        "BR-FIN-030"
       ]
     },
     {
@@ -353,7 +467,7 @@
       "type": "module",
       "module": "cycle",
       "title": "Ciclo financeiro",
-      "summary": "Ciclo de renda do usuário: abertura, painel do dia, recebimento antecipado, fechamento e histórico.",
+      "summary": "Ciclo de renda do usuário: abertura, painel do dia (com próximos compromissos e projeção), recebimento antecipado, fechamento e histórico.",
       "doc": "modules/cycle/index.md",
       "state": "implemented"
     },
@@ -389,28 +503,50 @@
       "id": "cycle.dashboard",
       "type": "feature",
       "module": "cycle",
-      "title": "Painel do dia (limite diário)",
-      "summary": "Tela inicial que mostra quanto ainda pode ser gasto hoje, o limite diário, o gasto do dia, o status e o resumo do ciclo ativo.",
+      "title": "Painel do dia (Hoje)",
+      "summary": "Tela inicial que responde quanto ainda pode ser gasto hoje sem perder a meta: saldo e limite do dia com status, próximos compromissos (faturas e fixas pendentes), resumo do ciclo e projeção dos próximos ciclos (\"livre antes de novos gastos\").",
       "doc": "modules/cycle/dashboard.md",
       "state": "implemented",
       "keywords": [
         "limite diário",
         "hoje",
+        "você pode gastar hoje",
         "saldo do dia",
         "status",
-        "dashboard"
+        "dashboard",
+        "próximos compromissos",
+        "projeção",
+        "próximos ciclos"
       ],
       "symbols": [
         "buildDashboardSummary",
         "calculateDailyLimitForDate",
         "calculateDayStatus",
-        "calculateRemainingDays"
+        "calculateRemainingDays",
+        "selectUpcomingCommitments",
+        "selectCycleProjections",
+        "projectCycles",
+        "selectCycleAdjustments"
       ],
       "business_rules": [
+        "BR-FIN-004",
+        "BR-FIN-005",
         "BR-FIN-007",
         "BR-FIN-008",
-        "BR-FIN-009"
-      ]
+        "BR-FIN-009",
+        "BR-FIN-030",
+        "BR-FIN-031"
+      ],
+      "adrs": [
+        "ADR-017"
+      ],
+      "tests": [
+        "src/application/financial-vision.test.ts",
+        "src/domain/financial/projection.test.ts",
+        "src/domain/financial/financial.calculations.test.ts",
+        "src/screens/screens.test.tsx"
+      ],
+      "spec": "SPEC-018"
     },
     {
       "id": "cycle.history",
@@ -455,14 +591,17 @@
         "startPendingInstallments"
       ],
       "business_rules": [
+        "BR-FIN-004",
         "BR-FIN-005",
         "BR-FIN-006",
         "BR-FIN-010",
         "BR-FIN-013",
-        "BR-FIN-017"
+        "BR-FIN-017",
+        "BR-FIN-025"
       ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts"
+        "src/application/cycle.use-cases.test.ts",
+        "src/application/financial-vision.test.ts"
       ],
       "spec": "SPEC-002"
     },
@@ -562,7 +701,8 @@
         "BR-FIN-001",
         "BR-FIN-011",
         "BR-FIN-012",
-        "BR-FIN-019"
+        "BR-FIN-025",
+        "BR-FIN-026"
       ],
       "tests": [
         "src/application/cycle.use-cases.test.ts"
@@ -661,7 +801,7 @@
       "type": "module",
       "module": "payment",
       "title": "Pagamentos e rendas",
-      "summary": "Confirmação mensal do pagamento das despesas fixas (Pix, dinheiro, débito, crédito) e rendas avulsas do ciclo.",
+      "summary": "Confirmação mensal do pagamento das despesas fixas (à vista ou crédito; pendentes ficam reservadas) e rendas avulsas do ciclo.",
       "doc": "modules/payment/index.md",
       "state": "implemented"
     },
@@ -703,50 +843,56 @@
       "type": "feature",
       "module": "payment",
       "title": "Pagar despesas fixas do ciclo",
-      "summary": "O Hoje lista as despesas fixas do ciclo como pendentes ou pagas; Pagar abre a escolha de Pix, dinheiro, débito ou crédito (cartão, parcelas e juros) e desconta o saldo do ciclo.",
+      "summary": "O Hoje lista as despesas fixas ativas do ciclo como pendentes (reservadas no saldo) ou pagas; Pagar à vista confirma a saída já reservada e Pagar no crédito (cartão, parcelas e juros) tira a reserva e leva o valor para as faturas.",
       "doc": "modules/payment/fixed-expense.md",
       "state": "implemented",
       "keywords": [
         "pagar",
         "despesa fixa",
+        "à vista",
         "pix",
-        "dinheiro",
-        "débito",
         "crédito",
         "juros",
         "pendente",
-        "desfazer"
+        "reservada",
+        "desfazer",
+        "inativa"
       ],
       "symbols": [
         "payFixedExpense",
         "undoFixedPayment",
         "calculatePaidFixedAmount",
+        "calculateBaseAvailableAmount",
         "calculateInitialAvailableAmount",
-        "selectCycleAdjustments"
+        "selectCycleAdjustments",
+        "selectPendingFixedExpenses"
       ],
       "business_rules": [
         "BR-FIN-004",
         "BR-FIN-005",
         "BR-FIN-021",
-        "BR-FIN-022"
+        "BR-FIN-022",
+        "BR-FIN-030"
       ],
       "adrs": [
         "ADR-015",
-        "ADR-014"
+        "ADR-014",
+        "ADR-017"
       ],
       "tests": [
         "src/application/payment.use-cases.test.ts",
+        "src/application/financial-vision.test.ts",
         "src/screens/screens.test.tsx",
         "src/infrastructure/sync/sync-engine.test.ts"
       ],
-      "spec": "SPEC-014"
+      "spec": "SPEC-018"
     },
     {
       "id": "planning",
       "type": "module",
       "module": "planning",
       "title": "Planejamento financeiro",
-      "summary": "Base financeira do usuário: renda mensal (fontes com dia de pagamento), meta de economia, despesas fixas e parcelamentos.",
+      "summary": "Base financeira do usuário: renda mensal (fontes ativas com dia de pagamento), meta de economia, despesas fixas e parcelamentos (ativos ou inativos).",
       "doc": "modules/planning/index.md",
       "state": "implemented"
     },
@@ -755,7 +901,7 @@
       "type": "feature",
       "module": "planning",
       "title": "Configurar base financeira",
-      "summary": "Cadastro de renda mensal, meta de economia, despesas fixas permanentes e parcelamentos; calcula o total de fixos e alerta quando o plano passa da renda.",
+      "summary": "Cadastro de renda mensal, meta de economia, despesas fixas permanentes e parcelamentos (cada item ativo ou inativo); calcula o total de fixos ativos e alerta quando o plano passa da renda.",
       "doc": "modules/planning/configure.md",
       "state": "implemented",
       "keywords": [
@@ -765,14 +911,17 @@
         "meta",
         "despesas fixas",
         "parcelamento",
-        "cartão"
+        "cartão",
+        "ativo",
+        "inativo"
       ],
       "symbols": [
         "saveConfig",
         "calculateIncomeTotal",
         "calculateFixedExpensesTotal",
         "calculateBaseAvailableAmount",
-        "calculateFixedExpenseAmount"
+        "calculateFixedExpenseAmount",
+        "isActive"
       ],
       "business_rules": [
         "BR-FIN-004",
@@ -781,16 +930,21 @@
         "BR-FIN-015",
         "BR-FIN-018"
       ],
+      "adrs": [
+        "ADR-017"
+      ],
       "tests": [
-        "src/application/cycle.use-cases.test.ts"
-      ]
+        "src/application/cycle.use-cases.test.ts",
+        "src/application/financial-vision.test.ts"
+      ],
+      "spec": "SPEC-017"
     },
     {
       "id": "planning.income-sources",
       "type": "feature",
       "module": "planning",
       "title": "Múltiplas fontes de renda",
-      "summary": "A renda mensal é a soma de fontes com nome e valor, cadastradas na Configuração; dados antigos viram uma fonte \"Renda\".",
+      "summary": "A renda mensal é a soma das fontes ativas (nome, valor, dia de pagamento), cadastradas na Configuração; fontes podem ser desativadas; dados antigos viram uma fonte \"Renda\".",
       "doc": "modules/planning/income-sources.md",
       "state": "implemented",
       "keywords": [
@@ -798,12 +952,16 @@
         "fontes de renda",
         "salário",
         "freela",
-        "migração"
+        "migração",
+        "ativa",
+        "inativa"
       ],
       "symbols": [
         "calculatePrimaryPayday",
+        "calculatePrimaryIncomeSource",
         "saveConfig",
         "calculateIncomeTotal",
+        "isActive",
         "legacyIncomeSources",
         "migrateV2ToV3",
         "migrateV5ToV6",
@@ -815,7 +973,9 @@
         "BR-FIN-024"
       ],
       "adrs": [
-        "ADR-013"
+        "ADR-013",
+        "ADR-016",
+        "ADR-017"
       ],
       "tests": [
         "src/application/cycle.use-cases.test.ts",
@@ -823,7 +983,7 @@
         "src/infrastructure/sync/mappers.test.ts",
         "src/screens/screens.test.tsx"
       ],
-      "spec": "SPEC-015"
+      "spec": "SPEC-017"
     },
     {
       "id": "planning.payday",
@@ -912,7 +1072,7 @@
       "type": "module",
       "module": "storage",
       "title": "Persistência local",
-      "summary": "Documento local único versionado (schemaVersion 3) com migração do formato do MVP.",
+      "summary": "Documento local único versionado (schemaVersion 7) com migrações encadeadas desde o formato do MVP.",
       "doc": "modules/storage/index.md",
       "state": "implemented"
     },
@@ -934,6 +1094,8 @@
       "symbols": [
         "migrateV1ToV2",
         "migrateV2ToV3",
+        "migrateV6ToV7",
+        "migrateDocument",
         "legacyIncomeSources",
         "normalizeLegacyMonth",
         "parseLocalState",
@@ -941,7 +1103,11 @@
       ],
       "adrs": [
         "ADR-003",
-        "ADR-013"
+        "ADR-013",
+        "ADR-014",
+        "ADR-015",
+        "ADR-016",
+        "ADR-017"
       ],
       "tests": [
         "src/infrastructure/storage/local-store.test.ts"
@@ -980,7 +1146,10 @@
         "applyRemoteRows",
         "adoptRemoteActiveCycle",
         "mapSupabaseError",
-        "scheduleSync"
+        "scheduleSync",
+        "statementPaymentToRow",
+        "statementPaymentFromRow",
+        "cardPurchaseFromRow"
       ],
       "business_rules": [
         "BR-SYNC-001",
@@ -990,7 +1159,8 @@
       ],
       "adrs": [
         "ADR-004",
-        "ADR-008"
+        "ADR-008",
+        "ADR-017"
       ],
       "tests": [
         "src/infrastructure/sync/sync-engine.test.ts",

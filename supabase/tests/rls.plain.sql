@@ -66,6 +66,27 @@ values ('pay7','c1','aluguel','Aluguel','Moradia','debit',150000,0,'2026-10-10',
 do $$ begin raise notice 'ok - refazer pagamento após exclusão lógica é aceito'; end $$;
 select pg_temp.expect_error($q$delete from public.extra_incomes where id='inc1'$q$,'42501','DELETE físico de renda avulsa negado');
 
+-- limite, ativo, situação inicial e pagamento de fatura (BR-FIN-026..028, ADR-017)
+update public.credit_cards set credit_limit=600000, active=false where id='k1';
+do $$ begin assert (select credit_limit from public.credit_cards where id='k1')=600000 and (select active from public.credit_cards where id='k1')=false; raise notice 'ok - limite e ativo do cartão gravados'; end $$;
+select pg_temp.expect_error($q$update public.credit_cards set credit_limit=-1 where id='k1'$q$,'23514','limite negativo rejeitado');
+insert into public.card_purchases (id,card_id,description,category,total_amount,installments,purchase_date,first_cycle_key,first_statement_key,settled_installments,created_at,client_updated_at)
+values ('p6','k1','Celular','Pessoal',180000,12,'2026-03-25','2026-03','2026-03',5,now(),now());
+do $$ begin assert (select settled_installments from public.card_purchases where id='p6')=5 and (select settled_installments from public.card_purchases where id='p1')=0; raise notice 'ok - situação inicial com parcelas quitadas gravada'; end $$;
+select pg_temp.expect_error($q$insert into public.card_purchases (id,card_id,description,category,total_amount,installments,purchase_date,first_cycle_key,settled_installments,created_at,client_updated_at) values ('p7','k1','x','Outros',100,2,'2026-10-20','2026-10',2,now(),now())$q$,'23514','parcelas quitadas >= total rejeitado');
+select pg_temp.expect_error($q$update public.card_purchases set first_statement_key='novembro' where id='p1'$q$,'23514','first_statement_key inválida rejeitada');
+update public.card_purchases set origin='existing' where id='p6';
+select pg_temp.expect_error($q$update public.card_purchases set origin='importada' where id='p6'$q$,'23514','origem inválida rejeitada');
+insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,paid_at,client_updated_at)
+values ('sp1','k1','2026-10','c1',100000,105000,'2026-11-08',now());
+do $$ begin assert (select count(*) from public.statement_payments)=1; raise notice 'ok - A grava pagamento de fatura com juros'; end $$;
+select pg_temp.expect_error($q$insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,paid_at,client_updated_at) values ('sp2','k1','2026-10','c1',100000,100000,'2026-11-08',now())$q$,'23505','BR-FIN-026 segundo pagamento vigente da mesma fatura rejeitado');
+select pg_temp.expect_error($q$insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,paid_at,client_updated_at) values ('sp3','k1','2026-11','c1',100000,90000,'2026-12-08',now())$q$,'23514','valor pago menor que a fatura rejeitado');
+select pg_temp.expect_error($q$insert into public.statement_payments (id,card_id,statement_key,cycle_id,statement_amount,paid_amount,paid_at,client_updated_at) values ('sp4','inexistente','2026-11','c1',1,1,'2026-12-08',now())$q$,'23503','pagamento de fatura exige cartão existente');
+select pg_temp.expect_error($q$delete from public.statement_payments where id='sp1'$q$,'42501','DELETE físico de pagamento de fatura negado');
+update public.fixed_expenses set active=false where id='nenhuma';
+do $$ begin raise notice 'ok - coluna active em fixed_expenses disponível'; end $$;
+
 -- ordem closed→active na mesma instrução (contrato §3)
 insert into public.cycles (id,start_date,end_date,received_at,started_at,closed_at,status,initial_available_amount,previous_month_debt,final_balance,client_updated_at)
 values ('c1','2026-10-07','2026-11-06',now(),now(),now(),'closed',100000,0,98500,now()),
@@ -74,7 +95,7 @@ on conflict (user_id,id) do update set status=excluded.status, closed_at=exclude
 do $$ begin assert (select count(*) from public.cycles where status='active')=1; raise notice 'ok - upsert closed→active aceito'; end $$;
 
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-00000000000b"}',false);
-do $$ begin assert (select count(*) from public.cycles)=0 and (select count(*) from public.card_purchases)=0 and (select count(*) from public.credit_cards)=0 and (select count(*) from public.fixed_payments)=0 and (select count(*) from public.extra_incomes)=0, 'B não vê'; raise notice 'ok - B não vê dados de A'; end $$;
+do $$ begin assert (select count(*) from public.cycles)=0 and (select count(*) from public.card_purchases)=0 and (select count(*) from public.credit_cards)=0 and (select count(*) from public.fixed_payments)=0 and (select count(*) from public.extra_incomes)=0 and (select count(*) from public.statement_payments)=0, 'B não vê'; raise notice 'ok - B não vê dados de A'; end $$;
 update public.cycles set initial_available_amount=0 where id='c3';
 select set_config('request.jwt.claims','{"sub":"00000000-0000-0000-0000-00000000000a"}',false);
 do $$ begin assert (select initial_available_amount from public.cycles where id='c3')=90000; raise notice 'ok - B não altera dados de A'; end $$;

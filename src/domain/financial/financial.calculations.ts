@@ -21,10 +21,10 @@ import {
   FinancialConfig,
   FinancialMonth,
   IncomeSource,
+  isActive,
   MoneyCents,
 } from './financial.types';
 import { formatCycleLabel, formatShortDate, toISODate } from '../../utils/date';
-
 
 export function normalizeCategory(category?: string): ExpenseCategory {
   const normalized = category?.trim();
@@ -64,45 +64,56 @@ export function calculateFixedExpenseAmount(expense: FixedExpense): MoneyCents {
   return expense.amount;
 }
 
-export function calculateIncomeTotal(sources: Pick<IncomeSource, 'amount'>[]): MoneyCents {
-  return sources.reduce((total, source) => total + source.amount, 0);
+/** BR-FIN-018: renda mensal = soma das fontes ativas. */
+export function calculateIncomeTotal(
+  sources: Pick<IncomeSource, 'amount' | 'active'>[],
+): MoneyCents {
+  return sources.filter(isActive).reduce((total, source) => total + source.amount, 0);
 }
 
-/** BR-FIN-024: o ciclo usa o dia de pagamento da fonte de maior valor (empate: a primeira). */
-export function calculatePrimaryIncomeSource<T extends Pick<IncomeSource, 'amount'>>(
+/** BR-FIN-024: o ciclo usa o dia de pagamento da fonte ativa de maior valor (empate: a primeira). */
+export function calculatePrimaryIncomeSource<T extends Pick<IncomeSource, 'amount' | 'active'>>(
   sources: T[],
 ): T | undefined {
-  return sources.reduce<T | undefined>(
-    (primary, source) => (!primary || source.amount > primary.amount ? source : primary),
-    undefined,
-  );
+  return sources
+    .filter(isActive)
+    .reduce<T | undefined>(
+      (primary, source) => (!primary || source.amount > primary.amount ? source : primary),
+      undefined,
+    );
 }
 
-export function calculatePrimaryPayday(sources: Pick<IncomeSource, 'amount' | 'payday'>[]): number {
+export function calculatePrimaryPayday(
+  sources: Pick<IncomeSource, 'amount' | 'payday' | 'active'>[],
+): number {
   return calculatePrimaryIncomeSource(sources)?.payday ?? DEFAULT_PAYDAY;
 }
 
 export function calculateFixedExpensesTotal(
   config: Pick<FinancialConfig, 'fixedExpenses'>,
 ): MoneyCents {
-  return config.fixedExpenses.reduce(
-    (total, expense) => total + calculateFixedExpenseAmount(expense),
-    0,
-  );
+  return config.fixedExpenses
+    .filter(isActive)
+    .reduce((total, expense) => total + calculateFixedExpenseAmount(expense), 0);
 }
 
 /**
- * BR-FIN-004: saldo base = renda + rendas avulsas − despesas fixas pagas à vista − meta.
- * Despesas fixas pendentes não descontam (BR-FIN-021).
+ * BR-FIN-004: saldo base = renda + rendas avulsas − despesas fixas do ciclo − meta. As fixas do ciclo
+ * são as pagas à vista mais as ativas ainda pendentes (reservadas); a fixa paga no crédito pesa pela
+ * fatura (BR-FIN-022), nunca aqui.
  */
 export function calculateBaseAvailableAmount(
   config: Pick<FinancialConfig, 'monthlyIncome' | 'savingGoal'>,
-  adjustments: Pick<CycleAdjustments, 'extraIncome' | 'paidFixedExpenses'> = {},
+  adjustments: Pick<
+    CycleAdjustments,
+    'extraIncome' | 'paidFixedExpenses' | 'pendingFixedExpenses'
+  > = {},
 ): MoneyCents {
   return (
     config.monthlyIncome +
     (adjustments.extraIncome ?? 0) -
     (adjustments.paidFixedExpenses ?? 0) -
+    (adjustments.pendingFixedExpenses ?? 0) -
     config.savingGoal
   );
 }
@@ -115,9 +126,16 @@ export type CycleAdjustments = {
   extraIncome?: MoneyCents;
   /** Despesas fixas pagas à vista (Pix, dinheiro, débito) no ciclo. */
   paidFixedExpenses?: MoneyCents;
+  /** Despesas fixas ativas ainda não pagas no ciclo: ficam reservadas (BR-FIN-004). */
+  pendingFixedExpenses?: MoneyCents;
+  /** Juros de faturas pagas com atraso no ciclo (BR-FIN-026). */
+  statementInterest?: MoneyCents;
 };
 
-/** BR-FIN-005: saldo inicial = saldo base − dívida herdada − parcelas de cartão do ciclo. */
+/**
+ * BR-FIN-005: saldo inicial = saldo base − dívida herdada − parcelas de cartão do ciclo − juros de
+ * faturas pagas com atraso no ciclo.
+ */
 export function calculateInitialAvailableAmount(
   config: Pick<FinancialConfig, 'monthlyIncome' | 'savingGoal'>,
   previousMonthDebt: MoneyCents,
@@ -126,7 +144,8 @@ export function calculateInitialAvailableAmount(
   return (
     calculateBaseAvailableAmount(config, adjustments) -
     previousMonthDebt -
-    (adjustments.cardCharges ?? 0)
+    (adjustments.cardCharges ?? 0) -
+    (adjustments.statementInterest ?? 0)
   );
 }
 
@@ -167,7 +186,11 @@ export function calculateFinalBalance(month: FinancialMonth): MoneyCents {
 }
 
 export function calculatePreviousMonthDebt(previousMonth?: FinancialMonth): MoneyCents {
-  if (!previousMonth || previousMonth.finalBalance === undefined || previousMonth.finalBalance >= 0) {
+  if (
+    !previousMonth ||
+    previousMonth.finalBalance === undefined ||
+    previousMonth.finalBalance >= 0
+  ) {
     return 0;
   }
 
@@ -238,10 +261,7 @@ export function describeCloseCycleBlock(month: Pick<FinancialMonth, 'endDate'>):
   return `O ciclo termina em ${formatShortDate(month.endDate)}. Se o pagamento cair antes, use "Já recebi".`;
 }
 
-export function buildFinancialCycleDates(
-  receivedAt?: Date,
-  payday: number = DEFAULT_PAYDAY,
-) {
+export function buildFinancialCycleDates(receivedAt?: Date, payday: number = DEFAULT_PAYDAY) {
   const startDate = startOfDay(receivedAt ?? calculateDefaultCycleStartDate(new Date(), payday));
   const endDate = calculateCycleEndDate(startDate, payday);
 

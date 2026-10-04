@@ -4,11 +4,11 @@ type: module
 module: payment
 title: Pagamentos e rendas
 summary: >
-  Confirmação mensal do pagamento das despesas fixas (Pix, dinheiro, débito, crédito) e rendas
-  avulsas do ciclo.
+  Confirmação mensal do pagamento das despesas fixas (à vista ou crédito; pendentes ficam
+  reservadas) e rendas avulsas do ciclo.
 code:
   - src/components/FixedExpensesCard.tsx
-last_verified_commit: f9eaa87+T-022
+last_verified_commit: c47cf18+T-025
 ---
 
 # Módulo: pagamentos e rendas

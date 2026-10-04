@@ -13,7 +13,7 @@ code:
   - src/domain/financial/financial.calculations.ts
 symbols: [addCategory, normalizeCategory, getAvailableCategories, getSortedCategories]
 business_rules: [BR-FIN-012]
-last_verified_commit: 359de21
+last_verified_commit: c47cf18+T-025
 ---
 
 # Gerenciar categorias

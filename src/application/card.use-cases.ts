@@ -1,25 +1,59 @@
-import { parseISO } from 'date-fns';
+import { addDays, isAfter, parseISO, startOfDay } from 'date-fns';
 
 import {
-  calculateFirstCycleKey,
+  addCycleKeys,
   CardPurchase,
+  currentStatementKey,
   cycleKeyFromStartDate,
+  cycleKeyOffset,
+  firstCountedCycleKey,
+  isMonthKey,
   lastInstallmentCycleKey,
+  listOpenInstallments,
   MAX_CARD_DAY,
   MAX_CARD_INSTALLMENTS,
   MIN_CARD_DAY,
+  statementClosingDate,
+  statementCycleKey,
+  statementDueDate,
+  statementKeyForDate,
+  statementPaymentId,
 } from '../domain/financial/credit-card';
 import { normalizeCategory } from '../domain/financial/financial.calculations';
-import { assertDateWithinCycle, recalculateActiveCycleBalance, requireActiveCycle } from './cycle.use-cases';
+import { FinancialConfig, isActive } from '../domain/financial/financial.types';
+import { toISODate } from '../utils/date';
+import {
+  assertDateWithinCycle,
+  calculateNextCycleStartDate,
+  recalculateActiveCycleBalance,
+  requireActiveCycle,
+} from './cycle.use-cases';
 import { DomainError } from './errors';
-import { selectConfig } from './selectors';
-import { CardPurchaseRecord, CreditCardRecord, isLive, LocalState, touch, UseCaseContext } from './state';
+import {
+  selectActiveCycle,
+  selectCardStatements,
+  selectConfig,
+  selectStatementPayments,
+} from './selectors';
+import {
+  CardPurchaseRecord,
+  CreditCardRecord,
+  isLive,
+  LocalState,
+  StatementPaymentRecord,
+  touch,
+  UseCaseContext,
+} from './state';
 
 export type CreditCardInput = {
   id?: string;
   name: string;
   closingDay: number;
   dueDay: number;
+  /** Limite total em centavos; `null` ou ausente = não informado (BR-FIN-026). */
+  creditLimit?: number | null;
+  /** Ausente: novo cartão nasce ativo; edição mantém o valor atual. */
+  active?: boolean;
 };
 
 export type CardPurchaseInput = {
@@ -33,10 +67,70 @@ export type CardPurchaseInput = {
   date: string;
 };
 
+/**
+ * Situação inicial (BR-FIN-027): fatura em aberto ou parcelamento que já existia antes do app.
+ * Uma fatura em aberto é `totalInstallments = remainingInstallments = 1`.
+ */
+export type ExistingCardDebtInput = {
+  cardId: string;
+  description: string;
+  category: string;
+  installmentAmount: number;
+  totalInstallments: number;
+  /** Parcelas ainda não pagas, incluindo a da fatura `nextStatementKey`. */
+  remainingInstallments: number;
+  /** Fatura (`yyyy-MM` do fechamento) da próxima parcela a pagar; ainda não vencida. */
+  nextStatementKey: string;
+};
+
+export type CardPurchaseUpdate = Omit<CardPurchaseInput, 'cardId'>;
+
+export type PayStatementInput = {
+  cardId: string;
+  statementKey: string;
+  /** Valor pago, obrigatório depois do vencimento (≥ valor da fatura; a diferença são juros). */
+  paidAmount?: number;
+};
+
+/** Quantas faturas à frente a situação inicial aceita para a próxima parcela. */
+const MAX_STATEMENTS_AHEAD = 12;
+
 function assertCardDay(day: number, label: string) {
   if (!Number.isInteger(day) || day < MIN_CARD_DAY || day > MAX_CARD_DAY) {
     throw new DomainError(`${label} deve ser um dia entre ${MIN_CARD_DAY} e ${MAX_CARD_DAY}.`);
   }
+}
+
+function assertPositiveCents(value: number, message = 'Informe um valor maior que zero.') {
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new DomainError(message);
+  }
+}
+
+function assertInstallments(installments: number) {
+  if (!Number.isInteger(installments) || installments < 1 || installments > MAX_CARD_INSTALLMENTS) {
+    throw new DomainError(`As parcelas devem ficar entre 1 e ${MAX_CARD_INSTALLMENTS}.`);
+  }
+}
+
+function requireDescription(value: string): string {
+  const description = value.trim();
+
+  if (!description) {
+    throw new DomainError('Informe uma descrição.');
+  }
+
+  return description;
+}
+
+function requireConfig(state: LocalState, message: string): FinancialConfig {
+  const config = selectConfig(state);
+
+  if (!config) {
+    throw new DomainError(message);
+  }
+
+  return config;
 }
 
 function findLiveCard(state: LocalState, cardId: string): CreditCardRecord {
@@ -49,7 +143,51 @@ function findLiveCard(state: LocalState, cardId: string): CreditCardRecord {
   return card;
 }
 
-/** BR-FIN-019: cria ou atualiza um cartão (nome único, fechamento e vencimento de 1 a 28). */
+/** Cartão que aceita compras novas: vivo e ativo (BR-FIN-028). */
+function findUsableCard(state: LocalState, cardId: string): CreditCardRecord {
+  const card = findLiveCard(state, cardId);
+
+  if (!isActive(card)) {
+    throw new DomainError('Este cartão está inativo. Ative-o para registrar compras.');
+  }
+
+  return card;
+}
+
+function findLivePurchase(state: LocalState, purchaseId: string): CardPurchaseRecord {
+  const purchase = state.cardPurchases.find((record) => record.id === purchaseId && isLive(record));
+
+  if (!purchase) {
+    throw new DomainError('Compra não encontrada.');
+  }
+
+  return purchase;
+}
+
+function isStatementPaid(state: LocalState, cardId: string, statementKey: string): boolean {
+  return selectStatementPayments(state).some(
+    (payment) => payment.cardId === cardId && payment.statementKey === statementKey,
+  );
+}
+
+const maxKey = (left: string, right: string) => (left > right ? left : right);
+
+/** Pagamento de fixa vivo que gerou a compra no cartão (BR-FIN-022). */
+function findLinkedFixedPayment(state: LocalState, purchaseId: string) {
+  return state.fixedPayments.find(
+    (payment) => isLive(payment) && payment.cardPurchaseId === purchaseId,
+  );
+}
+
+function formatMonthKey(key: string): string {
+  return `${key.slice(5, 7)}/${key.slice(0, 4)}`;
+}
+
+// ---------------------------------------------------------------------------
+// Cartões
+// ---------------------------------------------------------------------------
+
+/** BR-FIN-019/026/028: cria ou atualiza um cartão (nome único, dias de 1 a 28, limite opcional). */
 export function saveCreditCard(
   state: LocalState,
   input: CreditCardInput,
@@ -64,6 +202,12 @@ export function saveCreditCard(
   assertCardDay(input.closingDay, 'O dia de fechamento');
   assertCardDay(input.dueDay, 'O dia de vencimento');
 
+  const creditLimit = input.creditLimit ?? null;
+
+  if (creditLimit !== null && (!Number.isInteger(creditLimit) || creditLimit < 0)) {
+    throw new DomainError('O limite do cartão não pode ser negativo.');
+  }
+
   const duplicated = state.creditCards.some(
     (card) =>
       isLive(card) && card.id !== input.id && card.name.toLowerCase() === name.toLowerCase(),
@@ -73,14 +217,18 @@ export function saveCreditCard(
     throw new DomainError('Já existe um cartão com esse nome.');
   }
 
-  const fields = { name, closingDay: input.closingDay, dueDay: input.dueDay };
-
   if (input.id) {
     const current = findLiveCard(state, input.id);
-    const unchanged =
-      current.name === fields.name &&
-      current.closingDay === fields.closingDay &&
-      current.dueDay === fields.dueDay;
+    const fields = {
+      name,
+      closingDay: input.closingDay,
+      dueDay: input.dueDay,
+      creditLimit,
+      active: input.active ?? current.active,
+    };
+    const unchanged = (Object.keys(fields) as (keyof typeof fields)[]).every(
+      (key) => current[key] === fields[key],
+    );
 
     return unchanged
       ? state
@@ -94,7 +242,11 @@ export function saveCreditCard(
 
   const card: CreditCardRecord = {
     id: ctx.newId('card'),
-    ...fields,
+    name,
+    closingDay: input.closingDay,
+    dueDay: input.dueDay,
+    creditLimit,
+    active: input.active ?? true,
     updatedAt: ctx.now.toISOString(),
     deletedAt: null,
     dirty: true,
@@ -103,58 +255,90 @@ export function saveCreditCard(
   return { ...state, creditCards: [...state.creditCards, card] };
 }
 
-/** Exclusão lógica; só é permitida sem compras vigentes no cartão. */
-export function deleteCreditCard(state: LocalState, cardId: string, ctx: UseCaseContext): LocalState {
+/** BR-FIN-028: ativa ou desativa o cartão; as parcelas continuam valendo. */
+export function setCreditCardActive(
+  state: LocalState,
+  cardId: string,
+  active: boolean,
+  ctx: UseCaseContext,
+): LocalState {
+  const card = findLiveCard(state, cardId);
+
+  return card.active === active
+    ? state
+    : {
+        ...state,
+        creditCards: state.creditCards.map((record) =>
+          record.id === card.id ? touch({ ...record, active }, ctx.now) : record,
+        ),
+      };
+}
+
+/** Exclusão lógica; só é permitida sem compras vigentes no cartão (BR-FIN-028). */
+export function deleteCreditCard(
+  state: LocalState,
+  cardId: string,
+  ctx: UseCaseContext,
+): LocalState {
   const card = findLiveCard(state, cardId);
 
   if (state.cardPurchases.some((purchase) => isLive(purchase) && purchase.cardId === card.id)) {
-    throw new DomainError('Exclua as compras deste cartão antes de removê-lo.');
+    throw new DomainError('Este cartão tem compras registradas. Desative-o em vez de excluir.');
   }
 
   return {
     ...state,
     creditCards: state.creditCards.map((record) =>
-      record.id === card.id ? touch({ ...record, deletedAt: ctx.now.toISOString() }, ctx.now) : record,
+      record.id === card.id
+        ? touch({ ...record, deletedAt: ctx.now.toISOString() }, ctx.now)
+        : record,
     ),
   };
 }
 
+// ---------------------------------------------------------------------------
+// Compras
+// ---------------------------------------------------------------------------
+
 /**
- * Valida e monta a compra no cartão (sem gravar). A 1ª parcela cai no ciclo que contém o
- * fechamento da fatura (BR-FIN-019); o valor já inclui os juros (BR-FIN-020).
+ * Valida e monta a compra no cartão (sem gravar). A compra entra na fatura do 1º fechamento em ou
+ * depois da data; a fatura pesa no ciclo do seu vencimento (BR-FIN-025). O valor já inclui os
+ * juros (BR-FIN-020).
  */
 export function buildCardPurchase(
   state: LocalState,
   input: CardPurchaseInput,
   ctx: UseCaseContext,
 ): CardPurchaseRecord {
-  const config = selectConfig(state);
+  const config = requireConfig(
+    state,
+    'Configure a base financeira antes de registrar compras no cartão.',
+  );
   const cycle = requireActiveCycle(state, 'Nenhum ciclo ativo para registrar compras no cartão.');
+  const card = findUsableCard(state, input.cardId);
+  const description = requireDescription(input.description);
 
-  if (!config) {
-    throw new DomainError('Configure a base financeira antes de registrar compras no cartão.');
-  }
+  assertPositiveCents(input.totalAmount);
+  assertInstallments(input.installments);
+  assertDateWithinCycle(cycle, input.date, 'compra');
 
-  const card = findLiveCard(state, input.cardId);
-  const description = input.description.trim();
+  const purchaseDate = parseISO(input.date);
+  let firstStatementKey = statementKeyForDate(purchaseDate, card.closingDay);
 
-  if (!description) {
-    throw new DomainError('Informe uma descrição.');
-  }
-
-  if (!Number.isInteger(input.totalAmount) || input.totalAmount <= 0) {
-    throw new DomainError('Informe um valor maior que zero.');
-  }
-
-  if (
-    !Number.isInteger(input.installments) ||
-    input.installments < 1 ||
-    input.installments > MAX_CARD_INSTALLMENTS
+  // Fechamento aumentado depois de pagar a fatura: a fatura paga já fechou, a compra vai para a
+  // seguinte (BR-FIN-028).
+  while (
+    isStatementPaid(state, card.id, firstStatementKey) &&
+    !isAfter(startOfDay(ctx.now), statementClosingDate(firstStatementKey, card.closingDay))
   ) {
-    throw new DomainError(`As parcelas devem ficar entre 1 e ${MAX_CARD_INSTALLMENTS}.`);
+    firstStatementKey = addCycleKeys(firstStatementKey, 1);
   }
 
-  assertDateWithinCycle(cycle, input.date);
+  if (isStatementPaid(state, card.id, firstStatementKey)) {
+    throw new DomainError(
+      `A fatura ${formatMonthKey(firstStatementKey)} deste cartão já foi paga. Confira a data da compra.`,
+    );
+  }
 
   return {
     id: ctx.newId('purchase'),
@@ -164,12 +348,12 @@ export function buildCardPurchase(
     totalAmount: input.totalAmount,
     installments: input.installments,
     purchaseDate: input.date,
-    firstCycleKey: calculateFirstCycleKey(
-      parseISO(input.date),
-      card.closingDay,
-      config.payday,
+    firstStatementKey,
+    firstCycleKey: maxKey(
+      statementCycleKey(firstStatementKey, card, config.payday),
       cycleKeyFromStartDate(cycle.startDate),
     ),
+    settledInstallments: 0,
     createdAt: ctx.now.toISOString(),
     updatedAt: ctx.now.toISOString(),
     deletedAt: null,
@@ -177,7 +361,7 @@ export function buildCardPurchase(
   };
 }
 
-/** BR-FIN-019/020: registra a compra no crédito e recalcula o saldo do ciclo ativo. */
+/** BR-FIN-019/020/025: registra a compra no crédito e recalcula o saldo do ciclo ativo. */
 export function addCardPurchase(
   state: LocalState,
   input: CardPurchaseInput,
@@ -191,43 +375,327 @@ export function addCardPurchase(
   );
 }
 
-/** Parcelas em ciclos fechados não podem mudar (histórico imutável). */
-export function canDeleteCardPurchase(state: LocalState, purchase: CardPurchase): boolean {
-  const lastKey = lastInstallmentCycleKey(purchase);
+/** Ciclo de referência: o ativo, ou o próximo a abrir quando ainda não há ciclo. */
+function referenceCycleKey(state: LocalState, now: Date): string {
+  const cycle = selectActiveCycle(state);
 
-  return !state.cycles.some((cycle) => {
+  return cycle
+    ? cycleKeyFromStartDate(cycle.startDate)
+    : cycleKeyFromStartDate(toISODate(calculateNextCycleStartDate(state, now)));
+}
+
+/**
+ * BR-FIN-027: cadastra uma fatura em aberto ou um parcelamento que já existia no cartão. Gera a
+ * agenda das parcelas restantes a partir da fatura da próxima parcela; as já pagas não pesam no
+ * orçamento nem no limite.
+ */
+export function addExistingCardDebt(
+  state: LocalState,
+  input: ExistingCardDebtInput,
+  ctx: UseCaseContext,
+): LocalState {
+  const config = requireConfig(
+    state,
+    'Configure a base financeira antes de cadastrar compras anteriores.',
+  );
+  const card = findLiveCard(state, input.cardId);
+  const description = requireDescription(input.description);
+
+  assertPositiveCents(input.installmentAmount, 'Informe o valor da parcela.');
+  assertInstallments(input.totalInstallments);
+
+  if (
+    !Number.isInteger(input.remainingInstallments) ||
+    input.remainingInstallments < 1 ||
+    input.remainingInstallments > input.totalInstallments
+  ) {
+    throw new DomainError('As parcelas restantes devem ficar entre 1 e o total de parcelas.');
+  }
+
+  if (!isMonthKey(input.nextStatementKey)) {
+    throw new DomainError('Escolha a fatura da próxima parcela.');
+  }
+
+  const today = startOfDay(ctx.now);
+  const openKey = currentStatementKey(card, today);
+  const ahead = cycleKeyOffset(openKey, input.nextStatementKey);
+
+  if (
+    isAfter(today, statementDueDate(input.nextStatementKey, card)) ||
+    ahead > MAX_STATEMENTS_AHEAD
+  ) {
+    throw new DomainError('A próxima parcela precisa estar em uma fatura que ainda não venceu.');
+  }
+
+  if (isStatementPaid(state, card.id, input.nextStatementKey)) {
+    throw new DomainError(
+      `A fatura ${formatMonthKey(input.nextStatementKey)} deste cartão já foi paga.`,
+    );
+  }
+
+  const settled = input.totalInstallments - input.remainingInstallments;
+  const nextCycleKey = statementCycleKey(input.nextStatementKey, card, config.payday);
+  const activeKey = referenceCycleKey(state, ctx.now);
+  const firstStatementKey = addCycleKeys(input.nextStatementKey, -settled);
+  const purchase: CardPurchaseRecord = {
+    id: ctx.newId('purchase'),
+    cardId: card.id,
+    description,
+    category: normalizeCategory(input.category),
+    totalAmount: input.installmentAmount * input.totalInstallments,
+    installments: input.totalInstallments,
+    purchaseDate: toISODate(statementClosingDate(firstStatementKey, card.closingDay)),
+    firstStatementKey,
+    firstCycleKey: addCycleKeys(nextCycleKey > activeKey ? nextCycleKey : activeKey, -settled),
+    settledInstallments: settled,
+    origin: 'existing',
+    createdAt: ctx.now.toISOString(),
+    updatedAt: ctx.now.toISOString(),
+    deletedAt: null,
+    dirty: true,
+  };
+
+  return recalculateActiveCycleBalance(
+    { ...state, cardPurchases: [...state.cardPurchases, purchase] },
+    ctx,
+  );
+}
+
+/**
+ * BR-FIN-029: a compra só muda (editar, excluir, estornar) enquanto nenhum ciclo fechado contou uma
+ * parcela dela e nenhuma fatura paga contém parcela dela. Ciclos fechados antes do cadastro da
+ * compra nunca a contaram.
+ */
+export function canModifyCardPurchase(state: LocalState, purchase: CardPurchase): boolean {
+  const firstKey = firstCountedCycleKey(purchase);
+  const lastKey = lastInstallmentCycleKey(purchase);
+  const countedInClosedCycle = state.cycles.some((cycle) => {
     if (!isLive(cycle) || cycle.status !== 'closed') {
       return false;
     }
 
     const key = cycleKeyFromStartDate(cycle.startDate);
+    const closedAfterPurchase = !cycle.closedAt || cycle.closedAt >= purchase.createdAt;
 
-    return key >= purchase.firstCycleKey && key <= lastKey;
+    return closedAfterPurchase && key >= firstKey && key <= lastKey;
   });
+
+  return (
+    !countedInClosedCycle &&
+    !listOpenInstallments(purchase).some((installment) =>
+      isStatementPaid(state, purchase.cardId, installment.statementKey),
+    )
+  );
 }
 
-export function deleteCardPurchase(
+/** @deprecated use `canModifyCardPurchase`. */
+export const canDeleteCardPurchase = canModifyCardPurchase;
+
+function assertModifiable(state: LocalState, purchase: CardPurchase) {
+  if (!canModifyCardPurchase(state, purchase)) {
+    throw new DomainError(
+      'Esta compra já pesou em um ciclo fechado ou em uma fatura paga e não pode mais ser alterada.',
+    );
+  }
+}
+
+/**
+ * BR-FIN-029: edita uma compra feita no app. A fatura e o ciclo são recalculados pela nova data
+ * (dentro do ciclo ativo). Compras da situação inicial só mudam descrição e categoria.
+ */
+export function updateCardPurchase(
   state: LocalState,
   purchaseId: string,
+  input: CardPurchaseUpdate,
   ctx: UseCaseContext,
 ): LocalState {
-  const purchase = state.cardPurchases.find((record) => record.id === purchaseId && isLive(record));
+  const current = findLivePurchase(state, purchaseId);
+  assertModifiable(state, current);
 
-  if (!purchase) {
-    throw new DomainError('Compra não encontrada.');
+  const description = requireDescription(input.description);
+  const category = normalizeCategory(input.category);
+  const valuesChanged =
+    input.totalAmount !== current.totalAmount ||
+    input.installments !== current.installments ||
+    input.date !== current.purchaseDate;
+
+  if (!valuesChanged) {
+    return replacePurchase(state, { ...current, description, category }, ctx);
   }
 
-  if (!canDeleteCardPurchase(state, purchase)) {
-    throw new DomainError('Esta compra já tem parcelas em ciclos fechados e não pode ser excluída.');
+  if (current.origin === 'existing') {
+    throw new DomainError(
+      'Em compras anteriores ao app, só a descrição e a categoria podem mudar.',
+    );
   }
 
+  if (findLinkedFixedPayment(state, current.id)) {
+    throw new DomainError(
+      'Esta compra veio do pagamento de uma despesa fixa. Desfaça o pagamento para mudar os valores.',
+    );
+  }
+
+  const rebuilt = buildCardPurchase(
+    { ...state, cardPurchases: state.cardPurchases.filter((record) => record.id !== current.id) },
+    { ...input, cardId: current.cardId },
+    ctx,
+  );
+
+  return replacePurchase(state, { ...rebuilt, id: current.id, createdAt: current.createdAt }, ctx);
+}
+
+function replacePurchase(
+  state: LocalState,
+  next: CardPurchaseRecord,
+  ctx: UseCaseContext,
+): LocalState {
   return recalculateActiveCycleBalance(
     {
       ...state,
       cardPurchases: state.cardPurchases.map((record) =>
-        record.id === purchase.id ? touch({ ...record, deletedAt: ctx.now.toISOString() }, ctx.now) : record,
+        record.id === next.id ? touch(next, ctx.now) : record,
       ),
     },
     ctx,
   );
 }
+
+/** BR-FIN-029: exclui (ou estorna) a compra inteira. */
+export function deleteCardPurchase(
+  state: LocalState,
+  purchaseId: string,
+  ctx: UseCaseContext,
+): LocalState {
+  const purchase = findLivePurchase(state, purchaseId);
+  assertModifiable(state, purchase);
+
+  // BR-FIN-030: a compra de uma fixa paga no crédito leva junto o pagamento; a fixa volta a ficar
+  // pendente (reservada), para o compromisso nunca sumir do orçamento.
+  const linked = findLinkedFixedPayment(state, purchase.id);
+
+  if (linked && linked.cycleId !== selectActiveCycle(state)?.id) {
+    throw new DomainError(
+      'Esta compra pagou uma despesa fixa de um ciclo encerrado e não pode ser excluída.',
+    );
+  }
+
+  const deletedAt = ctx.now.toISOString();
+  const withoutPayment = linked
+    ? {
+        ...state,
+        fixedPayments: state.fixedPayments.map((payment) =>
+          payment.id === linked.id ? touch({ ...payment, deletedAt }, ctx.now) : payment,
+        ),
+      }
+    : state;
+
+  return replacePurchase(withoutPayment, { ...purchase, deletedAt }, ctx);
+}
+
+// ---------------------------------------------------------------------------
+// Faturas (BR-FIN-026)
+// ---------------------------------------------------------------------------
+
+/**
+ * BR-FIN-026: marca a fatura como paga e libera o limite. Só vale para fatura já fechada. Até o
+ * vencimento, o valor pago é o da fatura; depois, o usuário informa o valor pago e a diferença
+ * (juros) pesa no ciclo ativo.
+ */
+export function payStatement(
+  state: LocalState,
+  input: PayStatementInput,
+  ctx: UseCaseContext,
+): LocalState {
+  const cycle = requireActiveCycle(
+    state,
+    'Nenhum ciclo ativo para registrar o pagamento da fatura.',
+  );
+  const card = findLiveCard(state, input.cardId);
+  const statement = selectCardStatements(state, card.id, ctx.now).find(
+    (item) => item.key === input.statementKey,
+  );
+
+  if (!statement || statement.amount <= 0) {
+    throw new DomainError('Fatura não encontrada.');
+  }
+
+  if (statement.status === 'paid') {
+    throw new DomainError('Esta fatura já foi paga.');
+  }
+
+  if (statement.status === 'open') {
+    throw new DomainError('A fatura ainda está aberta. Ela pode ser paga depois do fechamento.');
+  }
+
+  let paidAmount = statement.amount;
+
+  if (statement.status === 'overdue') {
+    if (input.paidAmount === undefined) {
+      throw new DomainError('A fatura venceu. Informe o valor pago, com juros.');
+    }
+
+    if (!Number.isInteger(input.paidAmount) || input.paidAmount < statement.amount) {
+      throw new DomainError('O valor pago não pode ser menor que o valor da fatura.');
+    }
+
+    paidAmount = input.paidAmount;
+  }
+
+  // Id determinístico: dois aparelhos que pagam a mesma fatura convergem no mesmo registro.
+  const id = statementPaymentId(card.id, statement.key);
+  const payment: StatementPaymentRecord = {
+    id,
+    cardId: card.id,
+    statementKey: statement.key,
+    cycleId: cycle.id,
+    statementAmount: statement.amount,
+    paidAmount,
+    paidAt: toISODate(ctx.now),
+    updatedAt: ctx.now.toISOString(),
+    deletedAt: null,
+    dirty: true,
+  };
+
+  return recalculateActiveCycleBalance(
+    {
+      ...state,
+      statementPayments: [...state.statementPayments.filter((record) => record.id !== id), payment],
+    },
+    ctx,
+  );
+}
+
+/** Desfaz o pagamento de fatura feito no ciclo ativo; o limite volta a ficar comprometido. */
+export function undoStatementPayment(
+  state: LocalState,
+  paymentId: string,
+  ctx: UseCaseContext,
+): LocalState {
+  const cycle = requireActiveCycle(state, 'Nenhum ciclo ativo para desfazer o pagamento.');
+  const payment = state.statementPayments.find(
+    (record) => record.id === paymentId && isLive(record),
+  );
+
+  if (!payment || payment.cycleId !== cycle.id) {
+    throw new DomainError('Só é possível desfazer pagamentos de fatura feitos no ciclo ativo.');
+  }
+
+  return recalculateActiveCycleBalance(
+    {
+      ...state,
+      statementPayments: state.statementPayments.map((record) =>
+        record.id === payment.id
+          ? touch({ ...record, deletedAt: ctx.now.toISOString() }, ctx.now)
+          : record,
+      ),
+    },
+    ctx,
+  );
+}
+
+/** Data a partir da qual a fatura pode ser paga (dia seguinte ao fechamento). */
+export function statementPayableFrom(key: string, closingDay: number): string {
+  return toISODate(addDays(statementClosingDate(key, closingDay), 1));
+}
+
+export { statementPaymentId };

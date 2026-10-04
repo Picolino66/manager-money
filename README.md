@@ -8,7 +8,10 @@ a cada gasto dentro do ciclo do seu dia de pagamento. Funciona offline; o login 
 
 - Ciclo financeiro alinhado ao **dia de pagamento configurável** (1–28)
 - Limite diário dinâmico, status do dia e histórico por dia
-- Despesas fixas, **parcelamentos** no cartão e meta de economia
+- Despesas fixas (pendentes ficam reservadas no ciclo), meta de economia e rendas avulsas
+- Cartões de crédito: compras parceladas, **faturas** que pesam no ciclo do vencimento, **limite do cartão**
+  separado do dinheiro disponível, "Paguei a fatura" e situação inicial (dívidas anteriores ao app)
+- Próximos compromissos e **projeção** dos próximos ciclos ("livre antes de novos gastos")
 - "Já recebi": abre o próximo ciclo quando a renda cai antes do dia
 - Gastos por categoria e período, com gráfico
 - Conta opcional (e-mail e senha), **sync offline-first**, exportação JSON e exclusão de conta

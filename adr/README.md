@@ -18,6 +18,7 @@ Fonte primária das decisões arquiteturais. ADRs nunca são apagadas: só passa
 | [ADR-011](ADR-011-autenticacao-email-senha.md) | Autenticação por e-mail e senha, sem envio de e-mail | F2 (evolução) | ACCEPTED |
 | [ADR-012](ADR-012-upgrade-expo-sdk-57.md) | Upgrade do Expo SDK 54 para 57 | F2 (evolução) | ACCEPTED |
 | [ADR-013](ADR-013-fontes-de-renda.md) | Múltiplas fontes de renda e documento local v3 | F3 (evolução) | ACCEPTED |
-| [ADR-014](ADR-014-cartoes-de-credito.md) | Cartões de crédito e compras parceladas | F3 (evolução) | ACCEPTED |
-| [ADR-015](ADR-015-pagamento-de-fixas-e-renda-avulsa.md) | Pagamento de despesas fixas e renda avulsa | F3 (evolução) | ACCEPTED |
+| [ADR-014](ADR-014-cartoes-de-credito.md) | Cartões de crédito e compras parceladas | F3 (evolução) | ACCEPTED (ciclo da fatura substituído pela ADR-017) |
+| [ADR-015](ADR-015-pagamento-de-fixas-e-renda-avulsa.md) | Pagamento de despesas fixas e renda avulsa | F3 (evolução) | ACCEPTED (reserva de fixas pendentes pela ADR-017) |
 | [ADR-016](ADR-016-dia-de-pagamento-por-fonte.md) | Dia de pagamento por fonte de renda | F3 (evolução) | ACCEPTED |
+| [ADR-017](ADR-017-faturas-limite-e-situacao-inicial.md) | Faturas pelo vencimento, limite do cartão e situação inicial | F3 (evolução) | ACCEPTED |

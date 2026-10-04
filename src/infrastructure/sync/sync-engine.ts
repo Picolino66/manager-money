@@ -1,4 +1,6 @@
+import { recalculateActiveCycleBalance } from '../../application/cycle.use-cases';
 import {
+  createDefaultContext,
   createEmptyState,
   createEmptySyncState,
   CycleRecord,
@@ -28,6 +30,8 @@ import {
   fixedPaymentToRow,
   settingsFromRow,
   settingsToRow,
+  statementPaymentFromRow,
+  statementPaymentToRow,
 } from './mappers';
 import {
   CardPurchaseRow,
@@ -39,6 +43,7 @@ import {
   FixedPaymentRow,
   RemoteRow,
   SettingsRow,
+  StatementPaymentRow,
   SyncError,
   SyncRemote,
 } from './types';
@@ -61,42 +66,76 @@ type PushedRef = { id: string; updatedAt: string };
 // ---------------------------------------------------------------------------
 
 /** Registros pendentes de envio. Em `cycles`, fechados antes de ativos (índice único). */
-export function collectDirty(state: LocalState, table: SyncTable, userId: string): { refs: PushedRef[]; rows: RemoteRow[] } {
+export function collectDirty(
+  state: LocalState,
+  table: SyncTable,
+  userId: string,
+): { refs: PushedRef[]; rows: RemoteRow[] } {
   switch (table) {
     case 'settings': {
       const record = state.settings?.dirty ? state.settings : null;
       return record
-        ? { refs: [{ id: 'settings', updatedAt: record.updatedAt }], rows: [settingsToRow(record, userId)] }
+        ? {
+            refs: [{ id: 'settings', updatedAt: record.updatedAt }],
+            rows: [settingsToRow(record, userId)],
+          }
         : { refs: [], rows: [] };
     }
     case 'fixed_expenses': {
       const records = state.fixedExpenses.filter((record) => record.dirty);
-      return { refs: records.map(ref), rows: records.map((record) => fixedExpenseToRow(record, userId)) };
+      return {
+        refs: records.map(ref),
+        rows: records.map((record) => fixedExpenseToRow(record, userId)),
+      };
     }
     case 'credit_cards': {
       const records = state.creditCards.filter((record) => record.dirty);
-      return { refs: records.map(ref), rows: records.map((record) => creditCardToRow(record, userId)) };
+      return {
+        refs: records.map(ref),
+        rows: records.map((record) => creditCardToRow(record, userId)),
+      };
     }
     case 'card_purchases': {
       const records = state.cardPurchases.filter((record) => record.dirty);
-      return { refs: records.map(ref), rows: records.map((record) => cardPurchaseToRow(record, userId)) };
+      return {
+        refs: records.map(ref),
+        rows: records.map((record) => cardPurchaseToRow(record, userId)),
+      };
     }
     case 'fixed_payments': {
       const records = state.fixedPayments.filter((record) => record.dirty);
-      return { refs: records.map(ref), rows: records.map((record) => fixedPaymentToRow(record, userId)) };
+      return {
+        refs: records.map(ref),
+        rows: records.map((record) => fixedPaymentToRow(record, userId)),
+      };
     }
     case 'extra_incomes': {
       const records = state.extraIncomes.filter((record) => record.dirty);
-      return { refs: records.map(ref), rows: records.map((record) => extraIncomeToRow(record, userId)) };
+      return {
+        refs: records.map(ref),
+        rows: records.map((record) => extraIncomeToRow(record, userId)),
+      };
+    }
+    case 'statement_payments': {
+      const records = state.statementPayments.filter((record) => record.dirty);
+      return {
+        refs: records.map(ref),
+        rows: records.map((record) => statementPaymentToRow(record, userId)),
+      };
     }
     case 'cycles': {
       const order = (cycle: CycleRecord) => (cycle.status === 'closed' || cycle.deletedAt ? 0 : 1);
-      const records = state.cycles.filter((record) => record.dirty).sort((a, b) => order(a) - order(b));
+      const records = state.cycles
+        .filter((record) => record.dirty)
+        .sort((a, b) => order(a) - order(b));
       return { refs: records.map(ref), rows: records.map((record) => cycleToRow(record, userId)) };
     }
     case 'expenses': {
       const records = state.expenses.filter((record) => record.dirty);
-      return { refs: records.map(ref), rows: records.map((record) => expenseToRow(record, userId)) };
+      return {
+        refs: records.map(ref),
+        rows: records.map((record) => expenseToRow(record, userId)),
+      };
     }
   }
 }
@@ -126,6 +165,8 @@ export function acknowledge(state: LocalState, table: SyncTable, pushed: PushedR
       return { ...state, fixedPayments: state.fixedPayments.map(clean) };
     case 'extra_incomes':
       return { ...state, extraIncomes: state.extraIncomes.map(clean) };
+    case 'statement_payments':
+      return { ...state, statementPayments: state.statementPayments.map(clean) };
     case 'cycles':
       return { ...state, cycles: state.cycles.map(clean) };
     case 'expenses':
@@ -163,7 +204,11 @@ function maxCursor(current: string | null, rows: RemoteRow[]): string | null {
 }
 
 /** Aplica linhas remotas ao estado local e avança o cursor da tabela. */
-export function applyRemoteRows(state: LocalState, table: SyncTable, rows: RemoteRow[]): LocalState {
+export function applyRemoteRows(
+  state: LocalState,
+  table: SyncTable,
+  rows: RemoteRow[],
+): LocalState {
   let next: LocalState = state;
 
   switch (table) {
@@ -175,68 +220,118 @@ export function applyRemoteRows(state: LocalState, table: SyncTable, rows: Remot
     case 'fixed_expenses':
       next = {
         ...state,
-        fixedExpenses: mergeRecords(state.fixedExpenses, (rows as FixedExpenseRow[]).map(fixedExpenseFromRow)),
+        fixedExpenses: mergeRecords(
+          state.fixedExpenses,
+          (rows as FixedExpenseRow[]).map(fixedExpenseFromRow),
+        ),
       };
       break;
     case 'credit_cards':
       next = {
         ...state,
-        creditCards: mergeRecords(state.creditCards, (rows as CreditCardRow[]).map(creditCardFromRow)),
+        creditCards: mergeRecords(
+          state.creditCards,
+          (rows as CreditCardRow[]).map(creditCardFromRow),
+        ),
       };
       break;
     case 'card_purchases':
       next = {
         ...state,
-        cardPurchases: mergeRecords(state.cardPurchases, (rows as CardPurchaseRow[]).map(cardPurchaseFromRow)),
+        cardPurchases: mergeRecords(
+          state.cardPurchases,
+          (rows as CardPurchaseRow[]).map((row) =>
+            cardPurchaseFromRow(
+              row,
+              (cardId) => state.creditCards.find((card) => card.id === cardId)?.closingDay,
+            ),
+          ),
+        ),
       };
       break;
     case 'fixed_payments':
       next = {
         ...state,
-        fixedPayments: mergeRecords(state.fixedPayments, (rows as FixedPaymentRow[]).map(fixedPaymentFromRow)),
+        fixedPayments: mergeRecords(
+          state.fixedPayments,
+          (rows as FixedPaymentRow[]).map(fixedPaymentFromRow),
+        ),
       };
       break;
     case 'extra_incomes':
       next = {
         ...state,
-        extraIncomes: mergeRecords(state.extraIncomes, (rows as ExtraIncomeRow[]).map(extraIncomeFromRow)),
+        extraIncomes: mergeRecords(
+          state.extraIncomes,
+          (rows as ExtraIncomeRow[]).map(extraIncomeFromRow),
+        ),
+      };
+      break;
+    case 'statement_payments':
+      next = {
+        ...state,
+        statementPayments: mergeRecords(
+          state.statementPayments,
+          (rows as StatementPaymentRow[]).map(statementPaymentFromRow),
+        ),
       };
       break;
     case 'cycles':
-      next = { ...state, cycles: mergeRecords(state.cycles, (rows as CycleRow[]).map(cycleFromRow)) };
+      next = {
+        ...state,
+        cycles: mergeRecords(state.cycles, (rows as CycleRow[]).map(cycleFromRow)),
+      };
       break;
     case 'expenses':
-      next = { ...state, expenses: mergeRecords(state.expenses, (rows as ExpenseRow[]).map(expenseFromRow)) };
+      next = {
+        ...state,
+        expenses: mergeRecords(state.expenses, (rows as ExpenseRow[]).map(expenseFromRow)),
+      };
       break;
   }
 
   return {
     ...next,
-    sync: { ...next.sync, cursors: { ...next.sync.cursors, [table]: maxCursor(next.sync.cursors[table], rows) } },
+    sync: {
+      ...next.sync,
+      cursors: { ...next.sync.cursors, [table]: maxCursor(next.sync.cursors[table], rows) },
+    },
   };
 }
 
 /**
- * ADR-004 §4: outro aparelho já tem um ciclo ativo no servidor. Adota o ciclo remoto,
- * move os gastos do ciclo local duplicado e exclui logicamente o duplicado.
+ * ADR-004 §4: outro aparelho já tem um ciclo ativo no servidor. Adota o ciclo remoto, move os
+ * gastos, pagamentos de fixas, rendas avulsas e pagamentos de fatura do ciclo local duplicado e
+ * exclui logicamente o duplicado. O saldo é recalculado ao fim do sync.
  */
-export function adoptRemoteActiveCycle(state: LocalState, remoteCycleId: string, now: Date): LocalState {
+export function adoptRemoteActiveCycle(
+  state: LocalState,
+  remoteCycleId: string,
+  now: Date,
+): LocalState {
   const duplicates = new Set(
     state.cycles
-      .filter((cycle) => cycle.id !== remoteCycleId && cycle.status === 'active' && isLive(cycle) && cycle.dirty)
+      .filter(
+        (cycle) =>
+          cycle.id !== remoteCycleId && cycle.status === 'active' && isLive(cycle) && cycle.dirty,
+      )
       .map((cycle) => cycle.id),
   );
 
   if (duplicates.size === 0) return state;
+
+  const moveTo = <T extends SyncMeta & { cycleId: string }>(record: T): T =>
+    duplicates.has(record.cycleId) ? touch({ ...record, cycleId: remoteCycleId }, now) : record;
 
   return {
     ...state,
     cycles: state.cycles.map((cycle) =>
       duplicates.has(cycle.id) ? touch({ ...cycle, deletedAt: now.toISOString() }, now) : cycle,
     ),
-    expenses: state.expenses.map((expense) =>
-      duplicates.has(expense.cycleId) ? touch({ ...expense, cycleId: remoteCycleId }, now) : expense,
-    ),
+    expenses: state.expenses.map(moveTo),
+    fixedPayments: state.fixedPayments.map(moveTo),
+    extraIncomes: state.extraIncomes.map(moveTo),
+    statementPayments: state.statementPayments.map(moveTo),
   };
 }
 
@@ -253,6 +348,7 @@ function markAllDirty(state: LocalState): LocalState {
     cardPurchases: state.cardPurchases.map(dirty),
     fixedPayments: state.fixedPayments.map(dirty),
     extraIncomes: state.extraIncomes.map(dirty),
+    statementPayments: state.statementPayments.map(dirty),
   };
 }
 
@@ -262,7 +358,10 @@ function markAllDirty(state: LocalState): LocalState {
 
 export type FirstLoginPlan = 'upload' | 'download' | 'choose';
 
-export async function planFirstLogin(state: LocalState, remote: SyncRemote): Promise<FirstLoginPlan> {
+export async function planFirstLogin(
+  state: LocalState,
+  remote: SyncRemote,
+): Promise<FirstLoginPlan> {
   if (!(await remote.hasData())) return 'upload';
   if (!hasLocalData(state)) return 'download';
   return 'choose';
@@ -287,7 +386,12 @@ export function unlinkAccount(state: LocalState, erase: boolean): LocalState {
 // Orquestração com I/O
 // ---------------------------------------------------------------------------
 
-async function pushTable(access: StateAccess, remote: SyncRemote, table: SyncTable, userId: string) {
+async function pushTable(
+  access: StateAccess,
+  remote: SyncRemote,
+  table: SyncTable,
+  userId: string,
+) {
   const { refs, rows } = collectDirty(access.get(), table, userId);
 
   if (rows.length === 0) return;
@@ -322,7 +426,8 @@ export async function runSync(
   // Se a conta mudar durante a rede (logout/troca), nenhuma escrita deste sync é aplicada.
   const access: StateAccess = {
     get: liveAccess.get,
-    commit: (update) => liveAccess.commit((state) => (state.sync.userId === userId ? update(state) : state)),
+    commit: (update) =>
+      liveAccess.commit((state) => (state.sync.userId === userId ? update(state) : state)),
   };
 
   try {
@@ -340,6 +445,11 @@ export async function runSync(
       const rows = await remote.pull(table, access.get().sync.cursors[table]);
       if (rows.length > 0) await access.commit((state) => applyRemoteRows(state, table, rows));
     }
+
+    // O saldo do ciclo ativo é derivado: recalcula com o que chegou de outros aparelhos (BR-FIN-005).
+    await access.commit((state) =>
+      recalculateActiveCycleBalance(state, { ...createDefaultContext(), now: clock() }),
+    );
 
     await access.commit((state) => ({
       ...state,

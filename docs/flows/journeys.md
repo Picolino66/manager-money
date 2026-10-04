@@ -8,7 +8,7 @@ summary: >
   exportação, dia de pagamento) e avaliação heurística das telas existentes.
 code:
   - src/navigation/AppNavigator.tsx
-last_verified_commit: 6fd4838+T-021
+last_verified_commit: c47cf18+T-025r2
 ---
 
 # Jornadas, wireframes e usabilidade
@@ -26,7 +26,9 @@ Stack raiz
 ├── Config            (configuração financeira)
 ├── StartMonth        (abrir ciclo)
 ├── AddExpense        (registrar / editar / excluir gasto; à vista ou no crédito)
-├── Cards             (cartões de crédito: cadastro e faturas)
+├── Cards             (cartões de crédito: lista, limite, cadastro)
+├── CardDetail        (cartão: limite, faturas, Paguei a fatura, compras; { cardId })
+├── CardDebt          ("Compras anteriores ao app": situação inicial; { cardId })
 ├── Incomes           (rendas avulsas do ciclo)
 ├── Account           (NOVA: entrar, sync, sair, excluir conta)
 └── PrivacyPolicy     (NOVA: política de privacidade)
@@ -37,7 +39,7 @@ Stack raiz
 ### FLOW-primeiro-uso (P1)
 
 1. Abre o app → Hoje mostra "Configuração inicial" → **Configurar**
-2. Informa as **fontes de renda** (nome, valor e **dia de pagamento** de cada uma; o ciclo usa o da maior) e meta → adiciona fixos e parcelamentos → **Salvar**. Depois, em Hoje, confirma cada fixa com **Pagar** (Pix, dinheiro, débito ou crédito)
+2. Informa as **fontes de renda** (nome, valor e **dia de pagamento** de cada uma; o ciclo usa o da maior) e meta → adiciona fixos e parcelamentos → **Salvar**. Depois, em Hoje, confirma cada fixa com **Pagar** (à vista ou crédito; enquanto pendente, ela fica reservada no saldo)
 3. É levada a **Abrir ciclo** → vê a prévia (saldo, período, dias, limite inicial) → **Iniciar ciclo**
 4. Volta a Hoje e vê "Ainda pode gastar R$ X"
 
@@ -46,11 +48,27 @@ padrão, o que já reduz a carga.
 
 ### FLOW-registrar-gasto (P1, mais frequente)
 
-1. Hoje → **Registrar** → valor (teclado numérico) → categoria → descrição → data (hoje por padrão)
-2. **Salvar gasto** → volta a Hoje com o valor atualizado
+1. Hoje → **Registrar** → valor (teclado numérico) → forma (**À vista** | **Crédito**) → no crédito: cartão
+   (só ativos) → parcelas → caixa "Limite disponível do cartão" → fatura e ciclo da 1ª parcela → categoria →
+   descrição (obrigatória no crédito; à vista, vazia = nome da categoria) → data (hoje por padrão)
+2. **Salvar gasto** → volta a Hoje com "Ainda pode gastar hoje" atualizado. Compra acima do limite do cartão:
+   aviso + "Continuar mesmo assim?" (não bloqueia; BR-FIN-026)
 
 **Meta:** ≤ 10 s. O lançamento errado é corrigido em Histórico → toque no gasto → **Editar** ou
 **Excluir** (novo).
+
+### FLOW-cartao-fatura (P1, ADR-017)
+
+1. Ajustes → **Cartões de crédito** → cartão → detalhe: "Quanto ainda posso usar deste cartão?" (limite total,
+   comprometido, **Limite disponível do cartão**) e **Fatura atual** (a fechada/vencida mais antiga não paga;
+   senão, a aberta), próxima e futuras
+2. Depois do fechamento: **Paguei a fatura** → (vencida: informa o valor pago com juros) → limite liberado;
+   juros entram no ciclo ativo. **Desfazer** enquanto o ciclo estiver ativo
+3. Primeira vez: **Compras anteriores ao app** → fatura em aberto ou parcelamento em andamento (parcelas já
+   pagas não contam)
+
+**Risco:** confundir limite do cartão com dinheiro para gastar. Mitigação: rótulos distintos ("Limite
+disponível do cartão" × "Ainda pode gastar hoje") e próximos compromissos no Hoje.
 
 ### FLOW-receber-antecipado (P1)
 
@@ -62,7 +80,7 @@ padrão, o que já reduz a carga.
 
 1. Depois do fim do período, Hoje mostra o aviso "Ciclo encerrado em dd/MM" e **Fechar ciclo**
 2. Antes do fim, **Fechar ciclo** fica indisponível e mostra o motivo (BR-FIN-017)
-3. Fechar → Ciclos mostra o resultado → Hoje oferece **Iniciar ciclo**
+3. Fechar → Ciclos mostra o resultado → Hoje oferece **Iniciar ciclo** (a prévia simula a abertura sem gravar)
 
 ### FLOW-ativar-sync (P2)
 

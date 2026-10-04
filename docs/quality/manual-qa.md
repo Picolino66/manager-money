@@ -8,7 +8,7 @@ summary: >
   críticos antes da publicação nas lojas.
 code:
   - src/navigation/AppNavigator.tsx
-last_verified_commit: f9eaa87+T-023
+last_verified_commit: c47cf18+T-025
 ---
 
 # Campanha de QA manual — v1.0
@@ -59,9 +59,9 @@ last_verified_commit: f9eaa87+T-023
 | D05.05 | Alta | Mesma compra com data depois do fechamento | Mostra que a 1ª parcela entra no próximo ciclo; saldo atual não muda |
 | D05.06 | Média | Cartões → tocar no cartão → excluir a compra | Saldo inicial volta ao valor anterior; cartão com compras não pode ser excluído |
 | **Dia 6 — pagar despesas fixas e rendas avulsas** ||||
-| D06.01 | Alta | Hoje → "Despesas fixas do ciclo" (nasce encolhido, mostra Pagas/Pendentes) → tocar na seta com 1 fixa de R$ 1.000,00 | Expande e aparece como Pendente; "Saldo inicial" ainda não desconta a fixa |
-| D06.02 | Alta | Pagar → À vista (Pix, dinheiro ou débito) → Confirmar pagamento (sem outro menu) | Mostra "Pago · À vista"; "Saldo inicial" cai R$ 1.000,00; resumo Pagas/Pendentes atualiza |
-| D06.03 | Alta | Desfazer o pagamento | Volta a Pendente e o saldo volta |
+| D06.01 | Alta | Hoje → "Despesas fixas do ciclo" (nasce encolhido, mostra Pagas/Pendentes) → tocar na seta com 1 fixa de R$ 1.000,00 | Expande e aparece como Pendente; "Saldo inicial" **já desconta** a fixa (reservada, BR-FIN-004/ADR-017) |
+| D06.02 | Alta | Pagar → À vista (Pix, dinheiro ou débito) → Confirmar pagamento (sem outro menu) | Mostra "Pago · À vista"; "Saldo inicial" **não muda** (já estava reservado); resumo Pagas/Pendentes atualiza |
+| D06.03 | Alta | Desfazer o pagamento | Volta a Pendente; o saldo continua com a fixa reservada |
 | D06.05 | Alta | Pagar → Cartão de crédito, cartão Nubank, 3x, juros R$ 50,00 | Prévia "Total R$ 1.050,00 em 3x de R$ 350,00"; só a 1ª parcela (se cair neste ciclo) reduz o saldo |
 | D06.06 | Alta | Pagar → Cartão de crédito sem cartão cadastrado | Mostra "Cadastre um cartão…" com atalho para Cartões |
 | D06.07 | Alta | Hoje → Renda → Adicionar renda "Freela" R$ 500,00 | Soma ao saldo inicial; aparece em "Rendas avulsas"; nome/valor vazios mostram erro |
@@ -69,3 +69,16 @@ last_verified_commit: f9eaa87+T-023
 | D06.09 | Alta | Fechar o ciclo e abrir o próximo | Fixas voltam a Pendente; o ciclo fechado manteve o resultado com os pagamentos |
 | D06.10 | Alta | Atualizar o app por cima de uma versão com ciclo ativo | "Saldo inicial" volta a refletir a renda sem as fixas; confirme os pagamentos para descontá-las |
 | D05.07 | Alta | Duas fontes: Salário R$ 5.000 (dia 5) e Freela R$ 800 (dia 20) | Tela mostra "O ciclo usa o dia 5 (Salário…)"; o próximo ciclo começa no dia 5; não existe campo global de dia |
+| **Dia 7 — faturas, limite, situação inicial e projeção (ADR-017)** ||||
+| D07.01 | Alta | Cartões → editar Nubank (fecha 20, vence 27) → limite R$ 6.000,00 | Mostra limite total, comprometido R$ 0,00 e "Limite disponível do cartão" R$ 6.000,00 — separado de "Ainda pode gastar hoje" |
+| D07.02 | Alta | Registrar no crédito R$ 600,00 em 6x, data antes do fechamento | Disponível do cartão cai R$ 600,00 na hora; só a parcela da fatura que vence neste ciclo reduz o saldo |
+| D07.03 | Alta | Registrar no crédito valor acima do limite disponível | Aviso de limite; a compra é registrada e o disponível fica negativo |
+| D07.04 | Alta | Depois do fechamento, fatura fechada → **Paguei a fatura** | Fatura "Paga"; limite liberado no valor da fatura; saldo do ciclo não muda |
+| D07.05 | Alta | Fatura vencida → Paguei a fatura → valor pago R$ 20,00 acima | Pede o valor pago; recusa valor menor que a fatura; a diferença (juros) reduz o saldo do ciclo |
+| D07.06 | Alta | Cartões → Situação inicial: parcelamento 10x de R$ 100,00, 4 restantes, próxima fatura atual | Comprometido sobe R$ 400,00; parcelas pagas não pesam; próximos ciclos mostram as parcelas |
+| D07.07 | Média | Tentar excluir cartão com compras | Pede para desativar; desativado some de Registrar gasto e as parcelas continuam |
+| D07.08 | Média | Configuração → desativar uma fonte de renda e uma despesa fixa | Renda e fixas totais excluem as inativas; desativar a única fonte ativa é recusado |
+| D07.09 | Alta | Hoje → Próximos compromissos e Próximos ciclos | Faturas a pagar e fixas pendentes listadas; "Livre antes de novos gastos" por ciclo |
+| D07.10 | Alta | Atualizar o app por cima da versão anterior com ciclo ativo e fixas pendentes | Ao abrir, "Saldo inicial" cai no total das fixas pendentes (agora reservadas); compras antigas mantêm o ciclo; faturas que já tinham vencido aparecem pagas (sem juros) |
+| D07.11 | Alta | Pagar uma fixa no crédito → Cartões → excluir a compra gerada | A fixa volta a Pendente e reservada; editar valor/parcelas/data dessa compra pede "Desfaça o pagamento" |
+| D07.12 | Média | Dois aparelhos com a mesma conta marcam "Paguei a fatura" da mesma fatura | Após sincronizar, há um único pagamento; sync sem erro |

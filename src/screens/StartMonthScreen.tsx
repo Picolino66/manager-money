@@ -7,29 +7,49 @@ import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
 import { MetricRow } from '../components/MetricRow';
 import { Screen } from '../components/Screen';
-import { calculateNextCycleStartDate } from '../application/cycle.use-cases';
+import { openCycle } from '../application/cycle.use-cases';
 import {
-  buildFinancialCycleDates,
   calculateDailyLimit,
   calculateFixedExpenseAmount,
-  calculateFixedExpensesTotal,
-  calculateInitialAvailableAmount,
-  calculatePreviousMonthDebt,
   calculateRemainingDays,
 } from '../domain/financial/financial.calculations';
 import { colors, spacing, typography } from '../design/theme';
-import { selectCardCharges } from '../application/selectors';
-import { cycleKeyFromStartDate } from '../domain/financial/credit-card';
+import {
+  selectActiveCycle,
+  selectCycleAdjustments,
+  selectPendingFixedExpenses,
+} from '../application/selectors';
+import { LocalState } from '../application/state';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '../utils/currency';
 import { formatCycleLabel } from '../utils/date';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'StartMonth'>;
 
+/**
+ * Prévia fiel do ciclo: roda o mesmo caso de uso de abertura sobre uma cópia do documento (puro,
+ * nada é gravado). Assim fixas reservadas, parcelas que avançam e faturas batem com o ciclo real.
+ */
+function previewCycle(doc: LocalState, now: Date) {
+  try {
+    const preview = openCycle(doc, { now, newId: (prefix) => `${prefix}-preview` });
+    const cycle = selectActiveCycle(preview);
+
+    return cycle
+      ? {
+          cycle,
+          adjustments: selectCycleAdjustments(preview, cycle),
+          pendingFixed: selectPendingFixedExpenses(preview, cycle.id),
+        }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export function StartMonthScreen({ navigation }: Props) {
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
-  const months = useFinancialStore((state) => state.months);
   const startFinancialCycle = useFinancialStore((state) => state.startFinancialCycle);
   const doc = useFinancialStore((state) => state.doc);
 
@@ -61,25 +81,26 @@ export function StartMonthScreen({ navigation }: Props) {
     );
   }
 
-  const cycleDates = buildFinancialCycleDates(calculateNextCycleStartDate(doc, new Date()), config.payday);
-  const previousClosedMonth = months[0];
-  const previousMonthDebt = calculatePreviousMonthDebt(previousClosedMonth);
-  const fixedExpensesTotal = calculateFixedExpensesTotal(config);
-  const cardCharges = selectCardCharges(doc, cycleKeyFromStartDate(cycleDates.startDate));
-  const initialAvailableAmount = calculateInitialAvailableAmount(config, previousMonthDebt, { cardCharges });
-  const remainingDays = calculateRemainingDays(
-    {
-      id: 'preview',
-      ...cycleDates,
-      startedAt: cycleDates.receivedAt,
-      status: 'active',
-      initialAvailableAmount,
-      previousMonthDebt,
-      expenses: [],
-    },
-    new Date(),
-  );
-  const dailyLimit = calculateDailyLimit(initialAvailableAmount, remainingDays);
+  const now = new Date();
+  const preview = previewCycle(doc, now);
+
+  if (!preview) {
+    return (
+      <Screen>
+        <EmptyState
+          actionLabel="Revisar configuração"
+          iconName="alert-circle-outline"
+          message="Não foi possível calcular o próximo ciclo. Revise a configuração."
+          onActionPress={() => navigation.navigate('Config')}
+          title="Configuração incompleta"
+        />
+      </Screen>
+    );
+  }
+
+  const { cycle, adjustments, pendingFixed } = preview;
+  const remainingDays = calculateRemainingDays({ ...cycle, expenses: [] }, now);
+  const dailyLimit = calculateDailyLimit(cycle.initialAvailableAmount, remainingDays);
 
   async function handleStartMonth() {
     try {
@@ -97,10 +118,17 @@ export function StartMonthScreen({ navigation }: Props) {
     <Screen>
       <Text style={styles.title}>Abrir ciclo</Text>
       <Card>
-        <MetricRow label="Renda mensal" value={formatCurrency(config.monthlyIncome)} />
-        <MetricRow label="Despesas fixas (a pagar no ciclo)" value={formatCurrency(fixedExpensesTotal)} />
-        {config.fixedExpenses.map((expense) => (
+        <MetricRow
+          label="Renda mensal (fontes ativas)"
+          value={formatCurrency(config.monthlyIncome)}
+        />
+        <MetricRow
+          label="− Despesas fixas reservadas"
+          value={formatCurrency(adjustments.pendingFixedExpenses)}
+        />
+        {pendingFixed.map((expense) => (
           <MetricRow
+            indent
             key={expense.id}
             label={
               expense.type === 'installment'
@@ -110,27 +138,44 @@ export function StartMonthScreen({ navigation }: Props) {
             value={formatCurrency(calculateFixedExpenseAmount(expense))}
           />
         ))}
-        <MetricRow label="Meta de economia" value={formatCurrency(config.savingGoal)} />
-        <MetricRow label="Faturas de cartão" value={formatCurrency(cardCharges)} />
+        <MetricRow label="− Meta de economia" value={formatCurrency(config.savingGoal)} />
         <MetricRow
-          label="Dívida herdada"
-          tone={previousMonthDebt > 0 ? 'negative' : 'default'}
-          value={formatCurrency(previousMonthDebt)}
+          label="− Faturas de cartão do ciclo"
+          value={formatCurrency(adjustments.cardCharges)}
         />
-        <MetricRow label="Saldo disponível" value={formatCurrency(initialAvailableAmount)} />
         <MetricRow
-          label="Período"
-          value={formatCycleLabel(cycleDates.startDate, cycleDates.endDate)}
+          label="− Dívida herdada"
+          tone={cycle.previousMonthDebt > 0 ? 'negative' : 'default'}
+          value={formatCurrency(cycle.previousMonthDebt)}
         />
+        <MetricRow
+          label="= Saldo disponível"
+          tone={cycle.initialAvailableAmount < 0 ? 'negative' : 'default'}
+          value={formatCurrency(cycle.initialAvailableAmount)}
+        />
+        <MetricRow label="Período" value={formatCycleLabel(cycle.startDate, cycle.endDate)} />
         <MetricRow label="Dias do ciclo" value={String(remainingDays)} />
         <MetricRow label="Limite diário inicial" value={formatCurrency(dailyLimit)} />
+        <Text style={styles.hint}>
+          As despesas fixas ficam reservadas até você pagá-las; pagas no crédito, passam a pesar
+          pela fatura do cartão.
+        </Text>
       </Card>
-      <AppButton iconName="play-circle-outline" onPress={() => void handleStartMonth()} title="Iniciar ciclo" />
+      <AppButton
+        iconName="play-circle-outline"
+        onPress={() => void handleStartMonth()}
+        title="Iniciar ciclo"
+      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
+  hint: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: '600',
+  },
   title: {
     color: colors.ink,
     fontSize: typography.title,

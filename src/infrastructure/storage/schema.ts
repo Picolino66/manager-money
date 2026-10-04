@@ -10,6 +10,7 @@ import { LocalState, STATE_SCHEMA_VERSION } from '../../application/state';
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const cents = z.number().int();
+const monthKey = z.string().regex(/^\d{4}-\d{2}$/);
 
 const syncMeta = {
   updatedAt: z.string(),
@@ -26,6 +27,7 @@ const settingsSchema = z.object({
       name: z.string(),
       amount: cents.min(0),
       payday: z.number().int().min(MIN_PAYDAY).max(MAX_PAYDAY),
+      active: z.boolean().optional(),
     }),
   ),
   savingGoal: cents.min(0),
@@ -41,6 +43,7 @@ const fixedExpenseSchema = z.discriminatedUnion('type', [
     name: z.string(),
     category: z.string(),
     amount: cents.min(0),
+    active: z.boolean().optional(),
   }),
   z.object({
     ...syncMeta,
@@ -52,6 +55,7 @@ const fixedExpenseSchema = z.discriminatedUnion('type', [
     totalInstallments: z.number().int().min(1),
     remainingInstallments: z.number().int().min(0),
     startedAtCycleId: z.string().optional(),
+    active: z.boolean().optional(),
   }),
 ]);
 
@@ -86,6 +90,8 @@ const creditCardSchema = z.object({
   name: z.string().min(1),
   closingDay: z.number().int().min(MIN_CARD_DAY).max(MAX_CARD_DAY),
   dueDay: z.number().int().min(MIN_CARD_DAY).max(MAX_CARD_DAY),
+  creditLimit: cents.min(0).nullable(),
+  active: z.boolean(),
 });
 
 const cardPurchaseSchema = z.object({
@@ -97,8 +103,22 @@ const cardPurchaseSchema = z.object({
   totalAmount: cents.positive(),
   installments: z.number().int().min(1).max(MAX_CARD_INSTALLMENTS),
   purchaseDate: isoDate,
-  firstCycleKey: z.string().regex(/^\d{4}-\d{2}$/),
+  firstStatementKey: monthKey,
+  firstCycleKey: monthKey,
+  settledInstallments: z.number().int().min(0),
+  origin: z.literal('existing').optional(),
   createdAt: z.string(),
+});
+
+const statementPaymentSchema = z.object({
+  ...syncMeta,
+  id: z.string().min(1),
+  cardId: z.string().min(1),
+  statementKey: monthKey,
+  cycleId: z.string().min(1),
+  statementAmount: cents.min(0),
+  paidAmount: cents.min(0),
+  paidAt: isoDate,
 });
 
 const fixedPaymentSchema = z.object({
@@ -137,6 +157,7 @@ export const localStateSchema = z.object({
   cardPurchases: z.array(cardPurchaseSchema),
   fixedPayments: z.array(fixedPaymentSchema),
   extraIncomes: z.array(extraIncomeSchema),
+  statementPayments: z.array(statementPaymentSchema),
   sync: z.object({
     userId: z.string().nullable(),
     cursors: z.object({
@@ -148,6 +169,7 @@ export const localStateSchema = z.object({
       card_purchases: cursor,
       fixed_payments: cursor,
       extra_incomes: cursor,
+      statement_payments: cursor,
     }),
     lastSyncAt: z.string().nullable(),
     lastError: z.string().nullable(),

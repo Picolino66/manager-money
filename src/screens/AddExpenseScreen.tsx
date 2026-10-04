@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { RootStackParamList } from '../navigation/types';
 import { AppButton } from '../components/AppButton';
 import { Card } from '../components/Card';
+import { CardLimitNotice, confirmCardLimit } from '../components/CardLimitNotice';
 import { CurrencyInput } from '../components/CurrencyInput';
 import { EmptyState } from '../components/EmptyState';
 import { Screen } from '../components/Screen';
@@ -20,25 +21,31 @@ import {
   cycleKeyOffset,
   MAX_CARD_INSTALLMENTS,
   splitInstallments,
+  statementDueDate,
+  statementKeyForDate,
 } from '../domain/financial/credit-card';
-import {
-  getSortedCategories,
-  normalizeCategory,
-} from '../domain/financial/financial.calculations';
-import { isLive } from '../application/state';
+import { getSortedCategories, normalizeCategory } from '../domain/financial/financial.calculations';
+import { selectActiveCreditCards, selectCardLimitUsage } from '../application/selectors';
 import { DEFAULT_EXPENSE_CATEGORY } from '../domain/financial/financial.types';
 import { colors, spacing, typography } from '../design/theme';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '../utils/currency';
 import { describeFirstInstallment } from './cardText';
-import { formatCycleLabel, formatDateInput, parseBRDateInput, toISODate } from '../utils/date';
+import {
+  formatCycleLabel,
+  formatDateInput,
+  formatShortDate,
+  parseBRDateInput,
+  toISODate,
+} from '../utils/date';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddExpense'>;
 
 const expenseSchema = z.object({
   amount: z.number().int().positive('Informe um valor maior que zero.'),
   category: z.string().trim().min(1),
-  description: z.string().trim().min(1, 'Informe uma descrição.'),
+  // Opcional à vista; obrigatória no crédito (validada no envio, o domínio exige).
+  description: z.string().trim(),
   date: z.string().regex(/^\d{2}\/\d{2}\/\d{4}$/, 'Use o formato DD/MM/AAAA.'),
 });
 
@@ -51,7 +58,9 @@ export function AddExpenseScreen({ navigation, route }: Props) {
   const updateExpense = useFinancialStore((state) => state.updateExpense);
   const deleteExpense = useFinancialStore((state) => state.deleteExpense);
   const addCardPurchase = useFinancialStore((state) => state.addCardPurchase);
-  const creditCards = useFinancialStore((state) => state.doc.creditCards).filter(isLive);
+  const doc = useFinancialStore((state) => state.doc);
+  // BR-FIN-028: cartão desativado some do formulário de compra.
+  const creditCards = selectActiveCreditCards(doc);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit'>('cash');
   const [cardId, setCardId] = useState<string | null>(null);
   const [installmentsText, setInstallmentsText] = useState('1');
@@ -70,6 +79,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<ExpenseForm>({
     resolver: zodResolver(expenseSchema),
@@ -159,6 +169,16 @@ export function AddExpenseScreen({ navigation, route }: Props) {
         return;
       }
 
+      if (!values.description) {
+        setError('description', { message: 'Informe uma descrição.' });
+        return;
+      }
+
+      // BR-FIN-026: passar do limite só gera aviso; a pessoa decide continuar.
+      if (!(await confirmCardLimit(selectCardLimitUsage(doc, selectedCard.id), values.amount))) {
+        return;
+      }
+
       try {
         await addCardPurchase({
           cardId: selectedCard.id,
@@ -180,9 +200,12 @@ export function AddExpenseScreen({ navigation, route }: Props) {
     }
 
     try {
+      const category = normalizeCategory(values.category);
       const expenseInput = {
         ...values,
-        category: normalizeCategory(values.category),
+        // Sem descrição, o histórico mostra a categoria.
+        description: values.description || category,
+        category,
         date: toISODate(parsedExpenseDate),
       };
 
@@ -230,7 +253,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
     isCredit && selectedCard && watchedDate && config
       ? calculateFirstCycleKey(
           watchedDate,
-          selectedCard.closingDay,
+          selectedCard,
           config.payday,
           cycleKeyFromStartDate(activeMonth.startDate),
         )
@@ -242,11 +265,36 @@ export function AddExpenseScreen({ navigation, route }: Props) {
     isCredit && watchedAmount > 0 && installments >= 1 && installments <= MAX_CARD_INSTALLMENTS
       ? splitInstallments(watchedAmount, installments)
       : [];
+  const statementDue =
+    isCredit && selectedCard && watchedDate
+      ? formatShortDate(
+          toISODate(
+            statementDueDate(
+              statementKeyForDate(watchedDate, selectedCard.closingDay),
+              selectedCard,
+            ),
+          ),
+        )
+      : null;
+  const limitUsage = isCredit && selectedCard ? selectCardLimitUsage(doc, selectedCard.id) : null;
 
   return (
     <Screen>
       <Text style={styles.title}>{isEditing ? 'Editar gasto' : 'Novo gasto'}</Text>
       <Card>
+        <Controller
+          control={control}
+          name="amount"
+          render={({ field }) => (
+            <CurrencyInput
+              error={errors.amount?.message}
+              label={isCredit ? 'Valor total (com juros)' : 'Valor'}
+              onBlur={field.onBlur}
+              onChangeValue={field.onChange}
+              value={field.value}
+            />
+          )}
+        />
         {!isEditing ? (
           <SelectField
             label="Forma de pagamento"
@@ -284,21 +332,16 @@ export function AddExpenseScreen({ navigation, route }: Props) {
               onChangeText={setInstallmentsText}
               value={installmentsText}
             />
+            <CardLimitNotice amount={watchedAmount} usage={limitUsage} />
+            {installmentValues.length > 0 ? (
+              <Text style={styles.hint}>
+                {installments}x de {formatCurrency(installmentValues[0] ?? 0)}
+                {statementDue ? ` · entra na fatura que vence ${statementDue}` : ''} ·{' '}
+                {describeFirstInstallment(cyclesAhead)}. O valor informado já deve incluir os juros.
+              </Text>
+            ) : null}
           </>
         ) : null}
-        <Controller
-          control={control}
-          name="amount"
-          render={({ field }) => (
-            <CurrencyInput
-              error={errors.amount?.message}
-              label={isCredit ? 'Valor total (com juros)' : 'Valor'}
-              onBlur={field.onBlur}
-              onChangeValue={field.onChange}
-              value={field.value}
-            />
-          )}
-        />
         <Controller
           control={control}
           name="category"
@@ -321,7 +364,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
               label="Descrição"
               onBlur={field.onBlur}
               onChangeText={field.onChange}
-              placeholder="Almoço"
+              placeholder={isCredit ? 'Ex.: notebook' : 'Opcional · ex.: almoço'}
               value={field.value}
             />
           )}
@@ -340,18 +383,14 @@ export function AddExpenseScreen({ navigation, route }: Props) {
             />
           )}
         />
-        {isCredit && installmentValues.length > 0 ? (
-          <Text style={styles.hint}>
-            {installments}x de {formatCurrency(installmentValues[0] ?? 0)} ·{' '}
-            {describeFirstInstallment(cyclesAhead)}. O valor informado já deve incluir os juros.
-          </Text>
-        ) : null}
       </Card>
       <AppButton
         iconName={isEditing ? 'save-outline' : 'add-circle-outline'}
         isLoading={isSubmitting}
         onPress={handleSubmit(onSubmit)}
-        title={isEditing ? 'Salvar alterações' : isCredit ? 'Salvar compra no crédito' : 'Salvar gasto'}
+        title={
+          isEditing ? 'Salvar alterações' : isCredit ? 'Salvar compra no crédito' : 'Salvar gasto'
+        }
       />
       {isEditing ? (
         <AppButton

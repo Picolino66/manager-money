@@ -11,11 +11,8 @@ import { MetricRow } from '../components/MetricRow';
 import { Screen } from '../components/Screen';
 import { SelectField } from '../components/SelectField';
 import { TextInputField } from '../components/TextInputField';
-import {
-  calculateFixedExpenseAmount,
-  getSortedCategories,
-  normalizeCategory,
-} from '../domain/financial/financial.calculations';
+import { getSortedCategories, normalizeCategory } from '../domain/financial/financial.calculations';
+import { isLive } from '../application/state';
 import { DEFAULT_EXPENSE_CATEGORY } from '../domain/financial/financial.types';
 import { colors, radius, spacing, typography } from '../design/theme';
 import { MainTabParamList } from '../navigation/types';
@@ -32,7 +29,14 @@ type CategoryTotal = {
   total: number;
 };
 
-type CategorizedItemType = 'expense' | 'fixed' | 'installment';
+/**
+ * - expense: gasto à vista do dia a dia;
+ * - card: compra no cartão de crédito (data da compra, valor total);
+ * - fixed / installment: pagamento efetivo de despesa fixa / parcelamento fora do cartão.
+ * Fixa paga no crédito conta uma vez só, como fixa (valor + juros); a compra que ela gerou no
+ * cartão não entra de novo como "Cartão".
+ */
+type CategorizedItemType = 'expense' | 'card' | 'fixed' | 'installment';
 
 type CategorizedItem = {
   id: string;
@@ -40,17 +44,19 @@ type CategorizedItem = {
   name: string;
   category: string;
   amount: number;
-  date?: string;
+  date: string;
 };
 
 const itemTypeLabels: Record<CategorizedItemType, string> = {
   expense: 'Gasto',
+  card: 'Cartão',
   fixed: 'Fixo',
   installment: 'Parcelamento',
 };
 
 const itemTypeFilterOptions: { label: string; type: CategorizedItemType }[] = [
   { label: 'Gasto', type: 'expense' },
+  { label: 'Cartão', type: 'card' },
   { label: 'Parcelado', type: 'installment' },
   { label: 'Fixo', type: 'fixed' },
 ];
@@ -66,6 +72,7 @@ export function CategoriesScreen({ navigation }: Props) {
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const months = useFinancialStore((state) => state.months);
   const addCategory = useFinancialStore((state) => state.addCategory);
+  const doc = useFinancialStore((state) => state.doc);
   const categories = getSortedCategories(config);
   const categoryOptions = useMemo(
     () => [ALL_CATEGORIES, ...categories].map((category) => ({ label: category, value: category })),
@@ -80,48 +87,58 @@ export function CategoriesScreen({ navigation }: Props) {
   const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORIES);
   const [visibleItemTypes, setVisibleItemTypes] = useState<Record<CategorizedItemType, boolean>>({
     expense: true,
+    card: true,
     installment: false,
     fixed: false,
   });
   const [newCategoryName, setNewCategoryName] = useState('');
 
-  const allItems = useMemo<CategorizedItem[]>(
-    () => {
-      const expenseItems = [
-        ...(activeMonth?.expenses ?? []),
-        ...months.flatMap((month) => month.expenses),
-      ].map((expense) => ({
-        id: expense.id,
-        type: 'expense' as const,
-        name: expense.description,
-        category: normalizeCategory(expense.category),
-        amount: expense.amount,
-        date: expense.date,
+  const allItems = useMemo<CategorizedItem[]>(() => {
+    const expenseItems = [
+      ...(activeMonth?.expenses ?? []),
+      ...months.flatMap((month) => month.expenses),
+    ].map((expense) => ({
+      id: expense.id,
+      type: 'expense' as const,
+      name: expense.description,
+      category: normalizeCategory(expense.category),
+      amount: expense.amount,
+      date: expense.date,
+    }));
+
+    // Pagamentos efetivos de fixas (não a configuração), pela data do pagamento.
+    const fixedPayments = doc.fixedPayments.filter(isLive);
+    const paymentItems = fixedPayments.map((payment) => ({
+      id: payment.id,
+      type:
+        doc.fixedExpenses.find((expense) => expense.id === payment.fixedExpenseId)?.type ===
+        'installment'
+          ? ('installment' as const)
+          : ('fixed' as const),
+      name: payment.method === 'credit' ? `${payment.name} (no crédito)` : payment.name,
+      category: normalizeCategory(payment.category),
+      amount: payment.amount + payment.interest,
+      date: payment.paidAt,
+    }));
+    const purchasesFromFixed = new Set(
+      fixedPayments.flatMap((payment) => (payment.cardPurchaseId ? [payment.cardPurchaseId] : [])),
+    );
+    const cardItems = doc.cardPurchases
+      .filter((purchase) => isLive(purchase) && !purchasesFromFixed.has(purchase.id))
+      .map((purchase) => ({
+        id: purchase.id,
+        type: 'card' as const,
+        name:
+          purchase.installments > 1
+            ? `${purchase.description} (${purchase.installments}x)`
+            : purchase.description,
+        category: normalizeCategory(purchase.category),
+        amount: purchase.totalAmount,
+        date: purchase.purchaseDate,
       }));
 
-      const plannedItems =
-        config?.fixedExpenses.reduce<CategorizedItem[]>((items, expense) => {
-          const amount = calculateFixedExpenseAmount(expense);
-
-          if (amount <= 0) {
-            return items;
-          }
-
-          items.push({
-            id: expense.id,
-            type: expense.type === 'installment' ? 'installment' : 'fixed',
-            name: expense.name,
-            category: normalizeCategory(expense.category),
-            amount,
-          });
-
-          return items;
-        }, []) ?? [];
-
-      return [...expenseItems, ...plannedItems];
-    },
-    [activeMonth, config, months],
-  );
+    return [...expenseItems, ...cardItems, ...paymentItems];
+  }, [activeMonth, doc, months]);
 
   const filteredItems = useMemo(() => {
     const start = parseFilterDate(startDate);
@@ -131,24 +148,18 @@ export function CategoriesScreen({ navigation }: Props) {
       return [];
     }
 
-    const hasActiveCycleInRange =
-      activeMonth !== null &&
-      !isAfter(startOfDay(parseISO(activeMonth.startDate)), end) &&
-      !isBefore(startOfDay(parseISO(activeMonth.endDate)), start);
-
     return allItems.filter((item) => {
       const matchesType = visibleItemTypes[item.type];
-      const isWithinRange = item.date
-        ? !isBefore(startOfDay(parseISO(item.date)), start) &&
-          !isAfter(startOfDay(parseISO(item.date)), end)
-        : hasActiveCycleInRange;
+      const isWithinRange =
+        !isBefore(startOfDay(parseISO(item.date)), start) &&
+        !isAfter(startOfDay(parseISO(item.date)), end);
       const matchesCategory =
         selectedCategory === ALL_CATEGORIES ||
         normalizeCategory(item.category) === selectedCategory;
 
       return matchesType && isWithinRange && matchesCategory;
     });
-  }, [activeMonth, allItems, endDate, selectedCategory, startDate, visibleItemTypes]);
+  }, [allItems, endDate, selectedCategory, startDate, visibleItemTypes]);
 
   const categoryTotals = useMemo<CategoryTotal[]>(() => {
     const totals = filteredItems.reduce<Record<string, number>>((result, item) => {
@@ -212,6 +223,9 @@ export function CategoriesScreen({ navigation }: Props) {
       <View style={styles.header}>
         <Text style={styles.title}>Categorias</Text>
         <Text style={styles.subtitle}>Gastos por período e categoria</Text>
+        <Text style={styles.subtitle}>
+          Compras no cartão contam pela data da compra (valor total); fixas, quando pagas.
+        </Text>
       </View>
 
       <Card>
@@ -259,6 +273,7 @@ export function CategoriesScreen({ navigation }: Props) {
 
             return (
               <Pressable
+                accessibilityLabel={`Mostrar itens do tipo ${option.label}`}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: isSelected }}
                 key={option.type}
@@ -313,7 +328,7 @@ export function CategoriesScreen({ navigation }: Props) {
         ) : null}
         {filteredItems
           .slice()
-          .sort((left, right) => (right.date ?? '').localeCompare(left.date ?? ''))
+          .sort((left, right) => right.date.localeCompare(left.date))
           .map((item) => (
             <MetricRow
               key={`${item.type}-${item.id}`}

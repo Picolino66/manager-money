@@ -19,6 +19,7 @@ import {
   FinancialConfig,
   FinancialConfigInput,
   FixedExpense,
+  isActive,
   MAX_PAYDAY,
   MIN_PAYDAY,
 } from '../domain/financial/financial.types';
@@ -76,8 +77,15 @@ function fixedExpenseFields(expense: FixedExpense): string {
         expense.totalInstallments,
         expense.remainingInstallments,
         expense.startedAtCycleId ?? null,
+        isActive(expense),
       ])
-    : JSON.stringify([expense.type, expense.name, expense.category, expense.amount]);
+    : JSON.stringify([
+        expense.type,
+        expense.name,
+        expense.category,
+        expense.amount,
+        isActive(expense),
+      ]);
 }
 
 /** Substitui um registro de despesa fixa, marcando sujo apenas quando algo mudou. */
@@ -93,11 +101,12 @@ function replaceFixedExpense(
   return touch({ ...next, updatedAt: record.updatedAt, deletedAt: null, dirty: record.dirty }, now);
 }
 
-/** BR-FIN-010: avança as parcelas já iniciadas (uma vez por ciclo aberto). */
+/** BR-FIN-010: avança as parcelas já iniciadas (uma vez por ciclo aberto); inativas ficam pausadas. */
 function advanceInstallments(records: FixedExpenseRecord[], now: Date): FixedExpenseRecord[] {
   return records.map((record) => {
     if (
       !isLive(record) ||
+      !isActive(record) ||
       record.type !== 'installment' ||
       !record.startedAtCycleId ||
       record.remainingInstallments <= 0
@@ -116,7 +125,12 @@ function startPendingInstallments(
   now: Date,
 ): FixedExpenseRecord[] {
   return records.map((record) => {
-    if (!isLive(record) || record.type !== 'installment' || record.startedAtCycleId) {
+    if (
+      !isLive(record) ||
+      !isActive(record) ||
+      record.type !== 'installment' ||
+      record.startedAtCycleId
+    ) {
       return record;
     }
 
@@ -149,7 +163,8 @@ function createCycle(
     initialAvailableAmount: calculateInitialAvailableAmount(
       config,
       previousMonthDebt,
-      selectCycleAdjustments(state, { id, startDate: dates.startDate }),
+      // Reserva das fixas pendentes com as parcelas já avançadas (BR-FIN-004/010).
+      selectCycleAdjustments({ ...state, fixedExpenses }, { id, startDate: dates.startDate }),
     ),
     previousMonthDebt,
     updatedAt: ctx.now.toISOString(),
@@ -196,19 +211,24 @@ export function saveConfig(
     name: source.name.trim(),
     amount: source.amount,
     payday: source.payday,
+    ...(source.active === false ? { active: false } : {}),
   }));
 
-  if (incomeSources.length === 0) {
-    throw new DomainError('Informe ao menos uma fonte de renda.');
+  if (!incomeSources.some(isActive)) {
+    throw new DomainError('Informe ao menos uma fonte de renda ativa.');
   }
 
   if (
     incomeSources.some(
       (source) =>
-        !Number.isInteger(source.payday) || source.payday < MIN_PAYDAY || source.payday > MAX_PAYDAY,
+        !Number.isInteger(source.payday) ||
+        source.payday < MIN_PAYDAY ||
+        source.payday > MAX_PAYDAY,
     )
   ) {
-    throw new DomainError(`O dia de pagamento de cada fonte deve ficar entre ${MIN_PAYDAY} e ${MAX_PAYDAY}.`);
+    throw new DomainError(
+      `O dia de pagamento de cada fonte deve ficar entre ${MIN_PAYDAY} e ${MAX_PAYDAY}.`,
+    );
   }
 
   const nextSettingsFields = {
@@ -413,7 +433,9 @@ export function receiveIncomeEarly(state: LocalState, ctx: UseCaseContext): Loca
       nextCycle,
     ],
     expenses: state.expenses.map((expense) =>
-      newCycleExpenses.has(expense.id) ? touch({ ...expense, cycleId: nextCycle.id }, ctx.now) : expense,
+      newCycleExpenses.has(expense.id)
+        ? touch({ ...expense, cycleId: nextCycle.id }, ctx.now)
+        : expense,
     ),
   };
 }
@@ -461,7 +483,11 @@ function normalizeExpenseInput(input: ExpenseInput) {
   };
 }
 
-export function addExpense(state: LocalState, input: ExpenseInput, ctx: UseCaseContext): LocalState {
+export function addExpense(
+  state: LocalState,
+  input: ExpenseInput,
+  ctx: UseCaseContext,
+): LocalState {
   const cycle = requireActiveCycle(state, 'Nenhum ciclo ativo para receber gastos.');
   assertDateWithinCycle(cycle, input.date);
 
@@ -499,7 +525,11 @@ export function updateExpense(
 }
 
 /** RF-06 / SPEC-003: exclusão lógica para propagar no sync. */
-export function deleteExpense(state: LocalState, expenseId: string, ctx: UseCaseContext): LocalState {
+export function deleteExpense(
+  state: LocalState,
+  expenseId: string,
+  ctx: UseCaseContext,
+): LocalState {
   const cycle = requireActiveCycle(state, 'Nenhum ciclo ativo para excluir gastos.');
   const existing = findEditableExpense(state, cycle, expenseId);
 

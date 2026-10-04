@@ -23,6 +23,11 @@ export const DEFAULT_EXPENSE_CATEGORIES = [
 
 export type ExpenseCategory = string;
 
+/** Fonte de renda, despesa fixa ou cartão ativo: ausente conta como ativo (compatibilidade). */
+export function isActive(item: { active?: boolean }): boolean {
+  return item.active !== false;
+}
+
 export type MonthStatus = 'active' | 'closed';
 
 export type DayStatus = 'healthy' | 'warning' | 'critical' | 'negative';
@@ -42,6 +47,8 @@ export type PermanentFixedExpense = {
   name: string;
   category: ExpenseCategory;
   amount: MoneyCents;
+  /** Inativa não entra no ciclo nem na projeção. Ausente = ativa (dados antigos). */
+  active?: boolean;
 };
 
 export type InstallmentFixedExpense = {
@@ -53,6 +60,8 @@ export type InstallmentFixedExpense = {
   totalInstallments: number;
   remainingInstallments: number;
   startedAtCycleId?: string;
+  /** Inativa não entra no ciclo nem na projeção. Ausente = ativa (dados antigos). */
+  active?: boolean;
 };
 
 export type FixedExpense = PermanentFixedExpense | InstallmentFixedExpense;
@@ -64,13 +73,15 @@ export type IncomeSource = {
   amount: MoneyCents;
   /** Dia do mês em que a fonte paga (1–28). O ciclo usa o da fonte de maior valor (BR-FIN-024). */
   payday: number;
+  /** Inativa não soma à renda nem define o ciclo. Ausente = ativa (dados antigos). */
+  active?: boolean;
 };
 
 export type FinancialConfig = {
-  /** Soma das fontes de renda (derivado de `incomeSources`). */
+  /** Soma das fontes de renda ativas (derivado de `incomeSources`). */
   monthlyIncome: MoneyCents;
   incomeSources: IncomeSource[];
-  /** Dia do mês em que a renda cai (1–28). Derivado: dia da fonte de maior valor (BR-FIN-024). */
+  /** Dia do mês em que a renda cai (1–28). Derivado: dia da fonte ativa de maior valor (BR-FIN-024). */
   payday: number;
   fixedExpenses: FixedExpense[];
   customCategories: ExpenseCategory[];

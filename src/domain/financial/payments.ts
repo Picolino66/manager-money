@@ -47,7 +47,9 @@ export type ExtraIncome = {
 };
 
 /** Valor que sai da renda do ciclo agora: no crédito, quem desconta é a fatura (BR-FIN-019). */
-export function calculatePaidFixedAmount(payments: Pick<FixedExpensePayment, 'method' | 'amount'>[]): MoneyCents {
+export function calculatePaidFixedAmount(
+  payments: Pick<FixedExpensePayment, 'method' | 'amount'>[],
+): MoneyCents {
   return payments.reduce(
     (total, payment) => (payment.method === 'credit' ? total : total + payment.amount),
     0,

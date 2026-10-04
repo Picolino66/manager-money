@@ -27,6 +27,7 @@ export class MemoryServer {
       card_purchases: [],
       fixed_payments: [],
       extra_incomes: [],
+      statement_payments: [],
     };
     return this.data[userId];
   }
@@ -68,7 +69,10 @@ export class MemoryRemote implements SyncRemote {
       if (table === 'cycles') {
         const cycle = row as RowByTable['cycles'];
         const otherActive = (store.cycles as RowByTable['cycles'][]).some(
-          (existing) => existing.id !== cycle.id && existing.status === 'active' && existing.deleted_at === null,
+          (existing) =>
+            existing.id !== cycle.id &&
+            existing.status === 'active' &&
+            existing.deleted_at === null,
         );
         if (cycle.status === 'active' && cycle.deleted_at === null && otherActive) {
           throw new SyncError('conflict-active-cycle');
@@ -101,7 +105,9 @@ export class MemoryRemote implements SyncRemote {
     const store = this.server.store(this.userId);
     for (const table of Object.keys(store) as SyncTable[]) {
       store[table] = (store[table] as RemoteRow[]).map((row) =>
-        row.deleted_at ? row : { ...row, deleted_at: nowIso, server_updated_at: this.server.nextTimestamp() },
+        row.deleted_at
+          ? row
+          : { ...row, deleted_at: nowIso, server_updated_at: this.server.nextTimestamp() },
       ) as never;
     }
   }

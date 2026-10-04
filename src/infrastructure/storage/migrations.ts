@@ -1,3 +1,13 @@
+import { parseISO } from 'date-fns';
+
+import {
+  buildCardStatements,
+  CardPurchase,
+  CreditCard,
+  MAX_CARD_DAY,
+  statementKeyForDate,
+  statementPaymentId,
+} from '../../domain/financial/credit-card';
 import {
   buildLegacyFinancialCycleDates,
   calculateFixedExpensesTotal,
@@ -181,7 +191,10 @@ export function migrateV1ToV2(snapshot: LegacySnapshot, now: Date): LocalState {
     }));
   }
 
-  const months = [...(snapshot.months ?? []), ...(snapshot.activeMonth ? [snapshot.activeMonth] : [])]
+  const months = [
+    ...(snapshot.months ?? []),
+    ...(snapshot.activeMonth ? [snapshot.activeMonth] : []),
+  ]
     .map(normalizeLegacyMonth)
     .filter((month, index, all) => all.findIndex((other) => other.id === month.id) === index);
 
@@ -312,6 +325,87 @@ export function migrateV5ToV6(raw: unknown, now: Date): unknown {
   };
 }
 
+/**
+ * Migração v6 → v7 (documento bruto, ADR-017): cartões ganham limite (não informado) e ativo;
+ * compras ganham a fatura da 1ª parcela (derivada da data e do fechamento do cartão) e zero
+ * parcelas quitadas; faturas já vencidas ganham pagamento sem juros. O ciclo de cada compra não
+ * muda.
+ */
+export function migrateV6ToV7(raw: unknown, now: Date): unknown {
+  const document = raw as {
+    creditCards?: Record<string, unknown>[];
+    cardPurchases?: Record<string, unknown>[];
+    cycles?: { id?: string; status?: string; startedAt?: string; deletedAt?: string | null }[];
+    sync?: { cursors?: Record<string, unknown> };
+  };
+  const sync = document.sync ?? {};
+  const cards = (document.creditCards ?? []).map((card): Record<string, unknown> => ({
+    ...card,
+    creditLimit: null,
+    active: true,
+  }));
+  const closingDayOf = (cardId: unknown) =>
+    Number(cards.find((card) => card.id === cardId)?.closingDay) || MAX_CARD_DAY;
+  const purchases = (document.cardPurchases ?? []).map((purchase) => ({
+    ...purchase,
+    firstStatementKey: statementKeyForDate(
+      parseISO(String(purchase.purchaseDate)),
+      closingDayOf(purchase.cardId),
+    ),
+    settledInstallments: 0,
+  }));
+  // Mesmo critério de `selectActiveCycle`; sem ativo, o último iniciado.
+  const liveCycles = (document.cycles ?? [])
+    .filter((cycle) => cycle.deletedAt === null && cycle.id)
+    .sort((left, right) =>
+      (left.status === 'active') === (right.status === 'active')
+        ? String(right.startedAt).localeCompare(String(left.startedAt))
+        : left.status === 'active'
+          ? -1
+          : 1,
+    );
+  const anchorCycleId = liveCycles[0]?.id;
+  // Antes da v7 não havia "Paguei a fatura": faturas já vencidas contam como pagas sem juros,
+  // para não aparecerem vencidas nem prenderem o limite (BR-FIN-026).
+  const statementPayments = anchorCycleId
+    ? cards.flatMap((card) =>
+        buildCardStatements(
+          card as unknown as CreditCard,
+          purchases as unknown as CardPurchase[],
+          [],
+          now,
+        )
+          .filter((statement) => statement.status === 'overdue')
+          .map((statement) => ({
+            id: statementPaymentId(statement.cardId, statement.key),
+            cardId: statement.cardId,
+            statementKey: statement.key,
+            cycleId: anchorCycleId,
+            statementAmount: statement.amount,
+            paidAmount: statement.amount,
+            paidAt: statement.dueDate,
+            updatedAt: now.toISOString(),
+            deletedAt: null,
+            dirty: true,
+          })),
+      )
+    : [];
+
+  // Cartões, compras e ciclos não ficam pendentes de envio: o servidor aceita as colunas novas
+  // nulas, e o saldo do ciclo ativo é recalculado ao carregar (BR-FIN-004).
+  return {
+    ...document,
+    schemaVersion: 7,
+    creditCards: cards,
+    cardPurchases: purchases,
+    statementPayments,
+    sync: {
+      ...sync,
+      cursors: { ...sync.cursors, statement_payments: null },
+    },
+  };
+}
+
 /** Encadeia as migrações do documento bruto até a versão atual; `null` se já está atual. */
 export function migrateDocument(raw: unknown, now: Date): unknown | null {
   let document = raw;
@@ -335,6 +429,11 @@ export function migrateDocument(raw: unknown, now: Date): unknown | null {
   if (version === 5) {
     document = migrateV5ToV6(document, now);
     version = 6;
+  }
+
+  if (version === 6) {
+    document = migrateV6ToV7(document, now);
+    version = 7;
   }
 
   return document === raw ? null : document;

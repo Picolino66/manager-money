@@ -4,6 +4,8 @@ features: [payment.fixed-expense, payment.extra-income]
 ---
 # SPEC-014 — Pagamento de despesas fixas e renda avulsa
 
+> **Atualizada pela [SPEC-018](SPEC-018-hoje-compromissos-e-projecao.md) (ADR-017):** despesa fixa ativa pendente passa a ficar **reservada** no saldo do ciclo; pagar à vista não muda o saldo. A UI oferece só "À vista" e "Cartão de crédito".
+
 ## Objetivo
 Confirmar a cada ciclo o pagamento das despesas fixas (Pix, dinheiro, débito ou crédito com juros) e lançar rendas avulsas, com o saldo do ciclo acompanhando.
 

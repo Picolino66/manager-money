@@ -13,14 +13,14 @@ code:
 symbols: [calculatePrimaryPayday, calculateCycleEndDate, calculateDefaultCycleStartDate, canReceiveIncomeEarly]
 business_rules: [BR-FIN-002, BR-FIN-024]
 tests: [src/domain/financial/financial.calculations.test.ts]
-last_verified_commit: 6fd4838+T-021
+last_verified_commit: c47cf18+T-025
 ---
 
 # Dia de pagamento configurável
 
 Spec: [SPEC-001](../../../specs/SPEC-001-dia-de-pagamento.md).
 
-- Dia do pagamento (1 a 28) **por fonte de renda** na Configuração ([SPEC-015](../../../specs/SPEC-015-dia-de-pagamento-por-fonte.md)); o ciclo usa o da fonte de maior valor (BR-FIN-024); padrão 7 (dados migrados).
+- Dia do pagamento (1 a 28) **por fonte de renda** na Configuração ([SPEC-015](../../../specs/SPEC-015-dia-de-pagamento-por-fonte.md)); o ciclo usa o da fonte **ativa** de maior valor (BR-FIN-024); padrão 7 (dados migrados).
 - Início padrão: dia `payday` do mês corrente se hoje ≥ payday; senão, do mês anterior.
 - Fim: véspera do `payday` do mês seguinte ao início (vale para início normal e antecipado).
 - Mudar o payday não altera o ciclo ativo; vale para o próximo.

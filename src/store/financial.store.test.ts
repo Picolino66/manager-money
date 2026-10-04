@@ -11,7 +11,9 @@ jest.mock('../infrastructure/export/share-json', () => ({
   shareJson: jest.fn().mockResolvedValue(undefined),
 }));
 
-const { shareJson } = jest.requireMock('../infrastructure/export/share-json') as { shareJson: jest.Mock };
+const { shareJson } = jest.requireMock('../infrastructure/export/share-json') as {
+  shareJson: jest.Mock;
+};
 
 let sequence = 0;
 let now = new Date(2026, 9, 10, 12);
@@ -34,7 +36,14 @@ beforeEach(async () => {
   now = new Date(2026, 9, 10, 12);
   setUseCaseContextFactory(context);
   store().setSyncRemote(null);
-  useFinancialStore.setState({ doc: createEmptyState(), config: null, activeMonth: null, months: [], pendingChanges: 0, isSyncing: false });
+  useFinancialStore.setState({
+    doc: createEmptyState(),
+    config: null,
+    activeMonth: null,
+    months: [],
+    pendingChanges: 0,
+    isSyncing: false,
+  });
 });
 
 describe('useFinancialStore', () => {
@@ -50,12 +59,58 @@ describe('useFinancialStore', () => {
     expect(persisted.cycles).toHaveLength(1);
   });
 
+  it('ao carregar, recalcula o saldo do ciclo ativo com as regras atuais e persiste (ADR-017)', async () => {
+    const { openCycle, saveConfig } = jest.requireActual(
+      '../application/cycle.use-cases',
+    ) as typeof import('../application/cycle.use-cases');
+    const withRent = {
+      ...config,
+      fixedExpenses: [
+        {
+          id: 'aluguel',
+          type: 'permanent' as const,
+          name: 'Aluguel',
+          category: 'Moradia',
+          amount: 100000,
+        },
+      ],
+    };
+    const opened = openCycle(saveConfig(createEmptyState(), withRent, context()), context());
+    // Saldo gravado por uma versão antiga, sem a reserva do aluguel pendente.
+    const stale = {
+      ...opened,
+      cycles: opened.cycles.map((cycle) => ({ ...cycle, initialAvailableAmount: 300000 })),
+    };
+    await AsyncStorage.setItem(STATE_STORAGE_KEY, JSON.stringify(stale));
+
+    await store().loadAppData();
+
+    expect(store().activeMonth?.initialAvailableAmount).toBe(200000);
+    expect(
+      JSON.parse((await AsyncStorage.getItem(STATE_STORAGE_KEY)) ?? '{}').cycles[0]
+        .initialAvailableAmount,
+    ).toBe(200000);
+  });
+
   it('escritas concorrentes não se perdem (fila serializada)', async () => {
     await store().saveConfig(config);
     await store().startFinancialCycle();
-    const input = (description: string) => ({ amount: 100, category: 'Outros', description, date: '2026-10-10' });
-    await Promise.all([store().addExpense(input('A')), store().addExpense(input('B')), store().addExpense(input('C'))]);
-    expect(store().activeMonth?.expenses.map((expense) => expense.description)).toEqual(['A', 'B', 'C']);
+    const input = (description: string) => ({
+      amount: 100,
+      category: 'Outros',
+      description,
+      date: '2026-10-10',
+    });
+    await Promise.all([
+      store().addExpense(input('A')),
+      store().addExpense(input('B')),
+      store().addExpense(input('C')),
+    ]);
+    expect(store().activeMonth?.expenses.map((expense) => expense.description)).toEqual([
+      'A',
+      'B',
+      'C',
+    ]);
 
     const id = store().activeMonth!.expenses[0]!.id;
     await store().updateExpense(id, input('A2'));
@@ -91,7 +146,7 @@ describe('useFinancialStore', () => {
     await store().exportData();
     const payload = shareJson.mock.calls.at(-1)?.[1] as string;
     expect(payload).not.toContain('user-secreto');
-    expect(JSON.parse(payload)).toMatchObject({ app: 'manager-money', schemaVersion: 6 });
+    expect(JSON.parse(payload)).toMatchObject({ app: 'manager-money', schemaVersion: 7 });
   });
 
   it('sincroniza com debounce depois das escritas e faz backoff offline', async () => {
@@ -108,7 +163,10 @@ describe('useFinancialStore', () => {
     expect(server.store('u1').settings).toHaveLength(1);
 
     remote.offline = true;
-    await store().saveConfig({ ...config, incomeSources: [{ id: 'renda', name: 'Salário', amount: 1, payday: 7 }] });
+    await store().saveConfig({
+      ...config,
+      incomeSources: [{ id: 'renda', name: 'Salário', amount: 1, payday: 7 }],
+    });
     expect(await store().syncNow()).toEqual({ ok: false, code: 'network' });
     remote.offline = false;
     await jest.advanceTimersByTimeAsync(60_000);

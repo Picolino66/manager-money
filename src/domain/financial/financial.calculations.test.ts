@@ -125,7 +125,9 @@ describe('datas do ciclo com payday 7 (regressão do MVP)', () => {
   });
 
   it('sem data informada usa o início padrão de hoje', () => {
-    expect(buildFinancialCycleDates().startDate).toBe(iso(calculateDefaultCycleStartDate(new Date())));
+    expect(buildFinancialCycleDates().startDate).toBe(
+      iso(calculateDefaultCycleStartDate(new Date())),
+    );
   });
 });
 
@@ -200,7 +202,11 @@ describe('limite diário e status (BR-FIN-007..009)', () => {
   });
 
   it('gasto acima do limite reduz os dias seguintes', () => {
-    const month = { ...baseMonth, initialAvailableAmount: 100000, expenses: [expense('e1', 15000, '2026-04-20')] };
+    const month = {
+      ...baseMonth,
+      initialAvailableAmount: 100000,
+      expenses: [expense('e1', 15000, '2026-04-20')],
+    };
     expect(buildDashboardSummary(month, new Date(2026, 3, 21)).currentDailyLimit).toBe(5312);
     expect(calculateDayBalance(month, new Date(2026, 3, 20))).toBeLessThan(0);
   });
@@ -217,13 +223,19 @@ describe('limite diário e status (BR-FIN-007..009)', () => {
 
 describe('dívida herdada e saldo final (BR-FIN-006)', () => {
   it('só déficit é herdado', () => {
-    expect(calculatePreviousMonthDebt({ ...baseMonth, status: 'closed', finalBalance: -30000 })).toBe(30000);
-    expect(calculatePreviousMonthDebt({ ...baseMonth, status: 'closed', finalBalance: 30000 })).toBe(0);
+    expect(
+      calculatePreviousMonthDebt({ ...baseMonth, status: 'closed', finalBalance: -30000 }),
+    ).toBe(30000);
+    expect(
+      calculatePreviousMonthDebt({ ...baseMonth, status: 'closed', finalBalance: 30000 }),
+    ).toBe(0);
     expect(calculatePreviousMonthDebt(undefined)).toBe(0);
   });
 
   it('saldo final', () => {
-    expect(calculateFinalBalance({ ...baseMonth, expenses: [expense('1', 312000, '2026-04-30')] })).toBe(0);
+    expect(
+      calculateFinalBalance({ ...baseMonth, expenses: [expense('1', 312000, '2026-04-30')] }),
+    ).toBe(0);
   });
 });
 
@@ -232,10 +244,15 @@ describe('categorias (BR-FIN-012)', () => {
     expect(normalizeCategory('  ')).toBe('Outros');
     expect(normalizeCategory(' Viagem ')).toBe('Viagem');
     expect(getAvailableCategories({ customCategories: ['Viagem', 'Moradia'] })).toContain('Viagem');
-    expect(getAvailableCategories({ customCategories: ['Moradia'] }).filter((c) => c === 'Moradia')).toHaveLength(1);
+    expect(
+      getAvailableCategories({ customCategories: ['Moradia'] }).filter((c) => c === 'Moradia'),
+    ).toHaveLength(1);
     expect(getSortedCategories(null)[0]).toBe('Alimentação');
     expect(
-      calculateExpensesByCategory([expense('a', 100, '2026-04-08', 'Lazer'), expense('b', 50, '2026-04-08', 'Lazer')]),
+      calculateExpensesByCategory([
+        expense('a', 100, '2026-04-08', 'Lazer'),
+        expense('b', 50, '2026-04-08', 'Lazer'),
+      ]),
     ).toEqual({ Lazer: 150 });
   });
 });

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { FixedPaymentRecord } from '../application/state';
 import { colors, radius, spacing, typography } from '../design/theme';
 import { calculateFixedExpenseAmount } from '../domain/financial/financial.calculations';
-import { FixedExpense } from '../domain/financial/financial.types';
+import { FixedExpense, isActive } from '../domain/financial/financial.types';
 import { PAYMENT_METHOD_LABELS } from '../domain/financial/payments';
 import { formatCurrency } from '../utils/currency';
 import { AppButton } from './AppButton';
@@ -29,7 +29,10 @@ function describePayment(payment: FixedPaymentRecord, installments?: number): st
     : `Pago · ${method}`;
 }
 
-/** BR-FIN-021: todo ciclo mostra as despesas fixas para confirmar o pagamento. */
+/**
+ * BR-FIN-004/021: todo ciclo mostra as despesas fixas ativas para confirmar o pagamento. As
+ * pendentes já estão reservadas no saldo do ciclo.
+ */
 export function FixedExpensesCard({
   expenses,
   payments,
@@ -37,16 +40,22 @@ export function FixedExpensesCard({
   onPay,
   onUndo,
 }: FixedExpensesCardProps) {
+  // Só fixas ativas com valor no ciclo; pagamentos já feitos continuam aparecendo.
   const rows = expenses
-    .filter((expense) => calculateFixedExpenseAmount(expense) > 0)
-    .map((expense) => ({
-      expense,
-      amount: calculateFixedExpenseAmount(expense),
-      payment: payments.find((payment) => payment.fixedExpenseId === expense.id),
-    }))
+    .map((expense) => {
+      const payment = payments.find((item) => item.fixedExpenseId === expense.id);
+
+      return {
+        expense,
+        payment,
+        amount: payment ? payment.amount : calculateFixedExpenseAmount(expense),
+      };
+    })
+    .filter((row) => row.payment || (isActive(row.expense) && row.amount > 0))
     .sort(
       (left, right) =>
-        Number(Boolean(left.payment)) - Number(Boolean(right.payment)) || right.amount - left.amount,
+        Number(Boolean(left.payment)) - Number(Boolean(right.payment)) ||
+        right.amount - left.amount,
     );
   const [isExpanded, setIsExpanded] = useState(false);
   const pending = rows.filter((row) => !row.payment).reduce((total, row) => total + row.amount, 0);
@@ -66,7 +75,7 @@ export function FixedExpensesCard({
           <Text style={styles.summary}>
             {rows.length === 0
               ? 'Nenhuma despesa fixa neste ciclo.'
-              : `Pagas ${formatCurrency(paid)} · Pendentes ${formatCurrency(pending)}`}
+              : `Pagas ${formatCurrency(paid)} · Pendentes ${formatCurrency(pending)} (reservadas)`}
           </Text>
         </View>
         <Ionicons
@@ -77,6 +86,12 @@ export function FixedExpensesCard({
       </Pressable>
       {isExpanded ? (
         <>
+          {rows.length > 0 ? (
+            <Text style={styles.hint}>
+              As pendentes já estão reservadas no seu saldo. Pagar à vista não muda o quanto você
+              pode gastar; pagar no crédito leva o valor para a fatura do cartão.
+            </Text>
+          ) : null}
           {rows.map(({ expense, amount, payment }) => (
             <View key={expense.id} style={styles.row}>
               <View style={styles.rowText}>
@@ -89,7 +104,10 @@ export function FixedExpensesCard({
                 <Text style={styles.meta}>{expense.category}</Text>
                 <Text style={[styles.status, payment ? styles.statusPaid : styles.statusPending]}>
                   {payment
-                    ? describePayment(payment, installmentsByPurchaseId[payment.cardPurchaseId ?? ''])
+                    ? describePayment(
+                        payment,
+                        installmentsByPurchaseId[payment.cardPurchaseId ?? ''],
+                      )
                     : 'Pendente'}
                 </Text>
               </View>
@@ -132,6 +150,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.md,
+    minHeight: 44,
   },
   headerText: {
     flex: 1,
@@ -141,6 +160,11 @@ const styles = StyleSheet.create({
     color: colors.muted,
     fontSize: 13,
     fontWeight: '700',
+  },
+  hint: {
+    color: colors.muted,
+    fontSize: 13,
+    fontWeight: '600',
   },
   row: {
     alignItems: 'center',

@@ -97,7 +97,8 @@
       "ADR-009",
       "ADR-010",
       "ADR-011",
-      "ADR-012"
+      "ADR-012",
+      "ADR-017"
     ],
     "overrides": [
       {
@@ -115,6 +116,12 @@
         "adr": "ADR-012",
         "section": "architecture.tech_stack",
         "change": "Expo SDK 54 → 57",
+        "date": "2026-10-03"
+      },
+      {
+        "adr": "ADR-017",
+        "section": "contracts.schemas / BR-FIN-004",
+        "change": "documento local v7 + tabela statement_payments (contrato v1 aditivo); fatura pelo vencimento (substitui parte da ADR-014); fixas pendentes reservadas (sobrepõe parte da ADR-015); specs SPEC-016, SPEC-017, SPEC-018",
         "date": "2026-10-03"
       }
     ]

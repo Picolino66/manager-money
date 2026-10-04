@@ -13,7 +13,13 @@ import {
 } from './cycle.use-cases';
 import { DomainError } from './errors';
 import { selectActiveMonth, selectClosedMonths, selectConfig } from './selectors';
-import { countPendingChanges, createEmptyState, hasLocalData, LocalState, UseCaseContext } from './state';
+import {
+  countPendingChanges,
+  createEmptyState,
+  hasLocalData,
+  LocalState,
+  UseCaseContext,
+} from './state';
 import { FinancialConfigInput } from '../domain/financial/financial.types';
 import { toISODate } from '../utils/date';
 
@@ -88,7 +94,11 @@ describe('saveConfig (RF-01, BR-FIN-014)', () => {
       { id: 'freela', name: 'Freela', amount: 80000, payday: 20 },
       { id: 'salario', name: 'Salário', amount: 500000, payday: 5 },
     ];
-    const state = saveConfig(createEmptyState(), { ...baseConfig, incomeSources: sources }, at(2026, 10, 10));
+    const state = saveConfig(
+      createEmptyState(),
+      { ...baseConfig, incomeSources: sources },
+      at(2026, 10, 10),
+    );
     expect(state.settings?.payday).toBe(5);
     expect(selectConfig(state)?.payday).toBe(5);
     expect(selectActiveMonth(openCycle(state, at(2026, 10, 10)))).toMatchObject({
@@ -97,16 +107,72 @@ describe('saveConfig (RF-01, BR-FIN-014)', () => {
     });
 
     // Se o freela passa a ser a maior fonte, o ciclo (do próximo em diante) segue o dia dele.
-    const swapped = saveConfig(state, { ...baseConfig, incomeSources: [{ ...sources[0]!, amount: 900000 }, sources[1]!] }, at(2026, 10, 11));
+    const swapped = saveConfig(
+      state,
+      { ...baseConfig, incomeSources: [{ ...sources[0]!, amount: 900000 }, sources[1]!] },
+      at(2026, 10, 11),
+    );
     expect(swapped.settings?.payday).toBe(20);
   });
 
   it('BR-FIN-024: rejeita dia de pagamento fora de 1–28 em qualquer fonte', () => {
     for (const payday of [0, 29, 1.5]) {
       expect(() =>
-        saveConfig(createEmptyState(), { ...baseConfig, incomeSources: [{ id: 'a', name: 'A', amount: 100, payday }] }, at(2026, 10, 10)),
+        saveConfig(
+          createEmptyState(),
+          { ...baseConfig, incomeSources: [{ id: 'a', name: 'A', amount: 100, payday }] },
+          at(2026, 10, 10),
+        ),
       ).toThrow('dia de pagamento');
     }
+  });
+
+  it('BR-FIN-018/024: fonte inativa não soma e não define o dia de pagamento', () => {
+    const state = saveConfig(
+      createEmptyState(),
+      {
+        ...baseConfig,
+        incomeSources: [
+          { id: 'salario', name: 'Salário', amount: 500000, payday: 5 },
+          { id: 'bonus', name: 'Bônus', amount: 900000, payday: 20, active: false },
+        ],
+      },
+      at(2026, 10, 10),
+    );
+    // A inativa seria a maior fonte (900.000, dia 20), mas não conta.
+    expect(state.settings).toMatchObject({ monthlyIncome: 500000, payday: 5 });
+    expect(state.settings?.incomeSources[1]).toMatchObject({ id: 'bonus', active: false });
+    // Fonte ativa sem o campo continua sem ele (ausente = ativa).
+    expect(state.settings?.incomeSources[0]).not.toHaveProperty('active');
+    const month = selectActiveMonth(openCycle(state, at(2026, 10, 10)));
+    expect(month).toMatchObject({ startDate: '2026-10-05', endDate: '2026-11-04' });
+    // 500.000 − 50.000 − 150.000 − 10.000: o bônus inativo não entra no saldo.
+    expect(month?.initialAvailableAmount).toBe(290000);
+  });
+
+  it('BR-FIN-018: exige ao menos uma fonte de renda ativa', () => {
+    expect(() =>
+      saveConfig(
+        createEmptyState(),
+        {
+          ...baseConfig,
+          incomeSources: [
+            { id: 'renda', name: 'Salário', amount: 500000, payday: 7, active: false },
+          ],
+        },
+        at(2026, 10, 10),
+      ),
+    ).toThrow('ao menos uma fonte de renda ativa');
+
+    // Também ao desativar a única fonte de uma configuração existente.
+    const state = configured();
+    expect(() =>
+      saveConfig(
+        state,
+        { ...baseConfig, incomeSources: [{ ...baseConfig.incomeSources[0]!, active: false }] },
+        at(2026, 10, 11),
+      ),
+    ).toThrow('ao menos uma fonte de renda ativa');
   });
 
   it('BR-FIN-018: alterar só as fontes marca settings como sujo', () => {
@@ -117,7 +183,13 @@ describe('saveConfig (RF-01, BR-FIN-014)', () => {
     };
     const changed = saveConfig(
       clean,
-      { ...baseConfig, incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 7 }, { id: 'x', name: 'Extra', amount: 1000, payday: 7 }] },
+      {
+        ...baseConfig,
+        incomeSources: [
+          { id: 'renda', name: 'Salário', amount: 500000, payday: 7 },
+          { id: 'x', name: 'Extra', amount: 1000, payday: 7 },
+        ],
+      },
       at(2026, 10, 11),
     );
     expect(changed.settings).toMatchObject({ dirty: true, monthlyIncome: 501000 });
@@ -140,7 +212,7 @@ describe('saveConfig (RF-01, BR-FIN-014)', () => {
     expect(selectConfig(state)?.fixedExpenses).toHaveLength(0);
   });
 
-  it('com ciclo ativo, recalcula o saldo inicial e inicia parcelamentos pendentes', () => {
+  it('com ciclo ativo, recalcula o saldo inicial (fixa nova reservada) e inicia parcelamentos pendentes', () => {
     const opened = openCycle(configured(), at(2026, 10, 10));
     const before = selectActiveMonth(opened)?.initialAvailableAmount;
     const updated = saveConfig(
@@ -162,8 +234,9 @@ describe('saveConfig (RF-01, BR-FIN-014)', () => {
       },
       at(2026, 10, 12),
     );
-    // Fixa nova pendente não muda o saldo; só o pagamento desconta (BR-FIN-021).
-    expect(selectActiveMonth(updated)?.initialAvailableAmount).toBe(before);
+    // BR-FIN-004: fixa nova ativa e pendente fica reservada no ciclo: 290.000 − 20.000.
+    expect(before).toBe(290000);
+    expect(selectActiveMonth(updated)?.initialAvailableAmount).toBe(270000);
     const celular = updated.fixedExpenses.find((record) => record.id === 'celular');
     expect(celular?.type === 'installment' && celular.startedAtCycleId).toBe(
       selectActiveMonth(updated)?.id,
@@ -188,12 +261,20 @@ describe('openCycle (RF-03, BR-FIN-013, BR-FIN-017)', () => {
   it('abre com o período do dia de pagamento e saldo correto', () => {
     const month = selectActiveMonth(openCycle(configured(), at(2026, 10, 10)));
     expect(month).toMatchObject({ startDate: '2026-10-07', endDate: '2026-11-06' });
-    // BR-FIN-004: fixas pendentes não descontam. 500000 − 50000 (meta)
-    expect(month?.initialAvailableAmount).toBe(450000);
+    // BR-FIN-004: fixas ativas pendentes ficam reservadas.
+    // 500.000 − 50.000 (meta) − 150.000 (aluguel) − 10.000 (parcela do notebook) = 290.000
+    expect(month?.initialAvailableAmount).toBe(290000);
   });
 
   it('respeita payday configurado', () => {
-    const state = saveConfig(createEmptyState(), { ...baseConfig, incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 20 }] }, at(2026, 10, 10));
+    const state = saveConfig(
+      createEmptyState(),
+      {
+        ...baseConfig,
+        incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 20 }],
+      },
+      at(2026, 10, 10),
+    );
     expect(selectActiveMonth(openCycle(state, at(2026, 10, 10)))).toMatchObject({
       startDate: '2026-09-20',
       endDate: '2026-10-19',
@@ -211,26 +292,141 @@ describe('openCycle (RF-03, BR-FIN-013, BR-FIN-017)', () => {
       ...state,
       cycles: state.cycles.map((cycle) => ({ ...cycle, endDate: '2026-11-10' })),
     };
-    expect(toISODate(calculateNextCycleStartDate(legacy, new Date(2026, 10, 8)))).toBe('2026-11-11');
+    expect(toISODate(calculateNextCycleStartDate(legacy, new Date(2026, 10, 8)))).toBe(
+      '2026-11-11',
+    );
   });
 
   it('parcelas avançam uma vez por ciclo e herdam dívida', () => {
     let state = openCycle(configured(), at(2026, 10, 10));
     expect(installment(state).remainingInstallments).toBe(3);
-    state = addExpense(state, { amount: 600000, category: 'Lazer', description: 'Viagem', date: '2026-10-11' }, at(2026, 10, 11));
+    state = addExpense(
+      state,
+      { amount: 600000, category: 'Lazer', description: 'Viagem', date: '2026-10-11' },
+      at(2026, 10, 11),
+    );
     state = closeCycle(state, at(2026, 11, 7));
-    expect(selectClosedMonths(state)[0]?.finalBalance).toBe(-150000);
+    // 290.000 (saldo com fixas reservadas) − 600.000 = −310.000
+    expect(selectClosedMonths(state)[0]?.finalBalance).toBe(-310000);
     state = openCycle(state, at(2026, 11, 7));
     expect(installment(state).remainingInstallments).toBe(2);
-    expect(selectActiveMonth(state)?.previousMonthDebt).toBe(150000);
+    expect(selectActiveMonth(state)?.previousMonthDebt).toBe(310000);
+    // 290.000 − 310.000 de dívida herdada (BR-FIN-005/006).
+    expect(selectActiveMonth(state)?.initialAvailableAmount).toBe(-20000);
+  });
+
+  it('BR-FIN-004/010: parcelamento que termina ao avançar não fica reservado no novo ciclo', () => {
+    const lastInstallment = saveConfig(
+      createEmptyState(),
+      {
+        ...baseConfig,
+        fixedExpenses: [
+          { ...baseConfig.fixedExpenses[1]!, totalInstallments: 1, remainingInstallments: 1 },
+        ],
+      } as FinancialConfigInput,
+      at(2026, 10, 10),
+    );
+    let state = openCycle(lastInstallment, at(2026, 10, 10));
+    // 500.000 − 50.000 (meta) − 10.000 (última parcela) = 440.000
+    expect(selectActiveMonth(state)?.initialAvailableAmount).toBe(440000);
+    state = closeCycle(state, at(2026, 11, 7));
+    state = openCycle(state, at(2026, 11, 7));
+    expect(installment(state).remainingInstallments).toBe(0);
+    // Sobra não é transferida (BR-FIN-005); sem parcela restante: 500.000 − 50.000 = 450.000.
+    expect(selectActiveMonth(state)?.initialAvailableAmount).toBe(450000);
+  });
+});
+
+describe('parcelamento inativo (BR-FIN-004, BR-FIN-010)', () => {
+  const inactiveNotebook = (state: LocalState, active: boolean): FinancialConfigInput => ({
+    ...baseConfig,
+    fixedExpenses: [baseConfig.fixedExpenses[0]!, { ...installment(state), active }],
+  });
+
+  it('não inicia, não reserva e não avança ao abrir ciclo', () => {
+    const configuredInactive = saveConfig(
+      createEmptyState(),
+      {
+        ...baseConfig,
+        fixedExpenses: baseConfig.fixedExpenses.map((expense) =>
+          expense.id === 'notebook' ? { ...expense, active: false } : expense,
+        ),
+      },
+      at(2026, 10, 10),
+    );
+    let state = openCycle(configuredInactive, at(2026, 10, 10));
+    // 500.000 − 50.000 − 150.000: a parcela do notebook inativo não fica reservada.
+    expect(selectActiveMonth(state)?.initialAvailableAmount).toBe(300000);
+    expect(installment(state)).toMatchObject({ remainingInstallments: 3, active: false });
+    expect(installment(state).startedAtCycleId).toBeUndefined();
+
+    state = openCycle(closeCycle(state, at(2026, 11, 7)), at(2026, 11, 7));
+    expect(installment(state).remainingInstallments).toBe(3);
+    expect(installment(state).startedAtCycleId).toBeUndefined();
+  });
+
+  it('pausado no meio fica parado; reativado volta a reservar e avançar', () => {
+    let state = openCycle(configured(), at(2026, 10, 10));
+    const firstCycleId = selectActiveMonth(state)!.id;
+    expect(installment(state)).toMatchObject({
+      remainingInstallments: 3,
+      startedAtCycleId: firstCycleId,
+    });
+
+    // Desativado no 1º ciclo: devolve a reserva da parcela (290.000 → 300.000).
+    state = saveConfig(state, inactiveNotebook(state, false), at(2026, 10, 11));
+    expect(selectActiveMonth(state)?.initialAvailableAmount).toBe(300000);
+
+    state = openCycle(closeCycle(state, at(2026, 11, 7)), at(2026, 11, 7));
+    expect(installment(state)).toMatchObject({
+      remainingInstallments: 3,
+      startedAtCycleId: firstCycleId,
+    });
+    expect(selectActiveMonth(state)?.initialAvailableAmount).toBe(300000);
+
+    // Reativado: volta a reservar no ciclo ativo e avança na próxima abertura.
+    state = saveConfig(state, inactiveNotebook(state, true), at(2026, 11, 8));
+    expect(selectActiveMonth(state)?.initialAvailableAmount).toBe(290000);
+    state = openCycle(closeCycle(state, at(2026, 12, 7)), at(2026, 12, 7));
+    expect(installment(state).remainingInstallments).toBe(2);
+  });
+
+  // Regressão: a reserva do novo ciclo usa as parcelas já avançadas (a que zerou não reserva).
+  it('parcelamento que termina não fica reservado no ciclo seguinte', () => {
+    let state = saveConfig(
+      createEmptyState(),
+      {
+        ...baseConfig,
+        fixedExpenses: baseConfig.fixedExpenses.map((expense) =>
+          expense.id === 'notebook'
+            ? { ...expense, totalInstallments: 1, remainingInstallments: 1 }
+            : expense,
+        ),
+      },
+      at(2026, 10, 10),
+    );
+    state = openCycle(state, at(2026, 10, 10));
+    expect(selectActiveMonth(state)?.initialAvailableAmount).toBe(290000);
+    state = openCycle(closeCycle(state, at(2026, 11, 7)), at(2026, 11, 7));
+    expect(installment(state).remainingInstallments).toBe(0);
+    // 500.000 − 50.000 − 150.000 = 300.000 (sem a parcela que zerou).
+    expect(selectActiveMonth(state)?.initialAvailableAmount).toBe(300000);
   });
 });
 
 describe('receiveIncomeEarly (BR-FIN-003, BR-FIN-016)', () => {
   function inEarlyWindow() {
     let state = openCycle(configured(), at(2026, 10, 10));
-    state = addExpense(state, { amount: 1000, category: '', description: 'Antes', date: '2026-11-02' }, at(2026, 11, 2));
-    state = addExpense(state, { amount: 2000, category: 'Lazer', description: 'Depois', date: '2026-11-04' }, at(2026, 11, 2));
+    state = addExpense(
+      state,
+      { amount: 1000, category: '', description: 'Antes', date: '2026-11-02' },
+      at(2026, 11, 2),
+    );
+    state = addExpense(
+      state,
+      { amount: 2000, category: 'Lazer', description: 'Depois', date: '2026-11-04' },
+      at(2026, 11, 2),
+    );
     return state;
   }
 
@@ -254,9 +450,13 @@ describe('receiveIncomeEarly (BR-FIN-003, BR-FIN-016)', () => {
   });
 
   it('exige ciclo ativo, configuração e janela', () => {
-    expect(() => receiveIncomeEarly(configured(), at(2026, 11, 3))).toThrow('Nenhum ciclo ativo para antecipar.');
+    expect(() => receiveIncomeEarly(configured(), at(2026, 11, 3))).toThrow(
+      'Nenhum ciclo ativo para antecipar.',
+    );
     expect(() => receiveIncomeEarly(createEmptyState(), at(2026, 11, 3))).toThrow(DomainError);
-    expect(() => receiveIncomeEarly(openCycle(configured(), at(2026, 10, 10)), at(2026, 10, 20))).toThrow(DomainError);
+    expect(() =>
+      receiveIncomeEarly(openCycle(configured(), at(2026, 10, 10)), at(2026, 10, 20)),
+    ).toThrow(DomainError);
   });
 });
 
@@ -267,13 +467,18 @@ describe('closeCycle (RF-11, BR-FIN-017)', () => {
     expect(() => closeCycle(state, at(2026, 11, 6))).toThrow('O ciclo termina em 06/11.');
     const closed = closeCycle(state, at(2026, 11, 7));
     expect(selectActiveMonth(closed)).toBeNull();
-    expect(selectClosedMonths(closed)[0]?.finalBalance).toBe(450000);
+    expect(selectClosedMonths(closed)[0]?.finalBalance).toBe(290000);
     expect(() => closeCycle(closed, at(2026, 11, 7))).toThrow('Nenhum ciclo ativo para fechar.');
   });
 });
 
 describe('gastos (RF-05, RF-06, BR-FIN-011)', () => {
-  const input = { amount: 2500, category: ' Alimentação ', description: ' Almoço ', date: '2026-10-12' };
+  const input = {
+    amount: 2500,
+    category: ' Alimentação ',
+    description: ' Almoço ',
+    date: '2026-10-12',
+  };
 
   it('cria normalizado, edita e exclui logicamente', () => {
     let state = openCycle(configured(), at(2026, 10, 10));
@@ -288,7 +493,9 @@ describe('gastos (RF-05, RF-06, BR-FIN-011)', () => {
     state = deleteExpense(state, created!.id, at(2026, 10, 14));
     expect(selectActiveMonth(state)?.expenses).toHaveLength(0);
     expect(state.expenses[0]?.deletedAt).not.toBeNull();
-    expect(() => deleteExpense(state, created!.id, at(2026, 10, 14))).toThrow('Gasto não encontrado no ciclo ativo.');
+    expect(() => deleteExpense(state, created!.id, at(2026, 10, 14))).toThrow(
+      'Gasto não encontrado no ciclo ativo.',
+    );
   });
 
   it('rejeita data fora do ciclo e gasto de ciclo fechado', () => {

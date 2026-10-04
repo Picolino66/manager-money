@@ -3,6 +3,8 @@
 - **Status:** ACCEPTED · **Fase:** F3 (evolução) · **Data:** 2026-10-03
 - **Atualiza:** [ADR-003](ADR-003-persistencia-local.md) (documento v4), [ADR-004](ADR-004-sincronizacao.md) (novas tabelas)
   e [ADR-008](ADR-008-modelo-de-dados-e-consistencia.md) (modelo de dados). Relaciona [ADR-013](ADR-013-fontes-de-renda.md).
+- **Substituída em parte por:** [ADR-017](ADR-017-faturas-limite-e-situacao-inicial.md) — a fatura passa a pesar no
+  ciclo do **vencimento** (não mais do fechamento) e a compra grava também `first_statement_key`.
 
 ## Contexto
 

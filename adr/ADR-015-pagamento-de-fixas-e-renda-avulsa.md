@@ -3,6 +3,8 @@
 - **Status:** ACCEPTED · **Fase:** F3 (evolução) · **Data:** 2026-10-03
 - **Atualiza:** [ADR-003](ADR-003-persistencia-local.md) (documento v5), [ADR-004](ADR-004-sincronizacao.md) (novas tabelas) e
   [ADR-008](ADR-008-modelo-de-dados-e-consistencia.md). Depende de [ADR-014](ADR-014-cartoes-de-credito.md).
+- **Substituída em parte por:** [ADR-017](ADR-017-faturas-limite-e-situacao-inicial.md) — despesas fixas ativas
+  pendentes passam a ficar **reservadas** no saldo do ciclo (BR-FIN-004).
 
 ## Contexto
 

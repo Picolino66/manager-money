@@ -19,7 +19,9 @@ const purchase: CardPurchase = {
   totalAmount: 10000,
   installments: 3,
   purchaseDate: '2026-10-20',
+  firstStatementKey: '2026-10',
   firstCycleKey: '2026-11',
+  settledInstallments: 0,
   createdAt: '2026-10-20T12:00:00.000Z',
 };
 
@@ -56,29 +58,51 @@ describe('fechamento da fatura (BR-FIN-019)', () => {
     expect(calculateInvoiceClosingDate(new Date(2026, 11, 28), 25)).toEqual(new Date(2027, 0, 25));
   });
 
-  it('a compra cai no ciclo que contém o fechamento, nunca antes do ciclo ativo', () => {
-    // Fecha 25, pagamento dia 7: antes do fechamento = ciclo atual; depois = próximo.
-    expect(calculateFirstCycleKey(new Date(2026, 9, 20), 25, 7, '2026-10')).toBe('2026-10');
-    expect(calculateFirstCycleKey(new Date(2026, 9, 28), 25, 7, '2026-10')).toBe('2026-11');
-    // Dia 2/11 ainda está no ciclo de outubro, mas o fechamento (25/11) cai no ciclo de novembro.
-    expect(calculateFirstCycleKey(new Date(2026, 10, 2), 25, 7, '2026-10')).toBe('2026-11');
-    // Fecha dia 3: o fechamento (3/11) está no ciclo de outubro.
-    expect(calculateFirstCycleKey(new Date(2026, 9, 20), 3, 7, '2026-10')).toBe('2026-10');
-    // Fechamento antes do início do ciclo ativo (ciclo antecipado) é limitado ao ciclo ativo.
-    expect(calculateFirstCycleKey(new Date(2026, 10, 4), 5, 7, '2026-11')).toBe('2026-11');
+  it('a compra cai no ciclo que contém o vencimento da fatura, nunca antes do ciclo ativo', () => {
+    // Fecha 25, vence 5, pagamento dia 7: o vencimento (5/11) ainda está no ciclo de outubro.
+    expect(
+      calculateFirstCycleKey(new Date(2026, 9, 20), { closingDay: 25, dueDay: 5 }, 7, '2026-10'),
+    ).toBe('2026-10');
+    expect(
+      calculateFirstCycleKey(new Date(2026, 9, 28), { closingDay: 25, dueDay: 5 }, 7, '2026-10'),
+    ).toBe('2026-11');
+    // Dia 2/11 ainda está no ciclo de outubro, mas o vencimento (5/12) cai no ciclo de novembro.
+    expect(
+      calculateFirstCycleKey(new Date(2026, 10, 2), { closingDay: 25, dueDay: 5 }, 7, '2026-10'),
+    ).toBe('2026-11');
+    // Fecha dia 3 e vence dia 5: o vencimento (5/11) está no ciclo de outubro.
+    expect(
+      calculateFirstCycleKey(new Date(2026, 9, 20), { closingDay: 3, dueDay: 5 }, 7, '2026-10'),
+    ).toBe('2026-10');
+    // Vencimento (6/11) antes do início do ciclo ativo (antecipado) é limitado ao ciclo ativo.
+    expect(
+      calculateFirstCycleKey(new Date(2026, 10, 4), { closingDay: 5, dueDay: 6 }, 7, '2026-11'),
+    ).toBe('2026-11');
   });
 });
 
 describe('parcelas por ciclo', () => {
   it('devolve a parcela certa em cada ciclo e nada fora do intervalo', () => {
     expect(calculateInstallmentForCycle(purchase, '2026-10')).toBeNull();
-    expect(calculateInstallmentForCycle(purchase, '2026-11')).toMatchObject({ number: 1, amount: 3334 });
-    expect(calculateInstallmentForCycle(purchase, '2027-01')).toMatchObject({ number: 3, amount: 3333 });
+    expect(calculateInstallmentForCycle(purchase, '2026-11')).toMatchObject({
+      number: 1,
+      amount: 3334,
+    });
+    expect(calculateInstallmentForCycle(purchase, '2027-01')).toMatchObject({
+      number: 3,
+      amount: 3333,
+    });
     expect(calculateInstallmentForCycle(purchase, '2027-02')).toBeNull();
   });
 
   it('soma as cobranças do ciclo e informa o último ciclo', () => {
-    const other: CardPurchase = { ...purchase, id: 'p2', totalAmount: 600, installments: 1, firstCycleKey: '2026-12' };
+    const other: CardPurchase = {
+      ...purchase,
+      id: 'p2',
+      totalAmount: 600,
+      installments: 1,
+      firstCycleKey: '2026-12',
+    };
     expect(calculateCardChargesForCycle([purchase, other], '2026-12')).toBe(3333 + 600);
     expect(calculateCardChargesForCycle([purchase, other], '2026-10')).toBe(0);
     expect(lastInstallmentCycleKey(purchase)).toBe('2027-01');
