@@ -10,7 +10,7 @@ summary: >
 code:
   - packages/core/src/domain/financial/credit-card.ts
   - packages/core/src/application/card.use-cases.ts
-last_verified_commit: bfe9de6+T-028r2
+last_verified_commit: 7903717+T-041c
 ---
 
 # Módulo: cartões de crédito

@@ -49,6 +49,8 @@ type FinancialState = {
   setCreditCardActive: (cardId: string, active: boolean) => Promise<void>;
   addCardPurchase: (purchase: cardUseCases.CardPurchaseInput) => Promise<void>;
   addExistingCardDebt: (input: cardUseCases.ExistingCardDebtInput) => Promise<void>;
+  /** Situação inicial em lote (tudo ou nada). */
+  addExistingCardDebts: (inputs: cardUseCases.ExistingCardDebtInput[]) => Promise<void>;
   updateCardPurchase: (purchaseId: string, input: cardUseCases.CardPurchaseUpdate) => Promise<void>;
   deleteCardPurchase: (purchaseId: string) => Promise<void>;
   payStatement: (input: cardUseCases.PayStatementInput) => Promise<void>;
@@ -174,6 +176,8 @@ export const useFinancialStore = create<FinancialState>((set, get) => {
     addCardPurchase: (input) => run((doc, ctx) => cardUseCases.addCardPurchase(doc, input, ctx)),
     addExistingCardDebt: (input) =>
       run((doc, ctx) => cardUseCases.addExistingCardDebt(doc, input, ctx)),
+    addExistingCardDebts: (inputs) =>
+      run((doc, ctx) => cardUseCases.addExistingCardDebts(doc, inputs, ctx)),
     updateCardPurchase: (id, input) =>
       run((doc, ctx) => cardUseCases.updateCardPurchase(doc, id, input, ctx)),
     deleteCardPurchase: (id) => run((doc, ctx) => cardUseCases.deleteCardPurchase(doc, id, ctx)),

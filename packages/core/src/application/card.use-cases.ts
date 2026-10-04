@@ -543,6 +543,34 @@ export function addExistingCardDebt(
 }
 
 /**
+ * Cadastro em lote da situação inicial (BR-FIN-027/032): aplica `addExistingCardDebt` a cada item, em
+ * ordem, sobre o mesmo estado — então as validações acumuladas valem entre os itens (ex.: as parcelas
+ * "já no total" não passam do total da fatura). Tudo ou nada: o primeiro item recusado desfaz o lote
+ * e o erro diz qual foi.
+ */
+export function addExistingCardDebts(
+  state: LocalState,
+  inputs: ExistingCardDebtInput[],
+  ctx: UseCaseContext,
+): LocalState {
+  if (inputs.length === 0) {
+    throw new DomainError('Adicione ao menos um item para salvar.');
+  }
+
+  return inputs.reduce((current, input, index) => {
+    try {
+      return addExistingCardDebt(current, input, ctx);
+    } catch (error) {
+      if (error instanceof DomainError) {
+        throw new DomainError(`Item ${index + 1} (${input.description.trim()}): ${error.message}`);
+      }
+
+      throw error;
+    }
+  }, state);
+}
+
+/**
  * BR-FIN-029: a compra só muda (editar, excluir, estornar) enquanto nenhum ciclo fechado contou uma
  * parcela dela e nenhuma fatura paga contém parcela dela. Ciclos fechados antes do cadastro da
  * compra nunca a contaram.

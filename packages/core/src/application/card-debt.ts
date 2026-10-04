@@ -9,8 +9,9 @@ import {
   statementCycleKey,
   statementDueDate,
 } from '../domain/financial/credit-card';
-import { MoneyCents } from '../domain/financial/financial.types';
+import { DEFAULT_EXPENSE_CATEGORY, MoneyCents } from '../domain/financial/financial.types';
 import { toISODate } from '../utils/date';
+import { ExistingCardDebtInput } from './card.use-cases';
 import { selectCardStatements } from './selectors';
 import { CardPurchaseRecord, isLive, LocalState } from './state';
 
@@ -108,4 +109,68 @@ export function existingDebtCommitted(
   includedInBalance: boolean,
 ): MoneyCents {
   return amount * (includedInBalance ? remaining - 1 : remaining);
+}
+
+export type ExistingDebtMode = 'statement' | 'installments';
+
+export type ExistingDebtDraft = {
+  mode: ExistingDebtMode;
+  description: string;
+  amount: MoneyCents;
+  total: number;
+  remaining: number;
+};
+
+export type ExistingDebtErrors = Partial<
+  Record<'description' | 'amount' | 'total' | 'remaining', string>
+>;
+
+/** Validação do formulário (a mesma no app e no web); o núcleo valida de novo ao gravar. */
+export function validateExistingDebtDraft(draft: ExistingDebtDraft): ExistingDebtErrors {
+  const errors: ExistingDebtErrors = {};
+  const installments = draft.mode === 'installments';
+
+  if (installments && !draft.description.trim()) errors.description = 'Informe uma descrição.';
+  if (draft.amount <= 0) errors.amount = 'Informe um valor maior que zero.';
+
+  if (installments) {
+    if (draft.total < 1 || draft.total > MAX_CARD_INSTALLMENTS) {
+      errors.total = `Informe de 1 a ${MAX_CARD_INSTALLMENTS} parcelas.`;
+    }
+
+    if (draft.remaining < 1 || draft.remaining > draft.total) {
+      errors.remaining = 'As parcelas restantes devem ficar entre 1 e o total.';
+    }
+  }
+
+  return errors;
+}
+
+/** Formulário validado → entrada do caso de uso (fatura em aberto usa a categoria padrão). */
+export function buildExistingDebtInput(args: {
+  cardId: string;
+  mode: ExistingDebtMode;
+  description: string;
+  category: string;
+  amount: MoneyCents;
+  total: number;
+  remaining: number;
+  statementKey: string;
+  includedInBalance: boolean;
+}): ExistingCardDebtInput {
+  const installments = args.mode === 'installments';
+
+  return {
+    cardId: args.cardId,
+    description:
+      args.description.trim() ||
+      `Fatura ${args.statementKey.slice(5, 7)}/${args.statementKey.slice(0, 4)}`,
+    category: installments ? args.category : DEFAULT_EXPENSE_CATEGORY,
+    installmentAmount: args.amount,
+    totalInstallments: installments ? args.total : 1,
+    remainingInstallments: installments ? args.remaining : 1,
+    nextStatementKey: args.statementKey,
+    ...(installments ? {} : { statementBalance: true }),
+    ...(installments && args.includedInBalance ? { includedInStatementBalance: true } : {}),
+  };
 }

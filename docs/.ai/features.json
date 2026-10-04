@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T22:56:12.652Z",
-  "source_commit": "3b70dac",
+  "generated_at": "2026-10-04T23:20:07.353Z",
+  "source_commit": "e3632a9",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -273,6 +273,8 @@
         "limite já usado"
       ],
       "symbols": [
+        "addExistingCardDebts",
+        "validateExistingDebtDraft",
         "selectStatementChoices",
         "findStatementBalance",
         "existingDebtCycleRange",
@@ -280,8 +282,7 @@
         "listOpenInstallments",
         "listEffectiveInstallments",
         "calculateInstallmentForCycle",
-        "firstCountedCycleKey",
-        "updateCardPurchase"
+        "firstCountedCycleKey"
       ],
       "business_rules": [
         "BR-FIN-027",

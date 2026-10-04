@@ -1,11 +1,19 @@
-import { payStatement, saveCreditCard, addExistingCardDebt } from './card.use-cases';
 import {
+  addExistingCardDebt,
+  addExistingCardDebts,
+  payStatement,
+  saveCreditCard,
+} from './card.use-cases';
+import { DomainError } from './errors';
+import {
+  buildExistingDebtInput,
   existingDebtCommitted,
   existingDebtCycleRange,
   findStatementBalance,
   isValidInstallmentCount,
   resolveChosenStatement,
   selectStatementChoices,
+  validateExistingDebtDraft,
 } from './card-debt';
 import { openCycle, saveConfig } from './cycle.use-cases';
 import { selectCreditCards } from './selectors';
@@ -96,5 +104,152 @@ describe('situação inicial do cartão (núcleo)', () => {
 
     expect(existingDebtCommitted(10000, 4, false)).toBe(40000);
     expect(existingDebtCommitted(10000, 4, true)).toBe(30000);
+  });
+});
+
+describe('cadastro em lote da situação inicial', () => {
+  const item = (description: string, extra: object = {}) => ({
+    description,
+    category: 'Outros',
+    installmentAmount: 10000,
+    totalInstallments: 10,
+    remainingInstallments: 6,
+    nextStatementKey: '2026-11',
+    ...extra,
+  });
+
+  it('grava todos os itens de uma vez, cada um com seu id', () => {
+    const state = fixture();
+    const cardId = selectCreditCards(state)[0]!.id;
+    const next = addExistingCardDebts(
+      state,
+      [item('Celular'), item('Geladeira', { remainingInstallments: 3 })].map((input) => ({
+        ...input,
+        cardId,
+      })),
+      at(10),
+    );
+    const purchases = next.cardPurchases.filter((purchase) => purchase.origin === 'existing');
+
+    expect(purchases.map((purchase) => purchase.description)).toEqual(['Celular', 'Geladeira']);
+    expect(new Set(purchases.map((purchase) => purchase.id)).size).toBe(2);
+    expect(purchases.every((purchase) => purchase.dirty)).toBe(true);
+  });
+
+  it('tudo ou nada: item inválido desfaz o lote e o erro diz qual foi', () => {
+    const state = fixture();
+    const cardId = selectCreditCards(state)[0]!.id;
+    const inputs = [
+      item('Celular'),
+      item('Geladeira', { remainingInstallments: 12 }),
+      item('TV'),
+    ].map((input) => ({ ...input, cardId }));
+
+    expect(() => addExistingCardDebts(state, inputs, at(10))).toThrow(
+      /^Item 2 \(Geladeira\): As parcelas restantes/,
+    );
+    expect(state.cardPurchases).toHaveLength(0);
+    expect(() => addExistingCardDebts(state, [], at(10))).toThrow(DomainError);
+  });
+
+  it('as parcelas incluídas no total somam entre os itens do mesmo lote', () => {
+    let state = fixture();
+    const cardId = selectCreditCards(state)[0]!.id;
+    state = addExistingCardDebt(
+      state,
+      {
+        cardId,
+        description: 'Fatura',
+        category: 'Outros',
+        installmentAmount: 10000,
+        totalInstallments: 1,
+        remainingInstallments: 1,
+        nextStatementKey: '2026-11',
+        statementBalance: true,
+      },
+      at(10),
+    );
+    const included = (description: string) => ({
+      ...item(description, { installmentAmount: 6000, includedInStatementBalance: true }),
+      cardId,
+    });
+
+    expect(() => addExistingCardDebts(state, [included('A'), included('B')], at(10))).toThrow(
+      /^Item 2 \(B\): As parcelas incluídas somam mais/,
+    );
+    expect(addExistingCardDebts(state, [included('A')], at(10)).cardPurchases).toHaveLength(2);
+  });
+});
+
+describe('formulário da situação inicial', () => {
+  const draft = {
+    mode: 'installments' as const,
+    description: 'Celular',
+    amount: 10000,
+    total: 10,
+    remaining: 6,
+  };
+
+  it('valida parcelamento e fatura em aberto', () => {
+    expect(validateExistingDebtDraft(draft)).toEqual({});
+    expect(
+      validateExistingDebtDraft({ ...draft, description: ' ', amount: 0, remaining: 11 }),
+    ).toEqual({
+      description: 'Informe uma descrição.',
+      amount: 'Informe um valor maior que zero.',
+      remaining: 'As parcelas restantes devem ficar entre 1 e o total.',
+    });
+    expect(validateExistingDebtDraft({ ...draft, total: 49 }).total).toMatch(/1 a 48/);
+    // Fatura em aberto: descrição opcional, parcelas ignoradas.
+    expect(
+      validateExistingDebtDraft({
+        mode: 'statement',
+        description: '',
+        amount: 500,
+        total: 0,
+        remaining: 0,
+      }),
+    ).toEqual({});
+    expect(
+      validateExistingDebtDraft({
+        mode: 'statement',
+        description: '',
+        amount: 0,
+        total: 0,
+        remaining: 0,
+      }).amount,
+    ).toBeDefined();
+  });
+
+  it('monta a entrada do caso de uso nos dois modos', () => {
+    const base = {
+      cardId: 'c1',
+      category: 'Lazer',
+      amount: 10000,
+      total: 10,
+      remaining: 6,
+      statementKey: '2026-11',
+      includedInBalance: true,
+    };
+
+    expect(
+      buildExistingDebtInput({ ...base, mode: 'installments', description: ' Celular ' }),
+    ).toEqual({
+      cardId: 'c1',
+      description: 'Celular',
+      category: 'Lazer',
+      installmentAmount: 10000,
+      totalInstallments: 10,
+      remainingInstallments: 6,
+      nextStatementKey: '2026-11',
+      includedInStatementBalance: true,
+    });
+    expect(buildExistingDebtInput({ ...base, mode: 'statement', description: '' })).toMatchObject({
+      description: 'Fatura 11/2026',
+      category: 'Outros',
+      totalInstallments: 1,
+      remainingInstallments: 1,
+      statementBalance: true,
+    });
   });
 });

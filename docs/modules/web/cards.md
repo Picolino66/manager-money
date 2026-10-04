@@ -22,7 +22,7 @@ symbols: [CardDebtPage, selectStatementChoices, buildCardStatementsView, stateme
 business_rules: [BR-FIN-019, BR-FIN-025, BR-FIN-026, BR-FIN-028, BR-FIN-029, BR-FIN-033, BR-FIN-034]
 adrs: [ADR-018, ADR-020, ADR-022]
 tests: [packages/core/src/application/card-view.test.ts, packages/core/src/application/card-debt.test.ts, client/src/features/settings.test.tsx]
-last_verified_commit: 7903717+T-041b
+last_verified_commit: 7903717+T-041c
 ---
 
 # Cartões (CLIENT-017)
@@ -40,6 +40,6 @@ last_verified_commit: 7903717+T-041b
 - Compras: lápis (`CardPurchaseFormDialog` → `updateCardPurchase`) e lixeira (`deleteCardPurchase`); compra já
   contada em ciclo fechado ou fatura paga aparece "Bloqueada" (BR-FIN-029). Compra anterior ao app só muda
   descrição e categoria.
-- **Compras anteriores ao app** (`/ajustes/cartoes/:id/compras-anteriores`, `CardDebtPage` → `addExistingCardDebt`): modos "Fatura em aberto" (total que o banco mostra) e "Parcelamento em andamento" (valor, total e restantes), faturas ainda não vencidas e sem lançamento (`selectStatementChoices`), aviso de total já informado, opção "esta parcela já está no total" e prévia da agenda e do limite comprometido (`card-debt`, núcleo, igual ao app). Botão no detalhe do cartão e oferta ao cadastrar um cartão novo. Ver [card.existing-debt](../card/existing-debt.md).
+- **Compras anteriores ao app** (`/ajustes/cartoes/:id/compras-anteriores`, `CardDebtPage` → `addExistingCardDebt`): modos "Fatura em aberto" (total que o banco mostra) e "Parcelamento em andamento" (valor, total e restantes), faturas ainda não vencidas e sem lançamento (`selectStatementChoices`), aviso de total já informado, opção "esta parcela já está no total" e prévia da agenda e do limite comprometido (`card-debt`, núcleo, igual ao app). Em "Parcelamento em andamento" há **modo lote**: "Adicionar à lista" (com Remover) e "Salvar tudo (N)" numa única gravação (`addExistingCardDebts`, tudo ou nada). Botão no detalhe do cartão e oferta ao cadastrar um cartão novo. Ver [card.existing-debt](../card/existing-debt.md).
 - Fora desta entrega: registrar compra nova no cartão.
 - `card-view` e `card-text` moram no núcleo (antes em `app/src/screens`); app e web usam as mesmas.

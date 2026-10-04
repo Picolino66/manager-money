@@ -20,7 +20,7 @@ RF-01, RF-02, RF-12, RF-17, RF-19, RF-22, RF-23, RF-24, RF-26 · BR-FIN-018, BR-
 ## Regras
 - Mesmo princípio da SPEC-022: toda escrita passa por um caso de uso do núcleo (`saveConfig`,
   `saveCreditCard`, `setCreditCardActive`, `deleteCreditCard`, `payStatement`, `addStatementCharges`,
-  `undoStatementPayment`, `updateCardPurchase`, `deleteCardPurchase`, `addExistingCardDebt`); só os registros alterados são gravados.
+  `undoStatementPayment`, `updateCardPurchase`, `deleteCardPurchase`, `addExistingCardDebt`, `addExistingCardDebts`); só os registros alterados são gravados.
 - `/ajustes`: atalhos para Configuração financeira, Cartões, Exportar e Política de privacidade. "Conta e
   sincronização" não existe no web (sem sync; o menu da conta já tem "Sair").
 - **Configuração** (`/ajustes/configuracao`): fontes de renda (nome, valor, dia 1–28, ativa), meta de
@@ -35,7 +35,8 @@ RF-01, RF-02, RF-12, RF-17, RF-19, RF-22, RF-23, RF-24, RF-26 · BR-FIN-018, BR-
 - **Compras anteriores ao app** (`/ajustes/cartoes/:id/compras-anteriores`): situação inicial do cartão como no
   app (fatura em aberto ou parcelamento em andamento, BR-FIN-027/032), por `addExistingCardDebt`; as contas
   puras vivem no núcleo (`card-debt`) e o app as usa também. Acesso pelo detalhe do cartão e ao cadastrar um
-  cartão novo.
+  cartão novo. Em "Parcelamento em andamento" (app e web) há **cadastro em lote**: itens vão para uma lista e
+  "Salvar tudo" grava todos juntos por `addExistingCardDebts`, tudo ou nada.
 - Fora do escopo desta entrega: registrar compra nova no cartão pelo web, CSV de gastos, abrir/fechar ciclo,
   pagar fixa e renda avulsa.
 

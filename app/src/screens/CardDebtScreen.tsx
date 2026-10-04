@@ -4,13 +4,16 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { startOfDay } from 'date-fns';
 
 import {
+  buildExistingDebtInput,
   existingDebtCommitted,
   existingDebtCycleRange,
   findStatementBalance,
   isValidInstallmentCount,
   resolveChosenStatement,
   selectStatementChoices,
+  validateExistingDebtDraft,
 } from '@manager-money/core/application/card-debt';
+import { ExistingCardDebtInput } from '@manager-money/core/application/card.use-cases';
 import { selectCreditCards } from '@manager-money/core/application/selectors';
 import { AppButton } from '../components/AppButton';
 import { Card } from '../components/Card';
@@ -21,10 +24,7 @@ import { SelectField } from '../components/SelectField';
 import { TextInputField } from '../components/TextInputField';
 import { radius, spacing, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
-import {
-  addCycleKeys,
-  MAX_CARD_INSTALLMENTS,
-} from '@manager-money/core/domain/financial/credit-card';
+import { addCycleKeys } from '@manager-money/core/domain/financial/credit-card';
 import { getSortedCategories } from '@manager-money/core/domain/financial/financial.calculations';
 import {
   DEFAULT_EXPENSE_CATEGORY,
@@ -45,6 +45,18 @@ type Mode = 'statement' | 'installments';
 
 type Errors = Partial<Record<'description' | 'amount' | 'total' | 'remaining', string>>;
 
+/** Item do lote (parcelamento em andamento) aguardando o "Salvar tudo". */
+type QueuedItem = {
+  key: number;
+  input: ExistingCardDebtInput;
+  amount: MoneyCents;
+  total: number;
+  remaining: number;
+  included: boolean;
+};
+
+let queueKey = 0;
+
 function toCount(value: string): number {
   return Number(value.replace(/\D/g, '')) || 0;
 }
@@ -61,6 +73,7 @@ export function CardDebtScreen({ navigation, route }: Props) {
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const addExistingCardDebt = useFinancialStore((state) => state.addExistingCardDebt);
+  const addExistingCardDebts = useFinancialStore((state) => state.addExistingCardDebts);
   const [mode, setMode] = useState<Mode>('statement');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState<string>(DEFAULT_EXPENSE_CATEGORY);
@@ -72,6 +85,7 @@ export function CardDebtScreen({ navigation, route }: Props) {
   const [errors, setErrors] = useState<Errors>({});
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [queue, setQueue] = useState<QueuedItem[]>([]);
   const card = selectCreditCards(doc).find((item) => item.id === route.params.cardId);
 
   if (!card) {
@@ -133,55 +147,117 @@ export function CardDebtScreen({ navigation, route }: Props) {
     setLastSaved(null);
   }
 
-  async function handleSave() {
-    const nextErrors: Errors = {};
+  const draftIsEmpty = !description.trim() && amount === 0 && !totalText && !remainingText;
 
-    if (isInstallments && !description.trim()) nextErrors.description = 'Informe uma descrição.';
-    if (amount <= 0) nextErrors.amount = 'Informe um valor maior que zero.';
-
-    if (isInstallments) {
-      if (total < 1 || total > MAX_CARD_INSTALLMENTS) {
-        nextErrors.total = `Informe de 1 a ${MAX_CARD_INSTALLMENTS} parcelas.`;
-      }
-      if (remaining < 1 || remaining > total) {
-        nextErrors.remaining = 'As parcelas restantes devem ficar entre 1 e o total.';
-      }
-    }
+  /** Valida o formulário e monta o item; `null` mostra os erros na tela. */
+  function readDraft(): QueuedItem | null {
+    const nextErrors = validateExistingDebtDraft({ mode, description, amount, total, remaining });
 
     setErrors(nextErrors);
 
-    if (Object.keys(nextErrors).length > 0) return;
+    if (Object.keys(nextErrors).length > 0) return null;
 
-    const finalDescription = description.trim() || `Fatura ${formatMonthKey(selectedKey)}`;
+    return {
+      key: ++queueKey,
+      input: buildExistingDebtInput({
+        cardId,
+        mode,
+        description,
+        category,
+        amount,
+        total,
+        remaining,
+        statementKey: selectedKey,
+        includedInBalance: included,
+      }),
+      amount,
+      total,
+      remaining,
+      included,
+    };
+  }
+
+  function clearDraft() {
+    setDescription('');
+    setAmount(0);
+    setTotalText('');
+    setRemainingText('');
+  }
+
+  function showFailure(error: unknown) {
+    Alert.alert(
+      'Não foi possível cadastrar',
+      error instanceof Error ? error.message : 'Tente novamente.',
+    );
+  }
+
+  async function handleSave() {
+    const item = readDraft();
+
+    if (!item) return;
 
     setIsSaving(true);
 
     try {
-      await addExistingCardDebt({
-        cardId,
-        description: finalDescription,
-        category: isInstallments ? category : DEFAULT_EXPENSE_CATEGORY,
-        installmentAmount: amount,
-        totalInstallments: total,
-        remainingInstallments: remaining,
-        nextStatementKey: selectedKey,
-        ...(isInstallments ? {} : { statementBalance: true }),
-        ...(included ? { includedInStatementBalance: true } : {}),
-      });
-      setLastSaved(finalDescription);
-      setDescription('');
-      setAmount(0);
-      setTotalText('');
-      setRemainingText('');
+      await addExistingCardDebt(item.input);
+      setLastSaved(item.input.description);
+      clearDraft();
     } catch (error) {
-      Alert.alert(
-        'Não foi possível cadastrar',
-        error instanceof Error ? error.message : 'Tente novamente.',
-      );
+      showFailure(error);
     } finally {
       setIsSaving(false);
     }
   }
+
+  /** Parcelamento em lote: põe o item na lista e limpa o formulário (fatura e categoria ficam). */
+  function handleAddToQueue() {
+    const item = readDraft();
+
+    if (!item) return;
+
+    setQueue((current) => [...current, item]);
+    setLastSaved(null);
+    clearDraft();
+  }
+
+  async function handleSaveAll() {
+    const items = [...queue];
+
+    if (!draftIsEmpty) {
+      const pending = readDraft();
+
+      if (!pending) return;
+
+      items.push(pending);
+    }
+
+    if (items.length === 0) {
+      Alert.alert('Nada para salvar', 'Adicione ao menos um parcelamento à lista.');
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      await addExistingCardDebts(items.map((item) => item.input));
+      setLastSaved(
+        items.length === 1 ? items[0]!.input.description : `${items.length} parcelamentos`,
+      );
+      setQueue([]);
+      clearDraft();
+    } catch (error) {
+      // Tudo ou nada: a lista continua como estava para corrigir o item citado.
+      showFailure(error);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  const queueCommitted = queue.reduce(
+    (sum, item) => sum + existingDebtCommitted(item.amount, item.remaining, item.included),
+    0,
+  );
+  const queuedCount = queue.length + (draftIsEmpty ? 0 : 1);
 
   return (
     <Screen>
@@ -316,13 +392,63 @@ export function CardDebtScreen({ navigation, route }: Props) {
           </View>
         ) : null}
 
+        {isInstallments ? (
+          <AppButton
+            iconName="add-outline"
+            onPress={handleAddToQueue}
+            title="Adicionar à lista"
+            variant="secondary"
+          />
+        ) : (
+          <AppButton
+            iconName="save-outline"
+            isLoading={isSaving}
+            onPress={() => void handleSave()}
+            title="Salvar"
+          />
+        )}
+      </Card>
+
+      {isInstallments && queue.length > 0 ? (
+        <Card>
+          <Text style={styles.previewTitle}>Na lista ({queue.length})</Text>
+          {queue.map((item) => (
+            <View key={item.key} style={styles.queueRow}>
+              <View style={styles.queueText}>
+                <Text style={styles.queueTitle}>{item.input.description}</Text>
+                <Text style={styles.hint}>
+                  {describeInstallmentSchedule(
+                    item.remaining,
+                    formatCurrency(item.amount),
+                    item.input.nextStatementKey,
+                    addCycleKeys(item.input.nextStatementKey, item.remaining - 1),
+                  )}
+                  {item.total > item.remaining ? ` · de ${item.total}` : ''}
+                </Text>
+              </View>
+              <AppButton
+                accessibilityLabel={`Remover ${item.input.description} da lista`}
+                iconName="trash-outline"
+                onPress={() => setQueue((current) => current.filter((q) => q.key !== item.key))}
+                title="Remover"
+                variant="ghost"
+              />
+            </View>
+          ))}
+          <Text style={styles.hint}>
+            Compromete {formatCurrency(queueCommitted)} do limite do cartão.
+          </Text>
+        </Card>
+      ) : null}
+
+      {isInstallments ? (
         <AppButton
           iconName="save-outline"
           isLoading={isSaving}
-          onPress={() => void handleSave()}
-          title="Salvar"
+          onPress={() => void handleSaveAll()}
+          title={queuedCount > 0 ? `Salvar tudo (${queuedCount})` : 'Salvar tudo'}
         />
-      </Card>
+      ) : null}
 
       {lastSaved ? (
         <Text accessibilityLiveRegion="polite" style={styles.success}>
@@ -410,6 +536,21 @@ const useStyles = makeStyles((colors) => ({
   chipTextSelected: {
     color: colors.primaryDark,
     fontWeight: '900',
+  },
+  queueRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
+  },
+  queueText: {
+    flex: 1,
+    gap: 2,
+  },
+  queueTitle: {
+    color: colors.ink,
+    fontSize: 14,
+    fontWeight: '800',
   },
   preview: {
     backgroundColor: colors.infoSoft,

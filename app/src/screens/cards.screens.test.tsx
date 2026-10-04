@@ -392,7 +392,7 @@ describe('CardDebtScreen (SPEC-017 / BR-FIN-027)', () => {
     // Sem total informado para a fatura, não há o que incluir (BR-FIN-032).
     expect(screen.queryByLabelText('Esta parcela já está no total da fatura informada')).toBeNull();
 
-    fireEvent.press(screen.getByText('Salvar'));
+    fireEvent.press(screen.getByText('Salvar tudo (1)'));
 
     expect(await screen.findByText(/Celular cadastrado/)).toBeTruthy();
     const { doc } = useFinancialStore.getState();
@@ -475,7 +475,7 @@ describe('CardDebtScreen (SPEC-017 / BR-FIN-027)', () => {
       ),
     ).toBeTruthy();
 
-    fireEvent.press(screen.getByText('Salvar'));
+    fireEvent.press(screen.getByText('Salvar tudo (1)'));
     expect(await screen.findByText(/Celular cadastrado/)).toBeTruthy();
 
     const { doc } = useFinancialStore.getState();
@@ -508,11 +508,105 @@ describe('CardDebtScreen (SPEC-017 / BR-FIN-027)', () => {
       screen.getByLabelText('Parcelas restantes (incluindo a da fatura escolhida)'),
       '5',
     );
-    fireEvent.press(screen.getByText('Salvar'));
+    fireEvent.press(screen.getByText('Salvar tudo (1)'));
 
     expect(await screen.findByText('Informe uma descrição.')).toBeTruthy();
     expect(screen.getByText('Informe um valor maior que zero.')).toBeTruthy();
     expect(screen.getByText('As parcelas restantes devem ficar entre 1 e o total.')).toBeTruthy();
     expect(useFinancialStore.getState().doc.cardPurchases).toHaveLength(0);
+  });
+
+  const fillItem = (name: string, amountCents: string) => {
+    fireEvent.changeText(screen.getByLabelText('Descrição'), name);
+    fireEvent.changeText(screen.getByLabelText('Valor da parcela'), amountCents);
+    fireEvent.changeText(screen.getByLabelText('Total de parcelas'), '10');
+    fireEvent.changeText(
+      screen.getByLabelText('Parcelas restantes (incluindo a da fatura escolhida)'),
+      '6',
+    );
+  };
+
+  it('lote: adiciona vários à lista, remove um e salva tudo de uma vez', async () => {
+    await seed(cardDoc());
+    render(<CardDebtScreen navigation={navigation} route={debtRoute(cardId())} />);
+    fireEvent.press(screen.getByLabelText('Parcelamento em andamento'));
+
+    fillItem('Celular', '30000');
+    fireEvent.press(screen.getByText('Adicionar à lista'));
+    // O formulário limpa para o próximo item.
+    expect(screen.getByLabelText('Descrição').props.value).toBe('');
+    fillItem('Geladeira', '20000');
+    fireEvent.press(screen.getByText('Adicionar à lista'));
+    fillItem('TV', '10000');
+    fireEvent.press(screen.getByText('Adicionar à lista'));
+
+    expect(screen.getByText('Na lista (3)')).toBeTruthy();
+    fireEvent.press(screen.getByLabelText('Remover TV da lista'));
+    expect(screen.getByText('Na lista (2)')).toBeTruthy();
+    expect(useFinancialStore.getState().doc.cardPurchases).toHaveLength(0);
+
+    fireEvent.press(screen.getByText('Salvar tudo (2)'));
+
+    expect(await screen.findByText(/2 parcelamentos cadastrado/)).toBeTruthy();
+    const purchases = useFinancialStore.getState().doc.cardPurchases;
+    expect(purchases.map((purchase) => purchase.description)).toEqual(['Celular', 'Geladeira']);
+    expect(purchases.every((purchase) => purchase.dirty)).toBe(true);
+    expect(screen.queryByText(/Na lista/)).toBeNull();
+  });
+
+  it('lote: salvar tudo inclui o item preenchido e ainda não adicionado', async () => {
+    await seed(cardDoc());
+    render(<CardDebtScreen navigation={navigation} route={debtRoute(cardId())} />);
+    fireEvent.press(screen.getByLabelText('Parcelamento em andamento'));
+
+    fillItem('Celular', '30000');
+    fireEvent.press(screen.getByText('Adicionar à lista'));
+    fillItem('Geladeira', '20000');
+    fireEvent.press(screen.getByText('Salvar tudo (2)'));
+
+    await waitFor(() => expect(useFinancialStore.getState().doc.cardPurchases).toHaveLength(2));
+  });
+
+  it('lote: item inválido na hora de salvar não grava nada e mantém a lista', async () => {
+    const base = cardDoc(null);
+    await seed(
+      addExistingCardDebt(
+        base,
+        {
+          cardId: base.creditCards[0]!.id,
+          description: 'Fatura 10/2026',
+          category: 'Outros',
+          installmentAmount: 10000,
+          totalInstallments: 1,
+          remainingInstallments: 1,
+          nextStatementKey: '2026-10',
+          statementBalance: true,
+        },
+        ctxAt(TODAY),
+      ),
+    );
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    render(<CardDebtScreen navigation={navigation} route={debtRoute(cardId())} />);
+    fireEvent.press(screen.getByLabelText('Parcelamento em andamento'));
+
+    fillItem('A', '6000');
+    fireEvent.press(screen.getByText('Adicionar à lista'));
+    fillItem('B', '6000');
+    fireEvent.press(screen.getByText('Adicionar à lista'));
+    fireEvent.press(screen.getByText('Salvar tudo (2)'));
+
+    await waitFor(() =>
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Não foi possível cadastrar',
+        expect.stringMatching(/^Item 2 \(B\):/),
+      ),
+    );
+    expect(
+      useFinancialStore
+        .getState()
+        .doc.cardPurchases.filter((p) => p.description !== 'Fatura 10/2026'),
+    ).toHaveLength(0);
+    expect(screen.getByText('Na lista (2)')).toBeTruthy();
+    alertSpy.mockRestore();
   });
 });

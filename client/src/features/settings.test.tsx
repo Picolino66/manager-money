@@ -264,7 +264,7 @@ describe('compras anteriores ao app', () => {
     await user.type(screen.getByLabelText('Valor da parcela'), '10000');
     await user.type(screen.getByLabelText('Total de parcelas'), '10');
     await user.type(screen.getByLabelText(/Parcelas restantes/), '12');
-    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+    await user.click(screen.getByRole('button', { name: 'Salvar tudo (1)' }));
     expect(await screen.findByText('Informe uma descrição.')).toBeInTheDocument();
     expect(
       screen.getByText('As parcelas restantes devem ficar entre 1 e o total.'),
@@ -277,13 +277,92 @@ describe('compras anteriores ao app', () => {
     expect(screen.getByText(/4 parcela\(s\) já paga\(s\)/)).toBeInTheDocument();
 
     await user.type(screen.getByLabelText('Descrição'), 'Celular');
-    await user.click(screen.getByRole('button', { name: 'Salvar' }));
+    await user.click(screen.getByRole('button', { name: 'Salvar tudo (1)' }));
 
     await waitFor(() =>
       expect(gateway.rows.card_purchases.some((row) => row.description === 'Celular')).toBe(true),
     );
     const row = gateway.rows.card_purchases.find((item) => item.description === 'Celular')!;
     expect(row.installments).toBe(10);
+  });
+});
+
+describe('compras anteriores: lote de parcelamentos', () => {
+  async function fillItem(user: ReturnType<typeof userEvent.setup>, name: string, cents: string) {
+    const description = screen.getByLabelText('Descrição');
+    await user.clear(description);
+    await user.type(description, name);
+    await user.type(screen.getByLabelText('Valor da parcela'), cents);
+    await user.type(screen.getByLabelText('Total de parcelas'), '10');
+    await user.type(screen.getByLabelText(/Parcelas restantes/), '6');
+  }
+
+  async function openBatch(user: ReturnType<typeof userEvent.setup>) {
+    await user.click(await screen.findByRole('radio', { name: 'Parcelamento em andamento' }));
+  }
+
+  it('adiciona vários à lista, remove um e salva tudo numa única gravação', async () => {
+    signedIn(true);
+    renderApp(`/ajustes/cartoes/${gatewayCardId()}/compras-anteriores`);
+    const user = userEvent.setup();
+    const before = gateway.rows.card_purchases.length;
+    await openBatch(user);
+
+    await fillItem(user, 'Celular', '30000');
+    await user.click(screen.getByRole('button', { name: 'Adicionar à lista' }));
+    expect(screen.getByLabelText('Descrição')).toHaveValue('');
+    await fillItem(user, 'Geladeira', '20000');
+    await user.click(screen.getByRole('button', { name: 'Adicionar à lista' }));
+    await fillItem(user, 'TV', '10000');
+    await user.click(screen.getByRole('button', { name: 'Adicionar à lista' }));
+
+    expect(screen.getByText('Na lista (3)')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Remover TV da lista' }));
+    expect(screen.getByText('Na lista (2)')).toBeInTheDocument();
+    expect(gateway.upserts).toEqual([]);
+
+    await user.click(screen.getByRole('button', { name: 'Salvar tudo (2)' }));
+
+    await waitFor(() => expect(gateway.rows.card_purchases).toHaveLength(before + 2));
+    // Uma única gravação: as duas compras novas juntas (mais o ciclo ativo recalculado).
+    expect(gateway.upserts).toEqual([
+      { table: 'cycles', count: 1 },
+      { table: 'card_purchases', count: 2 },
+    ]);
+    expect(await screen.findByText(/2 parcelamentos cadastrado/)).toBeInTheDocument();
+    expect(screen.queryByText(/Na lista/)).toBeNull();
+  });
+
+  it('salvar tudo inclui o item preenchido e ainda não adicionado', async () => {
+    signedIn(true);
+    renderApp(`/ajustes/cartoes/${gatewayCardId()}/compras-anteriores`);
+    const user = userEvent.setup();
+    const before = gateway.rows.card_purchases.length;
+    await openBatch(user);
+
+    await fillItem(user, 'Celular', '30000');
+    await user.click(screen.getByRole('button', { name: 'Adicionar à lista' }));
+    await fillItem(user, 'Geladeira', '20000');
+    await user.click(screen.getByRole('button', { name: 'Salvar tudo (2)' }));
+
+    await waitFor(() => expect(gateway.rows.card_purchases).toHaveLength(before + 2));
+  });
+
+  it('validação no item e lista vazia não gravam nada', async () => {
+    signedIn(true);
+    renderApp(`/ajustes/cartoes/${gatewayCardId()}/compras-anteriores`);
+    const user = userEvent.setup();
+    await openBatch(user);
+
+    await user.click(screen.getByRole('button', { name: 'Adicionar à lista' }));
+    expect(await screen.findByText('Informe uma descrição.')).toBeInTheDocument();
+    expect(screen.queryByText(/Na lista/)).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Salvar tudo' }));
+    expect(
+      await screen.findByText('Adicione ao menos um parcelamento à lista.'),
+    ).toBeInTheDocument();
+    expect(gateway.upserts).toEqual([]);
   });
 });
 

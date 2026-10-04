@@ -1,17 +1,23 @@
 import { useState } from 'react';
 import { startOfDay } from 'date-fns';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { toast } from 'sonner';
 
-import { addExistingCardDebt } from '@manager-money/core/application/card.use-cases';
 import {
+  addExistingCardDebt,
+  addExistingCardDebts,
+  ExistingCardDebtInput,
+} from '@manager-money/core/application/card.use-cases';
+import {
+  buildExistingDebtInput,
   existingDebtCommitted,
   existingDebtCycleRange,
   findStatementBalance,
   isValidInstallmentCount,
   resolveChosenStatement,
   selectStatementChoices,
+  validateExistingDebtDraft,
 } from '@manager-money/core/application/card-debt';
 import {
   describeInstallmentSchedule,
@@ -23,10 +29,7 @@ import {
   selectConfig,
   selectCreditCards,
 } from '@manager-money/core/application/selectors';
-import {
-  addCycleKeys,
-  MAX_CARD_INSTALLMENTS,
-} from '@manager-money/core/domain/financial/credit-card';
+import { addCycleKeys } from '@manager-money/core/domain/financial/credit-card';
 import { getSortedCategories } from '@manager-money/core/domain/financial/financial.calculations';
 import {
   DEFAULT_EXPENSE_CATEGORY,
@@ -47,6 +50,18 @@ import { useDataStore } from '@/store/data.store';
 
 type Mode = 'statement' | 'installments';
 type Errors = Partial<Record<'description' | 'amount' | 'total' | 'remaining', string>>;
+
+/** Item do lote (parcelamento em andamento) aguardando o "Salvar tudo". */
+type QueuedItem = {
+  key: number;
+  input: ExistingCardDebtInput;
+  amount: MoneyCents;
+  total: number;
+  remaining: number;
+  included: boolean;
+};
+
+let queueKey = 0;
 
 const toCount = (value: string) => Number(value.replace(/\D/g, '')) || 0;
 
@@ -77,6 +92,7 @@ export function CardDebtPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [queue, setQueue] = useState<QueuedItem[]>([]);
 
   if (!doc) return null;
 
@@ -138,54 +154,112 @@ export function CardDebtPage() {
     setLastSaved(null);
   }
 
-  async function handleSave() {
-    const next: Errors = {};
+  const draftIsEmpty = !description.trim() && amount === 0 && !totalText && !remainingText;
+  const queuedCount = queue.length + (draftIsEmpty ? 0 : 1);
+  const queueCommitted = queue.reduce(
+    (sum, item) => sum + existingDebtCommitted(item.amount, item.remaining, item.included),
+    0,
+  );
 
-    if (isInstallments && !description.trim()) next.description = 'Informe uma descrição.';
-    if (amount <= 0) next.amount = 'Informe um valor maior que zero.';
-
-    if (isInstallments) {
-      if (total < 1 || total > MAX_CARD_INSTALLMENTS) {
-        next.total = `Informe de 1 a ${MAX_CARD_INSTALLMENTS} parcelas.`;
-      }
-      if (remaining < 1 || remaining > total) {
-        next.remaining = 'As parcelas restantes devem ficar entre 1 e o total.';
-      }
-    }
+  /** Valida o formulário e monta o item; `null` mostra os erros na tela. */
+  function readDraft(): QueuedItem | null {
+    const next = validateExistingDebtDraft({ mode, description, amount, total, remaining });
 
     setErrors(next);
     setError(null);
 
-    if (Object.keys(next).length > 0) return;
+    if (Object.keys(next).length > 0) return null;
 
-    const finalDescription = description.trim() || `Fatura ${formatMonthKey(selectedKey)}`;
+    return {
+      key: ++queueKey,
+      input: buildExistingDebtInput({
+        cardId,
+        mode,
+        description,
+        category,
+        amount,
+        total,
+        remaining,
+        statementKey: selectedKey,
+        includedInBalance: included,
+      }),
+      amount,
+      total,
+      remaining,
+      included,
+    };
+  }
+
+  function clearDraft() {
+    setDescription('');
+    setAmount(0);
+    setTotalText('');
+    setRemainingText('');
+  }
+
+  async function handleSave() {
+    const item = readDraft();
+
+    if (!item) return;
 
     setSaving(true);
     try {
+      await run((state, ctx) => addExistingCardDebt(state, item.input, ctx));
+      toast.success(`${item.input.description} cadastrado.`);
+      setLastSaved(item.input.description);
+      clearDraft();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Não foi possível cadastrar.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /** Parcelamento em lote: põe o item na lista e limpa o formulário (fatura e categoria ficam). */
+  function handleAddToQueue() {
+    const item = readDraft();
+
+    if (!item) return;
+
+    setQueue((current) => [...current, item]);
+    setLastSaved(null);
+    clearDraft();
+  }
+
+  async function handleSaveAll() {
+    const items = [...queue];
+
+    if (!draftIsEmpty) {
+      const pending = readDraft();
+
+      if (!pending) return;
+
+      items.push(pending);
+    }
+
+    if (items.length === 0) {
+      setError('Adicione ao menos um parcelamento à lista.');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
       await run((state, ctx) =>
-        addExistingCardDebt(
+        addExistingCardDebts(
           state,
-          {
-            cardId,
-            description: finalDescription,
-            category: isInstallments ? category : DEFAULT_EXPENSE_CATEGORY,
-            installmentAmount: amount,
-            totalInstallments: total,
-            remainingInstallments: remaining,
-            nextStatementKey: selectedKey,
-            ...(isInstallments ? {} : { statementBalance: true }),
-            ...(included ? { includedInStatementBalance: true } : {}),
-          },
+          items.map((item) => item.input),
           ctx,
         ),
       );
-      toast.success(`${finalDescription} cadastrado.`);
-      setLastSaved(finalDescription);
-      setDescription('');
-      setAmount(0);
-      setTotalText('');
-      setRemainingText('');
+      const label =
+        items.length === 1 ? items[0]!.input.description : `${items.length} parcelamentos`;
+      toast.success(`${label} cadastrado.`);
+      setLastSaved(label);
+      setQueue([]);
+      clearDraft();
     } catch (failure) {
+      // Tudo ou nada: a lista continua como estava para corrigir o item citado.
       setError(failure instanceof Error ? failure.message : 'Não foi possível cadastrar.');
     } finally {
       setSaving(false);
@@ -371,12 +445,72 @@ export function CardDebtPage() {
             {error}
           </p>
         ) : null}
-        <div className="flex justify-end">
-          <Button disabled={saving || choices.length === 0} onClick={() => void handleSave()}>
-            {saving ? 'Salvando…' : 'Salvar'}
+        {isInstallments ? (
+          <div className="flex justify-start">
+            <Button
+              variant="secondary"
+              disabled={saving || choices.length === 0}
+              onClick={handleAddToQueue}
+            >
+              <Plus aria-hidden className="h-4 w-4" /> Adicionar à lista
+            </Button>
+          </div>
+        ) : (
+          <div className="flex justify-end">
+            <Button disabled={saving || choices.length === 0} onClick={() => void handleSave()}>
+              {saving ? 'Salvando…' : 'Salvar'}
+            </Button>
+          </div>
+        )}
+      </Card>
+
+      {isInstallments && queue.length > 0 ? (
+        <Card className="mt-4 flex max-w-2xl flex-col gap-3">
+          <h2 className="text-base font-semibold text-ink">Na lista ({queue.length})</h2>
+          <ul className="flex flex-col divide-y divide-border">
+            {queue.map((item) => (
+              <li key={item.key} className="flex items-center justify-between gap-3 py-2">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-ink">{item.input.description}</p>
+                  <p className="text-xs text-muted">
+                    {describeInstallmentSchedule(
+                      item.remaining,
+                      formatCurrency(item.amount),
+                      item.input.nextStatementKey,
+                      addCycleKeys(item.input.nextStatementKey, item.remaining - 1),
+                    )}
+                    {item.total > item.remaining ? ` · de ${item.total}` : ''}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  title="Remover"
+                  aria-label={`Remover ${item.input.description} da lista`}
+                  onClick={() => setQueue((current) => current.filter((q) => q.key !== item.key))}
+                >
+                  <Trash2 aria-hidden className="h-4 w-4" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm text-muted">
+            Compromete {formatCurrency(queueCommitted)} do limite do cartão.
+          </p>
+        </Card>
+      ) : null}
+
+      {isInstallments ? (
+        <div className="mt-4 flex max-w-2xl justify-end">
+          <Button disabled={saving || choices.length === 0} onClick={() => void handleSaveAll()}>
+            {saving
+              ? 'Salvando…'
+              : queuedCount > 0
+                ? `Salvar tudo (${queuedCount})`
+                : 'Salvar tudo'}
           </Button>
         </div>
-      </Card>
+      ) : null}
 
       {lastSaved ? (
         <p aria-live="polite" className="mt-4 text-sm font-medium text-healthy">

@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-04T22:56:12.652Z",
-  "source_commit": "3b70dac",
+  "generated_at": "2026-10-04T23:20:07.353Z",
+  "source_commit": "e3632a9",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -35,26 +35,26 @@
     },
     "architecture/overview.md": {
       "id": "architecture.overview",
-      "last_verified_commit": "3b9bf25+T-033",
+      "last_verified_commit": "7903717+T-041c",
       "state": "fresh",
       "source_hashes": {
         "packages/core/src/domain/financial/financial.calculations.ts": "sha256:0fb6818bf1545e09507d30db849d5ec26b12b4e768d5fe7fdcafd53745393a40",
         "packages/core/src/application/cycle.use-cases.ts": "sha256:0e5cf78acb2c78c3aa49fb161269ee0b2b5873411a8715d52902497c516cace5",
         "app/src/infrastructure/storage/local-store.ts": "sha256:9689769c5890a4ed9738b5307efc5f6cd066a5ebdbc039d0fa1ce76d1b2ca115",
         "app/src/infrastructure/sync/sync-engine.ts": "sha256:c822c05100c32d939c4aac9289c821c36093b37f5f37256edfe486147891971c",
-        "app/src/store/financial.store.ts": "sha256:24b20489ee5d39fbee2acdb9fd3bb617c0bdb54efe1d272e572d7a2a90ea2655"
+        "app/src/store/financial.store.ts": "sha256:e51ecdeff7bad63c6ea041a1782946b57ef5de27af3cb2493eefc863dd22f6b9"
       }
     },
     "business/business-rules.md": {
       "id": "business.rules",
-      "last_verified_commit": "3b9bf25+T-033",
+      "last_verified_commit": "7903717+T-041c",
       "state": "fresh",
       "source_hashes": {
         "packages/core/src/domain/financial/financial.calculations.ts": "sha256:0fb6818bf1545e09507d30db849d5ec26b12b4e768d5fe7fdcafd53745393a40",
         "packages/core/src/domain/financial/credit-card.ts": "sha256:49bd4bad07554895885139680cbaef9e3d9857569cf225b165edd5afbea90564",
         "packages/core/src/domain/financial/projection.ts": "sha256:7281251bca2fd852a84e01b609bf7493dc56d25872afbe52ab0c7fb9f19d0da3",
         "packages/core/src/application/cycle.use-cases.ts": "sha256:0e5cf78acb2c78c3aa49fb161269ee0b2b5873411a8715d52902497c516cace5",
-        "packages/core/src/application/card.use-cases.ts": "sha256:b5148eda579faf6c1b3fb2c5a0c6e5700854c90714afe9ec311c9fed83ad37d7",
+        "packages/core/src/application/card.use-cases.ts": "sha256:507fa8a03698b976e542ce2c6260bae1294e52b2227c620e7931a47ca4d118a1",
         "packages/core/src/application/selectors.ts": "sha256:936d6821d68afdc31449a426ee55e65619d8a5345b6c60371740694c64528e32",
         "app/src/infrastructure/sync/sync-engine.ts": "sha256:c822c05100c32d939c4aac9289c821c36093b37f5f37256edfe486147891971c"
       }
@@ -70,10 +70,10 @@
     },
     "business/requirements.md": {
       "id": "business.requirements",
-      "last_verified_commit": "3b9bf25+T-033",
+      "last_verified_commit": "7903717+T-041c",
       "state": "fresh",
       "source_hashes": {
-        "app/src/store/financial.store.ts": "sha256:24b20489ee5d39fbee2acdb9fd3bb617c0bdb54efe1d272e572d7a2a90ea2655"
+        "app/src/store/financial.store.ts": "sha256:e51ecdeff7bad63c6ea041a1782946b57ef5de27af3cb2493eefc863dd22f6b9"
       }
     },
     "design/design-system.md": {
@@ -163,9 +163,11 @@
     },
     "modules/card/existing-debt.md": {
       "id": "card.existing-debt",
-      "last_verified_commit": "7903717+T-041b",
+      "last_verified_commit": "7903717+T-041c",
       "state": "fresh",
       "source_hashes": {
+        "addExistingCardDebts": "sha256:df101831db3c663209197011a77f74bbceae36e67fa94b7d8abba25bd66fad0c",
+        "validateExistingDebtDraft": "sha256:ea9b056c82f91b4a42f4a84bbbc567a5415e195ef50ace4a7a1e103654f71327",
         "selectStatementChoices": "sha256:25b767f7bf490b6d94c7742e8558a4111462f4fa2d175a7cf99817b926a715fb",
         "findStatementBalance": "sha256:6585a9a6a136ccd4c36f789689951f177cc887fbd2f1ba8e7f17d2fc71f98b16",
         "existingDebtCycleRange": "sha256:64a250d2a66580ace08cf2588f1a4b1c36ed7a576029f76d3a94fe3cb40b667b",
@@ -173,17 +175,16 @@
         "listOpenInstallments": "sha256:cad4e957d88a602e55126bc081a37089035d1c14b4bf35e564bfa2b72d157b3d",
         "listEffectiveInstallments": "sha256:cf492b9086b427773164452dfe5b6472ec89e67e1fabb96134b8a28ab81e5679",
         "calculateInstallmentForCycle": "sha256:3379744509c2e146a66caf09b12359ee7ec074e0ffa9d21bdfd6750449de90ec",
-        "firstCountedCycleKey": "sha256:427a9a02e806081c8c4c98840cea05fcf9b66a66f39ad832add49cb2a55b50d4",
-        "updateCardPurchase": "sha256:00ad12e69309489358cc30e3d13fd5f825f9d262cc285ddcfb5d5a3c5081c0ea"
+        "firstCountedCycleKey": "sha256:427a9a02e806081c8c4c98840cea05fcf9b66a66f39ad832add49cb2a55b50d4"
       }
     },
     "modules/card/index.md": {
       "id": "card",
-      "last_verified_commit": "bfe9de6+T-028r2",
+      "last_verified_commit": "7903717+T-041c",
       "state": "fresh",
       "source_hashes": {
         "packages/core/src/domain/financial/credit-card.ts": "sha256:49bd4bad07554895885139680cbaef9e3d9857569cf225b165edd5afbea90564",
-        "packages/core/src/application/card.use-cases.ts": "sha256:b5148eda579faf6c1b3fb2c5a0c6e5700854c90714afe9ec311c9fed83ad37d7"
+        "packages/core/src/application/card.use-cases.ts": "sha256:507fa8a03698b976e542ce2c6260bae1294e52b2227c620e7931a47ca4d118a1"
       }
     },
     "modules/card/manage.md": {
@@ -630,10 +631,10 @@
     },
     "modules/web/cards.md": {
       "id": "web.cards",
-      "last_verified_commit": "7903717+T-041b",
+      "last_verified_commit": "7903717+T-041c",
       "state": "fresh",
       "source_hashes": {
-        "CardDebtPage": "sha256:016176e2c22e5324f2d0c83a9e0f9942b38623f2f2567c053e8c75cfaa88eec6",
+        "CardDebtPage": "sha256:1e028c2704e0308f96ea60c48757bad498c1341fd3ae1e271676512a26702e3b",
         "selectStatementChoices": "sha256:25b767f7bf490b6d94c7742e8558a4111462f4fa2d175a7cf99817b926a715fb",
         "buildCardStatementsView": "sha256:d7f408606144ab1cf19acb7044e9c02c99f5f861744e4eee7a35e9d96dc66d96",
         "statementCycleKeys": "sha256:96810833a0d805dc7c5e6f08112377a9496fa4949ad4a355d1c532e90bf944d8",
