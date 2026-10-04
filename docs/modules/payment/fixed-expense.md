@@ -12,7 +12,6 @@ code:
   - src/components/FixedExpensesCard.tsx
   - src/components/PayFixedExpenseModal.tsx
   - src/components/CardLimitNotice.tsx
-  - src/components/UpcomingCommitmentsCard.tsx
   - src/screens/DashboardScreen.tsx
   - src/application/payment.use-cases.ts
   - src/domain/financial/payments.ts
@@ -34,7 +33,7 @@ Specs: [SPEC-014](../../../specs/SPEC-014-pagamento-de-fixas-e-renda-avulsa.md),
   Resumo "Pagas … · Pendentes …". Só fixas **ativas** e com valor no ciclo contam como pendentes (`selectPendingFixedExpenses` ignora parcelamento quitado).
 - **Reserva (BR-FIN-004, ADR-017):** fixa ativa pendente **já desconta** o saldo do ciclo
   (`pendingFixedExpenses` em `calculateBaseAvailableAmount`): o limite diário nasce realista. As pendentes
-  também aparecem em "Próximos compromissos" do Hoje ([cycle.dashboard](../cycle/dashboard.md)).
+  continuam listadas em "Despesas fixas do ciclo" do Hoje ([cycle.dashboard](../cycle/dashboard.md)).
 - **Pagar:** duas formas, como em Registrar gasto: **À vista (Pix, dinheiro ou débito)** e **Cartão de crédito**. À vista não abre outro menu e é gravada como `cash` (`pix`/`debit` seguem válidos em dados antigos); a lista mostra "Pago · À vista".
 - **Pagar (à vista):** o valor passa de "pendente" para "pago à vista" (`paidFixedExpenses`); o **saldo não
   muda**, porque já estava reservado.

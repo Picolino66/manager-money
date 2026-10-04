@@ -10,10 +10,8 @@ import { EmptyState } from '../components/EmptyState';
 import { FixedExpensesCard } from '../components/FixedExpensesCard';
 import { MetricRow } from '../components/MetricRow';
 import { PayFixedExpenseModal } from '../components/PayFixedExpenseModal';
-import { ProjectionCard } from '../components/ProjectionCard';
 import { Screen } from '../components/Screen';
 import { StatusBadge } from '../components/StatusBadge';
-import { UpcomingCommitmentsCard } from '../components/UpcomingCommitmentsCard';
 import { RootStackParamList } from '../navigation/types';
 import { colors, spacing, typography } from '../design/theme';
 import { canCloseActiveCycle, canReceiveIncomeEarlyNow } from '../application/cycle.use-cases';
@@ -27,12 +25,8 @@ import { PayFixedExpenseInput } from '../application/payment.use-cases';
 import {
   selectActiveCreditCards,
   selectCardLimitUsage,
-  selectCardStatements,
-  selectCreditCards,
   selectCycleAdjustments,
-  selectCycleProjections,
   selectCyclePayments,
-  selectUpcomingCommitments,
 } from '../application/selectors';
 import { FixedPaymentRecord, isLive } from '../application/state';
 import { DayStatus, FixedExpense } from '../domain/financial/financial.types';
@@ -67,16 +61,6 @@ export function DashboardScreen() {
   const installmentsByPurchaseId = Object.fromEntries(
     doc.cardPurchases.filter(isLive).map((purchase) => [purchase.id, purchase.installments]),
   );
-  const commitments = activeMonth ? selectUpcomingCommitments(doc, today) : [];
-  // Faturas com pagamento parcial: o compromisso mostra o restante (BR-FIN-033).
-  const partialStatementIds = new Set(
-    selectCreditCards(doc).flatMap((card) =>
-      selectCardStatements(doc, card.id, today)
-        .filter((statement) => statement.status === 'partial')
-        .map((statement) => `${card.id}:${statement.key}`),
-    ),
-  );
-  const projections = selectCycleProjections(doc, today, 3);
   const activeCards = selectActiveCreditCards(doc);
   const cardLimits = Object.fromEntries(
     activeCards.map((card) => [card.id, selectCardLimitUsage(doc, card.id)]),
@@ -273,11 +257,6 @@ export function DashboardScreen() {
         <MetricRow label="Meta de economia (guardada)" value={formatCurrency(config.savingGoal)} />
       </Card>
 
-      <UpcomingCommitmentsCard
-        commitments={commitments}
-        partialStatementIds={partialStatementIds}
-      />
-
       <FixedExpensesCard
         expenses={config.fixedExpenses}
         installmentsByPurchaseId={installmentsByPurchaseId}
@@ -285,8 +264,6 @@ export function DashboardScreen() {
         onUndo={handleUndoPayment}
         payments={cyclePayments}
       />
-
-      <ProjectionCard projections={projections} />
 
       {adjustments ? (
         <CyclePlanCard

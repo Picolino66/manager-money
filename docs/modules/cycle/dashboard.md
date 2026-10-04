@@ -10,8 +10,6 @@ summary: >
 keywords: [limite diário, hoje, você pode gastar hoje, saldo do dia, status, dashboard, próximos compromissos, projeção, próximos ciclos]
 code:
   - src/screens/DashboardScreen.tsx
-  - src/components/UpcomingCommitmentsCard.tsx
-  - src/components/ProjectionCard.tsx
   - src/components/CyclePlanCard.tsx
   - src/domain/financial/financial.calculations.ts
   - src/domain/financial/projection.ts
@@ -26,8 +24,10 @@ last_verified_commit: bfe9de6+T-028
 # Painel do dia (Hoje)
 
 Spec: [SPEC-018](../../../specs/SPEC-018-hoje-compromissos-e-projecao.md) · UI entregue na
-[T-024](../../../tasks/done/T-024.md). Componentes: `UpcomingCommitmentsCard`, `FixedExpensesCard`,
-`ProjectionCard`, `CyclePlanCard`.
+[T-024](../../../tasks/done/T-024.md). Componentes: `FixedExpensesCard`, `CyclePlanCard`.
+
+> A tela foi enxugada: os cards "Próximos compromissos" e "Próximos ciclos" foram removidos do Hoje. Os
+> seletores `selectUpcomingCommitments` e `selectCycleProjections` seguem no código, sem uso na UI.
 
 ## Descrição
 Responde "quanto posso gastar hoje **e continuar atingindo minha meta**?". O saldo do ciclo já desconta a
@@ -39,20 +39,13 @@ o restante de faturas parciais transportado do ciclo anterior.
    e o limite previsto de hoje (BR-FIN-007). Nunca mistura o limite do cartão com esse valor.
 2. **Ações:** Registrar e Renda (rendas avulsas).
 3. **Resumo curto:** dias restantes, "Dinheiro disponível no ciclo" e "Meta de economia (guardada)".
-4. **Próximos compromissos** (`UpcomingCommitmentsCard` ← `selectUpcomingCommitments`): faturas com **restante > 0**
-   já fechadas ou que vencem até o fim do ciclo, pelo **restante** (fatura parcial mostra só o que falta), com
-   "vence dd/MM" (fatura parcial com o sufixo "(restante)") e as **vencidas em destaque** (`overdue` = passou do vencimento sem quitar, mesmo parcial); depois
-   as fixas ativas pendentes. Vazio: "Nenhuma fatura ou despesa fixa pendente neste ciclo."
-5. **Despesas fixas do ciclo** (`FixedExpensesCard`): Pagar/Desfazer ([payment.fixed-expense](../payment/fixed-expense.md)).
-6. **Próximos ciclos** (`ProjectionCard` ← `selectCycleProjections`, 3 ciclos, **recolhido** mostrando o
-   "Livre antes de novos gastos"): por ciclo, renda − meta − fixas − faturas (BR-FIN-031), com aviso quando
-   negativo.
-7. **Plano do ciclo** (`CyclePlanCard`, **recolhido**, mostra o saldo inicial): renda (fontes ativas), rendas
+4. **Despesas fixas do ciclo** (`FixedExpensesCard`): Pagar/Desfazer ([payment.fixed-expense](../payment/fixed-expense.md)).
+5. **Plano do ciclo** (`CyclePlanCard`, **recolhido**, mostra o saldo inicial): renda (fontes ativas), rendas
    avulsas, fixas reservadas/pagas, meta, faturas do ciclo, encargos de faturas (`statementInterest`), **dívida de
    fatura transportada** (`carriedStatementDebt`, BR-FIN-034) e dívida herdada (`selectCycleAdjustments`). Rótulos:
    "− Faturas de cartão do ciclo", "− Juros/multas de faturas", "− Fatura pendente do ciclo anterior", "− Dívida
    herdada", "= Saldo inicial do ciclo" (UI da [T-027](../../../tasks/done/T-027.md)).
-8. **Fim da tela:** **Já recebi** ([receive-early.md](receive-early.md)) e **Fechar ciclo** ([close.md](close.md)),
+6. **Fim da tela:** **Já recebi** ([receive-early.md](receive-early.md)) e **Fechar ciclo** ([close.md](close.md)),
    conforme BR-FIN-016/017.
 
 ## Regras de negócio

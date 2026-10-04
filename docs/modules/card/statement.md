@@ -91,7 +91,7 @@ Não existe mais `payment` (singular) nem `calculateStatementInterest`: os encar
 - **Orçamento:** o principal já está reservado no ciclo do vencimento — **pagar não desconta de novo**. Só os
   encargos pesam, no ciclo ativo do lançamento (`statementInterest` ← `selectCycleStatementInterest`).
 - **Limite (BR-FIN-026):** cada fatura libera só o amortizado; encargos não ocupam limite.
-- **Restante parcial (BR-FIN-034):** durante o ciclo aparece em "Próximos compromissos" pelo restante; ao fechar,
+- **Restante parcial (BR-FIN-034):** durante o ciclo o restante aparece na fatura do cartão e pesa no plano do ciclo; ao fechar,
   vira dívida do próximo ciclo ([cycle.close](../cycle/close.md)). Fatura sem pagamento (`paidAmount > 0`) não é
   transportada; encargos sozinhos não bastam.
 - **Desfazer:** só lançamento do ciclo ativo; o limite volta a ficar comprometido pelo que ele amortizou e os

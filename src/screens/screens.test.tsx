@@ -5,7 +5,6 @@ import { Alert } from 'react-native';
 import { addCardPurchase, saveCreditCard } from '../application/card.use-cases';
 import { openCycle, saveConfig } from '../application/cycle.use-cases';
 import { payFixedExpense } from '../application/payment.use-cases';
-import { selectCycleProjections } from '../application/selectors';
 import { CardPurchaseRecord, createEmptyState, LocalState } from '../application/state';
 import { setUseCaseContextFactory, useFinancialStore } from '../store/financial.store';
 import { useSessionStore } from '../store/session.store';
@@ -513,21 +512,8 @@ function overduePurchase(cardId: string): CardPurchaseRecord {
   };
 }
 
-describe('Hoje: próximos compromissos e próximos ciclos (SPEC-018)', () => {
-  it('lista faturas (com destaque se vencida) e fixas pendentes', async () => {
-    const doc = docWithFixed(true);
-    await seed({ ...doc, cardPurchases: [overduePurchase(doc.creditCards[0]!.id)] });
-    render(<DashboardScreen />);
-    expect(screen.getByText('Próximos compromissos')).toBeTruthy();
-    expect(screen.getByText(/^Fatura Nubank · venceu \d{2}\/\d{2}$/)).toBeTruthy();
-    expect(screen.getByText('Vencida')).toBeTruthy();
-    expect(
-      screen.getByLabelText(/^Fatura Nubank · venceu \d{2}\/\d{2}, R\$ 400,00, vencida$/),
-    ).toBeTruthy();
-    expect(screen.getByText('Aluguel · fixa pendente')).toBeTruthy();
-  });
-
-  it('fatura parcial mostra o restante e o plano traz a fatura pendente do ciclo anterior', async () => {
+describe('Hoje: plano do ciclo com fatura parcial (SPEC-018)', () => {
+  it('o plano traz juros e a fatura pendente do ciclo anterior', async () => {
     const doc = docWithFixed(true);
     const cycle = doc.cycles[0]!;
     const purchase = overduePurchase(doc.creditCards[0]!.id);
@@ -553,58 +539,10 @@ describe('Hoje: próximos compromissos e próximos ciclos (SPEC-018)', () => {
       ],
     });
     render(<DashboardScreen />);
-    expect(screen.getByText(/^Fatura Nubank \(restante\) · venceu \d{2}\/\d{2}$/)).toBeTruthy();
-    expect(
-      screen.getByLabelText(
-        /^Fatura Nubank \(restante\) · venceu \d{2}\/\d{2}, R\$ 315,00, vencida$/,
-      ),
-    ).toBeTruthy();
-
     fireEvent.press(screen.getByLabelText('Mostrar ou ocultar o plano do ciclo'));
     expect(screen.getByText('− Juros/multas de faturas')).toBeTruthy();
     expect(screen.getByText('− Fatura pendente do ciclo anterior')).toBeTruthy();
     expect(screen.getByText('R$ 50,00')).toBeTruthy();
-  });
-
-  it('sem compromissos mostra mensagem vazia', async () => {
-    await seed(activeDoc());
-    render(<DashboardScreen />);
-    expect(screen.getByText('Nenhuma fatura ou despesa fixa pendente neste ciclo.')).toBeTruthy();
-  });
-
-  it('projeta os próximos 3 ciclos: renda, meta, fixas, cartões e livre', async () => {
-    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
-    let doc = docWithFixed(true);
-    const start = doc.cycles[0]!.startDate;
-    doc = addCardPurchase(
-      doc,
-      {
-        cardId: doc.creditCards[0]!.id,
-        description: 'TV',
-        category: 'Lazer',
-        totalAmount: 90000,
-        installments: 3,
-        date: start,
-      },
-      ctx,
-    );
-    await seed(doc);
-    render(<DashboardScreen />);
-    expect(screen.getByText('Próximos ciclos')).toBeTruthy();
-    expect(screen.getByText('Quanto do seu dinheiro futuro já está comprometido')).toBeTruthy();
-    expect(screen.getAllByText('Livre antes de novos gastos')).toHaveLength(3);
-    expect(screen.queryByText('Renda prevista')).toBeNull();
-
-    fireEvent.press(screen.getByLabelText('Mostrar ou ocultar detalhes dos próximos ciclos'));
-    expect(screen.getAllByText('Renda prevista')).toHaveLength(3);
-    expect(screen.getAllByText('− Faturas de cartão')).toHaveLength(3);
-    // Cada ciclo: 310.000 − 0 (meta) − 150.000 (aluguel) − parcela da TV no ciclo (30.000 ou 0).
-    const projections = selectCycleProjections(useFinancialStore.getState().doc, new Date(), 3);
-    expect(projections.some((projection) => projection.cardCharges === 30000)).toBe(true);
-    for (const projection of projections) {
-      expect(projection.free).toBe(160000 - projection.cardCharges);
-      expect(screen.getAllByText(formatCurrency(projection.free)).length).toBeGreaterThan(0);
-    }
   });
 
   it('plano do ciclo expande e mostra fixas reservadas (pagas + pendentes)', async () => {
