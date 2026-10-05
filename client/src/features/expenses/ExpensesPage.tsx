@@ -35,6 +35,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/dialog';
 import { Field } from '@/components/ui/field';
+import { DateMaskField } from '@/components/ui/date-mask-input';
 import { Input, NativeSelect } from '@/components/ui/input';
 import { EmptyState } from '@/components/ui/states';
 import { MoneyTd, Table, Td, Th } from '@/components/ui/table';
@@ -54,6 +55,9 @@ import { CardPurchaseFormDialog } from './CardPurchaseFormDialog';
 import { ExpenseFormDialog } from './ExpenseFormDialog';
 
 const PAGE_SIZE = 20;
+
+/** Ordem de texto em pt-BR: sem distinguir acento/caixa e com números naturais (2/12 antes de 10/12). */
+const collator = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
 
 /** Textos da ação de remover por tipo: gasto e compra são excluídos; fixa e fatura, desfeitas. */
 const REMOVAL: Record<
@@ -135,6 +139,7 @@ export function ExpensesPage() {
         id: 'name',
         accessorKey: 'name',
         header: 'Descrição',
+        sortingFn: (a, b) => collator.compare(a.original.name, b.original.name),
         cell: (info) => (
           <>
             {info.row.original.name || <span className="text-muted">—</span>}
@@ -148,15 +153,30 @@ export function ExpensesPage() {
         id: 'type',
         accessorKey: 'type',
         header: 'Tipo',
+        sortingFn: (a, b) =>
+          collator.compare(
+            PAID_HISTORY_LABELS[a.original.type],
+            PAID_HISTORY_LABELS[b.original.type],
+          ),
         cell: (info) => <Badge>{PAID_HISTORY_LABELS[info.row.original.type]}</Badge>,
       },
       {
         id: 'means',
         accessorKey: 'means',
         header: 'Meio',
+        sortingFn: (a, b) =>
+          collator.compare(
+            PAID_HISTORY_MEANS_LABELS[a.original.means],
+            PAID_HISTORY_MEANS_LABELS[b.original.means],
+          ),
         cell: (info) => PAID_HISTORY_MEANS_LABELS[info.row.original.means],
       },
-      { id: 'category', accessorKey: 'category', header: 'Categoria' },
+      {
+        id: 'category',
+        accessorKey: 'category',
+        header: 'Categoria',
+        sortingFn: (a, b) => collator.compare(a.original.category, b.original.category),
+      },
       { id: 'cycle', accessorKey: 'cycleLabel', header: 'Ciclo', enableSorting: false },
       { id: 'amount', accessorKey: 'amount', header: 'Valor' },
     ],
@@ -325,26 +345,8 @@ export function ExpensesPage() {
           )}
         </Field>
         <div className="grid grid-cols-2 gap-2 md:col-span-2">
-          <Field label="De">
-            {(props) => (
-              <Input
-                type="date"
-                value={filter.from}
-                onChange={(event) => update({ from: event.target.value })}
-                {...props}
-              />
-            )}
-          </Field>
-          <Field label="Até">
-            {(props) => (
-              <Input
-                type="date"
-                value={filter.to}
-                onChange={(event) => update({ to: event.target.value })}
-                {...props}
-              />
-            )}
-          </Field>
+          <DateMaskField label="De" value={filter.from} onChange={(from) => update({ from })} />
+          <DateMaskField label="Até" value={filter.to} onChange={(to) => update({ to })} />
         </div>
       </div>
 

@@ -43,7 +43,7 @@ describe('guarda de rota', () => {
   it('sem sessão vai para o login', async () => {
     signedIn();
     useSessionStore.setState({ status: 'signed-out', userId: null });
-    const router = renderApp('/gastos');
+    const router = renderApp('/historico');
 
     expect(await screen.findByRole('heading', { name: 'Manager Money' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/login');
@@ -131,7 +131,7 @@ describe('visão geral', () => {
 describe('histórico', () => {
   it('lista todos os ciclos e deixa o fechado somente leitura', async () => {
     signedIn();
-    renderApp('/gastos');
+    renderApp('/historico');
 
     const table = await screen.findByRole('table');
     expect(within(table).getAllByText('Somente leitura')).toHaveLength(2);
@@ -141,7 +141,7 @@ describe('histórico', () => {
 
   it('busca filtra a tabela e atualiza o total', async () => {
     signedIn();
-    renderApp('/gastos');
+    renderApp('/historico');
     const user = userEvent.setup();
 
     await user.type(await screen.findByLabelText('Buscar'), 'onibus');
@@ -152,7 +152,7 @@ describe('histórico', () => {
 
   it('registra gasto em centavos e grava só a linha nova', async () => {
     signedIn();
-    renderApp('/gastos');
+    renderApp('/historico');
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('button', { name: 'Registrar gasto' }));
@@ -175,7 +175,7 @@ describe('histórico', () => {
 
   it('falha ao gravar: mostra o erro e a tabela não muda', async () => {
     signedIn();
-    renderApp('/gastos');
+    renderApp('/historico');
     const user = userEvent.setup();
     gateway.failOn = { table: 'expenses', error: new SyncError('network') };
 
@@ -193,7 +193,7 @@ describe('histórico', () => {
 
   it('exclui com confirmação', async () => {
     signedIn();
-    renderApp('/gastos');
+    renderApp('/historico');
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('button', { name: 'Excluir gasto Ração' }));
@@ -233,7 +233,7 @@ describe('histórico: cartão e fixas', () => {
 
   it('compra no cartão tem lápis e lixeira; fixa paga só tem desfazer', async () => {
     signedInWithPaid();
-    renderApp('/gastos');
+    renderApp('/historico');
 
     expect(await screen.findByRole('button', { name: 'Editar compra Tênis' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Excluir compra Tênis' })).toBeInTheDocument();
@@ -249,7 +249,7 @@ describe('histórico: cartão e fixas', () => {
 
   it('edita a compra no cartão e grava só ela', async () => {
     signedInWithPaid();
-    renderApp('/gastos');
+    renderApp('/historico');
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('button', { name: 'Editar compra Tênis' }));
@@ -267,7 +267,7 @@ describe('histórico: cartão e fixas', () => {
 
   it('desfaz o pagamento da fixa com confirmação', async () => {
     signedInWithPaid();
-    renderApp('/gastos');
+    renderApp('/historico');
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('button', { name: 'Desfazer pagamento Aluguel' }));
@@ -282,7 +282,7 @@ describe('histórico: cartão e fixas', () => {
 
   it('exclui a compra no cartão com confirmação', async () => {
     signedInWithPaid();
-    renderApp('/gastos');
+    renderApp('/historico');
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('button', { name: 'Excluir compra Tênis' }));

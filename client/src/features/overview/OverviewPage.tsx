@@ -161,7 +161,7 @@ export function OverviewPage() {
         description={`Ciclo ${summary.cycleLabel} · ${summary.remainingDays} dia(s) restante(s)`}
         actions={
           <Button asChild>
-            <Link to="/gastos?novo=1">Registrar gasto</Link>
+            <Link to="/historico?novo=1">Registrar gasto</Link>
           </Button>
         }
       />

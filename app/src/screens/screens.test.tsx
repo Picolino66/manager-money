@@ -1139,6 +1139,36 @@ describe('DailyHistoryScreen (tudo que foi pago no ciclo)', () => {
     expect(await screen.findByText('TV')).toBeTruthy();
   });
 
+  it('campos de data do filtro aplicam a máscara DD/MM/AAAA enquanto digita', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    await seed(
+      addExpense(
+        docWithFixed(),
+        {
+          amount: 1500,
+          category: 'Alimentação',
+          description: 'Padaria',
+          date: format(ctx.now, 'yyyy-MM-dd'),
+        },
+        ctx,
+      ),
+    );
+    render(
+      <DailyHistoryScreen
+        navigation={navigation}
+        route={{ key: 'k', name: 'DailyHistory', params: undefined }}
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText('Filtros'));
+    const from = await screen.findByLabelText('De');
+
+    fireEvent.changeText(from, '05102026');
+    expect(screen.getByLabelText('De').props.value).toBe('05/10/2026');
+    fireEvent.changeText(screen.getByLabelText('Até'), '3112');
+    expect(screen.getByLabelText('Até').props.value).toBe('31/12');
+  });
+
   it('data inválida no filtro mostra erro e não aplica', async () => {
     await seed(docWithFixed());
     const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };

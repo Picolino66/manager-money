@@ -15,7 +15,7 @@ symbols: [buildOverview, OverviewPage, moneyTicks]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-026]
 adrs: [ADR-017, ADR-020]
 tests: [client/src/lib/view-models.test.ts, client/src/lib/chart.test.ts]
-last_verified_commit: 7903717+T-042h
+last_verified_commit: 7903717+T-042i
 ---
 
 # Visão geral (CLIENT-010)

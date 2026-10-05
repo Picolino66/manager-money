@@ -17,7 +17,7 @@ code:
 symbols: [AppShell, AccountMenu, useThemeStore, resolveScheme, readThemePreference]
 adrs: [ADR-021, ADR-020]
 tests: [client/src/store/theme.store.test.ts, client/src/styles/tokens.test.ts]
-last_verified_commit: 3b9bf25+T-040
+last_verified_commit: 7903717+T-042i
 ---
 
 # Shell e tema

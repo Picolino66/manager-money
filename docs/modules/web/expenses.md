@@ -15,14 +15,15 @@ code:
   - client/src/lib/expenses.ts
   - packages/core/src/application/paid-history.ts
   - client/src/components/ui/money-input.tsx
-symbols: [filterPaidHistory, CardPurchaseFormDialog, buildHistoryRows, filterHistoryRows, selectPaidHistory, ExpenseFormDialog, MoneyInput]
+  - client/src/components/ui/date-mask-input.tsx
+symbols: [DateMaskField, filterPaidHistory, CardPurchaseFormDialog, buildHistoryRows, filterHistoryRows, selectPaidHistory, ExpenseFormDialog, MoneyInput]
 business_rules: [BR-FIN-001, BR-FIN-013]
 adrs: [ADR-020]
-tests: [packages/core/src/application/paid-history.test.ts, client/src/lib/view-models.test.ts, client/src/features/features.test.tsx]
-last_verified_commit: 7903717+T-042h
+tests: [packages/core/src/application/paid-history.test.ts, client/src/lib/view-models.test.ts, client/src/features/features.test.tsx, client/src/features/history-table.test.tsx]
+last_verified_commit: 7903717+T-042i
 ---
 
-# Histórico em `/gastos` (CLIENT-011/012)
+# Histórico em `/historico` (CLIENT-011/012)
 
 - Linhas: `selectPaidHistory` (núcleo, mesma fonte do Histórico do app): gastos à vista, compras no
   cartão (data da compra, valor total), fixas e parcelamentos pagos e pagamentos de fatura, de ciclos
@@ -43,5 +44,6 @@ last_verified_commit: 7903717+T-042h
 - Registrar/editar: `addExpense`/`updateExpense` (data dentro do ciclo, valor > 0 em centavos — máscara
   igual à do app). Excluir: confirmação + `deleteExpense` (exclusão lógica, chega ao mobile no pull).
 - Falha ao gravar: diálogo continua aberto com a mensagem; a tabela não muda.
+- Rota `/historico` (`/gastos` antiga redireciona, mantendo `?novo=1`). **Ordenação** sobre todas as linhas filtradas (antes de paginar; volta à página 1): Tipo e Meio pelo rótulo exibido; Descrição e Categoria em pt-BR sem acento/caixa e em ordem natural (2/12 antes de 10/12); Data e Valor pelo valor real. **Filtro de datas** "De/Até" com máscara DD/MM/AAAA (`DateMaskField`, `maskDateInput` do núcleo; no app, o mesmo no modal de filtros): data incompleta/inexistente não filtra e mostra o aviso.
 - Compra parcelada no cartão aparece **uma linha por parcela** (n/N), na data da compra somada mês a mês (editar a data da compra reposiciona todas); parcelas por vir ficam em cinza com "a vencer" e, como as quitadas antes do app, não entram no total. Lápis e lixeira atuam na compra inteira (`sourceId`). BR-FIN-038.
 - Registrar compra no cartão, pagar fixa e pagar fatura ficam para o P1; aqui só se consulta.

@@ -14,7 +14,7 @@ test.describe('público', () => {
       }
     });
 
-    const response = await page.goto('/gastos');
+    const response = await page.goto('/historico');
     await expect(page).toHaveURL(/\/login$/);
     await expect(page.getByRole('heading', { name: 'Manager Money' })).toBeVisible();
 

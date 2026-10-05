@@ -13,6 +13,13 @@ export function formatDateInput(date: string): string {
   return formatDateLabel(date);
 }
 
+/** Máscara DD/MM/AAAA enquanto se digita: só dígitos, até 8, com as barras nos lugares. */
+export function maskDateInput(text: string): string {
+  const digits = text.replace(/\D/g, '').slice(0, 8);
+
+  return [digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8)].filter(Boolean).join('/');
+}
+
 export function parseBRDateInput(date: string): Date | null {
   const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(date.trim());
 

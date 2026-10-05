@@ -11,7 +11,7 @@ code:
   - client/vite.config.ts
   - client/eslint.config.js
   - client/src/router.tsx
-last_verified_commit: 7903717+T-041b
+last_verified_commit: 7903717+T-042i
 ---
 
 # Módulo: client web
@@ -25,7 +25,7 @@ Specs [SPEC-022](../../../specs/SPEC-022-client-web-mvp.md) e [SPEC-023](../../.
 | `web.onboarding` | `/comecar` | [onboarding.md](onboarding.md) |
 | `web.shell` | layout, tema, 404 | [shell.md](shell.md) |
 | `web.overview` | `/` | [overview.md](overview.md) |
-| `web.expenses` | `/gastos` | [expenses.md](expenses.md) |
+| `web.expenses` | `/historico` | [expenses.md](expenses.md) |
 | `web.cycles` | `/ciclos`, `/ciclos/:id` | [cycles.md](cycles.md) |
 | `web.analysis` | `/analise` | [analysis.md](analysis.md) |
 | `web.settings` | `/ajustes`, `/ajustes/configuracao`, `/ajustes/exportar` | [settings.md](settings.md) |

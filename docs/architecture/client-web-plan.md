@@ -15,7 +15,7 @@ code:
   - .github/workflows/ci.yml
   - client/README.md
 adrs: [ADR-019, ADR-020, ADR-021, ADR-022, ADR-004, ADR-006]
-last_verified_commit: 7903717+T-042h
+last_verified_commit: 7903717+T-042i
 ---
 
 # Reorganização do repositório
@@ -306,7 +306,7 @@ só `infrastructure/` fala com o Supabase.
 | `/login` | Entrar ou criar conta | — | entrar, criar conta | P0 |
 | `/comecar` | Onboarding de conta nova | config vazia | configurar renda/dia/meta, abrir 1º ciclo | P0 |
 | `/` | Visão geral do ciclo ativo | `selectActiveMonth`, `selectUpcomingCommitments`, `selectCardLimitUsage` | ir para gastos/ciclos | P0 |
-| `/gastos` | Tabela de gastos | gastos de todos os ciclos | buscar, filtrar, ordenar, paginar, registrar, editar/excluir (ciclo ativo) | P0 |
+| `/historico` (antes `/gastos`, que redireciona) | Tabela de gastos | gastos de todos os ciclos | buscar, filtrar, ordenar, paginar, registrar, editar/excluir (ciclo ativo) | P0 |
 | `/ciclos` | Ciclos fechados e resultado | `selectClosedMonths` | filtrar por ano | P0 |
 | `/ciclos/:id` | Detalhe do ciclo (por dia, fixas, rendas, faturas) | seletores do ciclo | — | P0 |
 | `/analise` | Gastos por categoria e período | `selectCycleSpendingRange` | escolher período, comparar | P0 |
@@ -577,7 +577,7 @@ Spec [SPEC-022](../../specs/SPEC-022-client-web-mvp.md) · tasks T-032..T-040 ·
 Spec [SPEC-023](../../specs/SPEC-023-client-web-ajustes.md) · task T-041. Entregue: `/ajustes` (atalhos),
 configuração financeira, cartões (lista, detalhe, faturas, compras) e exportar JSON; docs
 [settings](../modules/web/settings.md) e [cards](../modules/web/cards.md). `card-view`, `card-text` e
-`export-data` passaram para o núcleo. Também no Histórico (`/gastos`): lápis e lixeira, coluna Meio e filtros
+`export-data` passaram para o núcleo. Também no Histórico (`/historico`): lápis e lixeira, coluna Meio e filtros
 (`paid-history`). Situação inicial do cartão ("Compras anteriores ao app") também entregue. **Falta do P1:** registrar compra no cartão, abrir/fechar ciclo,
 pagar fixa, renda avulsa, planejamento, CSV, recarregar ao focar a aba e excluir conta.
 

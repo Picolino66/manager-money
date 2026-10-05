@@ -14,7 +14,7 @@ code:
 symbols: [addExpense, updateExpense, assertDateWithinCycle, parseBRDateInput]
 tests: [packages/core/src/application/cycle.use-cases.test.ts]
 business_rules: [BR-FIN-001, BR-FIN-011, BR-FIN-012, BR-FIN-025, BR-FIN-026]
-last_verified_commit: c47cf18+T-025r2
+last_verified_commit: 7903717+T-042i
 ---
 
 # Registrar e editar gasto

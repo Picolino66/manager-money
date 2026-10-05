@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router';
 
 import { AppShell } from './app/AppShell';
 import { ONBOARDING_PATH, RequireAuth } from './app/RequireAuth';
+import { LegacyExpensesRedirect } from './app/LegacyExpensesRedirect';
 import { NotFoundPage, RouteErrorPage } from './app/StatusPages';
 
 /** Rotas em português (client-web-plan → Rotas). Telas carregadas sob demanda. */
@@ -33,8 +34,9 @@ export const routes = [
               Component: (await import('./features/overview/OverviewPage')).OverviewPage,
             }),
           },
+          { path: 'gastos', element: <LegacyExpensesRedirect /> },
           {
-            path: 'gastos',
+            path: 'historico',
             lazy: async () => ({
               Component: (await import('./features/expenses/ExpensesPage')).ExpensesPage,
             }),

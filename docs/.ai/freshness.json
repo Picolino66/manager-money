@@ -1,20 +1,20 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-05T03:10:08.441Z",
-  "source_commit": "12036de",
+  "generated_at": "2026-10-05T03:16:19.048Z",
+  "source_commit": "b175ebb",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
     "architecture/client-web-plan.md": {
       "id": "architecture.client-web-plan",
-      "last_verified_commit": "7903717+T-042h",
+      "last_verified_commit": "7903717+T-042i",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:052fc5534bf1bee397ee1cca5da2ddeb609ced41ce4952d767661ee49e2e91eb",
         "app/package.json": "sha256:91ec3a321e89412e3a7065a8db05a9cc0904ba8d87ffca5774cb1cc98c5e1754",
         "client/package.json": "sha256:9eb428390a6a4f198656e7b3a853bfda81aba80a777ef2f791d8bec153890315",
         ".github/workflows/ci.yml": "sha256:597fe87591055d49008a22fff837addba9c5c0e6cea7cf7cf9812709e5217e12",
-        "client/README.md": "sha256:4cd8f04a0b9ed6266dd53175f803a09e7cd9183c8a59a1b710a68c54ffaf4a76"
+        "client/README.md": "sha256:3270b7d762df894d282b1b1f058bc5b5afcc4c323903a8071fa6ea453dc10a9b"
       }
     },
     "architecture/contracts.md": {
@@ -323,7 +323,7 @@
     },
     "modules/cycle/history.md": {
       "id": "cycle.history",
-      "last_verified_commit": "7903717+T-042h",
+      "last_verified_commit": "7903717+T-042i",
       "state": "fresh",
       "source_hashes": {
         "filterPaidHistory": "sha256:dd0426e97b285d3c3bf293a9c2f28b471d368f7fc771fd4e7f07e8868ee43311",
@@ -383,7 +383,7 @@
     },
     "modules/expense/register.md": {
       "id": "expense.register",
-      "last_verified_commit": "c47cf18+T-025r2",
+      "last_verified_commit": "7903717+T-042i",
       "state": "fresh",
       "source_hashes": {
         "addExpense": "sha256:a0bfcca61a801c3648e414241d0ed1a62bb6d7e6541573334b1c786a483de8b6",
@@ -659,9 +659,10 @@
     },
     "modules/web/expenses.md": {
       "id": "web.expenses",
-      "last_verified_commit": "7903717+T-042h",
+      "last_verified_commit": "7903717+T-042i",
       "state": "fresh",
       "source_hashes": {
+        "DateMaskField": "sha256:87106180681a1d16271a389380a17a555c395f3b823dd96f624357d6b865b7d3",
         "filterPaidHistory": "sha256:dd0426e97b285d3c3bf293a9c2f28b471d368f7fc771fd4e7f07e8868ee43311",
         "CardPurchaseFormDialog": "sha256:fd34f23fba765a7b13421ac6b538d6cb2bc0d6dcf31c56805eeaada43cda8a9e",
         "buildHistoryRows": "sha256:a7ece52afecd3bb5e71bf90d577f53ab520a75f786202be25446ac618be937ba",
@@ -673,13 +674,13 @@
     },
     "modules/web/index.md": {
       "id": "web",
-      "last_verified_commit": "7903717+T-041b",
+      "last_verified_commit": "7903717+T-042i",
       "state": "fresh",
       "source_hashes": {
         "client/package.json": "sha256:9eb428390a6a4f198656e7b3a853bfda81aba80a777ef2f791d8bec153890315",
         "client/vite.config.ts": "sha256:fbe8e4462d698ecf33bdf017c0633ca0920635e3ced71c845e64185d13060d63",
         "client/eslint.config.js": "sha256:8f4084021a82d0e08764f88267984237f828e820ca123e6d59ed5044ddc61f71",
-        "client/src/router.tsx": "sha256:9239bd2cfbf2a1c2a7cac68e0b1d97b819a56085b018587e8ac6ca2beb38f720"
+        "client/src/router.tsx": "sha256:15c441ac0e2f064187ca94cdab2374e169da717b26c982d1cbfa7c92af50880c"
       }
     },
     "modules/web/onboarding.md": {
@@ -693,11 +694,11 @@
     },
     "modules/web/overview.md": {
       "id": "web.overview",
-      "last_verified_commit": "7903717+T-042h",
+      "last_verified_commit": "7903717+T-042i",
       "state": "fresh",
       "source_hashes": {
         "buildOverview": "sha256:d0aaa07ff1516bf44325b85861c4e7ec4a2c4a143848aca609848d7c0535618a",
-        "OverviewPage": "sha256:734f2482bf5d499f3cbc57d20b71a859250c0bccd595d87463a4d22687864c26",
+        "OverviewPage": "sha256:ea14761bff9b943fe94b485a36be44c385949582655dfe1cce80e556c5fee8b2",
         "moneyTicks": "sha256:17e8af977a5885e407b51b5c214f62778307504df31b3e7017330062b3844a54"
       }
     },
@@ -716,7 +717,7 @@
     },
     "modules/web/shell.md": {
       "id": "web.shell",
-      "last_verified_commit": "3b9bf25+T-040",
+      "last_verified_commit": "7903717+T-042i",
       "state": "fresh",
       "source_hashes": {
         "AppShell": "sha256:f8b2f4ef8581d79c66093ae247daffe7639c33c5f6ff64c300c2066ddf773d1a",

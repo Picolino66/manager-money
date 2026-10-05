@@ -10,6 +10,7 @@ import {
   formatMonthLabel,
   formatShortDate,
   getTodayMonthYear,
+  maskDateInput,
   parseBRDateInput,
   toISODate,
 } from './date';
@@ -37,6 +38,16 @@ describe('datas', () => {
     expect(formatCycleLabel('2026-10-07', '2026-11-06')).toBe('07/10 a 06/11');
     expect(formatMonthLabel(2026, 10)).toBe('Outubro/2026');
     expect(getTodayMonthYear(new Date(2026, 9, 1))).toEqual({ month: 10, year: 2026 });
+  });
+
+  it('aplica a máscara DD/MM/AAAA enquanto digita', () => {
+    expect(maskDateInput('')).toBe('');
+    expect(maskDateInput('0')).toBe('0');
+    expect(maskDateInput('051')).toBe('05/1');
+    expect(maskDateInput('05102026')).toBe('05/10/2026');
+    expect(maskDateInput('05/10/2026')).toBe('05/10/2026');
+    expect(maskDateInput('05-10-2026 99')).toBe('05/10/2026');
+    expect(maskDateInput('ab')).toBe('');
   });
 
   it('valida data digitada', () => {

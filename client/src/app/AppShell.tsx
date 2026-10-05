@@ -21,7 +21,7 @@ import { useDataStore } from '@/store/data.store';
 
 const NAV = [
   { to: '/', label: 'Visão geral', icon: LayoutDashboard, end: true },
-  { to: '/gastos', label: 'Histórico', icon: ReceiptText, end: false },
+  { to: '/historico', label: 'Histórico', icon: ReceiptText, end: false },
   { to: '/ciclos', label: 'Ciclos', icon: History, end: false },
   { to: '/analise', label: 'Análise', icon: ChartPie, end: false },
   { to: '/ajustes', label: 'Ajustes', icon: Settings, end: false },

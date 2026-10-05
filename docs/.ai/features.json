@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-05T03:10:08.441Z",
-  "source_commit": "12036de",
+  "generated_at": "2026-10-05T03:16:19.048Z",
+  "source_commit": "b175ebb",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -1577,6 +1577,7 @@
         "registrar"
       ],
       "symbols": [
+        "DateMaskField",
         "filterPaidHistory",
         "CardPurchaseFormDialog",
         "buildHistoryRows",
@@ -1595,7 +1596,8 @@
       "tests": [
         "packages/core/src/application/paid-history.test.ts",
         "client/src/lib/view-models.test.ts",
-        "client/src/features/features.test.tsx"
+        "client/src/features/features.test.tsx",
+        "client/src/features/history-table.test.tsx"
       ],
       "spec": "SPEC-022"
     },

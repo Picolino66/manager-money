@@ -7,7 +7,12 @@ import {
   PaidHistoryFilter,
   PaidHistoryType,
 } from '@manager-money/core/application/paid-history';
-import { formatDateInput, parseBRDateInput, toISODate } from '@manager-money/core/utils/date';
+import {
+  formatDateInput,
+  maskDateInput,
+  parseBRDateInput,
+  toISODate,
+} from '@manager-money/core/utils/date';
 import { radius, spacing, typography } from '../design/theme';
 import { makeStyles } from '../design/useTheme';
 import { AppButton } from './AppButton';
@@ -108,7 +113,7 @@ export function HistoryFilterModal({
               keyboardType="number-pad"
               label="De"
               maxLength={10}
-              onChangeText={setFromText}
+              onChangeText={(text) => setFromText(maskDateInput(text))}
               placeholder="DD/MM/AAAA"
               value={fromText}
             />
@@ -117,7 +122,7 @@ export function HistoryFilterModal({
               keyboardType="number-pad"
               label="Até"
               maxLength={10}
-              onChangeText={setToText}
+              onChangeText={(text) => setToText(maskDateInput(text))}
               placeholder="DD/MM/AAAA"
               value={toText}
             />
