@@ -1139,6 +1139,50 @@ describe('DailyHistoryScreen (tudo que foi pago no ciclo)', () => {
     expect(await screen.findByText('TV')).toBeTruthy();
   });
 
+  it('filtro de cartão mostra só as linhas do cartão escolhido', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    let doc = docWithFixed(true);
+    const cardId = doc.creditCards[0]!.id;
+    const today = format(ctx.now, 'yyyy-MM-dd');
+    doc = addExpense(
+      doc,
+      { amount: 1500, category: 'Alimentação', description: 'Padaria', date: today },
+      ctx,
+    );
+    doc = addCardPurchase(
+      doc,
+      {
+        cardId,
+        description: 'TV',
+        category: 'Lazer',
+        totalAmount: 90000,
+        installments: 1,
+        date: today,
+      },
+      ctx,
+    );
+    await seed(doc);
+    render(
+      <DailyHistoryScreen
+        navigation={navigation}
+        route={{ key: 'k', name: 'DailyHistory', params: undefined }}
+      />,
+    );
+    fireEvent.press(screen.getByLabelText(/Alternar detalhes de/));
+    expect(await screen.findByText('Padaria')).toBeTruthy();
+
+    fireEvent.press(screen.getByLabelText('Filtros'));
+    await screen.findByText('Cartão');
+    // O 1º "Todos" é o do campo Cartão (Categoria é "Todas").
+    fireEvent.press(screen.getAllByText('Todos')[0]!);
+    fireEvent.press(await screen.findByText('Nubank'));
+    fireEvent.press(screen.getByText('Aplicar filtros'));
+
+    expect(await screen.findByText('TV')).toBeTruthy();
+    expect(screen.queryByText('Padaria')).toBeNull();
+    expect(screen.getByLabelText('Filtros (ativos)')).toBeTruthy();
+  });
+
   it('campos de data do filtro aplicam a máscara DD/MM/AAAA enquanto digita', async () => {
     const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
     await seed(

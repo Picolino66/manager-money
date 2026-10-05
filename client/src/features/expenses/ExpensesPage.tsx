@@ -23,7 +23,11 @@ import {
   PAID_HISTORY_MEANS_LABELS,
   PaidHistoryType,
 } from '@manager-money/core/application/paid-history';
-import { selectActiveCycle, selectConfig } from '@manager-money/core/application/selectors';
+import {
+  selectActiveCycle,
+  selectConfig,
+  selectCreditCards,
+} from '@manager-money/core/application/selectors';
 import { CardPurchaseRecord, isLive } from '@manager-money/core/application/state';
 import { getSortedCategories } from '@manager-money/core/domain/financial/financial.calculations';
 import { formatCurrency } from '@manager-money/core/utils/currency';
@@ -120,6 +124,7 @@ export function ExpensesPage() {
     () => (doc?.cycles ?? []).filter(isLive).sort((a, b) => b.startDate.localeCompare(a.startDate)),
     [doc],
   );
+  const cards = useMemo(() => (doc ? selectCreditCards(doc) : []), [doc]);
   const formCategories = useMemo(
     () => [
       ...new Set([...getSortedCategories(doc ? selectConfig(doc) : null), ...categoriesOf(rows)]),
@@ -253,6 +258,11 @@ export function ExpensesPage() {
       label: `Categoria: ${filter.category}`,
       clear: { category: null },
     },
+    filter.cardId && {
+      key: 'card',
+      label: `Cartão: ${cards.find((card) => card.id === filter.cardId)?.name ?? ''}`,
+      clear: { cardId: null },
+    },
     filter.type && {
       key: 'type',
       label: `Tipo: ${PAID_HISTORY_LABELS[filter.type]}`,
@@ -283,7 +293,7 @@ export function ExpensesPage() {
         }
       />
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-7">
+      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-8">
         <Field label="Buscar" className="xl:col-span-2">
           {(props) => (
             <Input
@@ -326,6 +336,24 @@ export function ExpensesPage() {
             </NativeSelect>
           )}
         </Field>
+        {cards.length > 0 ? (
+          <Field label="Cartão">
+            {(props) => (
+              <NativeSelect
+                value={filter.cardId ?? ''}
+                onChange={(event) => update({ cardId: event.target.value || null })}
+                {...props}
+              >
+                <option value="">Todos</option>
+                {cards.map((card) => (
+                  <option key={card.id} value={card.id}>
+                    {card.name}
+                  </option>
+                ))}
+              </NativeSelect>
+            )}
+          </Field>
+        ) : null}
         <Field label="Tipo">
           {(props) => (
             <NativeSelect

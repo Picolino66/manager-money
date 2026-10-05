@@ -16,7 +16,7 @@ code:
   - packages/core/src/domain/financial/financial.calculations.ts
 symbols: [filterPaidHistory, selectPaidHistory, sumPaidHistory, calculateDayBalance, calculateFinalBalance, selectCycleSpending, selectCycleSpendingRange]
 business_rules: [BR-FIN-006, BR-FIN-008]
-last_verified_commit: 7903717+T-042i
+last_verified_commit: 7903717+T-042k
 ---
 
 # Histórico
@@ -36,7 +36,7 @@ last_verified_commit: 7903717+T-042i
 - **Filtros:** ícone de funil à direita do título "Histórico diário" (destacado quando há filtro ativo) abre
   o modal `HistoryFilterModal` com os mesmos filtros do client web, via `filterPaidHistory` (núcleo): busca
   sem acento em descrição e categoria, categoria, tipo e período (DD/MM/AAAA; vazio = sem limite). Não há
-  filtro de ciclo, pois a aba só mostra o ciclo ativo. Sem resultado: "Nada encontrado" com "Limpar filtros".
+  filtro de ciclo (mas tem o de **Cartão**, só com cartão cadastrado), pois a aba só mostra o ciclo ativo. Sem resultado: "Nada encontrado" com "Limpar filtros".
 - **Ciclos (aba):** no topo, o filtro de **Mês** e **Ano** (padrão: ciclo atual). O mês é o do início do
   ciclo. O ano e o mês ficam limitados ao ciclo mais antigo registrado e ao último ciclo com parcela de
   cartão, mais 3 ciclos de margem (`selectCycleSpendingRange`).

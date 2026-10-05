@@ -60,6 +60,8 @@ export type PaidHistoryItem = {
   installment: { number: number; total: number } | null;
   /** Parcela ainda por vir (data depois de hoje): aparece, mas não entra na soma. */
   upcoming: boolean;
+  /** Cartão de origem (compra, parcela, fixa paga no crédito, fatura); nulo no que saiu do saldo. */
+  cardId: string | null;
 };
 
 export const PAID_HISTORY_LABELS: Record<PaidHistoryType, string> = {
@@ -122,6 +124,10 @@ export function selectPaidHistory(
         deletable,
         installment: null,
         upcoming: false,
+        cardId:
+          payments.get(item.id)?.method === 'credit'
+            ? (purchases.get(payments.get(item.id)?.cardPurchaseId ?? '')?.cardId ?? null)
+            : null,
       };
     });
 
@@ -164,6 +170,7 @@ export function selectPaidHistory(
           upcoming && card
             ? (cycleOfDate(dueOf(installment.statementKey, card)) ?? cycleOfDate(date))
             : cycleOfDate(date),
+        cardId: purchase.cardId,
         countsInTotal: single ? true : !upcoming && !prior,
         means: 'credit',
         sourceId: purchase.id,
@@ -190,6 +197,7 @@ export function selectPaidHistory(
       deletable: activeIds.has(payment.cycleId),
       installment: null,
       upcoming: false,
+      cardId: payment.cardId,
     };
 
     // `paidAmount` já inclui os encargos; o principal é o que a compra no cartão já tinha pesado.
@@ -232,6 +240,8 @@ export type PaidHistoryFilter = {
   /** `null` = todos os ciclos (o app só mostra o ciclo ativo e ignora este campo). */
   cycleId: string | null;
   category: string | null;
+  /** `null` = todos os cartões; com cartão, só as linhas ligadas a ele (o saldo some). */
+  cardId: string | null;
   /** `null` = todos os tipos. */
   type: PaidHistoryType | null;
   /** yyyy-MM-dd inclusivos; vazio = sem limite. */
@@ -243,6 +253,7 @@ export const EMPTY_PAID_HISTORY_FILTER: PaidHistoryFilter = {
   search: '',
   cycleId: null,
   category: null,
+  cardId: null,
   type: null,
   from: '',
   to: '',
@@ -270,6 +281,7 @@ export function filterPaidHistory<T extends PaidHistoryItem>(
         normalizeText(item.category).includes(search)) &&
       (!filter.cycleId || item.cycleId === filter.cycleId) &&
       (!filter.category || item.category === filter.category) &&
+      (!filter.cardId || item.cardId === filter.cardId) &&
       (!filter.type || item.type === filter.type) &&
       (!filter.from || item.date >= filter.from) &&
       (!filter.to || item.date <= filter.to),

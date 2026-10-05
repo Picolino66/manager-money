@@ -181,4 +181,17 @@ describe('filterPaidHistory', () => {
     expect(names({ from: '2026-11-01', to: '2026-11-30' })).not.toContain('Almoço');
     expect(names({ to: '2026-10-31' })).toEqual(['Almoço']);
   });
+
+  it('filtra por cartão: compra e fixa paga no crédito; o saldo some', () => {
+    const cardId = items.find((item) => item.name === 'Tênis')!.cardId!;
+
+    expect(
+      items
+        .filter((item) => item.cardId === null)
+        .map((item) => item.name)
+        .sort(),
+    ).toEqual(['Almoço', 'Aluguel', 'Café']);
+    expect(names({ cardId })).toEqual(['Curso (no crédito)', 'Tênis']);
+    expect(names({ cardId: 'outro-cartao' })).toEqual([]);
+  });
 });

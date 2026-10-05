@@ -154,3 +154,37 @@ describe('histórico: parcelas do cartão (BR-FIN-038)', () => {
     expect(november.map((row) => row.name)).toEqual(['Celular (2/3)']);
   });
 });
+
+describe('histórico: filtro por cartão (parcelas e fatura)', () => {
+  it('cada cartão só vê as próprias parcelas; gasto à vista não tem cartão', () => {
+    let state = saveCreditCard(base(), { name: 'Itaú', closingDay: 10, dueDay: 20 }, TODAY);
+    const [nubank, itau] = state.creditCards.map((card) => card.id) as [string, string];
+    const buyOn = (cardId: string, description: string, installments: number) =>
+      addCardPurchase(
+        state,
+        {
+          cardId,
+          description,
+          category: 'Pessoal',
+          totalAmount: 9000,
+          installments,
+          date: '2026-10-10',
+        },
+        TODAY,
+      );
+
+    state = buyOn(nubank, 'Celular', 3);
+    state = buyOn(itau, 'Mochila', 2);
+
+    const all = selectPaidHistory(state, '2026-10-16');
+    const names = (cardId: string | null) =>
+      filterPaidHistory(all, { ...EMPTY_PAID_HISTORY_FILTER, cardId })
+        .map((item) => item.name)
+        .sort();
+
+    expect(names(nubank)).toEqual(['Celular (1/3)', 'Celular (2/3)', 'Celular (3/3)']);
+    expect(names(itau)).toEqual(['Mochila (1/2)', 'Mochila (2/2)']);
+    expect(names(null)).toHaveLength(5);
+    expect(all.every((item) => item.cardId !== null)).toBe(true);
+  });
+});

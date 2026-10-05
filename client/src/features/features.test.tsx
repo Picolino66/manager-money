@@ -247,6 +247,25 @@ describe('histórico: cartão e fixas', () => {
     expect(within(rowOf('Aluguel')).getByText('Saldo')).toBeInTheDocument();
   });
 
+  it('filtra por cartão: some o saldo e aparece a etiqueta removível', async () => {
+    signedInWithPaid();
+    renderApp('/historico');
+    const user = userEvent.setup();
+
+    await screen.findByRole('button', { name: 'Editar compra Tênis' });
+    await user.selectOptions(screen.getByLabelText('Cartão'), 'Nubank');
+
+    const table = screen.getByRole('table');
+    await waitFor(() => expect(within(table).queryByText('Aluguel')).toBeNull());
+    expect(within(table).getByText('Tênis')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Remover filtro Cartão: Nubank' }),
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Remover filtro Cartão: Nubank' }));
+    expect(await within(table).findByText('Aluguel')).toBeInTheDocument();
+  });
+
   it('edita a compra no cartão e grava só ela', async () => {
     signedInWithPaid();
     renderApp('/historico');

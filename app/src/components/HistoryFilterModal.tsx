@@ -22,6 +22,8 @@ import { TextInputField } from './TextInputField';
 type HistoryFilterModalProps = {
   filter: PaidHistoryFilter;
   categories: string[];
+  /** Cartões do usuário; vazio esconde o filtro de cartão. */
+  cards: { id: string; name: string }[];
   onApply: (filter: PaidHistoryFilter) => void;
   onClose: () => void;
 };
@@ -37,6 +39,7 @@ const ALL = '';
 export function HistoryFilterModal({
   filter,
   categories,
+  cards,
   onApply,
   onClose,
 }: HistoryFilterModalProps) {
@@ -44,6 +47,7 @@ export function HistoryFilterModal({
   const [search, setSearch] = useState(filter.search);
   const [category, setCategory] = useState(filter.category ?? ALL);
   const [type, setType] = useState<string>(filter.type ?? ALL);
+  const [cardId, setCardId] = useState(filter.cardId ?? ALL);
   const [fromText, setFromText] = useState(filter.from ? formatDateInput(filter.from) : '');
   const [toText, setToText] = useState(filter.to ? formatDateInput(filter.to) : '');
   const [errors, setErrors] = useState<Errors>({});
@@ -83,6 +87,7 @@ export function HistoryFilterModal({
       ...EMPTY_PAID_HISTORY_FILTER,
       search: search.trim(),
       category: category || null,
+      cardId: cardId || null,
       type: (type || null) as PaidHistoryType | null,
       from: from ?? '',
       to: to ?? '',
@@ -107,6 +112,17 @@ export function HistoryFilterModal({
               options={categoryOptions}
               value={category}
             />
+            {cards.length > 0 ? (
+              <SelectField
+                label="Cartão"
+                onChange={setCardId}
+                options={[
+                  { label: 'Todos', value: ALL },
+                  ...cards.map((card) => ({ label: card.name, value: card.id })),
+                ]}
+                value={cardId}
+              />
+            ) : null}
             <SelectField label="Tipo" onChange={setType} options={typeOptions} value={type} />
             <TextInputField
               error={errors.from}

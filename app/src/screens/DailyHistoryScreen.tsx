@@ -23,6 +23,7 @@ import {
   selectPaidHistory,
   sumPaidHistory,
 } from '@manager-money/core/application/paid-history';
+import { selectCreditCards } from '@manager-money/core/application/selectors';
 import { calculateDayBalance } from '@manager-money/core/domain/financial/financial.calculations';
 import { spacing, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
@@ -109,6 +110,10 @@ export function DailyHistoryScreen({ navigation }: Props) {
         : [],
     [activeMonth, doc, filter],
   );
+  const cards = useMemo(
+    () => selectCreditCards(doc).map((card) => ({ id: card.id, name: card.name })),
+    [doc],
+  );
   const categories = useMemo(
     () => [...new Set(cycleItems.map((item) => item.category))].sort((a, b) => a.localeCompare(b)),
     [cycleItems],
@@ -150,6 +155,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
   const filterModal = isFilterOpen ? (
     <HistoryFilterModal
       categories={categories}
+      cards={cards}
       filter={filter}
       onApply={(next) => {
         setFilter(next);
