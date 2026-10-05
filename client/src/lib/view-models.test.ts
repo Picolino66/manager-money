@@ -11,6 +11,7 @@ import { payFixedExpense } from '@manager-money/core/application/payment.use-cas
 import {
   selectActiveMonth,
   selectClosedMonths,
+  selectCreditSnapshot,
   selectUpcomingCommitments,
 } from '@manager-money/core/application/selectors';
 import { createEmptyState } from '@manager-money/core/application/state';
@@ -41,6 +42,7 @@ describe('visão geral (paridade com o Hoje do app)', () => {
     expect(view.summary).toEqual(buildDashboardSummary(selectActiveMonth(state)!, NOW));
     expect(view.commitments).toEqual(selectUpcomingCommitments(state, NOW));
     expect(view.savingGoal).toBe(50000);
+    expect(view.credit).toEqual(selectCreditSnapshot(state, NOW));
     // 07/11 a 12/11: um ponto por dia, gasto do dia em centavos.
     expect(view.daily.map((point) => point.date)).toEqual([
       '2026-11-07',

@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-05T00:50:13.265Z",
-  "source_commit": "85655fe",
+  "generated_at": "2026-10-05T01:01:59.051Z",
+  "source_commit": "d2338d5",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -634,6 +634,7 @@
         "próximos ciclos"
       ],
       "symbols": [
+        "selectCreditSnapshot",
         "buildDashboardSummary",
         "calculateDailyLimitForDate",
         "calculateDayStatus",
@@ -1638,7 +1639,7 @@
       "type": "feature",
       "module": "web",
       "title": "Visão geral do ciclo ativo (web)",
-      "summary": "KPIs do ciclo ativo (ainda pode gastar hoje, limite de hoje, disponível no ciclo, gasto), gráfico de gasto diário vs. limite, compromissos reservados e limite dos cartões, todos calculados pelo núcleo.",
+      "summary": "KPIs do ciclo ativo (ainda pode gastar hoje, disponível no ciclo, disponível no crédito, gasto no saldo, gasto no crédito da fatura vigente), gráfico de gasto diário vs. limite, compromissos reservados e limite dos cartões, todos calculados pelo núcleo.",
       "doc": "modules/web/overview.md",
       "state": "implemented",
       "keywords": [

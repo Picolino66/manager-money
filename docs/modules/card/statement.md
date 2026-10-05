@@ -24,7 +24,7 @@ symbols: [buildCardStatements, summarizeStatement, statementDueDate, payStatemen
 adrs: [ADR-017, ADR-018]
 tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/domain/financial/credit-card.test.ts, packages/core/src/domain/financial/statement.test.ts, packages/core/src/application/card.use-cases.test.ts, packages/core/src/application/financial-vision.test.ts, app/src/screens/cards.screens.test.tsx]
 business_rules: [BR-FIN-005, BR-FIN-025, BR-FIN-026, BR-FIN-030, BR-FIN-033, BR-FIN-034]
-last_verified_commit: 7903717+T-041
+last_verified_commit: 7903717+T-042e
 ---
 
 # Faturas, pagamento parcial e encargos

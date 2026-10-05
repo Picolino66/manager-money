@@ -22,7 +22,7 @@ symbols: [CardDebtPage, selectStatementChoices, buildCardStatementsView, stateme
 business_rules: [BR-FIN-019, BR-FIN-025, BR-FIN-026, BR-FIN-028, BR-FIN-029, BR-FIN-033, BR-FIN-034]
 adrs: [ADR-018, ADR-020, ADR-022]
 tests: [packages/core/src/application/card-view.test.ts, packages/core/src/application/card-debt.test.ts, client/src/features/settings.test.tsx]
-last_verified_commit: 7903717+T-041c
+last_verified_commit: 7903717+T-042d
 ---
 
 # Cartões (CLIENT-017)

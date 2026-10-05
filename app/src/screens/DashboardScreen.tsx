@@ -31,6 +31,7 @@ import {
   selectCardLimitUsage,
   selectCycleAdjustments,
   selectCyclePayments,
+  selectCreditSnapshot,
   selectRecurringIssues,
 } from '@manager-money/core/application/selectors';
 import { FixedPaymentRecord, isLive } from '@manager-money/core/application/state';
@@ -82,6 +83,9 @@ export function DashboardScreen() {
 
     return buildDashboardSummary(activeMonth);
   }, [activeMonth]);
+
+  // BR-FIN-037: limite disponível e gasto na fatura vigente, somados nos cartões ativos.
+  const credit = useMemo(() => selectCreditSnapshot(doc, new Date()), [doc]);
 
   const fixedMetrics = useMemo(() => {
     if (!config) {
@@ -229,14 +233,22 @@ export function DashboardScreen() {
           {formatCurrency(summary.todayBalance)}
         </Text>
         <View style={styles.heroMetrics}>
-          <View style={styles.heroMetric}>
-            <Text style={styles.heroMetricLabel}>Já gastou hoje</Text>
-            <Text style={styles.heroMetricValue}>{formatCurrency(summary.todaySpent)}</Text>
-          </View>
-          <View style={styles.heroMetric}>
-            <Text style={styles.heroMetricLabel}>Limite previsto para hoje</Text>
-            <Text style={styles.heroMetricValue}>{formatCurrency(summary.currentDailyLimit)}</Text>
-          </View>
+          <HeroMetric label="Já gastou hoje" value={formatCurrency(summary.todaySpent)} />
+          <HeroMetric
+            label="Disponível no ciclo"
+            negative={summary.remainingAvailableAmount < 0}
+            value={formatCurrency(summary.remainingAvailableAmount)}
+          />
+          <HeroMetric
+            label="Disponível no crédito"
+            negative={credit.availableLimit !== null && credit.availableLimit < 0}
+            value={credit.availableLimit === null ? '—' : formatCurrency(credit.availableLimit)}
+          />
+          <HeroMetric label="Gasto no saldo" value={formatCurrency(summary.totalSpent)} />
+          <HeroMetric
+            label="Gasto no crédito (fatura vigente)"
+            value={formatCurrency(credit.currentStatementAmount)}
+          />
         </View>
       </Card>
 
@@ -258,11 +270,6 @@ export function DashboardScreen() {
 
       <Card>
         <MetricRow label="Dias restantes" value={String(summary.remainingDays)} />
-        <MetricRow
-          label="Dinheiro disponível no ciclo"
-          tone={summary.remainingAvailableAmount < 0 ? 'negative' : 'default'}
-          value={formatCurrency(summary.remainingAvailableAmount)}
-        />
         <MetricRow label="Meta de economia (guardada)" value={formatCurrency(config.savingGoal)} />
       </Card>
 
@@ -340,6 +347,27 @@ function Header({ cycleLabel }: { cycleLabel?: string }) {
   );
 }
 
+function HeroMetric({
+  label,
+  value,
+  negative = false,
+}: {
+  label: string;
+  value: string;
+  negative?: boolean;
+}) {
+  const styles = useStyles();
+
+  return (
+    <View style={styles.heroMetric}>
+      <Text style={styles.heroMetricLabel}>{label}</Text>
+      <Text style={[styles.heroMetricValue, negative ? styles.heroMetricNegative : null]}>
+        {value}
+      </Text>
+    </View>
+  );
+}
+
 const useStyles = makeStyles((colors) => ({
   header: {
     gap: spacing.xs,
@@ -374,11 +402,16 @@ const useStyles = makeStyles((colors) => ({
   },
   heroMetrics: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: spacing.md,
   },
   heroMetric: {
-    flex: 1,
+    flexBasis: '45%',
+    flexGrow: 1,
     gap: spacing.xs,
+  },
+  heroMetricNegative: {
+    color: colors.negative,
   },
   heroMetricLabel: {
     color: colors.muted,

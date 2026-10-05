@@ -425,6 +425,69 @@ describe('situação inicial (BR-FIN-027)', () => {
     ).toEqual([1, 5, 6]);
   });
 
+  it('compra anterior aceita data real; recusa data futura ou inválida; editar só a data (BR-FIN-036)', () => {
+    const base0 = base();
+    const input = {
+      cardId: cardId(base0),
+      description: 'Celular',
+      category: 'Outros',
+      installmentAmount: 10000,
+      totalInstallments: 10,
+      remainingInstallments: 6,
+      nextStatementKey: '2026-10',
+    };
+    const withDate = addExistingCardDebt(base0, { ...input, purchaseDate: '2026-05-20' }, TODAY);
+    const without = addExistingCardDebt(base0, input, TODAY);
+    const saved = withDate.cardPurchases[0]!;
+
+    expect(saved.purchaseDate).toBe('2026-05-20');
+    // A data é informativa: fatura, ciclo e parcelas iguais às da compra sem data.
+    expect(saved).toMatchObject({
+      firstStatementKey: without.cardPurchases[0]!.firstStatementKey,
+      firstCycleKey: without.cardPurchases[0]!.firstCycleKey,
+      settledInstallments: 4,
+    });
+    expect(() =>
+      addExistingCardDebt(base0, { ...input, purchaseDate: '2026-12-01' }, TODAY),
+    ).toThrow('não pode ser futura');
+    expect(() =>
+      addExistingCardDebt(base0, { ...input, purchaseDate: '20/05/2026' }, TODAY),
+    ).toThrow('data de compra válida');
+
+    const edited = updateCardPurchase(
+      withDate,
+      saved.id,
+      {
+        description: 'Celular',
+        category: 'Outros',
+        totalAmount: saved.totalAmount,
+        installments: saved.installments,
+        date: '2026-04-02',
+      },
+      TODAY,
+    );
+
+    expect(edited.cardPurchases[0]).toMatchObject({
+      purchaseDate: '2026-04-02',
+      firstStatementKey: saved.firstStatementKey,
+      dirty: true,
+    });
+    expect(() =>
+      updateCardPurchase(
+        withDate,
+        saved.id,
+        {
+          description: 'Celular',
+          category: 'Outros',
+          totalAmount: saved.totalAmount,
+          installments: saved.installments,
+          date: '2027-01-01',
+        },
+        TODAY,
+      ),
+    ).toThrow('não pode ser futura');
+  });
+
   it('valida restantes, fatura vencida e fatura muito distante', () => {
     const state = base();
     const input = {
@@ -477,7 +540,7 @@ describe('situação inicial (BR-FIN-027)', () => {
     expect(initial(openCycle(withDebt, TODAY))).toBe(200000);
   });
 
-  it('compra anterior ao app só muda descrição e categoria', () => {
+  it('compra anterior ao app muda descrição, categoria e data; valor e parcelas não (BR-FIN-036)', () => {
     const state = addExistingCardDebt(
       base(),
       {
@@ -523,7 +586,7 @@ describe('situação inicial (BR-FIN-027)', () => {
         },
         TODAY,
       ),
-    ).toThrow('só a descrição e a categoria');
+    ).toThrow('só descrição, categoria e data');
   });
 });
 
@@ -635,7 +698,7 @@ describe('origem da compra (BR-FIN-029)', () => {
         },
         TODAY,
       ),
-    ).toThrow('só a descrição e a categoria');
+    ).toThrow('só descrição, categoria e data');
     expect(purchase(state, '2026-10-16', 1000).cardPurchases[1]!.origin).toBeUndefined();
   });
 });

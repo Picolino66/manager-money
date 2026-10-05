@@ -19,7 +19,7 @@ symbols: [filterPaidHistory, CardPurchaseFormDialog, buildHistoryRows, filterHis
 business_rules: [BR-FIN-001, BR-FIN-013]
 adrs: [ADR-020]
 tests: [packages/core/src/application/paid-history.test.ts, client/src/lib/view-models.test.ts, client/src/features/features.test.tsx]
-last_verified_commit: 7903717+historico-filtros
+last_verified_commit: 7903717+T-042d
 ---
 
 # Histórico em `/gastos` (CLIENT-011/012)
@@ -29,7 +29,7 @@ last_verified_commit: 7903717+historico-filtros
   vivos. A coluna Ações mostra **lápis** (`editable`) e **lixeira** (`deletable`) conforme o núcleo; sem
   nenhum dos dois mostra "Somente leitura".
 - Gasto: lápis abre o diálogo do gasto; lixeira exclui (`deleteExpense`). Compra no cartão: lápis abre
-  `CardPurchaseFormDialog` (`updateCardPurchase`; compra anterior ao app só muda descrição e categoria) e
+  `CardPurchaseFormDialog` (`updateCardPurchase`; compra anterior ao app muda descrição, categoria e data (BR-FIN-036)) e
   lixeira exclui (`deleteCardPurchase`, BR-FIN-029). Fixa/parcelado e lançamento de fatura do ciclo ativo:
   só lixeira, que **desfaz** (`undoFixedPayment`, `undoStatementPayment`); não há edição desses (sem caso
   de uso no núcleo). Toda remoção pede confirmação e o erro do núcleo aparece na tela.

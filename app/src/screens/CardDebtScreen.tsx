@@ -32,6 +32,7 @@ import {
 } from '@manager-money/core/domain/financial/financial.types';
 import { RootStackParamList } from '../navigation/types';
 import { useFinancialStore } from '../store/financial.store';
+import { formatDateInput, parseBRDateInput, toISODate } from '@manager-money/core/utils/date';
 import { formatCurrency } from '@manager-money/core/utils/currency';
 import {
   describeInstallmentSchedule,
@@ -43,7 +44,9 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CardDebt'>;
 
 type Mode = 'statement' | 'installments';
 
-type Errors = Partial<Record<'description' | 'amount' | 'total' | 'remaining', string>>;
+type Errors = Partial<
+  Record<'description' | 'amount' | 'total' | 'remaining' | 'purchaseDate', string>
+>;
 
 /** Item do lote (parcelamento em andamento) aguardando o "Salvar tudo". */
 type QueuedItem = {
@@ -76,6 +79,7 @@ export function CardDebtScreen({ navigation, route }: Props) {
   const addExistingCardDebts = useFinancialStore((state) => state.addExistingCardDebts);
   const [mode, setMode] = useState<Mode>('statement');
   const [description, setDescription] = useState('');
+  const [dateText, setDateText] = useState('');
   const [category, setCategory] = useState<string>(DEFAULT_EXPENSE_CATEGORY);
   const [amount, setAmount] = useState<MoneyCents>(0);
   const [totalText, setTotalText] = useState('');
@@ -147,11 +151,19 @@ export function CardDebtScreen({ navigation, route }: Props) {
     setLastSaved(null);
   }
 
-  const draftIsEmpty = !description.trim() && amount === 0 && !totalText && !remainingText;
+  const draftIsEmpty =
+    !description.trim() && amount === 0 && !totalText && !remainingText && !dateText.trim();
 
   /** Valida o formulário e monta o item; `null` mostra os erros na tela. */
   function readDraft(): QueuedItem | null {
-    const nextErrors = validateExistingDebtDraft({ mode, description, amount, total, remaining });
+    const parsedDate = dateText.trim() ? parseBRDateInput(dateText) : null;
+    const purchaseDate = parsedDate ? toISODate(parsedDate) : '';
+    const nextErrors = validateExistingDebtDraft(
+      { mode, description, amount, total, remaining, purchaseDate },
+      toISODate(new Date()),
+    );
+
+    if (dateText.trim() && !parsedDate) nextErrors.purchaseDate = 'Use o formato DD/MM/AAAA.';
 
     setErrors(nextErrors);
 
@@ -169,6 +181,7 @@ export function CardDebtScreen({ navigation, route }: Props) {
         remaining,
         statementKey: selectedKey,
         includedInBalance: included,
+        purchaseDate,
       }),
       amount,
       total,
@@ -179,6 +192,7 @@ export function CardDebtScreen({ navigation, route }: Props) {
 
   function clearDraft() {
     setDescription('');
+    setDateText('');
     setAmount(0);
     setTotalText('');
     setRemainingText('');
@@ -296,6 +310,18 @@ export function CardDebtScreen({ navigation, route }: Props) {
             value={category}
           />
         ) : null}
+        <TextInputField
+          error={errors.purchaseDate}
+          keyboardType="number-pad"
+          label="Data da compra (opcional)"
+          maxLength={10}
+          onChangeText={setDateText}
+          placeholder="DD/MM/AAAA"
+          value={dateText}
+        />
+        <Text style={styles.hint}>
+          Só informativa: a fatura e o limite seguem a fatura escolhida.
+        </Text>
         <CurrencyInput
           error={errors.amount}
           label={isInstallments ? 'Valor da parcela' : 'Valor da fatura'}
@@ -424,6 +450,9 @@ export function CardDebtScreen({ navigation, route }: Props) {
                     addCycleKeys(item.input.nextStatementKey, item.remaining - 1),
                   )}
                   {item.total > item.remaining ? ` · de ${item.total}` : ''}
+                  {item.input.purchaseDate
+                    ? ` · compra em ${formatDateInput(item.input.purchaseDate)}`
+                    : ''}
                 </Text>
               </View>
               <AppButton

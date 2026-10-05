@@ -165,7 +165,7 @@ export function OverviewPage() {
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <Card className="flex flex-col gap-1">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm text-muted">Ainda pode gastar hoje</p>
@@ -178,17 +178,29 @@ export function OverviewPage() {
             Já gastou hoje <Money value={summary.todaySpent} />
           </p>
         </Card>
-        <Kpi label="Limite previsto para hoje">
-          <Money value={summary.currentDailyLimit} />
-        </Kpi>
         <Kpi label="Disponível no ciclo" hint="Já descontados fixas pendentes, faturas e a meta.">
           <Money value={summary.remainingAvailableAmount} />
         </Kpi>
         <Kpi
-          label="Gasto no ciclo"
-          hint={`Meta de economia guardada: ${formatCurrency(view.savingGoal)}`}
+          label="Disponível no crédito"
+          hint={
+            view.credit.availableLimit === null
+              ? 'Nenhum cartão ativo com limite informado.'
+              : view.credit.cardsWithoutLimit > 0
+                ? `Soma dos limites informados; ${view.credit.cardsWithoutLimit} cartão(ões) sem limite ficou(aram) de fora.`
+                : 'Limite dos cartões ativos menos o que já está comprometido.'
+          }
+        >
+          {view.credit.availableLimit === null ? '—' : <Money value={view.credit.availableLimit} />}
+        </Kpi>
+        <Kpi
+          label="Gasto no saldo"
+          hint={`Pix, dinheiro e débito no ciclo. Meta guardada: ${formatCurrency(view.savingGoal)}`}
         >
           <Money value={summary.totalSpent} />
+        </Kpi>
+        <Kpi label="Gasto no crédito" hint="Fatura vigente (aberta) dos cartões ativos.">
+          <Money value={view.credit.currentStatementAmount} />
         </Kpi>
       </div>
 

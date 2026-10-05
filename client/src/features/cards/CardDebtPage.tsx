@@ -37,6 +37,7 @@ import {
 } from '@manager-money/core/domain/financial/financial.types';
 import { formatCurrency } from '@manager-money/core/utils/currency';
 
+import { formatDateInput, toISODate } from '@manager-money/core/utils/date';
 import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -49,7 +50,9 @@ import { cn } from '@/lib/cn';
 import { useDataStore } from '@/store/data.store';
 
 type Mode = 'statement' | 'installments';
-type Errors = Partial<Record<'description' | 'amount' | 'total' | 'remaining', string>>;
+type Errors = Partial<
+  Record<'description' | 'amount' | 'total' | 'remaining' | 'purchaseDate', string>
+>;
 
 /** Item do lote (parcelamento em andamento) aguardando o "Salvar tudo". */
 type QueuedItem = {
@@ -82,6 +85,7 @@ export function CardDebtPage() {
   const run = useDataStore((state) => state.run);
   const [mode, setMode] = useState<Mode>('statement');
   const [description, setDescription] = useState('');
+  const [purchaseDate, setPurchaseDate] = useState('');
   const [category, setCategory] = useState<string>(DEFAULT_EXPENSE_CATEGORY);
   const [amount, setAmount] = useState<MoneyCents>(0);
   const [totalText, setTotalText] = useState('');
@@ -154,7 +158,8 @@ export function CardDebtPage() {
     setLastSaved(null);
   }
 
-  const draftIsEmpty = !description.trim() && amount === 0 && !totalText && !remainingText;
+  const draftIsEmpty =
+    !description.trim() && amount === 0 && !totalText && !remainingText && !purchaseDate;
   const queuedCount = queue.length + (draftIsEmpty ? 0 : 1);
   const queueCommitted = queue.reduce(
     (sum, item) => sum + existingDebtCommitted(item.amount, item.remaining, item.included),
@@ -163,7 +168,10 @@ export function CardDebtPage() {
 
   /** Valida o formulário e monta o item; `null` mostra os erros na tela. */
   function readDraft(): QueuedItem | null {
-    const next = validateExistingDebtDraft({ mode, description, amount, total, remaining });
+    const next = validateExistingDebtDraft(
+      { mode, description, amount, total, remaining, purchaseDate },
+      toISODate(new Date()),
+    );
 
     setErrors(next);
     setError(null);
@@ -182,6 +190,7 @@ export function CardDebtPage() {
         remaining,
         statementKey: selectedKey,
         includedInBalance: included,
+        purchaseDate,
       }),
       amount,
       total,
@@ -192,6 +201,7 @@ export function CardDebtPage() {
 
   function clearDraft() {
     setDescription('');
+    setPurchaseDate('');
     setAmount(0);
     setTotalText('');
     setRemainingText('');
@@ -328,6 +338,21 @@ export function CardDebtPage() {
             )}
           </Field>
         ) : null}
+        <Field
+          label="Data da compra (opcional)"
+          error={errors.purchaseDate}
+          hint="Só informativa: a fatura e o limite seguem a fatura escolhida acima."
+        >
+          {(props) => (
+            <Input
+              type="date"
+              max={toISODate(new Date())}
+              value={purchaseDate}
+              onChange={(event) => setPurchaseDate(event.target.value)}
+              {...props}
+            />
+          )}
+        </Field>
         <Field
           label={isInstallments ? 'Valor da parcela' : 'Valor da fatura'}
           error={errors.amount}
@@ -480,6 +505,9 @@ export function CardDebtPage() {
                       addCycleKeys(item.input.nextStatementKey, item.remaining - 1),
                     )}
                     {item.total > item.remaining ? ` · de ${item.total}` : ''}
+                    {item.input.purchaseDate
+                      ? ` · compra em ${formatDateInput(item.input.purchaseDate)}`
+                      : ''}
                   </p>
                 </div>
                 <Button

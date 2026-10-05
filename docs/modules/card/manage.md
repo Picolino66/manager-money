@@ -23,7 +23,7 @@ symbols: [saveCreditCard, setCreditCardActive, deleteCreditCard, updateCardPurch
 adrs: [ADR-014, ADR-017, ADR-018]
 tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/application/card.use-cases.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/domain/financial/credit-card.test.ts, app/src/screens/cards.screens.test.tsx, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-020, BR-FIN-026, BR-FIN-028, BR-FIN-029]
-last_verified_commit: 7903717+pull-refresh
+last_verified_commit: 7903717+T-042e
 ---
 
 # Cadastrar cartões, limite e ativo/inativo
@@ -63,7 +63,7 @@ UI entregue na [T-023](../../../tasks/done/T-023.md).
   (fechado depois do cadastro da compra) contou parcela dela e nenhuma fatura **com lançamento** (pagamento, mesmo
   parcial, ou encargo) a contém. Editar recalcula
   fatura e ciclo pela nova data (dentro do ciclo ativo); compras da situação inicial (`origin = 'existing'`)
-  só mudam descrição e categoria, qualquer que seja a data. Mudar só descrição e categoria nunca recalcula a
+  mudam descrição, categoria e data (informativa, BR-FIN-036; valor e parcelas travados). Mudar só descrição e categoria nunca recalcula a
   compra (vale com cartão inativo ou data fora do ciclo ativo). Compra criada por **fixa paga no crédito**: valor,
   parcelas e data ficam bloqueados ("Desfaça o pagamento"); excluí-la exclui junto o pagamento da fixa, que volta a
   pendente e reservada (bloqueado se o pagamento for de ciclo encerrado). Estorno = excluir a compra. Exclusões são lógicas (propagadas no sync).

@@ -4,7 +4,7 @@ type: feature
 module: web
 title: Visão geral do ciclo ativo (web)
 summary: >
-  KPIs do ciclo ativo (ainda pode gastar hoje, limite de hoje, disponível no ciclo, gasto), gráfico de
+  KPIs do ciclo ativo (ainda pode gastar hoje, disponível no ciclo, disponível no crédito, gasto no saldo, gasto no crédito da fatura vigente), gráfico de
   gasto diário vs. limite, compromissos reservados e limite dos cartões, todos calculados pelo núcleo.
 keywords: [dashboard, visão geral, limite diário, compromissos, kpi]
 code:
@@ -15,7 +15,7 @@ symbols: [buildOverview, OverviewPage, moneyTicks]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-026]
 adrs: [ADR-017, ADR-020]
 tests: [client/src/lib/view-models.test.ts, client/src/lib/chart.test.ts]
-last_verified_commit: 3b9bf25+T-040
+last_verified_commit: 7903717+T-042e
 ---
 
 # Visão geral (CLIENT-010)

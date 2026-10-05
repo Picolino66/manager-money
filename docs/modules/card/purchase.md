@@ -18,7 +18,7 @@ symbols: [addCardPurchase, buildCardPurchase, calculateFirstCycleKey, statementK
 adrs: [ADR-014, ADR-017]
 tests: [packages/core/src/domain/financial/credit-card.test.ts, packages/core/src/application/card.use-cases.test.ts, packages/core/src/application/financial-vision.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-005, BR-FIN-019, BR-FIN-020, BR-FIN-025, BR-FIN-026, BR-FIN-030]
-last_verified_commit: bfe9de6+T-028
+last_verified_commit: 7903717+T-042d
 ---
 
 # Compra parcelada no crédito

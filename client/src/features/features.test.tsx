@@ -119,6 +119,10 @@ describe('visão geral', () => {
 
     expect(await screen.findByText('Ainda pode gastar hoje')).toBeInTheDocument();
     expect(screen.getByText('Disponível no ciclo')).toBeInTheDocument();
+    expect(screen.getByText('Disponível no crédito')).toBeInTheDocument();
+    expect(screen.getByText('Gasto no saldo')).toBeInTheDocument();
+    expect(screen.getByText('Gasto no crédito')).toBeInTheDocument();
+    expect(screen.queryByText('Limite previsto para hoje')).not.toBeInTheDocument();
     expect(screen.getByText(/Ciclo atual|Ciclo ativo/)).toBeInTheDocument();
   });
 });

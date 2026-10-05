@@ -119,18 +119,30 @@ export type ExistingDebtDraft = {
   amount: MoneyCents;
   total: number;
   remaining: number;
+  /** Data real da compra (yyyy-MM-dd); vazia = não informar (BR-FIN-036). */
+  purchaseDate?: string;
 };
 
 export type ExistingDebtErrors = Partial<
-  Record<'description' | 'amount' | 'total' | 'remaining', string>
+  Record<'description' | 'amount' | 'total' | 'remaining' | 'purchaseDate', string>
 >;
 
 /** Validação do formulário (a mesma no app e no web); o núcleo valida de novo ao gravar. */
-export function validateExistingDebtDraft(draft: ExistingDebtDraft): ExistingDebtErrors {
+export function validateExistingDebtDraft(
+  draft: ExistingDebtDraft,
+  today?: string,
+): ExistingDebtErrors {
   const errors: ExistingDebtErrors = {};
   const installments = draft.mode === 'installments';
 
   if (installments && !draft.description.trim()) errors.description = 'Informe uma descrição.';
+  if (draft.purchaseDate) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.purchaseDate)) {
+      errors.purchaseDate = 'Informe uma data válida.';
+    } else if (today && draft.purchaseDate > today) {
+      errors.purchaseDate = 'A data da compra não pode ser futura.';
+    }
+  }
   if (draft.amount <= 0) errors.amount = 'Informe um valor maior que zero.';
 
   if (installments) {
@@ -157,6 +169,7 @@ export function buildExistingDebtInput(args: {
   remaining: number;
   statementKey: string;
   includedInBalance: boolean;
+  purchaseDate?: string;
 }): ExistingCardDebtInput {
   const installments = args.mode === 'installments';
 
@@ -170,6 +183,7 @@ export function buildExistingDebtInput(args: {
     totalInstallments: installments ? args.total : 1,
     remainingInstallments: installments ? args.remaining : 1,
     nextStatementKey: args.statementKey,
+    ...(args.purchaseDate ? { purchaseDate: args.purchaseDate } : {}),
     ...(installments ? {} : { statementBalance: true }),
     ...(installments && args.includedInBalance ? { includedInStatementBalance: true } : {}),
   };

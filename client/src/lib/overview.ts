@@ -5,7 +5,9 @@ import {
   selectActiveMonth,
   selectCardLimitUsage,
   selectConfig,
+  selectCreditSnapshot,
   selectUpcomingCommitments,
+  CreditSnapshot,
   UpcomingCommitment,
 } from '@manager-money/core/application/selectors';
 import { LocalState } from '@manager-money/core/application/state';
@@ -33,6 +35,7 @@ export type OverviewView =
       commitments: UpcomingCommitment[];
       commitmentsTotal: MoneyCents;
       cards: CardLimitView[];
+      credit: CreditSnapshot;
       daily: DailyPoint[];
     };
 
@@ -63,6 +66,7 @@ export function buildOverview(state: LocalState, now: Date): OverviewView {
     savingGoal: selectConfig(state)!.savingGoal,
     commitments,
     commitmentsTotal: commitments.reduce((total, item) => total + item.amount, 0),
+    credit: selectCreditSnapshot(state, now),
     cards: selectActiveCreditCards(state).map((card) => ({
       id: card.id,
       name: card.name,

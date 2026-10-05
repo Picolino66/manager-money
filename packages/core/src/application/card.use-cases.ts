@@ -84,6 +84,8 @@ export type ExistingCardDebtInput = {
   nextStatementKey: string;
   /** Total da fatura como o banco mostra: fonte de verdade daquela fatura (BR-FIN-032). */
   statementBalance?: boolean;
+  /** Data real da compra (informativa; hoje ou antes). Não muda fatura, ciclo nem limite. */
+  purchaseDate?: string;
   /** Parcelamento: a parcela atual já está dentro do total informado da fatura (BR-FIN-032). */
   includedInStatementBalance?: boolean;
 };
@@ -512,6 +514,8 @@ export function addExistingCardDebt(
     }
   }
 
+  assertExistingPurchaseDate(input.purchaseDate, ctx.now);
+
   const settled = input.totalInstallments - input.remainingInstallments;
   const nextCycleKey = statementCycleKey(input.nextStatementKey, card, config.payday);
   const activeKey = referenceCycleKey(state, ctx.now);
@@ -523,7 +527,8 @@ export function addExistingCardDebt(
     category: normalizeCategory(input.category),
     totalAmount: input.installmentAmount * input.totalInstallments,
     installments: input.totalInstallments,
-    purchaseDate: toISODate(statementClosingDate(firstStatementKey, card.closingDay)),
+    purchaseDate:
+      input.purchaseDate ?? toISODate(statementClosingDate(firstStatementKey, card.closingDay)),
     firstStatementKey,
     firstCycleKey: addCycleKeys(nextCycleKey > activeKey ? nextCycleKey : activeKey, -settled),
     settledInstallments: settled,
@@ -540,6 +545,21 @@ export function addExistingCardDebt(
     { ...state, cardPurchases: [...state.cardPurchases, purchase] },
     ctx,
   );
+}
+
+/** BR-FIN-036: a data de uma compra anterior ao app é informativa, mas precisa ser válida e não futura. */
+function assertExistingPurchaseDate(date: string | undefined, now: Date) {
+  if (date === undefined) {
+    return;
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(parseISO(date).getTime())) {
+    throw new DomainError('Informe uma data de compra válida.');
+  }
+
+  if (date > toISODate(now)) {
+    throw new DomainError('A data da compra não pode ser futura.');
+  }
 }
 
 /**
@@ -610,7 +630,8 @@ function assertModifiable(state: LocalState, purchase: CardPurchase) {
 
 /**
  * BR-FIN-029: edita uma compra feita no app. A fatura e o ciclo são recalculados pela nova data
- * (dentro do ciclo ativo). Compras da situação inicial só mudam descrição e categoria.
+ * (dentro do ciclo ativo). Compras da situação inicial mudam descrição, categoria e data (informativa,
+ * BR-FIN-036); valor e parcelas ficam travados.
  */
 export function updateCardPurchase(
   state: LocalState,
@@ -623,19 +644,27 @@ export function updateCardPurchase(
 
   const description = requireDescription(input.description);
   const category = normalizeCategory(input.category);
-  const valuesChanged =
-    input.totalAmount !== current.totalAmount ||
-    input.installments !== current.installments ||
-    input.date !== current.purchaseDate;
-
-  if (!valuesChanged) {
-    return replacePurchase(state, { ...current, description, category }, ctx);
-  }
+  const amountsChanged =
+    input.totalAmount !== current.totalAmount || input.installments !== current.installments;
 
   if (current.origin === 'existing') {
-    throw new DomainError(
-      'Em compras anteriores ao app, só a descrição e a categoria podem mudar.',
+    if (amountsChanged) {
+      throw new DomainError(
+        'Em compras anteriores ao app, só descrição, categoria e data da compra podem mudar.',
+      );
+    }
+
+    assertExistingPurchaseDate(input.date, ctx.now);
+
+    return replacePurchase(
+      state,
+      { ...current, description, category, purchaseDate: input.date },
+      ctx,
     );
+  }
+
+  if (!amountsChanged && input.date === current.purchaseDate) {
+    return replacePurchase(state, { ...current, description, category }, ctx);
   }
 
   if (findLinkedFixedPayment(state, current.id)) {

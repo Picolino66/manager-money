@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 import { updateCardPurchase } from '@manager-money/core/application/card.use-cases';
 import { CardPurchaseRecord, CycleRecord } from '@manager-money/core/application/state';
-import { formatCycleLabel } from '@manager-money/core/utils/date';
+import { formatCycleLabel, toISODate } from '@manager-money/core/utils/date';
 
 import { Button } from '@/components/ui/button';
 import { Dialog } from '@/components/ui/dialog';
@@ -35,7 +35,7 @@ type Props = {
 
 /**
  * Editar compra no cartão pelo caso de uso `updateCardPurchase` (BR-FIN-029). Compra da situação
- * inicial só muda descrição e categoria. Falha: o diálogo continua aberto com o erro do núcleo.
+ * inicial muda descrição, categoria e data (informativa, BR-FIN-036). Falha: o diálogo continua aberto com o erro do núcleo.
  */
 export function CardPurchaseFormDialog({ open, onOpenChange, cycle, categories, purchase }: Props) {
   const run = useDataStore((state) => state.run);
@@ -112,9 +112,8 @@ export function CardPurchaseFormDialog({ open, onOpenChange, cycle, categories, 
           {(props) => (
             <Input
               type="date"
-              min={cycle.startDate}
-              max={cycle.endDate}
-              disabled={valuesLocked}
+              min={valuesLocked ? undefined : cycle.startDate}
+              max={valuesLocked ? toISODate(new Date()) : cycle.endDate}
               {...props}
               {...register('date')}
             />
@@ -134,7 +133,7 @@ export function CardPurchaseFormDialog({ open, onOpenChange, cycle, categories, 
         </Field>
         {valuesLocked ? (
           <p className="text-sm text-muted">
-            Compra anterior ao app: só a descrição e a categoria podem mudar.
+            Compra anterior ao app: valor e parcelas não mudam; a data é só informativa.
           </p>
         ) : null}
         {error ? (

@@ -25,7 +25,7 @@ type EditCardPurchaseModalProps = {
 
 type Errors = Partial<Record<'description' | 'totalAmount' | 'installments' | 'date', string>>;
 
-/** BR-FIN-029: edição de compra no cartão. Compras anteriores ao app só mudam descrição/categoria. */
+/** BR-FIN-029: edição de compra no cartão. Compras anteriores ao app mudam descrição, categoria e data (informativa; BR-FIN-036). */
 export function EditCardPurchaseModal({
   purchase,
   canEditAmounts,
@@ -58,7 +58,12 @@ export function EditCardPurchaseModal({
       if (installments < 1 || installments > MAX_CARD_INSTALLMENTS) {
         nextErrors.installments = `Informe de 1 a ${MAX_CARD_INSTALLMENTS} parcelas.`;
       }
-      if (!date) nextErrors.date = 'Use o formato DD/MM/AAAA.';
+    }
+
+    if (!date) {
+      nextErrors.date = 'Use o formato DD/MM/AAAA.';
+    } else if (!canEditAmounts && toISODate(date) > toISODate(new Date())) {
+      nextErrors.date = 'A data da compra não pode ser futura.';
     }
 
     setErrors(nextErrors);
@@ -76,7 +81,7 @@ export function EditCardPurchaseModal({
               category,
               totalAmount: purchase.totalAmount,
               installments: purchase.installments,
-              date: purchase.purchaseDate,
+              date: date ? toISODate(date) : purchase.purchaseDate,
             },
       );
     } finally {
@@ -118,21 +123,21 @@ export function EditCardPurchaseModal({
                   onChangeText={setInstallmentsText}
                   value={installmentsText}
                 />
-                <TextInputField
-                  error={errors.date}
-                  keyboardType="number-pad"
-                  label="Data da compra"
-                  maxLength={10}
-                  onChangeText={setDateText}
-                  placeholder="DD/MM/AAAA"
-                  value={dateText}
-                />
               </>
             ) : (
               <Text style={styles.hint}>
-                Compra anterior ao app: só a descrição e a categoria podem mudar.
+                Compra anterior ao app: valor e parcelas não mudam; a data é só informativa.
               </Text>
             )}
+            <TextInputField
+              error={errors.date}
+              keyboardType="number-pad"
+              label="Data da compra"
+              maxLength={10}
+              onChangeText={setDateText}
+              placeholder="DD/MM/AAAA"
+              value={dateText}
+            />
             <AppButton
               iconName="save-outline"
               isLoading={isSaving}

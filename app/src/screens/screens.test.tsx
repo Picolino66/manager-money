@@ -82,9 +82,12 @@ describe('DashboardScreen (FLOW-primeiro-uso)', () => {
     render(<DashboardScreen />);
     expect(screen.getByText('Ainda pode gastar hoje')).toBeTruthy();
     expect(screen.getByText('Já gastou hoje')).toBeTruthy();
-    expect(screen.getByText('Limite previsto para hoje')).toBeTruthy();
+    expect(screen.getByText('Disponível no ciclo')).toBeTruthy();
+    expect(screen.getByText('Disponível no crédito')).toBeTruthy();
+    expect(screen.getByText('Gasto no saldo')).toBeTruthy();
+    expect(screen.getByText('Gasto no crédito (fatura vigente)')).toBeTruthy();
+    expect(screen.queryByText('Limite previsto para hoje')).toBeNull();
     expect(screen.getByText('Dias restantes')).toBeTruthy();
-    expect(screen.getByText('Dinheiro disponível no ciclo')).toBeTruthy();
     expect(screen.getByText('Meta de economia (guardada)')).toBeTruthy();
     // Plano do ciclo nasce recolhido, só com o saldo inicial.
     expect(screen.getByText('Saldo inicial R$ 3.100,00')).toBeTruthy();

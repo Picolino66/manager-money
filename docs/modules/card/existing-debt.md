@@ -19,7 +19,7 @@ symbols: [addExistingCardDebts, validateExistingDebtDraft, selectStatementChoice
 adrs: [ADR-017, ADR-018]
 tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/application/card.use-cases.test.ts, app/src/screens/cards.screens.test.tsx, packages/core/src/application/card-debt.test.ts, client/src/features/settings.test.tsx]
 business_rules: [BR-FIN-027, BR-FIN-029, BR-FIN-032]
-last_verified_commit: 7903717+T-041c
+last_verified_commit: 7903717+T-042d
 ---
 
 # Situação inicial do cartão
@@ -64,7 +64,8 @@ grava `includedInStatementBalance: true`. Saldo do ciclo ativo recalculado.
   **depois** de parcelas já marcadas como incluídas naquela fatura também é recusado se elas somarem mais que ele.
 - Exige configuração; aceita cartão inativo e cadastro antes do primeiro ciclo.
 - `nextStatementKey`: `yyyy-MM`, fatura ainda **não vencida**, até 12 faturas à frente da atual e sem lançamento.
-- BR-FIN-029: por ser `origin = 'existing'`, só **descrição e categoria** podem mudar depois (`updateCardPurchase`),
+- BR-036 (BR-FIN-036): o formulário (app e web, também no lote) tem **Data da compra (opcional)**, só informativa (não futura); depois, `updateCardPurchase` aceita mudar a data.
+- BR-FIN-029: por ser `origin = 'existing'`, só **descrição, categoria e data** podem mudar depois (`updateCardPurchase`),
   qualquer que seja a data; exclusão segue `canModifyCardPurchase`.
 
 ## Fluxo resumido

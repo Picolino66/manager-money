@@ -15,7 +15,7 @@ code:
 symbols: [recalculateActiveCycleBalance, saveConfig, addExpense, updateExpense, selectActiveMonth, selectClosedMonths, selectCycleAdjustments, selectStatementsToCarry, touch, commit]
 adrs: [ADR-001, ADR-008, ADR-018]
 tests: [packages/core/src/application/cycle.use-cases.test.ts, app/src/store/financial.store.test.ts]
-last_verified_commit: 7903717+T-042
+last_verified_commit: 7903717+T-042e
 ---
 
 # Casos de uso

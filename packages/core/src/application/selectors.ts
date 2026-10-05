@@ -10,6 +10,7 @@ import {
   CardStatement,
   addCycleKeys,
   cycleKeyFromStartDate,
+  currentStatementKey,
   cycleKeyOffset,
   listEffectiveInstallments,
   statementDueDate,
@@ -266,6 +267,45 @@ export function selectCardLimitUsage(state: LocalState, cardId: string): CardLim
         selectStatementPayments(state),
       )
     : null;
+}
+
+export type CreditSnapshot = {
+  /** Soma do limite disponível dos cartões ativos com limite informado; `null` se nenhum tem limite. */
+  availableLimit: MoneyCents | null;
+  /** Cartões ativos que não entram em `availableLimit` por não terem limite informado. */
+  cardsWithoutLimit: number;
+  /** Principal da fatura vigente (a aberta, que ainda recebe compras) somado nos cartões ativos. */
+  currentStatementAmount: MoneyCents;
+  /** Cartões ativos considerados. */
+  cards: number;
+};
+
+/**
+ * BR-FIN-037: resumo de crédito da visão geral (web) e do Hoje (app): limite disponível e gasto na
+ * fatura vigente (a que contém a data de hoje), somados nos cartões ativos.
+ */
+export function selectCreditSnapshot(state: LocalState, today: Date): CreditSnapshot {
+  const cards = selectActiveCreditCards(state);
+  let availableLimit: MoneyCents | null = null;
+  let cardsWithoutLimit = 0;
+  let currentStatementAmount = 0;
+
+  for (const card of cards) {
+    const available = selectCardLimitUsage(state, card.id)?.available ?? null;
+
+    if (available === null) {
+      cardsWithoutLimit += 1;
+    } else {
+      availableLimit = (availableLimit ?? 0) + available;
+    }
+
+    const key = currentStatementKey(card, today);
+    const statement = selectCardStatements(state, card.id, today).find((item) => item.key === key);
+
+    currentStatementAmount += statement?.amount ?? 0;
+  }
+
+  return { availableLimit, cardsWithoutLimit, currentStatementAmount, cards: cards.length };
 }
 
 // ---------------------------------------------------------------------------

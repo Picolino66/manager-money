@@ -200,6 +200,16 @@ describe('formulário da situação inicial', () => {
       remaining: 'As parcelas restantes devem ficar entre 1 e o total.',
     });
     expect(validateExistingDebtDraft({ ...draft, total: 49 }).total).toMatch(/1 a 48/);
+    expect(
+      validateExistingDebtDraft({ ...draft, purchaseDate: '2026-05-01' }, '2026-10-10'),
+    ).toEqual({});
+    expect(
+      validateExistingDebtDraft({ ...draft, purchaseDate: '2026-11-01' }, '2026-10-10')
+        .purchaseDate,
+    ).toMatch(/futura/);
+    expect(validateExistingDebtDraft({ ...draft, purchaseDate: '01/05' }).purchaseDate).toMatch(
+      /válida/,
+    );
     // Fatura em aberto: descrição opcional, parcelas ignoradas.
     expect(
       validateExistingDebtDraft({

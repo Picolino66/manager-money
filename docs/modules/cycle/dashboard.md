@@ -14,11 +14,11 @@ code:
   - packages/core/src/domain/financial/financial.calculations.ts
   - packages/core/src/domain/financial/projection.ts
   - packages/core/src/application/selectors.ts
-symbols: [buildDashboardSummary, calculateDailyLimitForDate, calculateDayStatus, calculateRemainingDays, selectUpcomingCommitments, selectCycleProjections, projectCycles, selectCycleAdjustments]
+symbols: [selectCreditSnapshot, buildDashboardSummary, calculateDailyLimitForDate, calculateDayStatus, calculateRemainingDays, selectUpcomingCommitments, selectCycleProjections, projectCycles, selectCycleAdjustments]
 adrs: [ADR-017, ADR-018]
 tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/domain/financial/projection.test.ts, packages/core/src/domain/financial/financial.calculations.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-007, BR-FIN-008, BR-FIN-009, BR-FIN-030, BR-FIN-031, BR-FIN-033, BR-FIN-034]
-last_verified_commit: 7903717+T-042b
+last_verified_commit: 7903717+T-042e
 ---
 
 # Painel do dia (Hoje)
@@ -35,10 +35,12 @@ meta, as fixas pendentes (reservadas), as parcelas de cartão do ciclo, os encar
 o restante de faturas parciais transportado do ciclo anterior.
 
 ## Saída (blocos, nesta ordem)
-1. **Hero:** "Ainda pode gastar hoje" = saldo do dia (BR-FIN-008) com selo de status (BR-FIN-009), "já gastou"
-   e o limite previsto de hoje (BR-FIN-007). Nunca mistura o limite do cartão com esse valor.
+1. **Hero:** "Ainda pode gastar hoje" = saldo do dia (BR-FIN-008) com selo de status (BR-FIN-009) e, no mesmo
+   quadro, a grade: "Já gastou hoje", "Disponível no ciclo", "Disponível no crédito", "Gasto no saldo" (gasto à
+   vista do ciclo) e "Gasto no crédito (fatura vigente)" (BR-FIN-037, `selectCreditSnapshot`). O limite previsto
+   de hoje (BR-FIN-007) deixou de aparecer. Nunca mistura o limite do cartão com o "pode gastar hoje".
 2. **Ações:** Registrar e Renda (rendas avulsas).
-3. **Resumo curto:** dias restantes, "Dinheiro disponível no ciclo" e "Meta de economia (guardada)".
+3. **Resumo curto:** dias restantes e "Meta de economia (guardada)" ("disponível no ciclo" foi para o hero).
 4. **Despesas fixas do ciclo** (`FixedExpensesCard`): Pagar/Desfazer ([payment.fixed-expense](../payment/fixed-expense.md)).
 5. **Plano do ciclo** (`CyclePlanCard`, **recolhido**, mostra o saldo inicial): renda (fontes ativas), rendas
    avulsas, fixas reservadas/pagas, meta, faturas do ciclo, encargos de faturas (`statementInterest`), **dívida de

@@ -34,7 +34,7 @@ FLOW-primeiro-uso · FLOW-cartao-fatura.
 - [x] Fatura atual e parcelamentos existentes geram os compromissos futuros e o limite já usado.
 - [x] Parcelas já pagas não pesam no saldo nem no limite.
 - [x] Valida restantes, fatura vencida e fatura distante demais; aceita cadastro antes do 1º ciclo.
-- [x] Compra anterior ao app só muda descrição e categoria.
+- [x] Compra anterior ao app só muda descrição, categoria e data (data informativa, BR-FIN-036).
 - [x] Cartão inativo não aceita compra nova e suas parcelas continuam valendo.
 - [x] Fonte inativa não soma nem define o ciclo; salvar exige uma ativa. Fixa inativa não reserva, não é paga e não avança parcelas.
 - [x] Sync aditivo (`active`, `settled_installments`) e migração v6 → v7.
