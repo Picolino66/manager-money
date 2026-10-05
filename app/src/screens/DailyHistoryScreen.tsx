@@ -12,9 +12,11 @@ import { EmptyState } from '../components/EmptyState';
 import { MetricRow } from '../components/MetricRow';
 import { HistoryFilterModal } from '../components/HistoryFilterModal';
 import { Screen } from '../components/Screen';
+import { formatMonthKey } from '@manager-money/core/application/card-text';
 import {
   EMPTY_PAID_HISTORY_FILTER,
   filterPaidHistory,
+  listHistoryStatementKeys,
   PAID_HISTORY_LABELS,
   PAID_HISTORY_MEANS_LABELS,
   PaidHistoryFilter,
@@ -29,7 +31,7 @@ import { spacing, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '@manager-money/core/utils/currency';
-import { formatDateLabel } from '@manager-money/core/utils/date';
+import { formatDateLabel, formatShortDate } from '@manager-money/core/utils/date';
 
 type Props = CompositeScreenProps<
   BottomTabScreenProps<MainTabParamList, 'DailyHistory'>,
@@ -91,24 +93,35 @@ export function DailyHistoryScreen({ navigation }: Props) {
   const [filter, setFilter] = useState<PaidHistoryFilter>(EMPTY_PAID_HISTORY_FILTER);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  // Tudo que foi pago no ciclo ativo: gasto à vista, cartão, fixas, parcelados e fatura.
+  const history = useMemo(() => selectPaidHistory(doc), [doc]);
+  // Tudo que pesa no ciclo ativo: o que saiu do saldo nele e o crédito cujas faturas vencem nele
+  // (BR-FIN-039).
   const cycleItems = useMemo(
-    () =>
-      activeMonth ? selectPaidHistory(doc).filter((item) => item.cycleId === activeMonth.id) : [],
-    [activeMonth, doc],
+    () => (activeMonth ? history.filter((item) => item.cycleId === activeMonth.id) : []),
+    [activeMonth, history],
   );
-  // Parcelas por vir (BR-FIN-038) que caem depois deste ciclo: aparecem num bloco à parte.
-  const upcomingItems = useMemo(
+  // Crédito de faturas que vencem depois deste ciclo (compras recentes e parcelas por vir): aparece
+  // num bloco à parte e não entra nos totais do ciclo.
+  const nextStatementItems = useMemo(
     () =>
       activeMonth
         ? filterPaidHistory(
-            selectPaidHistory(doc)
-              .filter((item) => item.upcoming && item.cycleId !== activeMonth.id)
+            history
+              .filter(
+                (item) =>
+                  item.means === 'credit' &&
+                  item.dueDate !== null &&
+                  item.dueDate > activeMonth.endDate,
+              )
               .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)),
             { ...filter, cycleId: null },
           )
         : [],
-    [activeMonth, doc, filter],
+    [activeMonth, history, filter],
+  );
+  const statementKeys = useMemo(
+    () => listHistoryStatementKeys([...cycleItems, ...nextStatementItems]),
+    [cycleItems, nextStatementItems],
   );
   const cards = useMemo(
     () => selectCreditCards(doc).map((card) => ({ id: card.id, name: card.name })),
@@ -156,6 +169,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
     <HistoryFilterModal
       categories={categories}
       cards={cards}
+      statementKeys={statementKeys}
       filter={filter}
       onApply={(next) => {
         setFilter(next);
@@ -174,6 +188,10 @@ export function DailyHistoryScreen({ navigation }: Props) {
             {showDate ? `${formatDateLabel(item.date)} · ` : ''}
             {PAID_HISTORY_MEANS_LABELS[item.means]} · {PAID_HISTORY_LABELS[item.type]} ·{' '}
             {item.category}
+            {item.statementKey ? ` · fatura ${formatMonthKey(item.statementKey)}` : ''}
+            {item.dueDate && item.means === 'credit'
+              ? `, vence ${formatShortDate(item.dueDate)}`
+              : ''}
             {item.upcoming ? ' · a vencer' : ''}
           </Text>
         </View>
@@ -271,7 +289,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
     );
   }
 
-  if (groups.length === 0 && upcomingItems.length === 0 && hasFilter) {
+  if (groups.length === 0 && nextStatementItems.length === 0 && hasFilter) {
     return (
       <Screen refreshable>
         {header}
@@ -287,7 +305,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
     );
   }
 
-  if (groups.length === 0 && upcomingItems.length === 0) {
+  if (groups.length === 0 && nextStatementItems.length === 0) {
     return (
       <Screen refreshable>
         <Text style={styles.title}>Histórico diário</Text>
@@ -308,6 +326,8 @@ export function DailyHistoryScreen({ navigation }: Props) {
       {groups.map((group) => {
         const date = parseISO(group.date);
         const total = sumPaidHistory(group.items);
+        // Compra no crédito pode ter data antes do ciclo (a fatura vence nele): sem saldo do dia.
+        const inCycle = group.date >= activeMonth.startDate && group.date <= activeMonth.endDate;
         const balance = calculateDayBalance(activeMonth, date);
         const isExpanded = expandedDays[group.date] ?? false;
 
@@ -338,24 +358,29 @@ export function DailyHistoryScreen({ navigation }: Props) {
             {isExpanded ? (
               <>
                 {group.items.map((item) => renderRow(item))}
-                <View style={styles.divider} />
-                <MetricRow
-                  label="Saldo do dia"
-                  tone={balance < 0 ? 'negative' : 'positive'}
-                  value={formatCurrency(balance)}
-                />
+                {inCycle ? (
+                  <>
+                    <View style={styles.divider} />
+                    <MetricRow
+                      label="Saldo do dia"
+                      tone={balance < 0 ? 'negative' : 'positive'}
+                      value={formatCurrency(balance)}
+                    />
+                  </>
+                ) : null}
               </>
             ) : null}
           </Card>
         );
       })}
-      {upcomingItems.length > 0 ? (
+      {nextStatementItems.length > 0 ? (
         <Card>
-          <Text style={styles.groupTitle}>Próximas parcelas</Text>
+          <Text style={styles.groupTitle}>Nas próximas faturas</Text>
           <Text style={styles.groupSubtitle}>
-            Parcelas de compras no cartão que caem nos próximos ciclos; não entram nos totais.
+            Compras e parcelas no cartão cujas faturas vencem depois deste ciclo; não entram nos
+            totais.
           </Text>
-          {upcomingItems.map((item) => renderRow(item, true))}
+          {nextStatementItems.map((item) => renderRow(item, true))}
         </Card>
       ) : null}
       {filterModal}

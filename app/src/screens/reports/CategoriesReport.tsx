@@ -1,16 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { startOfDay } from 'date-fns';
-import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
-import { AppButton } from '../components/AppButton';
-import { Card } from '../components/Card';
-import { EmptyState } from '../components/EmptyState';
-import { MetricRow } from '../components/MetricRow';
-import { Screen } from '../components/Screen';
-import { SelectField } from '../components/SelectField';
-import { TextInputField } from '../components/TextInputField';
+import { Card } from '../../components/Card';
+import { MetricRow } from '../../components/MetricRow';
+import { SelectField } from '../../components/SelectField';
+import { TextInputField } from '../../components/TextInputField';
 import {
   getSortedCategories,
   normalizeCategory,
@@ -19,21 +15,27 @@ import {
   CATEGORIZED_ITEM_LABELS,
   CategorizedItemType,
   filterCategorizedItems,
+  filterCategorizedItemsByType,
   selectCategorizedItems,
+  selectCycleCategorizedItems,
   sumCategorizedItems,
   summarizeByCategory,
 } from '@manager-money/core/application/category-analysis';
-import { DEFAULT_EXPENSE_CATEGORY } from '@manager-money/core/domain/financial/financial.types';
-import { radius, spacing, typography } from '../design/theme';
-import { makeStyles, useTheme } from '../design/useTheme';
-import { MainTabParamList } from '../navigation/types';
-import { useFinancialStore } from '../store/financial.store';
+import { isLive } from '@manager-money/core/application/state';
+import { radius, spacing, typography } from '../../design/theme';
+import { makeStyles, useTheme } from '../../design/useTheme';
+import { useFinancialStore } from '../../store/financial.store';
 import { formatCurrency } from '@manager-money/core/utils/currency';
-import { formatDateInput, parseBRDateInput, toISODate } from '@manager-money/core/utils/date';
-
-type Props = BottomTabScreenProps<MainTabParamList, 'Categories'>;
+import {
+  formatCycleLabel,
+  formatDateInput,
+  maskDateInput,
+  parseBRDateInput,
+  toISODate,
+} from '@manager-money/core/utils/date';
 
 const ALL_CATEGORIES = 'Todas';
+const FREE_PERIOD = 'periodo';
 
 const itemTypeLabels = CATEGORIZED_ITEM_LABELS;
 
@@ -50,13 +52,33 @@ function parseFilterDate(date: string) {
   return parsedDate ? startOfDay(parsedDate) : null;
 }
 
-export function CategoriesScreen({ navigation }: Props) {
+/**
+ * Aba Categorias dos Relatórios (RF-09, BR-FIN-039). Base "Ciclo": o que pesou no ciclo do salário
+ * (gastos, fixas à vista e as parcelas das faturas que vencem nele). "Período livre": pela data, com
+ * a compra no cartão pelo valor total.
+ */
+export function CategoriesReport() {
   const { colors } = useTheme();
   const styles = useStyles();
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
-  const addCategory = useFinancialStore((state) => state.addCategory);
   const doc = useFinancialStore((state) => state.doc);
+  const cycles = useMemo(
+    () =>
+      doc.cycles
+        .filter(isLive)
+        .sort((left, right) => right.startDate.localeCompare(left.startDate)),
+    [doc],
+  );
+  const [base, setBase] = useState(activeMonth?.id ?? cycles[0]?.id ?? FREE_PERIOD);
+  const baseOptions = [
+    ...cycles.map((cycle) => ({
+      label: `Ciclo ${formatCycleLabel(cycle.startDate, cycle.endDate)}${cycle.status === 'active' ? ' (atual)' : ''}`,
+      value: cycle.id,
+    })),
+    { label: 'Período livre', value: FREE_PERIOD },
+  ];
+  const byCycle = base !== FREE_PERIOD;
   const categories = getSortedCategories(config);
   const categoryOptions = useMemo(
     () => [ALL_CATEGORIES, ...categories].map((category) => ({ label: category, value: category })),
@@ -75,43 +97,26 @@ export function CategoriesScreen({ navigation }: Props) {
     installment: false,
     fixed: false,
   });
-  const [newCategoryName, setNewCategoryName] = useState('');
+  const filteredItems = useMemo(() => {
+    const category = selectedCategory === ALL_CATEGORIES ? null : selectedCategory;
 
-  const allItems = useMemo(() => selectCategorizedItems(doc), [doc]);
-
-  const filteredItems = useMemo(
-    () =>
-      filterCategorizedItems(allItems, {
-        start: parseFilterDate(startDate),
-        end: parseFilterDate(endDate),
-        category: selectedCategory === ALL_CATEGORIES ? null : selectedCategory,
-        types: visibleItemTypes,
-      }),
-    [allItems, endDate, selectedCategory, startDate, visibleItemTypes],
-  );
+    return byCycle
+      ? filterCategorizedItemsByType(selectCycleCategorizedItems(doc, base), {
+          category,
+          types: visibleItemTypes,
+        })
+      : filterCategorizedItems(selectCategorizedItems(doc), {
+          start: parseFilterDate(startDate),
+          end: parseFilterDate(endDate),
+          category,
+          types: visibleItemTypes,
+        });
+  }, [base, byCycle, doc, endDate, selectedCategory, startDate, visibleItemTypes]);
 
   const categoryTotals = useMemo(() => summarizeByCategory(filteredItems), [filteredItems]);
 
   const totalSpent = useMemo(() => sumCategorizedItems(filteredItems), [filteredItems]);
   const maxCategoryTotal = categoryTotals[0]?.total ?? 0;
-
-  async function handleCreateCategory() {
-    const normalizedCategory = normalizeCategory(newCategoryName);
-
-    if (normalizedCategory === DEFAULT_EXPENSE_CATEGORY) {
-      Alert.alert('Categoria inválida', 'Informe um nome diferente de Outros.');
-      return;
-    }
-
-    if (categories.includes(normalizedCategory)) {
-      Alert.alert('Categoria existente', 'Essa categoria já está cadastrada.');
-      return;
-    }
-
-    await addCategory(normalizedCategory);
-    setNewCategoryName('');
-    setSelectedCategory(normalizedCategory);
-  }
 
   function toggleItemType(type: CategorizedItemType) {
     setVisibleItemTypes((current) => ({
@@ -120,63 +125,37 @@ export function CategoriesScreen({ navigation }: Props) {
     }));
   }
 
-  if (!config) {
-    return (
-      <Screen refreshable>
-        <EmptyState
-          actionLabel="Configurar"
-          iconName="settings-outline"
-          message="Configure a base financeira antes de analisar categorias."
-          onActionPress={() => navigation.navigate('Dashboard')}
-          title="Configuração pendente"
-        />
-      </Screen>
-    );
-  }
-
   return (
-    <Screen refreshable>
-      <View style={styles.header}>
-        <Text style={styles.title}>Categorias</Text>
-        <Text style={styles.subtitle}>Gastos por período e categoria</Text>
-        <Text style={styles.subtitle}>
-          Compras no cartão contam pela data da compra (valor total); fixas, quando pagas.
-        </Text>
-      </View>
-
-      <Card>
-        <Text style={styles.sectionTitle}>Criar categoria</Text>
-        <TextInputField
-          autoCapitalize="sentences"
-          label="Nome"
-          onChangeText={setNewCategoryName}
-          placeholder="Ex: Viagem"
-          value={newCategoryName}
-        />
-        <AppButton
-          iconName="add-outline"
-          onPress={() => void handleCreateCategory()}
-          title="Criar categoria"
-          variant="secondary"
-        />
-      </Card>
+    <>
+      <Text style={styles.subtitle}>
+        {byCycle
+          ? 'O que pesou no ciclo: gastos, fixas à vista e as parcelas das faturas que vencem nele.'
+          : 'Pela data: compra no cartão pelo valor total, na data da compra; fixas, quando pagas.'}
+      </Text>
 
       <Card>
         <Text style={styles.sectionTitle}>Filtros</Text>
-        <View style={styles.dateGrid}>
-          <TextInputField
-            label="Início"
-            onChangeText={setStartDate}
-            placeholder="07/04/2026"
-            value={startDate}
-          />
-          <TextInputField
-            label="Fim"
-            onChangeText={setEndDate}
-            placeholder="06/05/2026"
-            value={endDate}
-          />
-        </View>
+        <SelectField label="Base" onChange={setBase} options={baseOptions} value={base} />
+        {byCycle ? null : (
+          <View style={styles.dateGrid}>
+            <TextInputField
+              keyboardType="number-pad"
+              label="Início"
+              maxLength={10}
+              onChangeText={(text) => setStartDate(maskDateInput(text))}
+              placeholder="DD/MM/AAAA"
+              value={startDate}
+            />
+            <TextInputField
+              keyboardType="number-pad"
+              label="Fim"
+              maxLength={10}
+              onChangeText={(text) => setEndDate(maskDateInput(text))}
+              placeholder="DD/MM/AAAA"
+              value={endDate}
+            />
+          </View>
+        )}
         <SelectField
           label="Categoria"
           onChange={setSelectedCategory}
@@ -253,7 +232,7 @@ export function CategoriesScreen({ navigation }: Props) {
             />
           ))}
       </Card>
-    </Screen>
+    </>
   );
 }
 

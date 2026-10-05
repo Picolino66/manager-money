@@ -319,7 +319,7 @@ export function AddExpenseScreen({ navigation, route }: Props) {
             <Text style={styles.hint}>Cadastre um cartão para registrar compras no crédito.</Text>
             <AppButton
               iconName="card-outline"
-              onPress={() => navigation.navigate('Cards')}
+              onPress={() => navigation.navigate('MainTabs', { screen: 'Cards' })}
               title="Cadastrar cartão"
               variant="secondary"
             />

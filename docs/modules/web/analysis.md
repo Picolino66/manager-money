@@ -2,25 +2,31 @@
 id: web.analysis
 type: feature
 module: web
-title: Análise por categoria e período (web)
+title: Relatórios › Categorias (web)
 summary: >
-  Totais por categoria num período livre, com filtro de categoria e de tipos (gasto, cartão, parcelado,
-  fixo), gráfico de barras e tabela equivalente, usando a mesma função do app.
-keywords: [análise, categorias, período, gráfico, relatório]
+  Aba Categorias dos Relatórios: totais por categoria na base "Ciclo" (o que pesou no ciclo do salário, com as parcelas
+  das faturas que vencem nele) ou "Período livre" (pela data), filtros de categoria e tipos, gráfico e tabela.
+keywords: [análise, categorias, período, gráfico, relatório, ciclo, fatura]
 code:
   - client/src/features/analysis/AnalysisPage.tsx
   - packages/core/src/application/category-analysis.ts
-symbols: [selectCategorizedItems, filterCategorizedItems, summarizeByCategory, sumCategorizedItems]
-business_rules: [BR-FIN-001]
-adrs: [ADR-020, ADR-022]
-tests: [packages/core/src/application/category-analysis.test.ts, client/src/lib/view-models.test.ts]
-last_verified_commit: 3b9bf25+T-040
+symbols: [selectCategorizedItems, selectCycleCategorizedItems, filterCategorizedItems, filterCategorizedItemsByType, summarizeByCategory, sumCategorizedItems]
+business_rules: [BR-FIN-001, BR-FIN-039]
+adrs: [ADR-020, ADR-022, ADR-024]
+tests: [packages/core/src/application/category-analysis.test.ts, packages/core/src/application/credit-report.test.ts, client/src/lib/view-models.test.ts, client/src/features/features.test.tsx]
+last_verified_commit: 7b1b7b1+T-043
 ---
 
-# Análise (CLIENT-014)
+# Relatórios › Categorias (CLIENT-014)
 
-- Mesma regra da aba Categorias do app (RF-09), agora no núcleo: fixa paga no crédito conta uma vez
-  (como fixa, valor + juros); compra no cartão pelo total na data da compra.
-- Padrão igual ao app: período do ciclo ativo, tipos Gasto e Cartão ligados.
-- Gráfico de barras horizontais (eixo em reais inteiros) + tabela com total e % + lista de lançamentos.
-- Comparação entre ciclos e tendências ficam para P1/P2.
+Rota `/relatorios/categorias` (`/analise` redireciona; ADR-024).
+
+- **Base** (padrão: ciclo atual):
+  - **Ciclo** (`selectCycleCategorizedItems`, BR-FIN-039): gastos do ciclo, fixas pagas à vista nele e as **parcelas das
+    faturas que vencem nele** (fixa paga no crédito entra pela parcela, como fixa). Soma o mesmo que gastos + faturas do
+    ciclo (`selectCycleSpending`); juros e multas de fatura não têm categoria e ficam de fora.
+  - **Período livre** (De/Até com máscara): `selectCategorizedItems` — compra no cartão pelo total na data da compra; fixa
+    paga no crédito conta uma vez (como fixa, valor + juros).
+- Tipos Gasto e Cartão ligados por padrão; filtro de categoria.
+- Gráfico de barras horizontais (eixo em reais inteiros) + tabela com total e %. A lista de lançamentos fica no
+  Histórico: "Ver lançamentos no Histórico" leva com ciclo (ou De/Até) e categoria já filtrados.

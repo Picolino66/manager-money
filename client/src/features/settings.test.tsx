@@ -64,13 +64,21 @@ describe('ajustes', () => {
 
     for (const [name, href] of [
       ['Configuração financeira', '/ajustes/configuracao'],
-      ['Cartões de crédito', '/ajustes/cartoes'],
       ['Exportar dados', '/ajustes/exportar'],
       ['Política de privacidade', '/privacidade'],
     ] as const) {
       const link = await screen.findByRole('link', { name: new RegExp(name) });
       expect(link).toHaveAttribute('href', href);
     }
+    // Cartões saíram de Ajustes para o menu principal (ADR-024).
+    expect(screen.queryByRole('link', { name: /Cartões de crédito/ })).toBeNull();
+  });
+
+  it('endereços antigos de cartões levam a /cartoes', async () => {
+    signedIn();
+    renderApp('/ajustes/cartoes');
+
+    expect(await screen.findByRole('heading', { name: 'Cartões de crédito' })).toBeInTheDocument();
   });
 });
 
@@ -156,7 +164,7 @@ describe('configuração financeira', () => {
 describe('cartões', () => {
   it('cadastra um cartão e grava só a linha nova', async () => {
     signedIn();
-    renderApp('/ajustes/cartoes');
+    renderApp('/cartoes');
     const user = userEvent.setup();
 
     expect(await screen.findByText('Nenhum cartão')).toBeInTheDocument();
@@ -182,7 +190,7 @@ describe('cartões', () => {
 
   it('lista limite e fatura; cartão com compras não pode ser excluído, só desativado', async () => {
     signedIn(true);
-    renderApp('/ajustes/cartoes');
+    renderApp('/cartoes');
     const user = userEvent.setup();
 
     expect(await screen.findByText('Nubank')).toBeInTheDocument();
@@ -196,7 +204,7 @@ describe('cartões', () => {
 
   it('detalhe: mostra faturas e edita a compra pelo lápis', async () => {
     signedIn(true);
-    renderApp('/ajustes/cartoes');
+    renderApp('/cartoes');
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('link', { name: 'Abrir cartão Nubank' }));
@@ -218,7 +226,7 @@ describe('cartões', () => {
   it('detalhe: paga a fatura fechada e desfaz o lançamento', async () => {
     signedIn(true);
     vi.setSystemTime(new Date(2026, 11, 8, 12)); // depois do fechamento (05/12), antes do vencimento
-    renderApp('/ajustes/cartoes');
+    renderApp('/cartoes');
     const user = userEvent.setup();
     useDataStore.getState().reset();
 
@@ -235,14 +243,14 @@ describe('cartões', () => {
 describe('compras anteriores ao app', () => {
   it('o detalhe do cartão leva à tela e o cadastro de cartão novo a oferece', async () => {
     signedIn(true);
-    renderApp('/ajustes/cartoes/' + gatewayCardId());
+    renderApp('/cartoes/' + gatewayCardId());
     const link = await screen.findByRole('link', { name: /Compras anteriores ao app/ });
-    expect(link).toHaveAttribute('href', `/ajustes/cartoes/${gatewayCardId()}/compras-anteriores`);
+    expect(link).toHaveAttribute('href', `/cartoes/${gatewayCardId()}/compras-anteriores`);
   });
 
   it('cartão recém-cadastrado oferece cadastrar compras anteriores', async () => {
     signedIn();
-    renderApp('/ajustes/cartoes');
+    renderApp('/cartoes');
     const user = userEvent.setup();
 
     await user.click(
@@ -257,7 +265,7 @@ describe('compras anteriores ao app', () => {
     expect(await screen.findByText('Cartão Inter cadastrado')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Cadastrar compras anteriores' })).toHaveAttribute(
       'href',
-      expect.stringMatching(/^\/ajustes\/cartoes\/.+\/compras-anteriores$/),
+      expect.stringMatching(/^\/cartoes\/.+\/compras-anteriores$/),
     );
     await user.click(screen.getByRole('button', { name: 'Agora não' }));
     expect(screen.queryByText('Cartão Inter cadastrado')).toBeNull();
@@ -265,7 +273,7 @@ describe('compras anteriores ao app', () => {
 
   it('fatura em aberto: valida o valor e grava só a compra nova', async () => {
     signedIn(true);
-    renderApp(`/ajustes/cartoes/${gatewayCardId()}/compras-anteriores`);
+    renderApp(`/cartoes/${gatewayCardId()}/compras-anteriores`);
     const user = userEvent.setup();
     const before = gateway.rows.card_purchases.length;
 
@@ -290,7 +298,7 @@ describe('compras anteriores ao app', () => {
 
   it('parcelamento: valida parcelas, mostra a prévia e grava a agenda restante', async () => {
     signedIn(true);
-    renderApp(`/ajustes/cartoes/${gatewayCardId()}/compras-anteriores`);
+    renderApp(`/cartoes/${gatewayCardId()}/compras-anteriores`);
     const user = userEvent.setup();
 
     await user.click(await screen.findByRole('radio', { name: 'Parcelamento em andamento' }));
@@ -336,7 +344,7 @@ describe('compras anteriores: lote de parcelamentos', () => {
 
   it('adiciona vários à lista, remove um e salva tudo numa única gravação', async () => {
     signedIn(true);
-    renderApp(`/ajustes/cartoes/${gatewayCardId()}/compras-anteriores`);
+    renderApp(`/cartoes/${gatewayCardId()}/compras-anteriores`);
     const user = userEvent.setup();
     const before = gateway.rows.card_purchases.length;
     await openBatch(user);
@@ -368,7 +376,7 @@ describe('compras anteriores: lote de parcelamentos', () => {
 
   it('salvar tudo inclui o item preenchido e ainda não adicionado', async () => {
     signedIn(true);
-    renderApp(`/ajustes/cartoes/${gatewayCardId()}/compras-anteriores`);
+    renderApp(`/cartoes/${gatewayCardId()}/compras-anteriores`);
     const user = userEvent.setup();
     const before = gateway.rows.card_purchases.length;
     await openBatch(user);
@@ -383,7 +391,7 @@ describe('compras anteriores: lote de parcelamentos', () => {
 
   it('validação no item e lista vazia não gravam nada', async () => {
     signedIn(true);
-    renderApp(`/ajustes/cartoes/${gatewayCardId()}/compras-anteriores`);
+    renderApp(`/cartoes/${gatewayCardId()}/compras-anteriores`);
     const user = userEvent.setup();
     await openBatch(user);
 

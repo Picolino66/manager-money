@@ -18,16 +18,28 @@ export type HistoryFilter = PaidHistoryFilter;
 
 export const EMPTY_FILTER: HistoryFilter = EMPTY_PAID_HISTORY_FILTER;
 
-/** Itens pagos de todos os ciclos vivos, do mais recente para o mais antigo. */
+/** Rótulo do ciclo da fatura que vence depois do último ciclo registrado (BR-FIN-039). */
+export const FUTURE_CYCLE_LABEL = 'Ciclo a abrir';
+
+/**
+ * Itens pagos de todos os ciclos vivos, do mais recente para o mais antigo. O crédito fica no ciclo
+ * em que a fatura vence; se esse ciclo ainda não foi aberto, o rótulo é "Ciclo a abrir".
+ */
 export function buildHistoryRows(state: LocalState, today?: string): HistoryRow[] {
-  const cycles = new Map(state.cycles.filter(isLive).map((cycle) => [cycle.id, cycle]));
+  const live = state.cycles.filter(isLive);
+  const cycles = new Map(live.map((cycle) => [cycle.id, cycle]));
+  const lastEnd = live.reduce((max, cycle) => (cycle.endDate > max ? cycle.endDate : max), '');
 
   return selectPaidHistory(state, today).map((item) => {
     const cycle = item.cycleId ? cycles.get(item.cycleId) : undefined;
 
     return {
       ...item,
-      cycleLabel: cycle ? formatCycleLabel(cycle.startDate, cycle.endDate) : '—',
+      cycleLabel: cycle
+        ? formatCycleLabel(cycle.startDate, cycle.endDate)
+        : item.dueDate && item.dueDate > lastEnd
+          ? FUTURE_CYCLE_LABEL
+          : '—',
     };
   });
 }

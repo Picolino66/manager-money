@@ -1,4 +1,4 @@
-import { ChevronRight, CreditCard, Download, ShieldCheck, SlidersHorizontal } from 'lucide-react';
+import { ChevronRight, Download, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { Link } from 'react-router';
 
 import { PageHeader } from '@/components/PageHeader';
@@ -10,12 +10,6 @@ const ITEMS = [
     icon: SlidersHorizontal,
     title: 'Configuração financeira',
     subtitle: 'Renda, meta, dia do pagamento e despesas fixas',
-  },
-  {
-    to: '/ajustes/cartoes',
-    icon: CreditCard,
-    title: 'Cartões de crédito',
-    subtitle: 'Fechamento, vencimento e faturas',
   },
   {
     to: '/ajustes/exportar',
@@ -31,11 +25,17 @@ const ITEMS = [
   },
 ] as const;
 
-/** Mesmos atalhos da tela Ajustes do app (sem "Conta e sincronização": o web não sincroniza). */
+/**
+ * Mesmos atalhos da tela Ajustes do app (sem "Conta e sincronização": o web não sincroniza). Cartões
+ * saíram daqui para o menu principal (ADR-024).
+ */
 export function SettingsPage() {
   return (
     <>
-      <PageHeader title="Ajustes" description="Configuração, cartões, exportação e privacidade." />
+      <PageHeader
+        title="Ajustes"
+        description="Configuração, exportação e privacidade. Os cartões ficam no menu Cartões."
+      />
       <ul className="grid gap-3 md:grid-cols-2">
         {ITEMS.map(({ to, icon: Icon, title, subtitle }) => (
           <li key={to}>

@@ -92,7 +92,7 @@ export function CardsPage() {
           </p>
           <div className="flex flex-wrap gap-2">
             <Button asChild>
-              <Link to={`/ajustes/cartoes/${created.id}/compras-anteriores`}>
+              <Link to={`/cartoes/${created.id}/compras-anteriores`}>
                 Cadastrar compras anteriores
               </Link>
             </Button>
@@ -126,7 +126,7 @@ export function CardsPage() {
               <li key={card.id}>
                 <Card className="flex h-full flex-col gap-3">
                   <Link
-                    to={`/ajustes/cartoes/${card.id}`}
+                    to={`/cartoes/${card.id}`}
                     aria-label={`Abrir cartão ${card.name}`}
                     className="flex items-center justify-between gap-3"
                   >

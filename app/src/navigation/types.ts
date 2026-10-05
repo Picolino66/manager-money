@@ -9,7 +9,6 @@ export type RootStackParamList = {
         expenseId?: string;
       }
     | undefined;
-  Cards: undefined;
   CardDetail: {
     cardId: string;
   };
@@ -17,6 +16,7 @@ export type RootStackParamList = {
     cardId: string;
   };
   Incomes: undefined;
+  ManageCategories: undefined;
   Account: undefined;
   PrivacyPolicy: undefined;
 };
@@ -24,7 +24,7 @@ export type RootStackParamList = {
 export type MainTabParamList = {
   Dashboard: undefined;
   DailyHistory: undefined;
-  PreviousMonths: undefined;
-  Categories: undefined;
+  Cards: undefined;
+  Reports: undefined;
   Settings: undefined;
 };

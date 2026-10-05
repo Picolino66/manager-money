@@ -17,7 +17,7 @@ import {
 import { createEmptyState } from '@manager-money/core/application/state';
 import {
   buildDashboardSummary,
-  calculateDayBalance,
+  calculateDailyLimitForDate,
 } from '@manager-money/core/domain/financial/financial.calculations';
 
 import { at, userFixture } from '../test/fixtures';
@@ -27,9 +27,16 @@ import {
   categoriesOf,
   EMPTY_FILTER,
   filterHistoryRows,
+  FUTURE_CYCLE_LABEL,
   sumAmounts,
 } from './expenses';
-import { buildOverview } from './overview';
+import {
+  buildBalanceChart,
+  buildCreditChart,
+  buildOverview,
+  describeStatement,
+  listCycleOptions,
+} from './overview';
 
 const NOW = new Date(2026, 10, 12, 12);
 
@@ -43,22 +50,85 @@ describe('visão geral (paridade com o Hoje do app)', () => {
     expect(view.commitments).toEqual(selectUpcomingCommitments(state, NOW));
     expect(view.savingGoal).toBe(50000);
     expect(view.credit).toEqual(selectCreditSnapshot(state, NOW));
-    // 07/11 a 12/11: um ponto por dia, gasto do dia em centavos.
-    expect(view.daily.map((point) => point.date)).toEqual([
+    expect(view).toMatchObject({ cycleStart: '2026-11-07', notStarted: false });
+    // Saldo em conta = disponível + reservados (aluguel pendente) + meta (BR-FIN-041).
+    expect(view.balance.balance).toBe(
+      view.summary.remainingAvailableAmount + view.commitmentsTotal + 50000,
+    );
+  });
+
+  it('gráfico de saldo: um ponto por dia do período; depois de hoje fica vazio (BR-FIN-039)', () => {
+    const state = userFixture();
+    const view = buildOverview(state, NOW);
+    if (view.kind !== 'active') throw new Error('esperava ciclo ativo');
+    const daily = buildBalanceChart(state, '2026-11-07', '2026-11-13', NOW);
+
+    expect(daily.map((point) => point.date)).toEqual([
       '2026-11-07',
       '2026-11-08',
       '2026-11-09',
       '2026-11-10',
       '2026-11-11',
       '2026-11-12',
+      '2026-11-13',
     ]);
-    expect(view.daily.find((point) => point.date === '2026-11-08')?.spent).toBe(3000);
-    // Disponível ao fim de cada dia: o último é o "disponível no ciclo" do resumo; só cai com gasto.
-    expect(view.daily.at(-1)?.available).toBe(view.summary.remainingAvailableAmount);
-    expect(view.daily[0]!.available).toBeGreaterThan(view.daily.at(-1)!.available);
-    // Crédito: um ponto por dia (sem cartão, tudo zerado e sem limite).
-    expect(view.creditDaily).toHaveLength(view.daily.length);
-    expect(view.creditDaily.every((point) => point.creditAvailable === null)).toBe(true);
+    expect(daily.find((point) => point.date === '2026-11-08')?.spent).toBe(3000);
+    // Disponível ao fim de hoje é o "disponível no ciclo" do resumo; amanhã ainda não tem valor.
+    expect(daily.at(-2)?.available).toBe(view.summary.remainingAvailableAmount);
+    expect(daily[0]!.available!).toBeGreaterThan(daily.at(-2)!.available!);
+    expect(daily.at(-1)).toMatchObject({ spent: null, available: null });
+    expect(listCycleOptions(state)[0]).toMatchObject({ id: view.cycleId, active: true });
+  });
+
+  it('gráfico de crédito: sem cartão não há fatura; período livre mostra os dias', () => {
+    const state = userFixture();
+
+    expect(
+      buildCreditChart(state, { mode: 'due-in-cycle', cardId: null, from: '', to: '' }, NOW),
+    ).toEqual({ period: null, from: '', to: '', points: [] });
+    const custom = buildCreditChart(
+      state,
+      { mode: 'custom', cardId: null, from: '2026-11-10', to: '2026-11-11' },
+      NOW,
+    );
+    expect(custom.points).toEqual([
+      { date: '2026-11-10', creditSpent: 0, statementTotal: 0, creditAvailable: null },
+      { date: '2026-11-11', creditSpent: 0, statementTotal: 0, creditAvailable: null },
+    ]);
+  });
+
+  it('gráfico de crédito: fatura que vence no ciclo, com o período do cartão', () => {
+    let state = userFixture();
+    state = saveCreditCard(
+      state,
+      { name: 'Inter', closingDay: 1, dueDay: 10, creditLimit: 100000 },
+      at(2026, 11, 8),
+    );
+    const cardId = state.creditCards.find((card) => card.name === 'Inter')!.id;
+    state = addCardPurchase(
+      state,
+      {
+        cardId,
+        description: 'Fone',
+        category: 'Lazer',
+        totalAmount: 20000,
+        installments: 1,
+        date: '2026-11-08',
+      },
+      at(2026, 11, 8),
+    );
+    const open = buildCreditChart(state, { mode: 'open', cardId: null, from: '', to: '' }, NOW);
+
+    expect(open.period?.statements.map((item) => item.key)).toEqual(['2026-12']);
+    expect(open.from).toBe('2026-11-02');
+    expect(open.points.find((point) => point.date === '2026-11-08')).toMatchObject({
+      creditSpent: 20000,
+      statementTotal: 20000,
+      creditAvailable: 80000,
+    });
+    expect(describeStatement(open.period!.statements[0]!, true)).toBe(
+      'Inter: 02/11 a 01/12, vence 10/12',
+    );
   });
 
   it('estados sem configuração e sem ciclo', () => {
@@ -181,6 +251,11 @@ describe('histórico com cartão e fixas', () => {
       'Tênis',
     ]);
     expect(rows.every((row) => row.cycleLabel !== '—')).toBe(true);
+    // BR-FIN-039: a fatura do Tênis vence num ciclo ainda não aberto.
+    expect(rows.find((row) => row.name === 'Tênis')).toMatchObject({
+      cycleId: null,
+      cycleLabel: FUTURE_CYCLE_LABEL,
+    });
   });
 });
 
@@ -196,21 +271,22 @@ describe('ciclos', () => {
       finalBalance: month.finalBalance,
       totalSpent: 5790,
       expenseCount: 2,
+      cardTotal: 0,
     });
   });
 
-  it('detalhe por dia igual ao histórico diário do app', () => {
+  it('detalhe: saldo dia a dia do ciclo inteiro (mesma conta do histórico diário do app)', () => {
     const state = userFixture();
     const month = selectClosedMonths(state)[0]!;
     const detail = buildCycleDetail(state, month.id, NOW)!;
 
-    expect(detail.days.map((day) => [day.date, day.total])).toEqual([
-      ['2026-10-20', 1200],
-      ['2026-10-08', 4590],
-    ]);
-    for (const day of detail.days) {
-      expect(day.balance).toBe(calculateDayBalance(month, parseISO(day.date)));
-    }
+    expect(detail.daily[0]!.date).toBe(month.startDate);
+    expect(detail.daily.at(-1)!.date).toBe(month.endDate);
+    expect(detail.daily.find((day) => day.date === '2026-10-08')).toMatchObject({
+      spent: 4590,
+      limit: calculateDailyLimitForDate(month, parseISO('2026-10-08')),
+    });
+    expect(detail.daily.find((day) => day.date === '2026-10-20')?.spent).toBe(1200);
     expect(detail.totalSpent).toBe(5790);
     expect(detail.spending.expensesTotal).toBe(5790);
     expect(buildCycleDetail(state, 'nao-existe', NOW)).toBeNull();

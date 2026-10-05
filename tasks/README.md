@@ -49,6 +49,7 @@ P1 = importante para operar; P2 = melhoria.
 | T-040 | Hardening do MVP web (CLIENT-015) | SPEC-022 | P0 | S7 | 3 |
 | T-041 | Ajustes no client web: configuração, cartões e exportação (CLIENT-017/018) | SPEC-023 | P1 | S7 | 8 |
 | T-042 | Despesa fixa recorrente no cartão: cobrança automática a cada virada de fatura | SPEC-024 | P1 | S7 | 8 |
+| T-043 | Ciclo do cartão em todas as telas e reorganização (Relatórios, Cartões no menu) | SPEC-025 | P1 | S7 | 8 |
 
 **S1 (23 pts):** fundação e correções de dados: T-001, T-002, T-003, T-004, T-005, T-006, T-007, T-015.
 **S2 (21 pts):** conta, sync e lojas: T-008, T-009, T-010, T-011, T-012, T-014.
@@ -62,4 +63,4 @@ P1 = importante para operar; P2 = melhoria.
 
 **S6 (estrutura e tema):** T-029 — reorganização em `app/`, `client/` e `supabase/` + plano do client web (ADR-019); T-030 — decisões do plano do client (ADR-020); T-031 — tema claro e escuro no mobile (ADR-021) (todas concluídas).
 
-**S7 (client web P0, ADR-020/022):** T-032 — decisão e spec; T-033 — `packages/core`; T-034 — bootstrap; T-035 — Supabase e auth; T-036 — shell, tema e onboarding; T-037 — visão geral; T-038 — gastos e ciclos; T-039 — análise; T-040 — hardening; T-041 — ajustes no web (configuração, cartões, exportação, SPEC-023); T-042 — fixa recorrente no cartão (SPEC-024, ADR-023).
+**S7 (client web P0, ADR-020/022):** T-032 — decisão e spec; T-033 — `packages/core`; T-034 — bootstrap; T-035 — Supabase e auth; T-036 — shell, tema e onboarding; T-037 — visão geral; T-038 — gastos e ciclos; T-039 — análise; T-040 — hardening; T-041 — ajustes no web (configuração, cartões, exportação, SPEC-023); T-042 — fixa recorrente no cartão (SPEC-024, ADR-023); T-043 — ciclo do cartão e reorganização das telas (SPEC-025, ADR-024).

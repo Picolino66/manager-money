@@ -1,16 +1,10 @@
 import { describeCycleStatements } from '@manager-money/core/application/card-view';
-import { ReactNode, useMemo } from 'react';
-import { Link } from 'react-router';
 import {
-  Bar,
-  CartesianGrid,
-  ComposedChart,
-  Line,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+  describeCycleDeficit,
+  describeSpendableToday,
+} from '@manager-money/core/application/spendable-today';
+import { ReactNode, useMemo, useState } from 'react';
+import { Link } from 'react-router';
 
 import { formatCurrency } from '@manager-money/core/utils/currency';
 import { formatShortDate } from '@manager-money/core/utils/date';
@@ -22,181 +16,40 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/states';
-import { Table, Td, Th, MoneyTd } from '@/components/ui/table';
-import { formatAxisReais, moneyTicksBetween } from '@/lib/chart';
 import { buildOverview } from '@/lib/overview';
 import { useDataStore } from '@/store/data.store';
 
-function Kpi({ label, children, hint }: { label: string; children: ReactNode; hint?: string }) {
+import { BalanceChartCard, CreditChartCard } from './ChartCards';
+
+function Kpi({
+  label,
+  children,
+  sub,
+  hint,
+}: {
+  label: string;
+  children: ReactNode;
+  /** Valor secundário logo abaixo do principal. */
+  sub?: ReactNode;
+  hint?: string;
+}) {
   return (
     <Card className="flex flex-col gap-1">
       <p className="text-sm text-muted">{label}</p>
       <p className="text-2xl font-semibold text-ink">{children}</p>
+      {sub ? <p className="text-sm text-ink">{sub}</p> : null}
       {hint ? <p className="text-xs text-muted">{hint}</p> : null}
     </Card>
   );
 }
 
-type Series = {
-  key: string;
-  label: string;
-  kind: 'bar' | 'line';
-  color: string;
-  /** Linha em degrau (limite previsto). */
-  step?: boolean;
-};
-
-type ChartRow = { date: string } & Record<string, number | string | null>;
-
-/**
- * Gráfico diário do ciclo (barras e linhas em centavos) com a tabela equivalente em "Ver dados em
- * tabela" (acessibilidade). Os valores vêm prontos do núcleo.
- */
-function CycleChart({
-  title,
-  data,
-  series,
-}: {
-  title: string;
-  data: ChartRow[];
-  series: Series[];
-}) {
-  const values = data.flatMap((row) =>
-    series
-      .map((item) => row[item.key])
-      .filter((value): value is number => typeof value === 'number'),
-  );
-  const ticks = moneyTicksBetween(Math.min(0, ...values), Math.max(0, ...values));
-  const labels = Object.fromEntries(series.map((item) => [item.key, item.label]));
-
-  return (
-    <Card>
-      <CardTitle>{title}</CardTitle>
-      <figure className="mt-4">
-        <div className="h-64" aria-hidden>
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
-              <CartesianGrid stroke="var(--border)" vertical={false} />
-              <XAxis
-                dataKey="date"
-                tickFormatter={formatShortDate}
-                stroke="var(--muted)"
-                fontSize={12}
-                tickLine={false}
-              />
-              <YAxis
-                ticks={ticks}
-                domain={[ticks[0] ?? 0, ticks[ticks.length - 1] ?? 0]}
-                tickFormatter={formatAxisReais}
-                stroke="var(--muted)"
-                fontSize={12}
-                width={72}
-                tickLine={false}
-              />
-              <Tooltip
-                formatter={(value, name) => [formatCurrency(Number(value)), labels[String(name)]]}
-                labelFormatter={(label) => formatShortDate(String(label))}
-                contentStyle={{
-                  background: 'var(--surface)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--ink)',
-                }}
-              />
-              {series.map((item) =>
-                item.kind === 'bar' ? (
-                  <Bar
-                    key={item.key}
-                    dataKey={item.key}
-                    name={item.key}
-                    fill={item.color}
-                    radius={[3, 3, 0, 0]}
-                    maxBarSize={40}
-                  />
-                ) : (
-                  <Line
-                    key={item.key}
-                    dataKey={item.key}
-                    name={item.key}
-                    stroke={item.color}
-                    strokeWidth={2}
-                    dot={false}
-                    connectNulls={false}
-                    type={item.step ? 'step' : 'monotone'}
-                  />
-                ),
-              )}
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
-        <figcaption className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted">
-          {series.map((item) => (
-            <span key={item.key} className="flex items-center gap-1.5">
-              <span
-                aria-hidden
-                className={item.kind === 'bar' ? 'h-2.5 w-2.5 rounded-sm' : 'h-0.5 w-3'}
-                style={{ background: item.color }}
-              />
-              {item.label}
-            </span>
-          ))}
-        </figcaption>
-        <details className="mt-3">
-          <summary className="cursor-pointer text-sm text-primary">Ver dados em tabela</summary>
-          <div className="mt-2">
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Dia</Th>
-                  {series.map((item) => (
-                    <Th key={item.key} className="text-right">
-                      {item.label}
-                    </Th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((row) => (
-                  <tr key={row.date}>
-                    <Td>{formatShortDate(row.date)}</Td>
-                    {series.map((item) => {
-                      const value = row[item.key];
-
-                      return typeof value === 'number' ? (
-                        <MoneyTd key={item.key}>{formatCurrency(value)}</MoneyTd>
-                      ) : (
-                        <Td key={item.key} className="text-right text-muted">
-                          —
-                        </Td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-        </details>
-      </figure>
-    </Card>
-  );
-}
-
-const BALANCE_SERIES: Series[] = [
-  { key: 'spent', label: 'Gasto do saldo', kind: 'bar', color: 'var(--primary)' },
-  { key: 'limit', label: 'Limite previsto', kind: 'line', color: 'var(--warning)', step: true },
-  { key: 'available', label: 'Disponível no ciclo', kind: 'line', color: 'var(--ink)' },
-];
-
-const CREDIT_SERIES: Series[] = [
-  { key: 'creditSpent', label: 'Gasto do crédito', kind: 'bar', color: 'var(--primary)' },
-  { key: 'creditAvailable', label: 'Disponível de crédito', kind: 'line', color: 'var(--warning)' },
-];
-
 /** Visão geral do ciclo ativo, somente leitura (P0). */
 export function OverviewPage() {
   const doc = useDataStore((state) => state.doc);
-  const view = useMemo(() => (doc ? buildOverview(doc, new Date()) : null), [doc]);
+  const [now] = useState(() => new Date());
+  const view = useMemo(() => (doc ? buildOverview(doc, now) : null), [doc, now]);
 
-  if (!view) return null;
+  if (!doc || !view) return null;
 
   if (view.kind !== 'active') {
     return (
@@ -207,7 +60,7 @@ export function OverviewPage() {
           message="O último ciclo foi fechado. Abra o próximo ciclo no app para voltar a acompanhar o limite diário aqui."
           action={
             <Button asChild variant="secondary">
-              <Link to="/ciclos">Ver ciclos anteriores</Link>
+              <Link to="/relatorios/ciclos">Ver ciclos anteriores</Link>
             </Button>
           }
         />
@@ -216,6 +69,7 @@ export function OverviewPage() {
   }
 
   const { summary } = view;
+  const spendable = describeSpendableToday(summary);
 
   return (
     <>
@@ -236,19 +90,32 @@ export function OverviewPage() {
             <DayStatusBadge status={summary.dayStatus} />
           </div>
           <p className="text-2xl font-semibold text-ink">
-            <Money value={summary.todayBalance} />
+            <Money value={spendable.amount} />
           </p>
+          {spendable.cycleDeficit !== null ? (
+            <p className="text-xs font-medium text-negative">
+              {describeCycleDeficit(spendable.cycleDeficit, view.cycleEnd)}
+            </p>
+          ) : null}
           <p className="text-xs text-muted">
             Já gastou hoje <Money value={summary.todaySpent} />
           </p>
         </Card>
         <Kpi
           label="Gasto no saldo"
-          hint={`Pix, dinheiro e débito no ciclo. Meta guardada: ${formatCurrency(view.savingGoal)}`}
+          hint={`Gastos do dia a dia. Fixas pagas: ${formatCurrency(view.balance.fixedPaid)} (já reservadas). Meta guardada: ${formatCurrency(view.savingGoal)}`}
         >
           <Money value={summary.totalSpent} />
         </Kpi>
-        <Kpi label="Disponível no ciclo" hint="Já descontados fixas pendentes, faturas e a meta.">
+        <Kpi
+          label="Disponível no ciclo"
+          sub={
+            <>
+              Saldo em conta <Money value={view.balance.balance} className="font-semibold" />
+            </>
+          }
+          hint="Já descontados fixas pendentes, faturas e a meta. O saldo em conta não desconta reservados nem a meta."
+        >
           <Money value={summary.remainingAvailableAmount} />
         </Kpi>
         <Kpi label="Gasto no crédito" hint={describeCycleStatements(view.credit.statements)}>
@@ -268,16 +135,16 @@ export function OverviewPage() {
         </Kpi>
       </div>
 
-      {view.daily.length > 0 ? (
-        <div className="mt-4 grid gap-4 xl:grid-cols-2">
-          <CycleChart title="Saldo no ciclo" data={view.daily} series={BALANCE_SERIES} />
-          <CycleChart title="Crédito no ciclo" data={view.creditDaily} series={CREDIT_SERIES} />
-        </div>
-      ) : (
+      {view.notStarted ? (
         <Card className="mt-4">
-          <CardTitle>Saldo e crédito no ciclo</CardTitle>
+          <CardTitle>Saldo e crédito</CardTitle>
           <p className="mt-3 text-sm text-muted">O ciclo ainda não começou.</p>
         </Card>
+      ) : (
+        <div className="mt-4 grid gap-4 xl:grid-cols-2">
+          <BalanceChartCard doc={doc} cycleId={view.cycleId} now={now} />
+          <CreditChartCard doc={doc} now={now} />
+        </div>
       )}
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
@@ -319,7 +186,12 @@ export function OverviewPage() {
         </Card>
 
         <Card>
-          <CardTitle>Limite dos cartões</CardTitle>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle>Limite dos cartões</CardTitle>
+            <Link to="/cartoes" className="text-sm text-primary underline">
+              Ver cartões
+            </Link>
+          </div>
           {view.cards.length === 0 ? (
             <p className="mt-3 text-sm text-muted">
               Nenhum cartão ativo. O limite do cartão nunca conta como dinheiro disponível.

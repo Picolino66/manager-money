@@ -28,3 +28,4 @@ Fonte primária das decisões arquiteturais. ADRs nunca são apagadas: só passa
 | [ADR-021](ADR-021-tema-claro-e-escuro.md) | Tema claro e escuro (mobile e web) | F4 (evolução) | ACCEPTED |
 | [ADR-022](ADR-022-nucleo-compartilhado-packages-core.md) | Núcleo compartilhado em `packages/core` com npm workspaces | F2 (evolução) | ACCEPTED |
 | [ADR-023](ADR-023-fixa-recorrente-no-cartao.md) | Despesa fixa recorrente no cartão: cobrança automática a cada virada de fatura | F3 (evolução) | ACCEPTED |
+| [ADR-024](ADR-024-ciclo-do-cartao-e-responsabilidade-das-telas.md) | Dois ciclos (salário e cartão) e uma responsabilidade por tela | F4 (evolução) | ACCEPTED |

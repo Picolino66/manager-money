@@ -10,6 +10,7 @@ keywords: [layout, sidebar, drawer, tema escuro, navegação, 404]
 code:
   - client/src/app/AppShell.tsx
   - client/src/app/StatusPages.tsx
+  - client/src/app/LegacyRedirect.tsx
   - client/src/components/AccountMenu.tsx
   - client/src/store/theme.store.ts
   - client/src/infrastructure/theme-preference.ts
@@ -17,10 +18,13 @@ code:
 symbols: [AppShell, AccountMenu, useThemeStore, resolveScheme, readThemePreference]
 adrs: [ADR-021, ADR-020]
 tests: [client/src/store/theme.store.test.ts, client/src/styles/tokens.test.ts]
-last_verified_commit: 7903717+T-042i
+last_verified_commit: 7b1b7b1+T-043
 ---
 
 # Shell e tema
+
+- **Menu (ADR-024):** Visão geral · Histórico · Cartões · Relatórios · Ajustes, uma responsabilidade por tela. Rotas antigas
+  (`/gastos`, `/ciclos…`, `/analise`, `/ajustes/cartoes…`) passam por `LegacyRedirect`, que mantém a busca e o `:id`.
 
 - **Tema (ADR-021):** "Sistema" por padrão, escolha manual salva em `manager-money:theme-preference`;
   aplicado em `<html data-theme>` antes do primeiro render (sem script inline, por causa da CSP).

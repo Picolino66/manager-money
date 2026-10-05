@@ -52,7 +52,7 @@ test.describe('autenticado (usuário de teste)', () => {
     'Defina E2E_EMAIL e E2E_PASSWORD de um usuário de teste dedicado.',
   );
 
-  test('entrar, registrar/editar/excluir gasto, ciclos, análise e sair', async ({ page }) => {
+  test('entrar, registrar/editar/excluir gasto, relatórios, cartões e sair', async ({ page }) => {
     await page.goto('/login');
     await page.getByLabel('E-mail').fill(email!);
     await page.getByLabel('Senha').fill(password!);
@@ -88,10 +88,19 @@ test.describe('autenticado (usuário de teste)', () => {
       await expect(page.getByText(`${marker} editado`)).toHaveCount(0);
     }
 
-    await page.getByRole('link', { name: 'Ciclos' }).click();
-    await expect(page.getByRole('heading', { name: 'Ciclos' })).toBeVisible();
-    await page.getByRole('link', { name: 'Análise' }).click();
-    await expect(page.getByRole('heading', { name: 'Análise' })).toBeVisible();
+    await page.getByRole('link', { name: 'Relatórios' }).click();
+    await expect(page.getByRole('heading', { name: 'Relatórios' })).toBeVisible();
+    await page
+      .getByRole('navigation', { name: 'Relatórios' })
+      .getByRole('link', { name: 'Categorias' })
+      .click();
+    await expect(page.getByLabel('Base')).toBeVisible();
+    await page
+      .getByRole('navigation', { name: 'Relatórios' })
+      .getByRole('link', { name: 'Crédito' })
+      .click();
+    await page.getByRole('link', { name: 'Cartões' }).click();
+    await expect(page.getByRole('heading', { name: 'Cartões de crédito' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Menu da conta' }).click();
     await page.getByRole('menuitem', { name: 'Sair' }).click();

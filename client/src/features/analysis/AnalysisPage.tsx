@@ -1,26 +1,30 @@
 import { useMemo, useState } from 'react';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
+import { Link } from 'react-router';
+
 import {
-  CATEGORIZED_ITEM_LABELS,
   CategorizedItemType,
   filterCategorizedItems,
+  filterCategorizedItemsByType,
   selectCategorizedItems,
+  selectCycleCategorizedItems,
   sumCategorizedItems,
   summarizeByCategory,
 } from '@manager-money/core/application/category-analysis';
 import { selectActiveCycle, selectConfig } from '@manager-money/core/application/selectors';
 import { getSortedCategories } from '@manager-money/core/domain/financial/financial.calculations';
 import { formatCurrency } from '@manager-money/core/utils/currency';
-import { formatDateLabel, toISODate } from '@manager-money/core/utils/date';
+import { formatCycleLabel, toISODate } from '@manager-money/core/utils/date';
 import { parseISO } from 'date-fns';
 
 import { Money } from '@/components/Money';
 import { formatAxisReais, moneyTicks } from '@/lib/chart';
-import { PageHeader } from '@/components/PageHeader';
+import { listCycleOptions } from '@/lib/overview';
 import { Card, CardTitle } from '@/components/ui/card';
+import { DateMaskField } from '@/components/ui/date-mask-input';
 import { Field } from '@/components/ui/field';
-import { Input, NativeSelect } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/input';
 import { EmptyState } from '@/components/ui/states';
 import { MoneyTd, Table, Td, Th } from '@/components/ui/table';
 import { useDataStore } from '@/store/data.store';
@@ -33,11 +37,19 @@ const TYPE_FILTER_LABELS: Record<CategorizedItemType, string> = {
   fixed: 'Fixo',
 };
 
-/** Gastos por categoria e período: mesma função do app (RF-09), em tela grande. */
+const FREE_PERIOD = 'periodo';
+
+/**
+ * Aba Categorias dos Relatórios (RF-09, BR-FIN-039). Base "Ciclo": o que pesou no ciclo do salário
+ * — gastos, fixas à vista e as parcelas das faturas que vencem nele. Base "Período livre": pela
+ * data, com a compra no cartão pelo valor total. Os lançamentos ficam no Histórico.
+ */
 export function AnalysisPage() {
   const doc = useDataStore((state) => state.doc);
   const active = doc ? selectActiveCycle(doc) : null;
+  const cycles = useMemo(() => (doc ? listCycleOptions(doc) : []), [doc]);
   const today = toISODate(new Date());
+  const [base, setBase] = useState<string>(active?.id ?? cycles[0]?.id ?? FREE_PERIOD);
   const [from, setFrom] = useState(active?.startDate ?? today);
   const [to, setTo] = useState(active?.endDate ?? today);
   const [category, setCategory] = useState('');
@@ -49,55 +61,66 @@ export function AnalysisPage() {
     fixed: false,
   });
 
-  const items = useMemo(() => (doc ? selectCategorizedItems(doc) : []), [doc]);
-  const filtered = useMemo(
-    () =>
-      filterCategorizedItems(items, {
-        start: from ? parseISO(from) : null,
-        end: to ? parseISO(to) : null,
+  const byCycle = base !== FREE_PERIOD;
+  const filtered = useMemo(() => {
+    if (!doc) return [];
+    if (byCycle) {
+      return filterCategorizedItemsByType(selectCycleCategorizedItems(doc, base), {
         category: category || null,
         types,
-      }),
-    [items, from, to, category, types],
-  );
+      });
+    }
+
+    return filterCategorizedItems(selectCategorizedItems(doc), {
+      start: from ? parseISO(from) : null,
+      end: to ? parseISO(to) : null,
+      category: category || null,
+      types,
+    });
+  }, [doc, byCycle, base, from, to, category, types]);
   const totals = useMemo(() => summarizeByCategory(filtered), [filtered]);
   const total = sumCategorizedItems(filtered);
   const ticks = moneyTicks(totals[0]?.total ?? 0);
   const categories = getSortedCategories(doc ? selectConfig(doc) : null);
-  const invalidPeriod = Boolean(from && to && from > to);
+  const invalidPeriod = !byCycle && Boolean(from && to && from > to);
+  const historyLink = `/historico?${new URLSearchParams({
+    ...(byCycle ? { ciclo: base } : { de: from, ate: to }),
+    ...(category ? { categoria: category } : {}),
+  }).toString()}`;
 
   return (
     <>
-      <PageHeader
-        title="Análise"
-        description="Para onde foi o dinheiro, por categoria, no período escolhido."
-      />
+      <p className="mb-4 text-sm text-muted">
+        {byCycle
+          ? 'Base Ciclo: o que pesou no ciclo do salário — gastos, fixas à vista e as parcelas das faturas que vencem nele.'
+          : 'Período livre: pela data; a compra no cartão entra pelo valor total, na data da compra.'}
+      </p>
 
       <Card className="mb-4">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          <Field
-            label="De"
-            error={invalidPeriod ? 'A data inicial deve ser antes da final.' : undefined}
-          >
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <Field label="Base">
             {(props) => (
-              <Input
-                type="date"
-                value={from}
-                onChange={(event) => setFrom(event.target.value)}
+              <NativeSelect
+                value={base}
+                onChange={(event) => setBase(event.target.value)}
                 {...props}
-              />
+              >
+                {cycles.map((cycle) => (
+                  <option key={cycle.id} value={cycle.id}>
+                    Ciclo {formatCycleLabel(cycle.startDate, cycle.endDate)}
+                    {cycle.active ? ' (atual)' : ''}
+                  </option>
+                ))}
+                <option value={FREE_PERIOD}>Período livre</option>
+              </NativeSelect>
             )}
           </Field>
-          <Field label="Até">
-            {(props) => (
-              <Input
-                type="date"
-                value={to}
-                onChange={(event) => setTo(event.target.value)}
-                {...props}
-              />
-            )}
-          </Field>
+          {byCycle ? null : (
+            <>
+              <DateMaskField label="De" value={from} onChange={setFrom} />
+              <DateMaskField label="Até" value={to} onChange={setTo} />
+            </>
+          )}
           <Field label="Categoria">
             {(props) => (
               <NativeSelect
@@ -131,7 +154,9 @@ export function AnalysisPage() {
         </div>
       </Card>
 
-      {filtered.length === 0 ? (
+      {invalidPeriod ? (
+        <EmptyState title="Período inválido" message="A data inicial deve ser antes da final." />
+      ) : filtered.length === 0 ? (
         <EmptyState
           title="Sem dados no período"
           message="Ajuste o período, a categoria ou os tipos incluídos."
@@ -219,34 +244,14 @@ export function AnalysisPage() {
             </div>
           </Card>
 
-          <Card className="xl:col-span-5">
-            <CardTitle>Lançamentos ({filtered.length})</CardTitle>
-            <div className="mt-3">
-              <Table>
-                <thead>
-                  <tr>
-                    <Th>Data</Th>
-                    <Th>Tipo</Th>
-                    <Th>Descrição</Th>
-                    <Th>Categoria</Th>
-                    <Th className="text-right">Valor</Th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...filtered]
-                    .sort((a, b) => b.date.localeCompare(a.date))
-                    .map((item) => (
-                      <tr key={`${item.type}-${item.id}`}>
-                        <Td className="whitespace-nowrap">{formatDateLabel(item.date)}</Td>
-                        <Td>{CATEGORIZED_ITEM_LABELS[item.type]}</Td>
-                        <Td>{item.name || '—'}</Td>
-                        <Td>{item.category}</Td>
-                        <MoneyTd>{formatCurrency(item.amount)}</MoneyTd>
-                      </tr>
-                    ))}
-                </tbody>
-              </Table>
-            </div>
+          <Card className="flex flex-wrap items-center justify-between gap-3 xl:col-span-5">
+            <p className="text-sm text-muted">
+              {filtered.length} lançamento(s) nesta análise. A lista completa, com edição, fica no
+              Histórico.
+            </p>
+            <Link to={historyLink} className="text-sm text-primary underline">
+              Ver lançamentos no Histórico
+            </Link>
           </Card>
         </div>
       )}

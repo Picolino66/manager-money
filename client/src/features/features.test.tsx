@@ -2,6 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { addCardPurchase, saveCreditCard } from '@manager-money/core/application/card.use-cases';
+import { addExpense } from '@manager-money/core/application/cycle.use-cases';
 import { payFixedExpense } from '@manager-money/core/application/payment.use-cases';
 import { SyncError } from '@manager-money/core/contract/types';
 
@@ -135,14 +136,81 @@ describe('visão geral', () => {
     expect(screen.queryByText('Limite previsto para hoje')).not.toBeInTheDocument();
     expect(screen.getByText(/Ciclo atual|Ciclo ativo/)).toBeInTheDocument();
 
-    // Gráfico 1: saldo (gasto, limite previsto, disponível); gráfico 2: crédito.
+    // Gráfico 1: saldo pelo ciclo do salário, com período e De/Até; gráfico 2: crédito pelo
+    // ciclo do cartão (sem cartão na fixture, mostra o aviso).
     expect(screen.getByText('Saldo no ciclo')).toBeInTheDocument();
-    expect(screen.getByText('Crédito no ciclo')).toBeInTheDocument();
-    expect(screen.getAllByText('Ver dados em tabela')).toHaveLength(2);
-    for (const column of ['Gasto do saldo', 'Limite previsto', 'Gasto do crédito']) {
+    expect(screen.getByText('Crédito no ciclo do cartão')).toBeInTheDocument();
+    expect(screen.getAllByText('Ver dados em tabela')).toHaveLength(1);
+    for (const column of [
+      'Gasto do saldo',
+      'Fixas pagas',
+      'Limite previsto',
+      'Disponível no ciclo',
+    ]) {
       expect(screen.getAllByText(column).length).toBeGreaterThan(0);
     }
-    expect(screen.getAllByText('Disponível de crédito').length).toBeGreaterThan(0);
+    expect(screen.getByText('Nenhum cartão ativo.')).toBeInTheDocument();
+    // BR-FIN-041: saldo em conta embaixo do disponível (sem descontar reservados nem a meta).
+    expect(screen.getByText(/^Saldo em conta/)).toBeInTheDocument();
+    expect(screen.getByText(/Fixas pagas: R\$\s0,00 \(já reservadas\)/)).toBeInTheDocument();
+    expect(screen.getAllByLabelText('De')).toHaveLength(2);
+    expect(screen.getByLabelText('Fatura')).toHaveValue('due-in-cycle');
+  });
+
+  it('ciclo no negativo: "Ainda pode gastar hoje" mostra R$ 0,00 e quanto falta (BR-FIN-040)', async () => {
+    signedIn(false);
+    gateway.seed(
+      addExpense(
+        userFixture(),
+        { amount: 1000000, category: 'Casa', description: 'Conserto', date: '2026-11-08' },
+        at(2026, 11, 8),
+      ),
+      USER,
+    );
+    renderApp('/');
+
+    const card = (await screen.findByText('Ainda pode gastar hoje')).closest('section')!;
+    // Valor em destaque (o "Já gastou hoje" também é R$ 0,00).
+    expect(card.querySelector('.text-2xl')).toHaveTextContent(/^R\$\s0,00$/);
+    expect(
+      within(card).getByText(
+        /^Ciclo no negativo: faltam R\$\s[\d.]+,\d{2} para cobrir até 06\/12\.$/,
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('gráfico de crédito pela fatura que vence no ciclo; trocar a fatura muda o período', async () => {
+    signedIn(false);
+    let state = saveCreditCard(
+      userFixture(),
+      { name: 'Inter', closingDay: 1, dueDay: 10, creditLimit: 100000 },
+      at(2026, 11, 8),
+    );
+    state = addCardPurchase(
+      state,
+      {
+        cardId: state.creditCards[0]!.id,
+        description: 'Fone',
+        category: 'Lazer',
+        totalAmount: 20000,
+        installments: 1,
+        date: '2026-11-08',
+      },
+      at(2026, 11, 8),
+    );
+    gateway.seed(state, USER);
+    renderApp('/');
+    const user = userEvent.setup();
+
+    // Ciclo 07/11 a 06/12: vence nele a fatura de 02/10 a 01/11 (vence 10/11).
+    expect(await screen.findByText('Fatura 02/10 a 01/11, vence 10/11')).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText('Fatura'), 'open');
+    expect(await screen.findByText('Fatura 02/11 a 01/12, vence 10/12')).toBeInTheDocument();
+    for (const column of ['Compras do dia', 'Fatura acumulada', 'Disponível de crédito']) {
+      expect(screen.getAllByText(column).length).toBeGreaterThan(0);
+    }
+    expect(screen.getAllByText('Ver dados em tabela')).toHaveLength(2);
+    expect(screen.getByRole('link', { name: 'Ver cartões' })).toHaveAttribute('href', '/cartoes');
   });
 });
 
@@ -317,6 +385,33 @@ describe('histórico: cartão e fixas', () => {
     expect(gateway.rows.fixed_payments[0]?.deleted_at).not.toBeNull();
   });
 
+  it('relatório de crédito: fatura com período, ciclo em que pesa e link para o Histórico', async () => {
+    signedInWithPaid();
+    renderApp('/relatorios/credito');
+
+    const table = await screen.findByRole('table', { name: /Faturas/ });
+    // Compra de 09/11 no Nubank (fecha dia 1, vence dia 10): fatura 02/11 a 01/12, vence 10/12.
+    const row = within(table).getByText('12/2026').closest('tr')!;
+    expect(within(row).getByText('02/11 a 01/12')).toBeInTheDocument();
+    expect(within(row).getByText('Ciclo a abrir')).toBeInTheDocument();
+    expect(within(row).getByText('R$ 250,00')).toBeInTheDocument();
+    const link = within(row).getByRole('link', { name: 'Lançamentos da fatura 12/2026 de Nubank' });
+    expect(link.getAttribute('href')).toMatch(/^\/historico\?cartao=.+&fatura=2026-12$/);
+    expect(screen.getByText('Faturas por mês de fechamento')).toBeInTheDocument();
+  });
+
+  it('histórico aceita filtros pelo link e mostra a coluna Fatura (BR-FIN-039)', async () => {
+    signedInWithPaid();
+    renderApp('/historico?fatura=2026-12');
+
+    expect(await screen.findByText('Tênis')).toBeInTheDocument();
+    expect(screen.queryByText('Padaria')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Remover filtro Fatura: 12/2026' })).toBeVisible();
+    const row = screen.getByText('Tênis').closest('tr')!;
+    expect(within(row).getByText('Ciclo a abrir')).toBeInTheDocument();
+    expect(within(row).getByText('vence 10/12')).toBeInTheDocument();
+  });
+
   it('exclui a compra no cartão com confirmação', async () => {
     signedInWithPaid();
     renderApp('/historico');
@@ -331,25 +426,66 @@ describe('histórico: cartão e fixas', () => {
   });
 });
 
-describe('ciclos e análise', () => {
-  it('lista fechados e abre o detalhe por dia', async () => {
+describe('relatórios (ADR-024)', () => {
+  it('menu tem Cartões e Relatórios; Ciclos e Análise saíram do menu', async () => {
+    signedIn();
+    renderApp('/');
+
+    const nav = (await screen.findAllByRole('navigation', { name: 'Principal' }))[0]!;
+    expect(within(nav).getByRole('link', { name: 'Cartões' })).toHaveAttribute('href', '/cartoes');
+    expect(within(nav).getByRole('link', { name: 'Relatórios' })).toHaveAttribute(
+      'href',
+      '/relatorios',
+    );
+    expect(within(nav).queryByRole('link', { name: 'Ciclos' })).toBeNull();
+    expect(within(nav).queryByRole('link', { name: 'Análise' })).toBeNull();
+  });
+
+  it('/ciclos leva à aba Ciclos; o detalhe mostra o saldo dia a dia e aponta para o Histórico', async () => {
     signedIn();
     renderApp('/ciclos');
     const user = userEvent.setup();
 
-    await user.click(await screen.findByRole('link', { name: /Detalhe do ciclo 07\/10/ }));
-    expect(await screen.findByText('Dia a dia')).toBeInTheDocument();
-    expect(screen.getByText('Ciclo fechado · somente leitura')).toBeInTheDocument();
-    expect(screen.getByText('Ônibus')).toBeInTheDocument();
+    expect(await screen.findByText('Comparação entre ciclos')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ciclos' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getAllByText('Faturas do ciclo').length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('link', { name: /Detalhe do ciclo 07\/10/ }));
+    expect(await screen.findByText('Ciclo fechado · somente leitura')).toBeInTheDocument();
+    expect(screen.getByText('Saldo no ciclo')).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: 'Ver lançamentos deste ciclo no Histórico' });
+    expect(link.getAttribute('href')).toMatch(/^\/historico\?ciclo=/);
+    expect(screen.queryByText('Dia a dia')).toBeNull();
   });
 
-  it('análise mostra os totais por categoria do período', async () => {
+  it('/analise leva à aba Categorias, com base no ciclo atual e link para o Histórico', async () => {
     signedIn();
     renderApp('/analise');
 
     const table = await screen.findByRole('table', { name: 'Totais por categoria no período' });
     expect(within(table).getByText('Pets')).toBeInTheDocument();
     expect(within(table).getByText('R$ 30,00')).toBeInTheDocument();
+    expect(screen.getByLabelText('Base')).toHaveDisplayValue(/\(atual\)$/);
+    expect(
+      screen.getByRole('link', { name: 'Ver lançamentos no Histórico' }).getAttribute('href'),
+    ).toMatch(/^\/historico\?ciclo=/);
+    expect(screen.queryByText(/^Lançamentos \(/)).toBeNull();
+  });
+
+  it('categorias em período livre mostra De/Até', async () => {
+    signedIn();
+    renderApp('/relatorios/categorias');
+    const user = userEvent.setup();
+
+    await user.selectOptions(await screen.findByLabelText('Base'), 'periodo');
+    expect(screen.getByLabelText('De')).toBeInTheDocument();
+    expect(screen.getByLabelText('Até')).toBeInTheDocument();
+  });
+
+  it('crédito sem cartão mostra o aviso', async () => {
+    signedIn();
+    renderApp('/relatorios/credito');
+
+    expect(await screen.findByText('Nenhum cartão')).toBeInTheDocument();
   });
 
   it('política de privacidade mostra o texto do núcleo', async () => {

@@ -15,7 +15,7 @@ code:
   - .github/workflows/ci.yml
   - client/README.md
 adrs: [ADR-019, ADR-020, ADR-021, ADR-022, ADR-004, ADR-006]
-last_verified_commit: 7903717+T-042k
+last_verified_commit: 7b1b7b1+T-043
 ---
 
 # Reorganização do repositório
@@ -305,14 +305,16 @@ só `infrastructure/` fala com o Supabase.
 |---|---|---|---|---|
 | `/login` | Entrar ou criar conta | — | entrar, criar conta | P0 |
 | `/comecar` | Onboarding de conta nova | config vazia | configurar renda/dia/meta, abrir 1º ciclo | P0 |
-| `/` | Visão geral do ciclo ativo | `selectActiveMonth`, `selectUpcomingCommitments`, `selectCardLimitUsage` | ir para gastos/ciclos | P0 |
-| `/historico` (antes `/gastos`, que redireciona) | Tabela de gastos | gastos de todos os ciclos | buscar, filtrar, ordenar, paginar, registrar, editar/excluir (ciclo ativo) | P0 |
-| `/ciclos` | Ciclos fechados e resultado | `selectClosedMonths` | filtrar por ano | P0 |
-| `/ciclos/:id` | Detalhe do ciclo (por dia, fixas, rendas, faturas) | seletores do ciclo | — | P0 |
-| `/analise` | Gastos por categoria e período | `selectCycleSpendingRange` | escolher período, comparar | P0 |
-| `/cartoes`, `/cartoes/:id` | Cartões, limite e faturas | `selectCreditCards`, `selectCardStatements` | pagar fatura, encargos, compras | P1 |
+| `/` | Visão geral do ciclo ativo | `selectActiveMonth`, `selectUpcomingCommitments`, `selectCreditSnapshot`, `credit-series` | gráficos de saldo (ciclo) e crédito (fatura) com De/Até | P0 |
+| `/historico` (antes `/gastos`, que redireciona) | Única lista de lançamentos | `selectPaidHistory` | buscar, filtrar (também pelo link), ordenar, paginar, registrar, editar/excluir (ciclo ativo) | P0 |
+| `/cartoes`, `/cartoes/:id` (antes `/ajustes/cartoes…`) | Cartões, limite e faturas | `selectCreditCards`, `selectCardStatements` | pagar fatura, encargos, compras | P1 |
+| `/relatorios/ciclos`, `/relatorios/ciclos/:id` (antes `/ciclos…`) | Ciclos fechados, comparação e detalhe | `selectClosedMonths`, `selectCycleSpending` | filtrar por ano | P0 |
+| `/relatorios/categorias` (antes `/analise`) | Gastos por categoria (base Ciclo ou Período livre) | `selectCycleCategorizedItems`, `selectCategorizedItems` | escolher base, categoria e tipos | P0 |
+| `/relatorios/credito` | Faturas pelo ciclo do cartão | `selectCreditReport` | filtrar por cartão e ano | P1 |
 | `/planejamento` | Projeção dos próximos ciclos | `selectCycleProjections` | — (P2: simular) | P1 |
 | `/ajustes/*` | Configuração, rendas, fixas, categorias, conta | config e cadastros | CRUD, exportar, sair, excluir conta | P1 |
+
+Menu e responsabilidade de cada tela: [ADR-024](../../adr/ADR-024-ciclo-do-cartao-e-responsabilidade-das-telas.md).
 | `/privacidade` | Política de privacidade | texto do núcleo | — | P0 |
 
 Rotas em português, coerentes com os textos de UI. Não há rotas separadas de `income`/`installments`:

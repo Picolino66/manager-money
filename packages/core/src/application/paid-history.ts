@@ -35,7 +35,11 @@ export type PaidHistoryItem = {
   category: string;
   amount: MoneyCents;
   date: string;
-  /** Ciclo do item; nulo quando a data não cai em nenhum ciclo (ex.: compra antiga no cartão). */
+  /**
+   * Ciclo em que o item pesa (BR-FIN-039): o que saiu do saldo fica no ciclo em que saiu; o que foi
+   * no crédito (compra, parcela, fixa paga no crédito) fica no ciclo em que a **fatura vence**. Nulo
+   * quando esse ciclo não existe (ex.: compra antiga no cartão ou fatura de um ciclo ainda não aberto).
+   */
   cycleId: string | null;
   /**
    * `false` = informativo: o valor já pesou no ciclo pela compra no cartão (a fatura paga não
@@ -62,6 +66,10 @@ export type PaidHistoryItem = {
   upcoming: boolean;
   /** Cartão de origem (compra, parcela, fixa paga no crédito, fatura); nulo no que saiu do saldo. */
   cardId: string | null;
+  /** Fatura (`yyyy-MM` do fechamento) da parcela, da fixa no crédito ou do lançamento de fatura. */
+  statementKey: string | null;
+  /** Vencimento dessa fatura (yyyy-MM-dd). */
+  dueDate: string | null;
 };
 
 export const PAID_HISTORY_LABELS: Record<PaidHistoryType, string> = {
@@ -91,11 +99,15 @@ export function selectPaidHistory(
   const cycleOfDate = (date: string) =>
     cycles.find((cycle) => cycle.startDate <= date && date <= cycle.endDate)?.id ?? null;
 
+  const cardsById = new Map(state.creditCards.map((record) => [record.id, record] as const));
+  const dueOf = (key: string, card: (typeof state.creditCards)[number]) =>
+    toISODate(statementDueDate(key, card));
+
   const items: PaidHistoryItem[] = selectCategorizedItems(state)
     .filter((item) => item.type !== 'card')
     .map((item) => {
-      const cycleId = cycleByItem.get(item.id) ?? cycleOfDate(item.date);
-      const inActiveCycle = cycleId !== null && activeIds.has(cycleId);
+      const paidCycleId = cycleByItem.get(item.id) ?? cycleOfDate(item.date);
+      const inActiveCycle = paidCycleId !== null && activeIds.has(paidCycleId);
       let editable = false;
       let deletable = false;
 
@@ -111,12 +123,17 @@ export function selectPaidHistory(
           inActiveCycle && (purchase === undefined || canModifyCardPurchase(state, purchase));
       }
 
-      const means: PaidHistoryMeans =
-        payments.get(item.id)?.method === 'credit' ? 'credit' : 'balance';
+      const payment = payments.get(item.id);
+      const means: PaidHistoryMeans = payment?.method === 'credit' ? 'credit' : 'balance';
+      // Fixa paga no crédito: pesa pela fatura da compra que ela gerou (BR-FIN-022/039).
+      const purchase =
+        means === 'credit' ? purchases.get(payment?.cardPurchaseId ?? '') : undefined;
+      const card = purchase ? cardsById.get(purchase.cardId) : undefined;
+      const dueDate = purchase && card ? dueOf(purchase.firstStatementKey, card) : null;
 
       return {
         ...item,
-        cycleId,
+        cycleId: dueDate ? cycleOfDate(dueDate) : paidCycleId,
         means,
         sourceId: item.id,
         countsInTotal: true,
@@ -124,16 +141,12 @@ export function selectPaidHistory(
         deletable,
         installment: null,
         upcoming: false,
-        cardId:
-          payments.get(item.id)?.method === 'credit'
-            ? (purchases.get(payments.get(item.id)?.cardPurchaseId ?? '')?.cardId ?? null)
-            : null,
+        cardId: purchase?.cardId ?? null,
+        statementKey: purchase && card ? purchase.firstStatementKey : null,
+        dueDate,
       };
     });
 
-  const cardsById = new Map(state.creditCards.map((record) => [record.id, record] as const));
-  const dueOf = (key: string, card: (typeof state.creditCards)[number]) =>
-    toISODate(statementDueDate(key, card));
   const fromFixed = new Set(
     state.fixedPayments.filter(isLive).flatMap((p) => (p.cardPurchaseId ? [p.cardPurchaseId] : [])),
   );
@@ -154,6 +167,7 @@ export function selectPaidHistory(
 
       const upcoming = date > today;
       const prior = installment.number <= purchase.settledInstallments;
+      const dueDate = card ? dueOf(installment.statementKey, card) : null;
 
       items.push({
         id: single ? purchase.id : `${purchase.id}#${installment.number}`,
@@ -166,11 +180,10 @@ export function selectPaidHistory(
         category,
         amount: single ? purchase.totalAmount : installment.nominalAmount,
         date,
-        cycleId:
-          upcoming && card
-            ? (cycleOfDate(dueOf(installment.statementKey, card)) ?? cycleOfDate(date))
-            : cycleOfDate(date),
+        cycleId: dueDate ? cycleOfDate(dueDate) : cycleOfDate(date),
         cardId: purchase.cardId,
+        statementKey: card ? installment.statementKey : null,
+        dueDate,
         countsInTotal: single ? true : !upcoming && !prior,
         means: 'credit',
         sourceId: purchase.id,
@@ -182,10 +195,9 @@ export function selectPaidHistory(
     }
   }
 
-  const cardNames = new Map(state.creditCards.map((card) => [card.id, card.name]));
-
   for (const payment of state.statementPayments.filter(isLive)) {
-    const card = cardNames.get(payment.cardId) ?? 'Cartão';
+    const cardRecord = cardsById.get(payment.cardId);
+    const card = cardRecord?.name ?? 'Cartão';
     const base = {
       type: 'statement' as const,
       category: STATEMENT_CATEGORY,
@@ -198,6 +210,8 @@ export function selectPaidHistory(
       installment: null,
       upcoming: false,
       cardId: payment.cardId,
+      statementKey: payment.statementKey,
+      dueDate: cardRecord ? dueOf(payment.statementKey, cardRecord) : null,
     };
 
     // `paidAmount` já inclui os encargos; o principal é o que a compra no cartão já tinha pesado.
@@ -242,6 +256,8 @@ export type PaidHistoryFilter = {
   category: string | null;
   /** `null` = todos os cartões; com cartão, só as linhas ligadas a ele (o saldo some). */
   cardId: string | null;
+  /** Fatura (`yyyy-MM` do fechamento); `null` = todas. Só ficam as linhas ligadas a uma fatura. */
+  statementKey: string | null;
   /** `null` = todos os tipos. */
   type: PaidHistoryType | null;
   /** yyyy-MM-dd inclusivos; vazio = sem limite. */
@@ -254,6 +270,7 @@ export const EMPTY_PAID_HISTORY_FILTER: PaidHistoryFilter = {
   cycleId: null,
   category: null,
   cardId: null,
+  statementKey: null,
   type: null,
   from: '',
   to: '',
@@ -282,8 +299,16 @@ export function filterPaidHistory<T extends PaidHistoryItem>(
       (!filter.cycleId || item.cycleId === filter.cycleId) &&
       (!filter.category || item.category === filter.category) &&
       (!filter.cardId || item.cardId === filter.cardId) &&
+      (!filter.statementKey || item.statementKey === filter.statementKey) &&
       (!filter.type || item.type === filter.type) &&
       (!filter.from || item.date >= filter.from) &&
       (!filter.to || item.date <= filter.to),
+  );
+}
+
+/** Faturas presentes nos itens (para o filtro), da mais recente para a mais antiga. */
+export function listHistoryStatementKeys(items: Pick<PaidHistoryItem, 'statementKey'>[]): string[] {
+  return [...new Set(items.flatMap((item) => (item.statementKey ? [item.statementKey] : [])))].sort(
+    (a, b) => b.localeCompare(a),
   );
 }

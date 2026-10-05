@@ -14,11 +14,13 @@ code:
   - packages/core/src/domain/financial/financial.calculations.ts
   - packages/core/src/domain/financial/projection.ts
   - packages/core/src/application/selectors.ts
-symbols: [selectCreditSnapshot, buildDashboardSummary, calculateDailyLimitForDate, calculateDayStatus, calculateRemainingDays, selectUpcomingCommitments, selectCycleProjections, projectCycles, selectCycleAdjustments]
+  - packages/core/src/application/spendable-today.ts
+  - packages/core/src/application/cycle-balance.ts
+symbols: [describeSpendableToday, selectCreditSnapshot, buildDashboardSummary, calculateDailyLimitForDate, calculateDayStatus, selectCycleBalance, selectUpcomingCommitments, selectCycleProjections, projectCycles, selectCycleAdjustments]
 adrs: [ADR-017, ADR-018]
-tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/domain/financial/projection.test.ts, packages/core/src/domain/financial/financial.calculations.test.ts, app/src/screens/screens.test.tsx]
-business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-007, BR-FIN-008, BR-FIN-009, BR-FIN-030, BR-FIN-031, BR-FIN-033, BR-FIN-034]
-last_verified_commit: 7903717+T-042j
+tests: [packages/core/src/application/spendable-today.test.ts, packages/core/src/application/card-rules.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/domain/financial/projection.test.ts, packages/core/src/domain/financial/financial.calculations.test.ts, app/src/screens/screens.test.tsx]
+business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-007, BR-FIN-008, BR-FIN-009, BR-FIN-030, BR-FIN-031, BR-FIN-033, BR-FIN-040, BR-FIN-041]
+last_verified_commit: 7b1b7b1+T-043c
 ---
 
 # Painel do dia (Hoje)
@@ -35,9 +37,12 @@ meta, as fixas pendentes (reservadas), as parcelas de cartão do ciclo, os encar
 o restante de faturas parciais transportado do ciclo anterior.
 
 ## Saída (blocos, nesta ordem)
-1. **Hero:** "Ainda pode gastar hoje" = saldo do dia (BR-FIN-008) com selo de status (BR-FIN-009) e, no mesmo
-   quadro, uma grade de duas colunas: "Disponível no ciclo" | "Gasto do saldo" (gasto à vista do ciclo) e
-   "Disponível no crédito" | "Gasto do crédito (fatura vigente)" — as faturas que vencem no ciclo, com o período
+1. **Hero:** "Ainda pode gastar hoje" = saldo do dia (BR-FIN-008) com selo de status (BR-FIN-009); com o **ciclo no
+   negativo** (limite do dia abaixo de zero) mostra **R$ 0,00** e "Ciclo no negativo: faltam R$ X para cobrir até dd/MM"
+   (`describeSpendableToday`, BR-FIN-040) em vez de um limite negativo que só piora com os dias. No mesmo
+   quadro, uma grade de duas colunas: "Disponível no ciclo" (com "Saldo em conta: R$ X" embaixo — disponível + reservados +
+   meta, `selectCycleBalance`, BR-FIN-041) | "Gasto do saldo" (gasto à vista do ciclo) e
+   "Disponível no crédito" | "Gasto no crédito" — as faturas que vencem no ciclo, com o período
    do cartão (BR-FIN-037, `selectCreditSnapshot`). "Já gastou hoje" e o limite previsto de hoje (BR-FIN-007) não
    aparecem mais. Nunca mistura o limite do cartão com o "pode gastar hoje".
 2. **Ações:** Registrar e Renda (rendas avulsas).

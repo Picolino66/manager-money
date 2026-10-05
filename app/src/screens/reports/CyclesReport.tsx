@@ -1,20 +1,20 @@
 import { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 
-import { Badge } from '../components/Badge';
-import { Card } from '../components/Card';
-import { EmptyState } from '../components/EmptyState';
-import { MetricRow } from '../components/MetricRow';
-import { Screen } from '../components/Screen';
-import { SelectField } from '../components/SelectField';
+import { Badge } from '../../components/Badge';
+import { Card } from '../../components/Card';
+import { EmptyState } from '../../components/EmptyState';
+import { MetricRow } from '../../components/MetricRow';
+import { SelectField } from '../../components/SelectField';
 import {
   CycleSpending,
   selectCycleSpending,
   selectCycleSpendingRange,
 } from '@manager-money/core/application/selectors';
-import { spacing, typography } from '../design/theme';
-import { makeStyles } from '../design/useTheme';
-import { useFinancialStore } from '../store/financial.store';
+import { cycleKeyFromStartDate } from '@manager-money/core/domain/financial/credit-card';
+import { spacing, typography } from '../../design/theme';
+import { makeStyles } from '../../design/useTheme';
+import { useFinancialStore } from '../../store/financial.store';
 import { formatCurrency, formatSignedCurrency } from '@manager-money/core/utils/currency';
 import {
   formatCycleLabel,
@@ -145,7 +145,11 @@ function CycleSpendingCard({ spending }: { spending: CycleSpending }) {
   );
 }
 
-export function PreviousMonthsScreen() {
+/**
+ * Aba Ciclos dos Relatórios (ADR-024): o que pesou em cada ciclo do salário — gastos, fixas e as
+ * faturas que vencem nele (BR-FIN-025/039) — e o resultado dos ciclos fechados.
+ */
+export function CyclesReport() {
   const styles = useStyles();
   const months = useFinancialStore((state) => state.months);
   const doc = useFinancialStore((state) => state.doc);
@@ -173,8 +177,7 @@ export function PreviousMonthsScreen() {
   }
 
   return (
-    <Screen refreshable>
-      <Text style={styles.title}>Ciclos</Text>
+    <>
       <View style={styles.filters}>
         <View style={styles.filter}>
           <SelectField
@@ -218,22 +221,23 @@ export function PreviousMonthsScreen() {
                   label="Saldo inicial"
                   value={formatCurrency(month.initialAvailableAmount)}
                 />
+                <MetricRow
+                  label="Faturas do ciclo"
+                  value={formatCurrency(
+                    selectCycleSpending(doc, cycleKeyFromStartDate(month.startDate), now).cardTotal,
+                  )}
+                />
                 <MetricRow label="Gastos registrados" value={String(month.expenses.length)} />
               </Card>
             );
           })}
         </>
       )}
-    </Screen>
+    </>
   );
 }
 
 const useStyles = makeStyles((colors) => ({
-  title: {
-    color: colors.ink,
-    fontSize: typography.title,
-    fontWeight: '900',
-  },
   subtitle: {
     color: colors.ink,
     fontSize: typography.sectionTitle,

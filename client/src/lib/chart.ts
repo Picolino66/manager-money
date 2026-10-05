@@ -55,3 +55,36 @@ export function moneyTicksBetween(min: MoneyCents, max: MoneyCents, count = 4): 
 
   return ticks;
 }
+
+/** Série de um gráfico diário (barras ou linhas, valores em centavos). */
+export type ChartSeries = {
+  key: string;
+  label: string;
+  kind: 'bar' | 'line';
+  color: string;
+  /** Linha em degrau (limite previsto). */
+  step?: boolean;
+  /** Barras com a mesma pilha ficam empilhadas (gasto do saldo + fixas pagas). */
+  stack?: string;
+};
+
+/** Saldo pelo ciclo do salário (BR-FIN-039). */
+export const BALANCE_SERIES: ChartSeries[] = [
+  { key: 'spent', label: 'Gasto do saldo', kind: 'bar', color: 'var(--primary)', stack: 'saldo' },
+  // BR-FIN-041: fixas pagas pelo saldo (já reservadas: não mudam o limite nem o disponível).
+  { key: 'fixedPaid', label: 'Fixas pagas', kind: 'bar', color: 'var(--info)', stack: 'saldo' },
+  { key: 'limit', label: 'Limite previsto', kind: 'line', color: 'var(--warning)', step: true },
+  { key: 'available', label: 'Disponível no ciclo', kind: 'line', color: 'var(--ink)' },
+];
+
+/** Crédito pelo ciclo do cartão (BR-FIN-039): compras do dia, fatura acumulada e limite. */
+export const CREDIT_SERIES: ChartSeries[] = [
+  { key: 'creditSpent', label: 'Compras do dia', kind: 'bar', color: 'var(--primary)' },
+  { key: 'statementTotal', label: 'Fatura acumulada', kind: 'line', color: 'var(--ink)' },
+  {
+    key: 'creditAvailable',
+    label: 'Disponível de crédito',
+    kind: 'line',
+    color: 'var(--warning)',
+  },
+];

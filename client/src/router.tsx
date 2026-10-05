@@ -1,8 +1,8 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, Navigate } from 'react-router';
 
 import { AppShell } from './app/AppShell';
 import { ONBOARDING_PATH, RequireAuth } from './app/RequireAuth';
-import { LegacyExpensesRedirect } from './app/LegacyExpensesRedirect';
+import { LegacyRedirect } from './app/LegacyRedirect';
 import { NotFoundPage, RouteErrorPage } from './app/StatusPages';
 
 /** Rotas em português (client-web-plan → Rotas). Telas carregadas sob demanda. */
@@ -34,7 +34,7 @@ export const routes = [
               Component: (await import('./features/overview/OverviewPage')).OverviewPage,
             }),
           },
-          { path: 'gastos', element: <LegacyExpensesRedirect /> },
+          { path: 'gastos', element: <LegacyRedirect to="/historico" /> },
           {
             path: 'historico',
             lazy: async () => ({
@@ -42,16 +42,65 @@ export const routes = [
             }),
           },
           {
-            path: 'ciclos',
+            path: 'cartoes',
             lazy: async () => ({
-              Component: (await import('./features/cycles/CyclesPage')).CyclesPage,
+              Component: (await import('./features/cards/CardsPage')).CardsPage,
             }),
           },
           {
-            path: 'ciclos/:id',
+            path: 'cartoes/:id',
             lazy: async () => ({
-              Component: (await import('./features/cycles/CycleDetailPage')).CycleDetailPage,
+              Component: (await import('./features/cards/CardDetailPage')).CardDetailPage,
             }),
+          },
+          {
+            path: 'cartoes/:id/compras-anteriores',
+            lazy: async () => ({
+              Component: (await import('./features/cards/CardDebtPage')).CardDebtPage,
+            }),
+          },
+          {
+            path: 'relatorios',
+            lazy: async () => ({
+              Component: (await import('./features/reports/ReportsLayout')).ReportsLayout,
+            }),
+            children: [
+              { index: true, element: <Navigate to="ciclos" replace /> },
+              {
+                path: 'ciclos',
+                lazy: async () => ({
+                  Component: (await import('./features/cycles/CyclesPage')).CyclesPage,
+                }),
+              },
+              {
+                path: 'ciclos/:id',
+                lazy: async () => ({
+                  Component: (await import('./features/cycles/CycleDetailPage')).CycleDetailPage,
+                }),
+              },
+              {
+                path: 'categorias',
+                lazy: async () => ({
+                  Component: (await import('./features/analysis/AnalysisPage')).AnalysisPage,
+                }),
+              },
+              {
+                path: 'credito',
+                lazy: async () => ({
+                  Component: (await import('./features/reports/CreditReportPage')).CreditReportPage,
+                }),
+              },
+            ],
+          },
+          // Endereços antigos (ADR-024).
+          { path: 'ciclos', element: <LegacyRedirect to="/relatorios/ciclos" /> },
+          { path: 'ciclos/:id', element: <LegacyRedirect to="/relatorios/ciclos/:id" /> },
+          { path: 'analise', element: <LegacyRedirect to="/relatorios/categorias" /> },
+          { path: 'ajustes/cartoes', element: <LegacyRedirect to="/cartoes" /> },
+          { path: 'ajustes/cartoes/:id', element: <LegacyRedirect to="/cartoes/:id" /> },
+          {
+            path: 'ajustes/cartoes/:id/compras-anteriores',
+            element: <LegacyRedirect to="/cartoes/:id/compras-anteriores" />,
           },
           {
             path: 'ajustes',
@@ -69,30 +118,6 @@ export const routes = [
             path: 'ajustes/exportar',
             lazy: async () => ({
               Component: (await import('./features/settings/ExportPage')).ExportPage,
-            }),
-          },
-          {
-            path: 'ajustes/cartoes',
-            lazy: async () => ({
-              Component: (await import('./features/cards/CardsPage')).CardsPage,
-            }),
-          },
-          {
-            path: 'ajustes/cartoes/:id/compras-anteriores',
-            lazy: async () => ({
-              Component: (await import('./features/cards/CardDebtPage')).CardDebtPage,
-            }),
-          },
-          {
-            path: 'ajustes/cartoes/:id',
-            lazy: async () => ({
-              Component: (await import('./features/cards/CardDetailPage')).CardDetailPage,
-            }),
-          },
-          {
-            path: 'analise',
-            lazy: async () => ({
-              Component: (await import('./features/analysis/AnalysisPage')).AnalysisPage,
             }),
           },
         ],

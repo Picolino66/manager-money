@@ -11,13 +11,15 @@ code:
   - client/vite.config.ts
   - client/eslint.config.js
   - client/src/router.tsx
-last_verified_commit: 7903717+T-042i
+last_verified_commit: 7b1b7b1+T-043
 ---
 
 # Módulo: client web
 
-Specs [SPEC-022](../../../specs/SPEC-022-client-web-mvp.md) e [SPEC-023](../../../specs/SPEC-023-client-web-ajustes.md) · plano
-[client-web-plan](../../architecture/client-web-plan.md) · [ADR-020](../../../adr/ADR-020-client-web-stack-e-integracao.md).
+Specs [SPEC-022](../../../specs/SPEC-022-client-web-mvp.md), [SPEC-023](../../../specs/SPEC-023-client-web-ajustes.md) e
+[SPEC-025](../../../specs/SPEC-025-ciclo-do-cartao-e-telas.md) · plano [client-web-plan](../../architecture/client-web-plan.md) ·
+[ADR-020](../../../adr/ADR-020-client-web-stack-e-integracao.md) · [ADR-024](../../../adr/ADR-024-ciclo-do-cartao-e-responsabilidade-das-telas.md)
+(menu: Visão geral · Histórico · Cartões · Relatórios · Ajustes; uma responsabilidade por tela).
 
 | Feature | Rota | Doc |
 |---|---|---|
@@ -26,10 +28,14 @@ Specs [SPEC-022](../../../specs/SPEC-022-client-web-mvp.md) e [SPEC-023](../../.
 | `web.shell` | layout, tema, 404 | [shell.md](shell.md) |
 | `web.overview` | `/` | [overview.md](overview.md) |
 | `web.expenses` | `/historico` | [expenses.md](expenses.md) |
-| `web.cycles` | `/ciclos`, `/ciclos/:id` | [cycles.md](cycles.md) |
-| `web.analysis` | `/analise` | [analysis.md](analysis.md) |
+| `web.reports` | `/relatorios` (abas Ciclos, Categorias, Crédito), `/relatorios/credito` | [reports.md](reports.md) |
+| `web.cycles` | `/relatorios/ciclos`, `/relatorios/ciclos/:id` | [cycles.md](cycles.md) |
+| `web.analysis` | `/relatorios/categorias` | [analysis.md](analysis.md) |
 | `web.settings` | `/ajustes`, `/ajustes/configuracao`, `/ajustes/exportar` | [settings.md](settings.md) |
-| `web.cards` | `/ajustes/cartoes`, `/ajustes/cartoes/:id`, `/ajustes/cartoes/:id/compras-anteriores` | [cards.md](cards.md) |
+| `web.cards` | `/cartoes`, `/cartoes/:id`, `/cartoes/:id/compras-anteriores` | [cards.md](cards.md) |
+
+Rotas antigas redirecionam mantendo a busca: `/gastos` → `/historico`, `/ciclos…` → `/relatorios/ciclos…`, `/analise` →
+`/relatorios/categorias`, `/ajustes/cartoes…` → `/cartoes…` (`LegacyRedirect`).
 
 ## Camadas (`client/src`)
 

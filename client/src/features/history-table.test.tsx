@@ -62,7 +62,7 @@ const amountsOnPage = () =>
   within(screen.getByRole('table'))
     .getAllByRole('row')
     .slice(1)
-    .map((row) => within(row).getAllByRole('cell')[6]!.textContent ?? '');
+    .map((row) => within(row).getAllByRole('cell')[7]!.textContent ?? '');
 
 describe('histórico: ordenação sobre todos os dados', () => {
   it('Valor ordena todas as páginas: 1º clique maior→menor, 2º menor→maior', async () => {
@@ -88,7 +88,7 @@ describe('histórico: ordenação sobre todos os dados', () => {
     await user.click(screen.getByRole('button', { name: /^Valor/ }));
     await waitFor(() => expect(screen.getByText(/Página 1 de 3/)).toBeInTheDocument());
     expect(parse(amountsOnPage()[0]!)).toBe(1);
-  });
+  }, 30_000); // 45 linhas em 3 páginas: com cobertura e workers em paralelo passa de 15 s.
 
   it('Descrição ordena em ordem natural e sem acento, sobre todas as páginas', async () => {
     signedIn();

@@ -1,3 +1,8 @@
+import { selectCycleBalance } from '@manager-money/core/application/cycle-balance';
+import {
+  describeCycleDeficit,
+  describeSpendableToday,
+} from '@manager-money/core/application/spendable-today';
 import { useMemo, useState } from 'react';
 import { Alert, Text, View } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -85,8 +90,10 @@ export function DashboardScreen() {
     return buildDashboardSummary(activeMonth);
   }, [activeMonth]);
 
-  // BR-FIN-037: limite disponível e gasto na fatura vigente, somados nos cartões ativos.
+  // BR-FIN-037/039: limite disponível e faturas que vencem no ciclo, somados nos cartões ativos.
   const credit = useMemo(() => selectCreditSnapshot(doc, new Date()), [doc]);
+  // BR-FIN-041: saldo em conta, sem descontar reservados nem a meta.
+  const cycleBalance = useMemo(() => selectCycleBalance(doc, new Date()), [doc]);
 
   const fixedMetrics = useMemo(() => {
     if (!config) {
@@ -220,6 +227,8 @@ export function DashboardScreen() {
   }
 
   const heroColors = heroStatusColors(colors)[summary.dayStatus];
+  // BR-FIN-040: ciclo no negativo mostra R$ 0,00 e quanto falta cobrir.
+  const spendable = describeSpendableToday(summary);
 
   return (
     <Screen refreshable>
@@ -231,10 +240,18 @@ export function DashboardScreen() {
           <StatusBadge status={summary.dayStatus} />
         </View>
         <Text adjustsFontSizeToFit numberOfLines={1} style={styles.heroValue}>
-          {formatCurrency(summary.todayBalance)}
+          {formatCurrency(spendable.amount)}
         </Text>
+        {spendable.cycleDeficit !== null && activeMonth ? (
+          <Text style={styles.heroDeficit}>
+            {describeCycleDeficit(spendable.cycleDeficit, activeMonth.endDate)}
+          </Text>
+        ) : null}
         <View style={styles.heroMetrics}>
           <HeroMetric
+            hint={
+              cycleBalance ? `Saldo em conta: ${formatCurrency(cycleBalance.balance)}` : undefined
+            }
             label="Disponível no ciclo"
             negative={summary.remainingAvailableAmount < 0}
             value={formatCurrency(summary.remainingAvailableAmount)}
@@ -247,7 +264,7 @@ export function DashboardScreen() {
           />
           <HeroMetric
             hint={describeCycleStatements(credit.statements)}
-            label="Gasto do crédito (fatura vigente)"
+            label="Gasto no crédito"
             value={formatCurrency(credit.cycleStatementsAmount)}
           />
         </View>
@@ -328,7 +345,7 @@ export function DashboardScreen() {
           onConfirm={handleConfirmPayment}
           onRegisterCard={() => {
             setPayingExpense(null);
-            navigation.navigate('Cards');
+            navigation.navigate('MainTabs', { screen: 'Cards' });
           }}
           payday={config.payday}
           paymentDate={clampIsoDate(toISODate(today), activeMonth.startDate, activeMonth.endDate)}
@@ -421,6 +438,11 @@ const useStyles = makeStyles((colors) => ({
   },
   heroMetricNegative: {
     color: colors.negative,
+  },
+  heroDeficit: {
+    color: colors.negative,
+    fontSize: 13,
+    fontWeight: '700',
   },
   heroMetricLabel: {
     color: colors.muted,

@@ -8,7 +8,7 @@ summary: >
   exportação, dia de pagamento) e avaliação heurística das telas existentes.
 code:
   - app/src/navigation/AppNavigator.tsx
-last_verified_commit: 7903717+T-042d
+last_verified_commit: 7b1b7b1+T-043
 ---
 
 # Jornadas, wireframes e usabilidade
@@ -19,17 +19,17 @@ last_verified_commit: 7903717+T-042d
 Stack raiz
 ├── MainTabs
 │   ├── Hoje (Dashboard)            ← tela inicial
-│   ├── Histórico (DailyHistory)
-│   ├── Ciclos (PreviousMonths)
-│   ├── Categorias (Categories)
-│   └── Ajustes (Settings)          ← NOVA aba
+│   ├── Histórico (DailyHistory)    ← única lista de lançamentos (ADR-024)
+│   ├── Cartões (Cards)             ← saiu de Ajustes (ADR-024)
+│   ├── Relatórios (Reports)        ← Ciclos | Categorias | Crédito (ADR-024)
+│   └── Ajustes (Settings)
 ├── Config            (configuração financeira)
 ├── StartMonth        (abrir ciclo)
 ├── AddExpense        (registrar / editar / excluir gasto; à vista ou no crédito)
-├── Cards             (cartões de crédito: lista, limite, cadastro)
 ├── CardDetail        (cartão: limite, faturas, Paguei a fatura, compras; { cardId })
 ├── CardDebt          ("Compras anteriores ao app": situação inicial; { cardId })
 ├── Incomes           (rendas avulsas do ciclo)
+├── ManageCategories  (Ajustes › Categorias: criar categoria)
 ├── Account           (NOVA: entrar, sync, sair, excluir conta)
 └── PrivacyPolicy     (NOVA: política de privacidade)
 ```
@@ -80,7 +80,7 @@ disponível do cartão" × "Ainda pode gastar hoje") e próximos compromissos no
 
 1. Depois do fim do período, Hoje mostra o aviso "Ciclo encerrado em dd/MM" e **Fechar ciclo**
 2. Antes do fim, **Fechar ciclo** fica indisponível e mostra o motivo (BR-FIN-017)
-3. Fechar → Ciclos mostra o resultado → Hoje oferece **Iniciar ciclo** (a prévia simula a abertura sem gravar)
+3. Fechar → Relatórios › Ciclos mostra o resultado → Hoje oferece **Iniciar ciclo** (a prévia simula a abertura sem gravar)
 
 ### FLOW-ativar-sync (P2)
 

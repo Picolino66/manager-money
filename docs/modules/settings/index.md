@@ -4,10 +4,10 @@ type: module
 module: settings
 title: Ajustes
 summary: >
-  Aba que centraliza configuração financeira, conta, exportação e política de privacidade.
+  Aba que centraliza configuração financeira, categorias, conta, exportação e política de privacidade.
 code:
   - app/src/screens/SettingsScreen.tsx
-last_verified_commit: 7903717+pull-refresh
+last_verified_commit: 7b1b7b1+T-043
 ---
 
 # Módulo: ajustes

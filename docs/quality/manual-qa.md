@@ -8,7 +8,7 @@ summary: >
   críticos antes da publicação nas lojas.
 code:
   - app/src/navigation/AppNavigator.tsx
-last_verified_commit: 455a4b1+T-031
+last_verified_commit: 7b1b7b1+T-043
 ---
 
 # Campanha de QA manual — v1.0
@@ -34,7 +34,7 @@ last_verified_commit: 455a4b1+T-031
 | D02.05 | Alta | Tentar "Fechar ciclo" antes do fim | Botão desabilitado com a explicação da data |
 | D02.06 | Alta | (Data do aparelho antes do dia de pagamento) tocar em "Já recebi" | Ciclo fechado na véspera; novo ciclo a partir de hoje; parcela 2/3 |
 | D02.07 | Alta | Logo depois de D02.06 | Botão "Já recebi" **não** aparece |
-| D02.08 | Média | Categorias: criar "Viagem", filtrar por período e tipo | Gráfico e total coerentes |
+| D02.08 | Média | Ajustes → Categorias: criar "Viagem"; Relatórios → Categorias: base Ciclo e Período livre, filtrar por tipo | Gráfico e total coerentes; na base Ciclo o cartão entra pela parcela da fatura que vence no ciclo |
 | **Dia 3 — conta e sync** (exige Supabase configurado) ||||
 | D03.01 | Alta | Ajustes → Conta → e-mail + senha de 7 caracteres → Criar conta | Alerta "Senha curta"; nada é enviado |
 | D03.02 | Alta | Entrar com senha errada | "E-mail ou senha incorretos." |
@@ -54,7 +54,7 @@ last_verified_commit: 455a4b1+T-031
 | **Dia 5 — fontes de renda e cartões de crédito** ||||
 | D05.01 | Alta | Configuração → Renda mensal → Adicionar uma 2ª fonte (Freela, R$ 500,00) | "Total" soma as duas fontes; ao salvar, "Renda mensal" do Hoje mostra o total |
 | D05.02 | Alta | Remover a única fonte de renda | Botão Remover não aparece com uma fonte só; nome ou valor vazio mostra erro |
-| D05.03 | Alta | Ajustes → Cartões de crédito → Adicionar (Nubank, fecha 25, vence 5) | Cartão listado com "Fecha dia 25 · Vence dia 5"; dia 29 mostra erro |
+| D05.03 | Alta | Aba Cartões → Adicionar (Nubank, fecha 25, vence 5) | Cartão listado com "Fecha dia 25 · Vence dia 5"; dia 29 mostra erro |
 | D05.04 | Alta | Registrar gasto → Cartão de crédito, R$ 300,00 em 3x, data antes do fechamento | Mostra "3x de R$ 100,00 · a 1ª parcela entra neste ciclo"; "Saldo inicial" cai R$ 100,00 |
 | D05.05 | Alta | Mesma compra com data depois do fechamento | Mostra que a 1ª parcela entra no próximo ciclo; saldo atual não muda |
 | D05.06 | Média | Cartões → tocar no cartão → excluir a compra | Saldo inicial volta ao valor anterior; cartão com compras não pode ser excluído |

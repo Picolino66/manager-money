@@ -110,7 +110,7 @@ export function CardDebtPage() {
         message="Este cartão não existe mais."
         action={
           <Button asChild>
-            <Link to="/ajustes/cartoes">Voltar aos cartões</Link>
+            <Link to="/cartoes">Voltar aos cartões</Link>
           </Button>
         }
       />
@@ -279,7 +279,7 @@ export function CardDebtPage() {
   return (
     <>
       <Link
-        to={`/ajustes/cartoes/${cardId}`}
+        to={`/cartoes/${cardId}`}
         className="mb-3 inline-flex items-center gap-1 text-sm text-primary underline"
       >
         <ArrowLeft aria-hidden className="h-4 w-4" /> {card.name}
@@ -545,11 +545,7 @@ export function CardDebtPage() {
           {lastSaved} cadastrado. Você pode cadastrar outro.
         </p>
       ) : null}
-      <Button
-        variant="ghost"
-        className="mt-2"
-        onClick={() => navigate(`/ajustes/cartoes/${cardId}`)}
-      >
+      <Button variant="ghost" className="mt-2" onClick={() => navigate(`/cartoes/${cardId}`)}>
         Concluir
       </Button>
     </>

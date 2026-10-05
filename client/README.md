@@ -45,9 +45,9 @@ npm run build && npm run preview   # http://localhost:4173
 
 ```
 src/
-├── main.tsx  router.tsx        entrada e rotas (/login, /comecar, /, /historico, /ciclos, /ciclos/:id, /analise, /ajustes/*, /privacidade)
+├── main.tsx  router.tsx        entrada e rotas (/login, /comecar, /, /historico, /cartoes/*, /relatorios/*, /ajustes/*, /privacidade)
 ├── app/                        guarda de rota, layout (sidebar/drawer), páginas de status
-├── features/                   telas por área: auth, onboarding, overview, expenses, cycles, analysis, settings, cards, legal
+├── features/                   telas por área: auth, onboarding, overview, expenses, cards, reports (cycles, analysis), settings, legal
 ├── components/ (ui/)           componentes Radix + Tailwind no padrão shadcn/ui
 ├── store/                      Zustand: sessão, dados (caso de uso → grava), tema
 ├── infrastructure/             Supabase (leitura/upsert), repositório, auth, logger, preferência de tema

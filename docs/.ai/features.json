@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-05T03:55:54.044Z",
-  "source_commit": "04a4e76",
+  "generated_at": "2026-10-05T13:02:05.728Z",
+  "source_commit": "7b1b7b1",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -463,7 +463,7 @@
       "type": "module",
       "module": "category",
       "title": "Categorias",
-      "summary": "Categorias padrão e personalizadas e análise de gastos por categoria e período.",
+      "summary": "Categorias padrão e personalizadas (Ajustes › Categorias) e análise por categoria (Relatórios › Categorias).",
       "doc": "modules/category/index.md",
       "state": "implemented"
     },
@@ -471,8 +471,8 @@
       "id": "category.analysis",
       "type": "feature",
       "module": "category",
-      "title": "Análise por categoria",
-      "summary": "Filtra gastos, compras no cartão e pagamentos de fixas e parcelamentos por período, categoria e tipo, e mostra o total, o gráfico de barras por categoria e a lista de itens.",
+      "title": "Análise por categoria (Relatórios › Categorias)",
+      "summary": "Totais por categoria na base \"Ciclo\" (o que pesou no ciclo do salário, com as parcelas das faturas que vencem nele) ou \"Período livre\" (pela data), com filtros de categoria e tipo, gráfico de barras e lista de itens; criar categoria fica em Ajustes › Categorias.",
       "doc": "modules/category/analysis.md",
       "state": "implemented",
       "keywords": [
@@ -482,17 +482,29 @@
         "filtro",
         "relatório",
         "cartão",
-        "fixas pagas"
+        "fixas pagas",
+        "ciclo",
+        "categorias"
       ],
       "symbols": [
         "selectCategorizedItems",
+        "selectCycleCategorizedItems",
         "filterCategorizedItems",
-        "summarizeByCategory"
+        "filterCategorizedItemsByType",
+        "summarizeByCategory",
+        "CategoriesReport",
+        "ManageCategoriesScreen"
       ],
       "business_rules": [
         "BR-FIN-012",
-        "BR-FIN-030"
-      ]
+        "BR-FIN-030",
+        "BR-FIN-039"
+      ],
+      "adrs": [
+        "ADR-022",
+        "ADR-024"
+      ],
+      "spec": "SPEC-025"
     },
     {
       "id": "category.manage",
@@ -634,11 +646,12 @@
         "próximos ciclos"
       ],
       "symbols": [
+        "describeSpendableToday",
         "selectCreditSnapshot",
         "buildDashboardSummary",
         "calculateDailyLimitForDate",
         "calculateDayStatus",
-        "calculateRemainingDays",
+        "selectCycleBalance",
         "selectUpcomingCommitments",
         "selectCycleProjections",
         "projectCycles",
@@ -653,38 +666,43 @@
         "BR-FIN-030",
         "BR-FIN-031",
         "BR-FIN-033",
-        "BR-FIN-034"
+        "BR-FIN-040",
+        "BR-FIN-041"
       ],
       "adrs": [
         "ADR-017",
         "ADR-018"
       ],
       "tests": [
+        "packages/core/src/application/spendable-today.test.ts",
         "packages/core/src/application/card-rules.test.ts",
         "packages/core/src/application/financial-vision.test.ts",
         "packages/core/src/domain/financial/projection.test.ts",
         "packages/core/src/domain/financial/financial.calculations.test.ts",
         "app/src/screens/screens.test.tsx"
       ],
-      "spec": "SPEC-024"
+      "spec": "SPEC-025"
     },
     {
       "id": "cycle.history",
       "type": "feature",
       "module": "cycle",
-      "title": "Histórico diário e ciclos anteriores",
-      "summary": "Histórico de tudo que foi pago no ciclo ativo (gasto à vista, cartão, fixas, parcelados e fatura) agrupado por dia, com o saldo de cada dia, e lista de ciclos fechados com o resultado final.",
+      "title": "Histórico diário e Relatórios › Ciclos (app)",
+      "summary": "Histórico de tudo que pesa no ciclo ativo (gasto à vista, cartão pela fatura que vence nele, fixas, parcelados e fatura) agrupado por dia, com o saldo de cada dia e o bloco \"Nas próximas faturas\"; e a aba Ciclos dos Relatórios com o que pesou em cada ciclo e os ciclos fechados.",
       "doc": "modules/cycle/history.md",
       "state": "implemented",
       "keywords": [
         "histórico",
         "dias",
         "ciclos anteriores",
-        "resultado"
+        "resultado",
+        "fatura",
+        "relatórios"
       ],
       "symbols": [
         "filterPaidHistory",
         "selectPaidHistory",
+        "listHistoryStatementKeys",
         "sumPaidHistory",
         "calculateDayBalance",
         "calculateFinalBalance",
@@ -693,8 +711,14 @@
       ],
       "business_rules": [
         "BR-FIN-006",
-        "BR-FIN-008"
-      ]
+        "BR-FIN-008",
+        "BR-FIN-038",
+        "BR-FIN-039"
+      ],
+      "adrs": [
+        "ADR-024"
+      ],
+      "spec": "SPEC-025"
     },
     {
       "id": "cycle.open",
@@ -1188,7 +1212,7 @@
       "type": "module",
       "module": "settings",
       "title": "Ajustes",
-      "summary": "Aba que centraliza configuração financeira, conta, exportação e política de privacidade.",
+      "summary": "Aba que centraliza configuração financeira, categorias, conta, exportação e política de privacidade.",
       "doc": "modules/settings/index.md",
       "state": "implemented"
     },
@@ -1197,7 +1221,7 @@
       "type": "feature",
       "module": "settings",
       "title": "Aba Ajustes e status de sincronização",
-      "summary": "Quinta aba com atalhos para configuração, cartões de crédito, conta (com status de sync), exportação, política de privacidade, aparência (tema) e versão do app.",
+      "summary": "Quinta aba com atalhos para configuração, categorias, conta (com status de sync), exportação, política de privacidade, aparência (tema) e versão do app. Cartões saíram daqui para a aba Cartões (ADR-024).",
       "doc": "modules/settings/hub.md",
       "state": "implemented",
       "keywords": [
@@ -1214,7 +1238,8 @@
         "SettingsRow"
       ],
       "adrs": [
-        "ADR-021"
+        "ADR-021",
+        "ADR-024"
       ],
       "tests": [
         "app/src/screens/syncStatus.test.ts",
@@ -1406,8 +1431,8 @@
       "id": "web.analysis",
       "type": "feature",
       "module": "web",
-      "title": "Análise por categoria e período (web)",
-      "summary": "Totais por categoria num período livre, com filtro de categoria e de tipos (gasto, cartão, parcelado, fixo), gráfico de barras e tabela equivalente, usando a mesma função do app.",
+      "title": "Relatórios › Categorias (web)",
+      "summary": "Aba Categorias dos Relatórios: totais por categoria na base \"Ciclo\" (o que pesou no ciclo do salário, com as parcelas das faturas que vencem nele) ou \"Período livre\" (pela data), filtros de categoria e tipos, gráfico e tabela.",
       "doc": "modules/web/analysis.md",
       "state": "implemented",
       "keywords": [
@@ -1415,26 +1440,34 @@
         "categorias",
         "período",
         "gráfico",
-        "relatório"
+        "relatório",
+        "ciclo",
+        "fatura"
       ],
       "symbols": [
         "selectCategorizedItems",
+        "selectCycleCategorizedItems",
         "filterCategorizedItems",
+        "filterCategorizedItemsByType",
         "summarizeByCategory",
         "sumCategorizedItems"
       ],
       "business_rules": [
-        "BR-FIN-001"
+        "BR-FIN-001",
+        "BR-FIN-039"
       ],
       "adrs": [
         "ADR-020",
-        "ADR-022"
+        "ADR-022",
+        "ADR-024"
       ],
       "tests": [
         "packages/core/src/application/category-analysis.test.ts",
-        "client/src/lib/view-models.test.ts"
+        "packages/core/src/application/credit-report.test.ts",
+        "client/src/lib/view-models.test.ts",
+        "client/src/features/features.test.tsx"
       ],
-      "spec": "SPEC-022"
+      "spec": "SPEC-025"
     },
     {
       "id": "web.auth",
@@ -1515,54 +1548,61 @@
       "adrs": [
         "ADR-018",
         "ADR-020",
-        "ADR-022"
+        "ADR-022",
+        "ADR-024"
       ],
       "tests": [
         "packages/core/src/application/card-view.test.ts",
         "packages/core/src/application/card-debt.test.ts",
         "client/src/features/settings.test.tsx"
       ],
-      "spec": "SPEC-023"
+      "spec": "SPEC-025"
     },
     {
       "id": "web.cycles",
       "type": "feature",
       "module": "web",
-      "title": "Ciclos e detalhe do ciclo (web)",
-      "summary": "Lista de ciclos fechados com saldo inicial, gasto e resultado, filtro por ano, e detalhe por ciclo com o dia a dia (total e saldo do dia), fixas pagas, rendas avulsas e faturas.",
+      "title": "Relatórios › Ciclos e detalhe do ciclo (web)",
+      "summary": "Aba Ciclos dos Relatórios: comparação entre ciclos do salário (gasto no saldo, faturas do ciclo e resultado), lista de ciclos fechados com filtro por ano e detalhe com saldo dia a dia, fixas, rendas e faturas que vencem nele.",
       "doc": "modules/web/cycles.md",
       "state": "implemented",
       "keywords": [
         "ciclos",
-        "histórico",
+        "relatórios",
         "resultado",
         "detalhe",
-        "dia a dia"
+        "comparação",
+        "faturas do ciclo"
       ],
       "symbols": [
         "buildClosedCycles",
-        "buildCycleDetail"
+        "buildCycleDetail",
+        "CyclesPage",
+        "CycleDetailPage"
       ],
       "business_rules": [
         "BR-FIN-005",
         "BR-FIN-006",
-        "BR-FIN-008"
+        "BR-FIN-008",
+        "BR-FIN-025",
+        "BR-FIN-039"
       ],
       "adrs": [
-        "ADR-020"
+        "ADR-020",
+        "ADR-024"
       ],
       "tests": [
         "client/src/lib/view-models.test.ts",
         "client/src/features/features.test.tsx"
       ],
-      "spec": "SPEC-022"
+      "spec": "SPEC-025"
     },
     {
       "id": "web.expenses",
       "type": "feature",
       "module": "web",
       "title": "Histórico de pagamentos (web)",
-      "summary": "Tudo que foi pago em todos os ciclos (gasto à vista, cartão, fixas, parcelados e fatura) com busca, filtros por ciclo, categoria, tipo e período, ordenação e paginação; registrar, editar e excluir só gastos à vista do ciclo ativo, pelos casos de uso do núcleo.",
+      "summary": "A única lista de lançamentos (ADR-024): tudo que foi pago em todos os ciclos (gasto à vista, cartão, fixas, parcelados e fatura) com busca, filtros por ciclo, fatura, cartão, categoria, tipo e período (também pelo link), ordenação e paginação; o crédito fica no ciclo em que a fatura vence (BR-FIN-039).",
       "doc": "modules/web/expenses.md",
       "state": "implemented",
       "keywords": [
@@ -1574,11 +1614,13 @@
         "busca",
         "editar",
         "excluir",
-        "registrar"
+        "registrar",
+        "fatura"
       ],
       "symbols": [
         "DateMaskField",
         "filterPaidHistory",
+        "listHistoryStatementKeys",
         "CardPurchaseFormDialog",
         "buildHistoryRows",
         "filterHistoryRows",
@@ -1588,10 +1630,13 @@
       ],
       "business_rules": [
         "BR-FIN-001",
-        "BR-FIN-013"
+        "BR-FIN-013",
+        "BR-FIN-038",
+        "BR-FIN-039"
       ],
       "adrs": [
-        "ADR-020"
+        "ADR-020",
+        "ADR-024"
       ],
       "tests": [
         "packages/core/src/application/paid-history.test.ts",
@@ -1599,7 +1644,7 @@
         "client/src/features/features.test.tsx",
         "client/src/features/history-table.test.tsx"
       ],
-      "spec": "SPEC-022"
+      "spec": "SPEC-025"
     },
     {
       "id": "web.onboarding",
@@ -1641,7 +1686,7 @@
       "type": "feature",
       "module": "web",
       "title": "Visão geral do ciclo ativo (web)",
-      "summary": "KPIs do ciclo ativo na ordem: ainda pode gastar hoje, gasto no saldo, disponível no ciclo, gasto no crédito (faturas que vencem no ciclo) e disponível no crédito; dois gráficos diários (saldo e crédito), compromissos reservados e limite dos cartões, todos calculados pelo núcleo.",
+      "summary": "KPIs do ciclo ativo na ordem: ainda pode gastar hoje, gasto no saldo, disponível no ciclo, gasto no crédito (faturas que vencem no ciclo) e disponível no crédito; dois gráficos diários com De/Até — saldo pelo ciclo do salário e crédito pelo ciclo do cartão (fatura) —, compromissos reservados e limite dos cartões, todos calculados pelo núcleo.",
       "doc": "modules/web/overview.md",
       "state": "implemented",
       "keywords": [
@@ -1649,23 +1694,36 @@
         "visão geral",
         "limite diário",
         "compromissos",
-        "kpi"
+        "kpi",
+        "fatura",
+        "ciclo do cartão",
+        "gráfico"
       ],
       "symbols": [
+        "selectCycleBalance",
+        "describeSpendableToday",
         "selectCreditDailySeries",
+        "selectCreditPeriod",
+        "selectBalanceDailySeries",
         "buildOverview",
+        "buildCreditChart",
         "OverviewPage",
-        "moneyTicks",
+        "DailyChart",
         "moneyTicksBetween"
       ],
       "business_rules": [
         "BR-FIN-004",
         "BR-FIN-005",
-        "BR-FIN-026"
+        "BR-FIN-026",
+        "BR-FIN-037",
+        "BR-FIN-039",
+        "BR-FIN-040",
+        "BR-FIN-041"
       ],
       "adrs": [
         "ADR-017",
-        "ADR-020"
+        "ADR-020",
+        "ADR-024"
       ],
       "tests": [
         "client/src/lib/view-models.test.ts",
@@ -1673,7 +1731,43 @@
         "packages/core/src/application/credit-series.test.ts",
         "client/src/features/features.test.tsx"
       ],
-      "spec": "SPEC-022"
+      "spec": "SPEC-025"
+    },
+    {
+      "id": "web.reports",
+      "type": "feature",
+      "module": "web",
+      "title": "Relatórios e aba Crédito (web)",
+      "summary": "Área Relatórios (Ciclos, Categorias, Crédito) e o relatório de crédito pelo ciclo do cartão: cada fatura com abertura, fechamento, vencimento, ciclo do salário em que pesa, valor, pago e situação, total por mês e filtros de cartão e ano.",
+      "doc": "modules/web/reports.md",
+      "state": "implemented",
+      "keywords": [
+        "relatórios",
+        "crédito",
+        "faturas",
+        "ciclo do cartão",
+        "cartão",
+        "mês de fechamento"
+      ],
+      "symbols": [
+        "ReportsLayout",
+        "CreditReportPage",
+        "buildCreditReport",
+        "selectCreditReport",
+        "selectCreditReportYears"
+      ],
+      "business_rules": [
+        "BR-FIN-025",
+        "BR-FIN-033",
+        "BR-FIN-039"
+      ],
+      "adrs": [
+        "ADR-024"
+      ],
+      "tests": [
+        "packages/core/src/application/credit-report.test.ts",
+        "client/src/features/features.test.tsx"
+      ]
     },
     {
       "id": "web.settings",
@@ -1749,7 +1843,7 @@
         "client/src/store/theme.store.test.ts",
         "client/src/styles/tokens.test.ts"
       ],
-      "spec": "SPEC-022"
+      "spec": "SPEC-025"
     }
   ]
 }

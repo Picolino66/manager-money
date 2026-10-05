@@ -3,6 +3,7 @@ import { addExpense, closeCycle, openCycle, saveConfig } from './cycle.use-cases
 import {
   EMPTY_PAID_HISTORY_FILTER,
   filterPaidHistory,
+  listHistoryStatementKeys,
   PAID_HISTORY_LABELS,
   selectPaidHistory,
   sumPaidHistory,
@@ -110,9 +111,54 @@ describe('selectPaidHistory', () => {
     expect(items.find((item) => item.name === 'Almoço')?.cycleId).not.toBe(
       items.find((item) => item.name === 'Café')?.cycleId,
     );
-    expect(items.find((item) => item.name === 'Tênis')?.cycleId).toBe(
-      items.find((item) => item.name === 'Café')?.cycleId,
+    // BR-FIN-039: a compra de 08/11 cai na fatura que fecha 01/12 e vence 10/12, num ciclo que
+    // ainda não foi aberto; a fixa paga no crédito segue a mesma fatura.
+    expect(items.find((item) => item.name === 'Tênis')).toMatchObject({
+      cycleId: null,
+      statementKey: '2026-12',
+      dueDate: '2026-12-10',
+    });
+    expect(items.find((item) => item.name === 'Curso (no crédito)')).toMatchObject({
+      cycleId: null,
+      statementKey: '2026-12',
+    });
+    expect(items.find((item) => item.name === 'Café')).toMatchObject({
+      statementKey: null,
+      dueDate: null,
+    });
+  });
+
+  it('BR-FIN-039: o crédito fica no ciclo em que a fatura vence; o filtro de fatura isola as linhas', () => {
+    let state = fixture();
+    state = saveCreditCard(state, { name: 'Inter', closingDay: 20, dueDay: 25 }, at(8, 11));
+    const inter = state.creditCards.find((card) => card.name === 'Inter')!.id;
+    state = addCardPurchase(
+      state,
+      {
+        cardId: inter,
+        description: 'Livro',
+        category: 'Educação',
+        totalAmount: 5000,
+        installments: 1,
+        date: '2026-11-08',
+      },
+      at(8, 11),
     );
+    const items = selectPaidHistory(state);
+    const cafe = items.find((item) => item.name === 'Café')!;
+
+    // Fecha 20/11 e vence 25/11, dentro do ciclo ativo (07/11 a 06/12).
+    expect(items.find((item) => item.name === 'Livro')).toMatchObject({
+      cycleId: cafe.cycleId,
+      statementKey: '2026-11',
+      dueDate: '2026-11-25',
+    });
+    expect(
+      filterPaidHistory(items, { ...EMPTY_PAID_HISTORY_FILTER, statementKey: '2026-12' })
+        .map((item) => item.name)
+        .sort(),
+    ).toEqual(['Curso (no crédito)', 'Tênis']);
+    expect(listHistoryStatementKeys(items)).toEqual(['2026-12', '2026-11']);
   });
 
   it('meio: compra e fixa no crédito = Crédito; gasto, fixa no pix e fatura = Saldo', () => {

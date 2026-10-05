@@ -4,10 +4,11 @@ type: module
 module: category
 title: Categorias
 summary: >
-  Categorias padrão e personalizadas e análise de gastos por categoria e período.
+  Categorias padrão e personalizadas (Ajustes › Categorias) e análise por categoria (Relatórios › Categorias).
 code:
-  - app/src/screens/CategoriesScreen.tsx
-last_verified_commit: 7903717+pull-refresh
+  - app/src/screens/ManageCategoriesScreen.tsx
+  - app/src/screens/reports/CategoriesReport.tsx
+last_verified_commit: 7b1b7b1+T-043
 ---
 
 # Módulo: categorias

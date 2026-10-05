@@ -23,12 +23,15 @@ import { formatCurrency } from '@manager-money/core/utils/currency';
 import { AccountScreen } from './AccountScreen';
 import { AddExpenseScreen } from './AddExpenseScreen';
 import { CardsScreen } from './CardsScreen';
-import { CategoriesScreen } from './CategoriesScreen';
+import { selectPaidHistory } from '@manager-money/core/application/paid-history';
+import { ManageCategoriesScreen } from './ManageCategoriesScreen';
+import { CategoriesReport } from './reports/CategoriesReport';
+import { CreditReport } from './reports/CreditReport';
+import { CyclesReport } from './reports/CyclesReport';
 import { ConfigScreen } from './ConfigScreen';
 import { IncomesScreen } from './IncomesScreen';
 import { DailyHistoryScreen } from './DailyHistoryScreen';
 import { DashboardScreen } from './DashboardScreen';
-import { PreviousMonthsScreen } from './PreviousMonthsScreen';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -77,6 +80,36 @@ describe('DashboardScreen (FLOW-primeiro-uso)', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Config');
   });
 
+  it('ciclo no negativo mostra R$ 0,00 e quanto falta cobrir (BR-FIN-040)', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    // Fixa maior que a renda: o ciclo já começa no negativo.
+    const doc = openCycle(
+      saveConfig(
+        createEmptyState(),
+        {
+          ...config,
+          fixedExpenses: [
+            {
+              id: 'aluguel',
+              type: 'permanent' as const,
+              name: 'Aluguel',
+              category: 'Moradia',
+              amount: 400000,
+            },
+          ],
+        },
+        ctx,
+      ),
+      ctx,
+    );
+    await seed(doc);
+    render(<DashboardScreen />);
+
+    // Renda R$ 3.100,00 − fixa R$ 4.000,00 = faltam R$ 900,00.
+    expect(screen.getAllByText('R$ 0,00').length).toBeGreaterThan(0);
+    expect(screen.getByText(/^Ciclo no negativo: faltam R\$\s900,00 para cobrir até/)).toBeTruthy();
+  });
+
   it('com ciclo ativo mostra o limite e bloqueia o fechamento antes do fim', async () => {
     await seed(activeDoc());
     render(<DashboardScreen />);
@@ -85,7 +118,8 @@ describe('DashboardScreen (FLOW-primeiro-uso)', () => {
     expect(screen.getByText('Disponível no ciclo')).toBeTruthy();
     expect(screen.getByText('Disponível no crédito')).toBeTruthy();
     expect(screen.getByText('Gasto do saldo')).toBeTruthy();
-    expect(screen.getByText('Gasto do crédito (fatura vigente)')).toBeTruthy();
+    expect(screen.getByText('Gasto no crédito')).toBeTruthy();
+    expect(screen.getByText(/^Saldo em conta: R\$/)).toBeTruthy();
     expect(screen.queryByText('Limite previsto para hoje')).toBeNull();
     expect(screen.getByText('Dias restantes')).toBeTruthy();
     expect(screen.getByText('Meta de economia (guardada)')).toBeTruthy();
@@ -606,7 +640,7 @@ describe('Despesas fixas do ciclo (BR-FIN-021/022)', () => {
     fireEvent.press(await screen.findByLabelText('Cartão de crédito'));
     expect(screen.getByText('Cadastre um cartão para pagar no crédito.')).toBeTruthy();
     fireEvent.press(screen.getByText('Cadastrar cartão'));
-    expect(mockNavigate).toHaveBeenCalledWith('Cards');
+    expect(mockNavigate).toHaveBeenCalledWith('MainTabs', { screen: 'Cards' });
   });
 
   it('desfazer volta a despesa para pendente', async () => {
@@ -937,7 +971,7 @@ describe('AddExpenseScreen (FLOW-registrar-gasto)', () => {
     fireEvent.press(screen.getByText('À vista (Pix, dinheiro ou débito)'));
     fireEvent.press(await screen.findByText('Cartão de crédito'));
     fireEvent.press(screen.getByText('Cadastrar cartão'));
-    expect(mockNavigate).toHaveBeenCalledWith('Cards');
+    expect(mockNavigate).toHaveBeenCalledWith('MainTabs', { screen: 'Cards' });
   });
 
   it('edição oferece excluir', async () => {
@@ -963,8 +997,8 @@ describe('AddExpenseScreen (FLOW-registrar-gasto)', () => {
   });
 });
 
-describe('CategoriesScreen (compras no cartão e fixas pagas)', () => {
-  it('conta a compra no cartão pelo total e a fixa paga no crédito uma vez só', async () => {
+describe('Relatórios › Categorias (compras no cartão e fixas pagas)', () => {
+  it('período livre: conta a compra no cartão pelo total e a fixa paga no crédito uma vez só', async () => {
     const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
     let doc = docWithFixed(true);
     const cardId = doc.creditCards[0]!.id;
@@ -986,14 +1020,11 @@ describe('CategoriesScreen (compras no cartão e fixas pagas)', () => {
       ctx,
     );
     await seed(doc);
-    render(
-      <CategoriesScreen
-        navigation={navigation}
-        route={{ key: 'k', name: 'Categories', params: undefined }}
-      />,
-    );
+    render(<CategoriesReport />);
 
-    expect(screen.getByText('Cartão: TV (3x) - Lazer')).toBeTruthy();
+    fireEvent.press(screen.getByText(/\(atual\)$/));
+    fireEvent.press(await screen.findByText('Período livre'));
+    expect(await screen.findByText('Cartão: TV (3x) - Lazer')).toBeTruthy();
     // A compra gerada pela fixa não aparece como "Cartão".
     expect(screen.queryByText('Cartão: Aluguel - Moradia')).toBeNull();
     expect(screen.queryByText(/Fixo: Aluguel/)).toBeNull();
@@ -1003,6 +1034,62 @@ describe('CategoriesScreen (compras no cartão e fixas pagas)', () => {
     expect(screen.getAllByText('R$ 1.510,00').length).toBeGreaterThan(0);
     // 900,00 (TV) + 1.510,00 (aluguel + juros) = 2.410,00
     expect(screen.getAllByText('R$ 2.410,00').length).toBeGreaterThan(0);
+  });
+});
+
+describe('Relatórios › Crédito', () => {
+  it('lista a fatura com período, vencimento e ciclo em que pesa', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    let doc = docWithFixed(true);
+    doc = addCardPurchase(
+      doc,
+      {
+        cardId: doc.creditCards[0]!.id,
+        description: 'TV',
+        category: 'Lazer',
+        totalAmount: 90000,
+        installments: 3,
+        date: doc.cycles[0]!.startDate,
+      },
+      ctx,
+    );
+    await seed(doc);
+    render(<CreditReport />);
+
+    expect(screen.getByText('Resumo')).toBeTruthy();
+    expect(screen.getAllByText('R$ 900,00').length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^Fatura \d{2}\/\d{4} · /)).toHaveLength(3);
+    expect(screen.getAllByText('Pesa no ciclo')).toHaveLength(3);
+  });
+
+  it('sem cartão mostra o aviso', async () => {
+    await seed({ ...createEmptyState() });
+    render(<CreditReport />);
+    expect(screen.getByText('Nenhum cartão')).toBeTruthy();
+  });
+});
+
+describe('Relatórios › Categorias (base Ciclo)', () => {
+  it('conta a parcela da fatura que vence no ciclo, não o total da compra', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    let doc = docWithFixed(true);
+    doc = addCardPurchase(
+      doc,
+      {
+        cardId: doc.creditCards[0]!.id,
+        description: 'TV',
+        category: 'Lazer',
+        totalAmount: 90000,
+        installments: 3,
+        date: doc.cycles[0]!.startDate,
+      },
+      ctx,
+    );
+    await seed(doc);
+    render(<CategoriesReport />);
+
+    expect(screen.getByText(/O que pesou no ciclo/)).toBeTruthy();
+    expect(screen.queryByText('Cartão: TV (3x) - Lazer')).toBeNull();
   });
 });
 
@@ -1038,11 +1125,16 @@ describe('DailyHistoryScreen (tudo que foi pago no ciclo)', () => {
       />,
     );
 
-    // Total do dia = 15,00 + 900,00 + 1.500,00 (nada contado duas vezes).
-    expect(screen.getByText('R$ 2.415,00')).toBeTruthy();
+    // BR-FIN-039: a compra no cartão fica no ciclo em que a fatura vence. Conforme a data de hoje,
+    // ela vence neste ciclo (entra no total do dia) ou depois ("Nas próximas faturas").
+    const tvInCycle =
+      selectPaidHistory(doc).find((item) => item.name === 'TV')?.cycleId === doc.cycles[0]!.id;
+    // Total do dia = 15,00 + 1.500,00 (+ 900,00 se a fatura vence neste ciclo); nada em dobro.
+    expect(screen.getByText(tvInCycle ? 'R$ 2.415,00' : 'R$ 1.515,00')).toBeTruthy();
+    if (!tvInCycle) expect(screen.getByText('Nas próximas faturas')).toBeTruthy();
     fireEvent.press(screen.getByLabelText(/Alternar detalhes de/));
     expect(await screen.findByText('Padaria')).toBeTruthy();
-    expect(screen.getByText('Crédito · Cartão · Lazer')).toBeTruthy();
+    expect(screen.getByText(/Crédito · Cartão · Lazer · fatura \d{2}\/\d{4}, vence/)).toBeTruthy();
     expect(screen.getByText('Saldo · Fixo · Moradia')).toBeTruthy();
     expect(screen.getByLabelText('Editar gasto Padaria')).toBeTruthy();
     expect(screen.getByLabelText('Editar compra TV')).toBeTruthy();
@@ -1081,10 +1173,15 @@ describe('DailyHistoryScreen (tudo que foi pago no ciclo)', () => {
       />,
     );
 
-    fireEvent.press(screen.getByLabelText(/Alternar detalhes de/));
+    const firstInCycle =
+      selectPaidHistory(doc).find((item) => item.name === 'Notebook (1/3)')?.cycleId ===
+      doc.cycles[0]!.id;
+
+    if (firstInCycle) fireEvent.press(screen.getByLabelText(/Alternar detalhes de/));
     expect(await screen.findByText('Notebook (1/3)')).toBeTruthy();
-    // Só a parcela de hoje (R$ 300,00) soma; as outras são "a vencer".
+    // Uma linha por parcela, R$ 300,00 cada; as que vencem depois ficam em "Nas próximas faturas".
     expect(screen.getAllByText('R$ 300,00').length).toBeGreaterThan(0);
+    expect(screen.getByText('Nas próximas faturas')).toBeTruthy();
     fireEvent.press(screen.getByLabelText('Editar compra Notebook (1/3)'));
     expect(mockNavigate).toHaveBeenCalledWith('CardDetail', { cardId });
   });
@@ -1311,7 +1408,7 @@ describe('AccountScreen', () => {
   });
 });
 
-describe('Ciclos: filtro de mês e ano', () => {
+describe('Relatórios › Ciclos: filtro de mês e ano', () => {
   it('abre no ciclo atual com a fatura que vence nele e as fixas pendentes', async () => {
     const doc = docWithFixed(true);
     const start = doc.cycles[0]!.startDate;
@@ -1329,7 +1426,7 @@ describe('Ciclos: filtro de mês e ano', () => {
         { now: new Date(), newId: (p) => `${p}-${Math.random()}` },
       ),
     );
-    render(<PreviousMonthsScreen />);
+    render(<CyclesReport />);
     expect(screen.getByText('Ciclo atual')).toBeTruthy();
     expect(screen.getByText('Fixas pendentes')).toBeTruthy();
     expect(screen.getByText('Aluguel')).toBeTruthy();
@@ -1338,8 +1435,25 @@ describe('Ciclos: filtro de mês e ano', () => {
 
   it('sem nenhum dado no ciclo exibe "Sem dados neste ciclo"', async () => {
     await seed({ ...createEmptyState() });
-    render(<PreviousMonthsScreen />);
+    render(<CyclesReport />);
     expect(screen.getByText('Sem dados neste ciclo')).toBeTruthy();
     expect(screen.getByText('Ciclos fechados ficam salvos aqui.')).toBeTruthy();
+  });
+});
+
+describe('ManageCategoriesScreen (Ajustes › Categorias)', () => {
+  it('cria categoria e recusa repetida', async () => {
+    await seed(docWithFixed());
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    render(<ManageCategoriesScreen />);
+
+    fireEvent.changeText(screen.getByLabelText('Nome'), 'Viagem');
+    fireEvent.press(screen.getAllByText('Criar categoria').at(-1)!);
+    expect(await screen.findByText('Viagem')).toBeTruthy();
+
+    fireEvent.changeText(screen.getByLabelText('Nome'), 'Viagem');
+    fireEvent.press(screen.getAllByText('Criar categoria').at(-1)!);
+    expect(alert).toHaveBeenCalledWith('Categoria existente', expect.any(String));
+    alert.mockRestore();
   });
 });

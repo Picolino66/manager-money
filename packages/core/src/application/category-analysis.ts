@@ -1,8 +1,9 @@
 import { isAfter, isBefore, parseISO, startOfDay } from 'date-fns';
 
+import { cycleKeyFromStartDate } from '../domain/financial/credit-card';
 import { normalizeCategory } from '../domain/financial/financial.calculations';
 import { MoneyCents } from '../domain/financial/financial.types';
-import { selectActiveMonth, selectClosedMonths } from './selectors';
+import { selectActiveMonth, selectCardInstallments, selectClosedMonths } from './selectors';
 import { isLive, LocalState } from './state';
 
 /**
@@ -91,6 +92,82 @@ export function selectCategorizedItems(state: LocalState): CategorizedItem[] {
     }));
 
   return [...expenseItems, ...cardItems, ...paymentItems];
+}
+
+/**
+ * BR-FIN-039: o que pesou no ciclo `cycleId` (base "Ciclo" da análise), pela mesma regra do total
+ * do ciclo: gastos do ciclo, fixas pagas à vista nele e as **parcelas das faturas que vencem nele**
+ * (valor da parcela, não o total da compra). Fixa paga no crédito entra pela parcela, como fixa.
+ * Juros e multas de fatura não têm categoria e ficam de fora.
+ */
+export function selectCycleCategorizedItems(state: LocalState, cycleId: string): CategorizedItem[] {
+  const cycle = state.cycles.find((record) => record.id === cycleId && isLive(record));
+
+  if (!cycle) return [];
+
+  const fixedType = (fixedExpenseId: string) =>
+    state.fixedExpenses.find((expense) => expense.id === fixedExpenseId)?.type === 'installment'
+      ? ('installment' as const)
+      : ('fixed' as const);
+  const expenses = state.expenses
+    .filter((expense) => isLive(expense) && expense.cycleId === cycleId)
+    .map((expense) => ({
+      id: expense.id,
+      type: 'expense' as const,
+      name: expense.description,
+      category: normalizeCategory(expense.category),
+      amount: expense.amount,
+      date: expense.date,
+    }));
+  const payments = state.fixedPayments.filter(isLive);
+  const cashPayments = payments
+    .filter((payment) => payment.cycleId === cycleId && payment.method !== 'credit')
+    .map((payment) => ({
+      id: payment.id,
+      type: fixedType(payment.fixedExpenseId),
+      name: payment.name,
+      category: normalizeCategory(payment.category),
+      amount: payment.amount + payment.interest,
+      date: payment.paidAt,
+    }));
+  const paymentByPurchase = new Map(
+    payments.flatMap((payment) =>
+      payment.cardPurchaseId ? [[payment.cardPurchaseId, payment] as const] : [],
+    ),
+  );
+  const installments = selectCardInstallments(state, cycleKeyFromStartDate(cycle.startDate))
+    .filter((installment) => installment.amount > 0)
+    .map((installment) => {
+      const { purchase } = installment;
+      const payment = paymentByPurchase.get(purchase.id);
+
+      return {
+        id: `${purchase.id}#${installment.number}`,
+        type: payment ? fixedType(payment.fixedExpenseId) : ('card' as const),
+        name: payment
+          ? `${payment.name} (no crédito)`
+          : purchase.installments > 1
+            ? `${purchase.description} (${installment.number}/${purchase.installments})`
+            : purchase.description,
+        category: normalizeCategory(purchase.category),
+        amount: installment.amount,
+        date: purchase.purchaseDate,
+      };
+    });
+
+  return [...expenses, ...cashPayments, ...installments];
+}
+
+/** Filtro sem período (base "Ciclo"): categoria e tipos. */
+export function filterCategorizedItemsByType(
+  items: CategorizedItem[],
+  filter: Pick<CategorizedItemFilter, 'category' | 'types'>,
+): CategorizedItem[] {
+  return items.filter(
+    (item) =>
+      filter.types[item.type] &&
+      (filter.category === null || normalizeCategory(item.category) === filter.category),
+  );
 }
 
 export function filterCategorizedItems(

@@ -84,10 +84,10 @@ export function SettingsScreen({ navigation }: Props) {
           title="Configuração financeira"
         />
         <SettingsRow
-          icon="card-outline"
-          onPress={() => navigation.navigate('Cards')}
-          subtitle="Fechamento, vencimento e faturas"
-          title="Cartões de crédito"
+          icon="pricetags-outline"
+          onPress={() => navigation.navigate('ManageCategories')}
+          subtitle="Criar categorias de gasto"
+          title="Categorias"
         />
         <SettingsRow
           icon="cloud-outline"
@@ -111,9 +111,7 @@ export function SettingsScreen({ navigation }: Props) {
         <Text style={styles.sectionTitle}>Aparência</Text>
         <ThemePreferenceSelector />
       </Card>
-      <Text style={styles.version}>
-        Versão {Application.nativeApplicationVersion ?? '1.0.0'}
-      </Text>
+      <Text style={styles.version}>Versão {Application.nativeApplicationVersion ?? '1.0.0'}</Text>
     </Screen>
   );
 }

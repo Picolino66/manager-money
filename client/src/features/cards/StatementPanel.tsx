@@ -9,24 +9,13 @@ import {
   STATEMENT_STATUS_LABEL,
 } from '@manager-money/core/application/card-text';
 import { formatDayMonth } from '@manager-money/core/application/card-view';
-import {
-  CardPurchase,
-  CardStatement,
-  StatementStatus,
-} from '@manager-money/core/domain/financial/credit-card';
+import { CardPurchase, CardStatement } from '@manager-money/core/domain/financial/credit-card';
 import { formatCurrency } from '@manager-money/core/utils/currency';
 
-import { Badge, BadgeTone } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-
-const STATUS_TONE: Record<StatementStatus, BadgeTone> = {
-  open: 'info',
-  closed: 'warning',
-  overdue: 'critical',
-  partial: 'warning',
-  paid: 'healthy',
-};
+import { STATEMENT_STATUS_TONE } from '@/lib/statement';
 
 type Props = {
   /** Ex.: "Fatura atual". */
@@ -82,7 +71,7 @@ export function StatementPanel({
           <h3 className="text-base font-semibold text-ink">{title}</h3>
           <p className="text-sm text-muted">Fatura {monthLabel}</p>
         </div>
-        <Badge tone={STATUS_TONE[statement.status]}>
+        <Badge tone={STATEMENT_STATUS_TONE[statement.status]}>
           {STATEMENT_STATUS_LABEL[statement.status]}
         </Badge>
       </div>

@@ -10,13 +10,13 @@ import { AddExpenseScreen } from '../screens/AddExpenseScreen';
 import { CardDebtScreen } from '../screens/CardDebtScreen';
 import { CardDetailScreen } from '../screens/CardDetailScreen';
 import { CardsScreen } from '../screens/CardsScreen';
-import { CategoriesScreen } from '../screens/CategoriesScreen';
 import { ConfigScreen } from '../screens/ConfigScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { DailyHistoryScreen } from '../screens/DailyHistoryScreen';
 import { IncomesScreen } from '../screens/IncomesScreen';
-import { PreviousMonthsScreen } from '../screens/PreviousMonthsScreen';
+import { ManageCategoriesScreen } from '../screens/ManageCategoriesScreen';
 import { PrivacyPolicyScreen } from '../screens/PrivacyPolicyScreen';
+import { ReportsScreen } from '../screens/ReportsScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { StartMonthScreen } from '../screens/StartMonthScreen';
 import { MainTabParamList, RootStackParamList } from './types';
@@ -48,9 +48,9 @@ function MainTabs() {
               ? 'home-outline'
               : route.name === 'DailyHistory'
                 ? 'calendar-outline'
-                : route.name === 'PreviousMonths'
-                  ? 'archive-outline'
-                  : route.name === 'Categories'
+                : route.name === 'Cards'
+                  ? 'card-outline'
+                  : route.name === 'Reports'
                     ? 'pie-chart-outline'
                     : 'settings-outline';
 
@@ -64,16 +64,8 @@ function MainTabs() {
         name="DailyHistory"
         options={{ title: 'Histórico' }}
       />
-      <Tab.Screen
-        component={PreviousMonthsScreen}
-        name="PreviousMonths"
-        options={{ title: 'Ciclos' }}
-      />
-      <Tab.Screen
-        component={CategoriesScreen}
-        name="Categories"
-        options={{ title: 'Categorias' }}
-      />
+      <Tab.Screen component={CardsScreen} name="Cards" options={{ title: 'Cartões' }} />
+      <Tab.Screen component={ReportsScreen} name="Reports" options={{ title: 'Relatórios' }} />
       <Tab.Screen component={SettingsScreen} name="Settings" options={{ title: 'Ajustes' }} />
     </Tab.Navigator>
   );
@@ -123,7 +115,6 @@ export function AppNavigator() {
           name="Incomes"
           options={{ title: 'Rendas do ciclo' }}
         />
-        <Stack.Screen component={CardsScreen} name="Cards" options={{ title: 'Cartões' }} />
         <Stack.Screen
           component={CardDetailScreen}
           name="CardDetail"
@@ -133,6 +124,11 @@ export function AppNavigator() {
           component={CardDebtScreen}
           name="CardDebt"
           options={{ title: 'Compras anteriores ao app' }}
+        />
+        <Stack.Screen
+          component={ManageCategoriesScreen}
+          name="ManageCategories"
+          options={{ title: 'Categorias' }}
         />
         <Stack.Screen component={AccountScreen} name="Account" options={{ title: 'Conta' }} />
         <Stack.Screen

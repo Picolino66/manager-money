@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { isAfter, parseISO, startOfDay } from 'date-fns';
-import { ArrowLeft, History, Pencil, Power } from 'lucide-react';
+import { ArrowLeft, History, Pencil, Power, ReceiptText } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { toast } from 'sonner';
 
@@ -76,7 +76,7 @@ export function CardDetailPage() {
         message="Este cartão não existe mais."
         action={
           <Button asChild>
-            <Link to="/ajustes/cartoes">Voltar aos cartões</Link>
+            <Link to="/cartoes">Voltar aos cartões</Link>
           </Button>
         }
       />
@@ -240,7 +240,7 @@ export function CardDetailPage() {
   return (
     <>
       <Link
-        to="/ajustes/cartoes"
+        to="/cartoes"
         className="mb-3 inline-flex items-center gap-1 text-sm text-primary underline"
       >
         <ArrowLeft aria-hidden className="h-4 w-4" /> Cartões
@@ -251,6 +251,11 @@ export function CardDetailPage() {
         actions={
           <>
             {!active ? <Badge>Inativo</Badge> : null}
+            <Button variant="secondary" asChild>
+              <Link to={`/historico?cartao=${card.id}`}>
+                <ReceiptText aria-hidden className="h-4 w-4" /> Compras no Histórico
+              </Link>
+            </Button>
             <Button variant="secondary" onClick={() => setEditingCard(true)}>
               <Pencil aria-hidden className="h-4 w-4" /> Editar cartão
             </Button>
@@ -374,7 +379,7 @@ export function CardDetailPage() {
 
         <Card className="flex flex-col items-start gap-2">
           <Button variant="secondary" asChild>
-            <Link to={`/ajustes/cartoes/${card.id}/compras-anteriores`}>
+            <Link to={`/cartoes/${card.id}/compras-anteriores`}>
               <History aria-hidden className="h-4 w-4" /> Compras anteriores ao app
             </Link>
           </Button>

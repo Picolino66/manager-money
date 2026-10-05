@@ -18,7 +18,9 @@ import {
 } from '@manager-money/core/application/card.use-cases';
 import { deleteExpense } from '@manager-money/core/application/cycle.use-cases';
 import { undoFixedPayment } from '@manager-money/core/application/payment.use-cases';
+import { formatMonthKey } from '@manager-money/core/application/card-text';
 import {
+  listHistoryStatementKeys,
   PAID_HISTORY_LABELS,
   PAID_HISTORY_MEANS_LABELS,
   PaidHistoryType,
@@ -31,7 +33,7 @@ import {
 import { CardPurchaseRecord, isLive } from '@manager-money/core/application/state';
 import { getSortedCategories } from '@manager-money/core/domain/financial/financial.calculations';
 import { formatCurrency } from '@manager-money/core/utils/currency';
-import { formatCycleLabel, formatDateLabel } from '@manager-money/core/utils/date';
+import { formatCycleLabel, formatDateLabel, formatShortDate } from '@manager-money/core/utils/date';
 
 import { Money } from '@/components/Money';
 import { PageHeader } from '@/components/PageHeader';
@@ -59,6 +61,25 @@ import { CardPurchaseFormDialog } from './CardPurchaseFormDialog';
 import { ExpenseFormDialog } from './ExpenseFormDialog';
 
 const PAGE_SIZE = 20;
+
+/**
+ * Filtros vindos do link (`?ciclo=&cartao=&fatura=&categoria=&tipo=&de=&ate=`): as outras telas (Relatórios,
+ * Cartões) apontam para cá em vez de repetir a lista de lançamentos.
+ */
+function filterFromParams(params: URLSearchParams): HistoryFilter {
+  const type = params.get('tipo');
+
+  return {
+    ...EMPTY_FILTER,
+    cycleId: params.get('ciclo') || null,
+    cardId: params.get('cartao') || null,
+    statementKey: params.get('fatura') || null,
+    category: params.get('categoria') || null,
+    type: type && type in PAID_HISTORY_LABELS ? (type as PaidHistoryType) : null,
+    from: params.get('de') ?? '',
+    to: params.get('ate') ?? '',
+  };
+}
 
 /** Ordem de texto em pt-BR: sem distinguir acento/caixa e com números naturais (2/12 antes de 10/12). */
 const collator = new Intl.Collator('pt-BR', { sensitivity: 'base', numeric: true });
@@ -110,7 +131,7 @@ export function ExpensesPage() {
   const run = useDataStore((state) => state.run);
   const saving = useDataStore((state) => state.saving);
   const [params, setParams] = useSearchParams();
-  const [filter, setFilter] = useState<HistoryFilter>(EMPTY_FILTER);
+  const [filter, setFilter] = useState<HistoryFilter>(() => filterFromParams(params));
   const [sorting, setSorting] = useState<SortingState>([{ id: 'date', desc: true }]);
   const [editing, setEditing] = useState<HistoryRow | null>(null);
   const [editingPurchase, setEditingPurchase] = useState<CardPurchaseRecord | null>(null);
@@ -125,6 +146,13 @@ export function ExpensesPage() {
     [doc],
   );
   const cards = useMemo(() => (doc ? selectCreditCards(doc) : []), [doc]);
+  const statementKeys = useMemo(
+    () =>
+      listHistoryStatementKeys(
+        filter.cardId ? rows.filter((row) => row.cardId === filter.cardId) : rows,
+      ),
+    [rows, filter.cardId],
+  );
   const formCategories = useMemo(
     () => [
       ...new Set([...getSortedCategories(doc ? selectConfig(doc) : null), ...categoriesOf(rows)]),
@@ -183,6 +211,27 @@ export function ExpensesPage() {
         sortingFn: (a, b) => collator.compare(a.original.category, b.original.category),
       },
       { id: 'cycle', accessorKey: 'cycleLabel', header: 'Ciclo', enableSorting: false },
+      {
+        id: 'statement',
+        accessorKey: 'statementKey',
+        header: 'Fatura',
+        sortingFn: (a, b) =>
+          (a.original.statementKey ?? '').localeCompare(b.original.statementKey ?? ''),
+        cell: (info) => {
+          const { statementKey, dueDate } = info.row.original;
+
+          return statementKey ? (
+            <span className="whitespace-nowrap">
+              {formatMonthKey(statementKey)}
+              {dueDate ? (
+                <span className="block text-xs text-muted">vence {formatShortDate(dueDate)}</span>
+              ) : null}
+            </span>
+          ) : (
+            <span className="text-muted">—</span>
+          );
+        },
+      },
       { id: 'amount', accessorKey: 'amount', header: 'Valor' },
     ],
     [],
@@ -263,6 +312,11 @@ export function ExpensesPage() {
       label: `Cartão: ${cards.find((card) => card.id === filter.cardId)?.name ?? ''}`,
       clear: { cardId: null },
     },
+    filter.statementKey && {
+      key: 'statement',
+      label: `Fatura: ${formatMonthKey(filter.statementKey)}`,
+      clear: { statementKey: null },
+    },
     filter.type && {
       key: 'type',
       label: `Tipo: ${PAID_HISTORY_LABELS[filter.type]}`,
@@ -283,7 +337,7 @@ export function ExpensesPage() {
     <>
       <PageHeader
         title="Histórico"
-        description="Tudo que foi pago em todos os ciclos: gastos à vista, cartão, fixas e parcelamentos. Só os gastos à vista do ciclo ativo podem ser editados."
+        description="Tudo que foi pago em todos os ciclos: gastos à vista, cartão, fixas e parcelamentos. O que saiu do saldo fica no ciclo em que saiu; o crédito, no ciclo em que a fatura vence."
         actions={
           activeCycle ? (
             <Button onClick={() => setParams({ novo: '1' })}>
@@ -293,7 +347,7 @@ export function ExpensesPage() {
         }
       />
 
-      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-8">
+      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-9">
         <Field label="Buscar" className="xl:col-span-2">
           {(props) => (
             <Input
@@ -348,6 +402,24 @@ export function ExpensesPage() {
                 {cards.map((card) => (
                   <option key={card.id} value={card.id}>
                     {card.name}
+                  </option>
+                ))}
+              </NativeSelect>
+            )}
+          </Field>
+        ) : null}
+        {statementKeys.length > 0 ? (
+          <Field label="Fatura">
+            {(props) => (
+              <NativeSelect
+                value={filter.statementKey ?? ''}
+                onChange={(event) => update({ statementKey: event.target.value || null })}
+                {...props}
+              >
+                <option value="">Todas</option>
+                {statementKeys.map((key) => (
+                  <option key={key} value={key}>
+                    {formatMonthKey(key)}
                   </option>
                 ))}
               </NativeSelect>
