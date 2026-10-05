@@ -16,7 +16,7 @@ symbols: [closeCycle, canCloseActiveCycle, canCloseCycle, describeCloseCycleBloc
 business_rules: [BR-FIN-006, BR-FIN-017, BR-FIN-034]
 adrs: [ADR-018]
 tests: [packages/core/src/application/cycle.use-cases.test.ts, packages/core/src/application/card-rules.test.ts]
-last_verified_commit: 7903717+T-042h
+last_verified_commit: 7903717+T-042j
 ---
 
 # Fechar ciclo

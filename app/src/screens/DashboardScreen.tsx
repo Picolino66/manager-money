@@ -234,21 +234,20 @@ export function DashboardScreen() {
           {formatCurrency(summary.todayBalance)}
         </Text>
         <View style={styles.heroMetrics}>
-          <HeroMetric label="Já gastou hoje" value={formatCurrency(summary.todaySpent)} />
           <HeroMetric
             label="Disponível no ciclo"
             negative={summary.remainingAvailableAmount < 0}
             value={formatCurrency(summary.remainingAvailableAmount)}
           />
+          <HeroMetric label="Gasto do saldo" value={formatCurrency(summary.totalSpent)} />
           <HeroMetric
             label="Disponível no crédito"
             negative={credit.availableLimit !== null && credit.availableLimit < 0}
             value={credit.availableLimit === null ? '—' : formatCurrency(credit.availableLimit)}
           />
-          <HeroMetric label="Gasto no saldo" value={formatCurrency(summary.totalSpent)} />
           <HeroMetric
             hint={describeCycleStatements(credit.statements)}
-            label="Gasto no crédito (fatura do ciclo)"
+            label="Gasto do crédito (fatura vigente)"
             value={formatCurrency(credit.cycleStatementsAmount)}
           />
         </View>

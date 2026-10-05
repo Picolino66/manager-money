@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-05T03:16:19.048Z",
+  "generated_at": "2026-10-05T03:25:50.304Z",
   "source_commit": "b175ebb",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
@@ -295,7 +295,7 @@
     },
     "modules/cycle/close.md": {
       "id": "cycle.close",
-      "last_verified_commit": "7903717+T-042h",
+      "last_verified_commit": "7903717+T-042j",
       "state": "fresh",
       "source_hashes": {
         "closeCycle": "sha256:44835f976e020ab479fc8dc369f3d50946bc0a62369a37113a2f0f31a8253cac",
@@ -307,7 +307,7 @@
     },
     "modules/cycle/dashboard.md": {
       "id": "cycle.dashboard",
-      "last_verified_commit": "7903717+T-042h",
+      "last_verified_commit": "7903717+T-042j",
       "state": "fresh",
       "source_hashes": {
         "selectCreditSnapshot": "sha256:e94b1fa6208ba1c3fd11d739ffa0f406fb30711ae8d71b99ffe4241d77306737",
@@ -356,7 +356,7 @@
     },
     "modules/cycle/receive-early.md": {
       "id": "cycle.receive-early",
-      "last_verified_commit": "7903717+T-042h",
+      "last_verified_commit": "7903717+T-042j",
       "state": "fresh",
       "source_hashes": {
         "receiveIncomeEarly": "sha256:2a13e8df00f62fd23639cfdd2a51acaeea5de0acfd39dc018c9693ec927a2a45",
@@ -437,7 +437,7 @@
     },
     "modules/payment/fixed-expense.md": {
       "id": "payment.fixed-expense",
-      "last_verified_commit": "7903717+T-042h",
+      "last_verified_commit": "7903717+T-042j",
       "state": "fresh",
       "source_hashes": {
         "launchRecurringCharges": "sha256:b84feb19bded96ab4d842742bf2484732ab09c63b47c4b6d304d53ae1c684959",
