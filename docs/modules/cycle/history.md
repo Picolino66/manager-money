@@ -16,7 +16,7 @@ code:
   - packages/core/src/domain/financial/financial.calculations.ts
 symbols: [filterPaidHistory, selectPaidHistory, sumPaidHistory, calculateDayBalance, calculateFinalBalance, selectCycleSpending, selectCycleSpendingRange]
 business_rules: [BR-FIN-006, BR-FIN-008]
-last_verified_commit: 7903717+T-042g
+last_verified_commit: 7903717+T-042h
 ---
 
 # Histórico

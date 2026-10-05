@@ -85,7 +85,7 @@ describe('DashboardScreen (FLOW-primeiro-uso)', () => {
     expect(screen.getByText('Disponível no ciclo')).toBeTruthy();
     expect(screen.getByText('Disponível no crédito')).toBeTruthy();
     expect(screen.getByText('Gasto no saldo')).toBeTruthy();
-    expect(screen.getByText('Gasto no crédito (fatura vigente)')).toBeTruthy();
+    expect(screen.getByText('Gasto no crédito (fatura do ciclo)')).toBeTruthy();
     expect(screen.queryByText('Limite previsto para hoje')).toBeNull();
     expect(screen.getByText('Dias restantes')).toBeTruthy();
     expect(screen.getByText('Meta de economia (guardada)')).toBeTruthy();

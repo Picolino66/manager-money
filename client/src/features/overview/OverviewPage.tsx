@@ -1,3 +1,4 @@
+import { describeCycleStatements } from '@manager-money/core/application/card-view';
 import { ReactNode, useMemo } from 'react';
 import { Link } from 'react-router';
 import {
@@ -199,8 +200,8 @@ export function OverviewPage() {
         >
           <Money value={summary.totalSpent} />
         </Kpi>
-        <Kpi label="Gasto no crédito" hint="Fatura vigente (aberta) dos cartões ativos.">
-          <Money value={view.credit.currentStatementAmount} />
+        <Kpi label="Gasto no crédito" hint={describeCycleStatements(view.credit.statements)}>
+          <Money value={view.credit.cycleStatementsAmount} />
         </Kpi>
       </div>
 

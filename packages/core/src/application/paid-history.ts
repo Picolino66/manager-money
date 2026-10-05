@@ -1,6 +1,6 @@
 import { addMonths, parseISO } from 'date-fns';
 
-import { listInstallments } from '../domain/financial/credit-card';
+import { listInstallments, statementDueDate } from '../domain/financial/credit-card';
 import { normalizeCategory } from '../domain/financial/financial.calculations';
 import { MoneyCents } from '../domain/financial/financial.types';
 import { toISODate } from '../utils/date';
@@ -125,6 +125,9 @@ export function selectPaidHistory(
       };
     });
 
+  const cardsById = new Map(state.creditCards.map((record) => [record.id, record] as const));
+  const dueOf = (key: string, card: (typeof state.creditCards)[number]) =>
+    toISODate(statementDueDate(key, card));
   const fromFixed = new Set(
     state.fixedPayments.filter(isLive).flatMap((p) => (p.cardPurchaseId ? [p.cardPurchaseId] : [])),
   );
@@ -133,6 +136,7 @@ export function selectPaidHistory(
     if (fromFixed.has(purchase.id)) continue;
 
     const modifiable = canModifyCardPurchase(state, purchase);
+    const card = cardsById.get(purchase.cardId);
     const category = normalizeCategory(purchase.category);
     const single = purchase.installments === 1 || purchase.kind === 'statement-balance';
 
@@ -156,7 +160,10 @@ export function selectPaidHistory(
         category,
         amount: single ? purchase.totalAmount : installment.nominalAmount,
         date,
-        cycleId: cycleOfDate(date),
+        cycleId:
+          upcoming && card
+            ? (cycleOfDate(dueOf(installment.statementKey, card)) ?? cycleOfDate(date))
+            : cycleOfDate(date),
         countsInTotal: single ? true : !upcoming && !prior,
         means: 'credit',
         sourceId: purchase.id,

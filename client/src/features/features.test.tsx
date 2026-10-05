@@ -122,6 +122,7 @@ describe('visão geral', () => {
     expect(screen.getByText('Disponível no crédito')).toBeInTheDocument();
     expect(screen.getByText('Gasto no saldo')).toBeInTheDocument();
     expect(screen.getByText('Gasto no crédito')).toBeInTheDocument();
+    expect(screen.getByText('Nenhuma fatura vence neste ciclo.')).toBeInTheDocument();
     expect(screen.queryByText('Limite previsto para hoje')).not.toBeInTheDocument();
     expect(screen.getByText(/Ciclo atual|Ciclo ativo/)).toBeInTheDocument();
   });

@@ -10,6 +10,7 @@ import {
 } from './card-text';
 import {
   buildCardStatementsView,
+  describeCycleStatements,
   formatDayMonth,
   hasCardPurchases,
   statementCycleKeys,
@@ -123,5 +124,15 @@ describe('card-text', () => {
         ] as never,
       }),
     ).toBe(300);
+  });
+});
+
+describe('describeCycleStatements (BR-FIN-037)', () => {
+  const statement = { openDate: '2026-09-06', closingDate: '2026-10-05', dueDate: '2026-10-10' };
+
+  it('descreve nenhuma, uma ou várias faturas do ciclo', () => {
+    expect(describeCycleStatements([])).toBe('Nenhuma fatura vence neste ciclo.');
+    expect(describeCycleStatements([statement])).toBe('Fatura 06/09 a 05/10, vence 10/10.');
+    expect(describeCycleStatements([statement, statement])).toBe('2 faturas vencem neste ciclo.');
   });
 });

@@ -51,27 +51,76 @@ describe('selectCreditSnapshot (BR-FIN-037)', () => {
     expect(selectCreditSnapshot(base(), TODAY.now)).toEqual({
       availableLimit: 500000,
       cardsWithoutLimit: 0,
-      currentStatementAmount: 0,
+      cycleStatementsAmount: 0,
+      statements: [],
       cards: 1,
     });
   });
 
-  it('compra até o fechamento cai na fatura vigente e reduz o limite', () => {
+  it('compra até o fechamento cai na fatura que vence no ciclo e reduz o limite', () => {
     const state = buy(base(), '2026-10-10', 30000);
     const snapshot = selectCreditSnapshot(state, TODAY.now);
 
-    expect(snapshot.currentStatementAmount).toBe(30000);
+    expect(snapshot.cycleStatementsAmount).toBe(30000);
+    expect(snapshot.availableLimit).toBe(470000);
+    // Fatura 2026-10: abre 21/09, fecha 20/10 e vence 27/10 (dentro do ciclo 05/10–04/11).
+    expect(snapshot.statements).toEqual([
+      {
+        cardId: state.creditCards[0]!.id,
+        cardName: 'Nubank',
+        key: '2026-10',
+        openDate: '2026-09-21',
+        closingDate: '2026-10-20',
+        dueDate: '2026-10-27',
+        amount: 30000,
+      },
+    ]);
+  });
+
+  it('compra depois do fechamento vence no ciclo seguinte: não entra no gasto deste ciclo', () => {
+    const state = buy(base(), '2026-10-25', 30000);
+    const snapshot = selectCreditSnapshot(state, TODAY.now);
+
+    expect(snapshot.cycleStatementsAmount).toBe(0);
+    expect(snapshot.statements).toEqual([]);
+    // O limite, porém, já está comprometido.
     expect(snapshot.availableLimit).toBe(470000);
   });
 
-  it('compra depois do fechamento vai para a próxima fatura, não para a vigente', () => {
-    const state = buy(base(), '2026-10-25', 30000);
-    // Hoje (16/10) ainda é a fatura que fecha dia 20: a compra de 25/10 não entra nela.
-    const snapshot = selectCreditSnapshot(state, new Date(2026, 9, 25, 12));
+  it('exemplo: ciclo 25/09–24/10, cartão 05→fechamento, vencimento 10/10', () => {
+    const ctx: UseCaseContext = { ...TODAY, now: new Date(2026, 9, 5, 12) };
+    const configured = saveConfig(
+      createEmptyState(),
+      {
+        incomeSources: [{ id: 'renda', name: 'Salário', amount: 500000, payday: 25 }],
+        savingGoal: 0,
+        customCategories: [],
+        fixedExpenses: [],
+      },
+      ctx,
+    );
+    let state = openCycle(
+      saveCreditCard(configured, { name: 'Picpay', closingDay: 5, dueDay: 10 }, ctx),
+      ctx,
+    );
+    const cardId = state.creditCards[0]!.id;
+    const purchase = (date: string, totalAmount: number) =>
+      addCardPurchase(
+        state,
+        { cardId, description: 'Compra', category: 'Pessoal', totalAmount, installments: 1, date },
+        ctx,
+      );
 
-    expect(snapshot.currentStatementAmount).toBe(30000);
-    expect(selectCreditSnapshot(state, TODAY.now).currentStatementAmount).toBe(0);
-    expect(snapshot.availableLimit).toBe(470000);
+    state = purchase('2026-09-27', 10000); // fatura que fecha em 05/10 e vence em 10/10
+    state = purchase('2026-10-05', 5000); // ainda é a mesma fatura (fecha no dia 5)
+    state = purchase('2026-10-06', 7000); // próxima fatura: vence só em 10/11
+
+    const snapshot = selectCreditSnapshot(state, ctx.now);
+
+    expect(snapshot.cycleStatementsAmount).toBe(15000);
+    expect(snapshot.statements).toMatchObject([
+      { key: '2026-10', openDate: '2026-09-06', closingDate: '2026-10-05', dueDate: '2026-10-10' },
+    ]);
   });
 
   it('cartão sem limite não entra no disponível; só ele → null', () => {
@@ -81,7 +130,7 @@ describe('selectCreditSnapshot (BR-FIN-037)', () => {
     expect(snapshot).toMatchObject({
       availableLimit: null,
       cardsWithoutLimit: 1,
-      currentStatementAmount: 12000,
+      cycleStatementsAmount: 12000,
     });
   });
 
@@ -95,7 +144,7 @@ describe('selectCreditSnapshot (BR-FIN-037)', () => {
 
     expect(selectCreditSnapshot(state, TODAY.now)).toMatchObject({
       availableLimit: 470000 + 195000,
-      currentStatementAmount: 35000,
+      cycleStatementsAmount: 35000,
       cards: 2,
     });
 
@@ -103,7 +152,7 @@ describe('selectCreditSnapshot (BR-FIN-037)', () => {
 
     expect(selectCreditSnapshot(off, TODAY.now)).toMatchObject({
       availableLimit: 470000,
-      currentStatementAmount: 30000,
+      cycleStatementsAmount: 30000,
       cards: 1,
     });
   });
@@ -120,7 +169,8 @@ describe('selectCreditSnapshot (BR-FIN-037)', () => {
     expect(selectCreditSnapshot(state, TODAY.now)).toEqual({
       availableLimit: null,
       cardsWithoutLimit: 0,
-      currentStatementAmount: 0,
+      cycleStatementsAmount: 0,
+      statements: [],
       cards: 0,
     });
   });

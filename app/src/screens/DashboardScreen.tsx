@@ -37,6 +37,7 @@ import {
 import { FixedPaymentRecord, isLive } from '@manager-money/core/application/state';
 import { DayStatus, FixedExpense } from '@manager-money/core/domain/financial/financial.types';
 import { useFinancialStore } from '../store/financial.store';
+import { describeCycleStatements } from '@manager-money/core/application/card-view';
 import { formatCurrency } from '@manager-money/core/utils/currency';
 import { clampIsoDate, toISODate } from '@manager-money/core/utils/date';
 
@@ -246,8 +247,9 @@ export function DashboardScreen() {
           />
           <HeroMetric label="Gasto no saldo" value={formatCurrency(summary.totalSpent)} />
           <HeroMetric
-            label="Gasto no crédito (fatura vigente)"
-            value={formatCurrency(credit.currentStatementAmount)}
+            hint={describeCycleStatements(credit.statements)}
+            label="Gasto no crédito (fatura do ciclo)"
+            value={formatCurrency(credit.cycleStatementsAmount)}
           />
         </View>
       </Card>
@@ -351,10 +353,12 @@ function HeroMetric({
   label,
   value,
   negative = false,
+  hint,
 }: {
   label: string;
   value: string;
   negative?: boolean;
+  hint?: string;
 }) {
   const styles = useStyles();
 
@@ -364,6 +368,7 @@ function HeroMetric({
       <Text style={[styles.heroMetricValue, negative ? styles.heroMetricNegative : null]}>
         {value}
       </Text>
+      {hint ? <Text style={styles.heroMetricHint}>{hint}</Text> : null}
     </View>
   );
 }
@@ -409,6 +414,11 @@ const useStyles = makeStyles((colors) => ({
     flexBasis: '45%',
     flexGrow: 1,
     gap: spacing.xs,
+  },
+  heroMetricHint: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: '600',
   },
   heroMetricNegative: {
     color: colors.negative,

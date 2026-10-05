@@ -18,7 +18,7 @@ symbols: [selectCreditSnapshot, buildDashboardSummary, calculateDailyLimitForDat
 adrs: [ADR-017, ADR-018]
 tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/domain/financial/projection.test.ts, packages/core/src/domain/financial/financial.calculations.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-007, BR-FIN-008, BR-FIN-009, BR-FIN-030, BR-FIN-031, BR-FIN-033, BR-FIN-034]
-last_verified_commit: 7903717+T-042e
+last_verified_commit: 7903717+T-042h
 ---
 
 # Painel do dia (Hoje)
@@ -37,7 +37,7 @@ o restante de faturas parciais transportado do ciclo anterior.
 ## Saída (blocos, nesta ordem)
 1. **Hero:** "Ainda pode gastar hoje" = saldo do dia (BR-FIN-008) com selo de status (BR-FIN-009) e, no mesmo
    quadro, a grade: "Já gastou hoje", "Disponível no ciclo", "Disponível no crédito", "Gasto no saldo" (gasto à
-   vista do ciclo) e "Gasto no crédito (fatura vigente)" (BR-FIN-037, `selectCreditSnapshot`). O limite previsto
+   vista do ciclo) e "Gasto no crédito (fatura do ciclo)" — faturas que vencem no ciclo (BR-FIN-037, `selectCreditSnapshot`). O limite previsto
    de hoje (BR-FIN-007) deixou de aparecer. Nunca mistura o limite do cartão com o "pode gastar hoje".
 2. **Ações:** Registrar e Renda (rendas avulsas).
 3. **Resumo curto:** dias restantes e "Meta de economia (guardada)" ("disponível no ciclo" foi para o hero).

@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-05T02:47:03.770Z",
-  "source_commit": "b691e17",
+  "generated_at": "2026-10-05T03:10:08.441Z",
+  "source_commit": "12036de",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -1639,7 +1639,7 @@
       "type": "feature",
       "module": "web",
       "title": "Visão geral do ciclo ativo (web)",
-      "summary": "KPIs do ciclo ativo (ainda pode gastar hoje, disponível no ciclo, disponível no crédito, gasto no saldo, gasto no crédito da fatura vigente), gráfico de gasto diário vs. limite, compromissos reservados e limite dos cartões, todos calculados pelo núcleo.",
+      "summary": "KPIs do ciclo ativo (ainda pode gastar hoje, disponível no ciclo, disponível no crédito, gasto no saldo, gasto no crédito das faturas que vencem no ciclo), gráfico de gasto diário vs. limite, compromissos reservados e limite dos cartões, todos calculados pelo núcleo.",
       "doc": "modules/web/overview.md",
       "state": "implemented",
       "keywords": [

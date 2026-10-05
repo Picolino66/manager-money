@@ -10,7 +10,6 @@ import {
   CardStatement,
   addCycleKeys,
   cycleKeyFromStartDate,
-  currentStatementKey,
   cycleKeyOffset,
   listEffectiveInstallments,
   statementDueDate,
@@ -269,26 +268,42 @@ export function selectCardLimitUsage(state: LocalState, cardId: string): CardLim
     : null;
 }
 
+/** Fatura que pesa no ciclo ativo (o vencimento cai nele), com o período do cartão. */
+export type CycleStatementView = {
+  cardId: string;
+  cardName: string;
+  key: string;
+  /** Primeiro dia que a fatura recebe compras e dia do fechamento (yyyy-MM-dd). */
+  openDate: string;
+  closingDate: string;
+  dueDate: string;
+  amount: MoneyCents;
+};
+
 export type CreditSnapshot = {
   /** Soma do limite disponível dos cartões ativos com limite informado; `null` se nenhum tem limite. */
   availableLimit: MoneyCents | null;
   /** Cartões ativos que não entram em `availableLimit` por não terem limite informado. */
   cardsWithoutLimit: number;
-  /** Principal da fatura vigente (a aberta, que ainda recebe compras) somado nos cartões ativos. */
-  currentStatementAmount: MoneyCents;
+  /** Soma das faturas cujo vencimento cai no ciclo ativo (cartões ativos), pelo período do cartão. */
+  cycleStatementsAmount: MoneyCents;
+  /** Essas faturas, uma por cartão e vencimento, em ordem de vencimento. */
+  statements: CycleStatementView[];
   /** Cartões ativos considerados. */
   cards: number;
 };
 
 /**
- * BR-FIN-037: resumo de crédito da visão geral (web) e do Hoje (app): limite disponível e gasto na
- * fatura vigente (a que contém a data de hoje), somados nos cartões ativos.
+ * BR-FIN-037: resumo de crédito da visão geral (web) e do Hoje (app). "Gasto no crédito" soma o
+ * período de cada fatura (abertura→fechamento do cartão) e entra no ciclo em que **vence** (a
+ * mesma regra do orçamento, BR-FIN-004/025); o disponível soma `limite − comprometido`.
  */
 export function selectCreditSnapshot(state: LocalState, today: Date): CreditSnapshot {
   const cards = selectActiveCreditCards(state);
+  const cycle = selectActiveCycle(state);
+  const statements: CycleStatementView[] = [];
   let availableLimit: MoneyCents | null = null;
   let cardsWithoutLimit = 0;
-  let currentStatementAmount = 0;
 
   for (const card of cards) {
     const available = selectCardLimitUsage(state, card.id)?.available ?? null;
@@ -299,13 +314,32 @@ export function selectCreditSnapshot(state: LocalState, today: Date): CreditSnap
       availableLimit = (availableLimit ?? 0) + available;
     }
 
-    const key = currentStatementKey(card, today);
-    const statement = selectCardStatements(state, card.id, today).find((item) => item.key === key);
+    if (!cycle) continue;
 
-    currentStatementAmount += statement?.amount ?? 0;
+    for (const statement of selectCardStatements(state, card.id, today)) {
+      if (statement.dueDate >= cycle.startDate && statement.dueDate <= cycle.endDate) {
+        statements.push({
+          cardId: card.id,
+          cardName: card.name,
+          key: statement.key,
+          openDate: toISODate(statementStartDate(statement.key, card.closingDay)),
+          closingDate: statement.closingDate,
+          dueDate: statement.dueDate,
+          amount: statement.amount,
+        });
+      }
+    }
   }
 
-  return { availableLimit, cardsWithoutLimit, currentStatementAmount, cards: cards.length };
+  statements.sort((a, b) => a.dueDate.localeCompare(b.dueDate) || a.cardId.localeCompare(b.cardId));
+
+  return {
+    availableLimit,
+    cardsWithoutLimit,
+    cycleStatementsAmount: statements.reduce((total, item) => total + item.amount, 0),
+    statements,
+    cards: cards.length,
+  };
 }
 
 // ---------------------------------------------------------------------------

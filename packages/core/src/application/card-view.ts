@@ -144,6 +144,22 @@ export function formatDayMonth(isoDate: string): string {
   return format(parseISO(isoDate), 'dd/MM');
 }
 
+/**
+ * Texto curto do "Gasto no crédito" (BR-FIN-037): período da fatura (abertura→fechamento do cartão)
+ * e vencimento; várias faturas viram uma contagem.
+ */
+export function describeCycleStatements(
+  statements: { openDate: string; closingDate: string; dueDate: string }[],
+): string {
+  if (statements.length === 0) return 'Nenhuma fatura vence neste ciclo.';
+
+  if (statements.length > 1) return `${statements.length} faturas vencem neste ciclo.`;
+
+  const [item] = statements;
+
+  return `Fatura ${formatDayMonth(item!.openDate)} a ${formatDayMonth(item!.closingDate)}, vence ${formatDayMonth(item!.dueDate)}.`;
+}
+
 /** BR-FIN-028: cartão com compras vigentes não pode ser excluído (só desativado). */
 export function hasCardPurchases(doc: LocalState, cardId: string): boolean {
   return doc.cardPurchases.some((purchase) => isLive(purchase) && purchase.cardId === cardId);

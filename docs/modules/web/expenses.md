@@ -19,7 +19,7 @@ symbols: [filterPaidHistory, CardPurchaseFormDialog, buildHistoryRows, filterHis
 business_rules: [BR-FIN-001, BR-FIN-013]
 adrs: [ADR-020]
 tests: [packages/core/src/application/paid-history.test.ts, client/src/lib/view-models.test.ts, client/src/features/features.test.tsx]
-last_verified_commit: 7903717+T-042g
+last_verified_commit: 7903717+T-042h
 ---
 
 # Histórico em `/gastos` (CLIENT-011/012)
