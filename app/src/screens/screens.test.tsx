@@ -405,7 +405,8 @@ describe('Hoje: fixa recorrente no cartão (BR-FIN-035)', () => {
       },
     ];
     let doc = saveConfig(createEmptyState(), { ...config, fixedExpenses: fixed() }, ctx);
-    doc = saveCreditCard(doc, { name: 'Nubank', closingDay: 28, dueDay: 5 }, ctx);
+    // Fecha dia 6: a fatura vira no dia 7, o início do ciclo (payday 7), então já lança ao abrir.
+    doc = saveCreditCard(doc, { name: 'Nubank', closingDay: 6, dueDay: 15 }, ctx);
     const cardId = doc.creditCards[0]!.id;
     doc = saveConfig(doc, { ...config, fixedExpenses: fixed(cardId) }, ctx);
     if (!cardActive) doc = setCreditCardActive(doc, cardId, false, ctx);
@@ -413,7 +414,7 @@ describe('Hoje: fixa recorrente no cartão (BR-FIN-035)', () => {
     return openCycle(doc, ctx);
   }
 
-  it('ao abrir o ciclo a fixa já aparece paga no cartão, lançada automaticamente', async () => {
+  it('quando a fatura vira a fixa aparece paga no cartão, lançada automaticamente', async () => {
     await seed(recurringDoc(true));
     render(<DashboardScreen />);
     expandFixed();

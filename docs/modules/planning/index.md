@@ -8,7 +8,7 @@ summary: >
   despesas fixas e parcelamentos (ativos ou inativos).
 code:
   - app/src/screens/ConfigScreen.tsx
-last_verified_commit: 7903717+T-042
+last_verified_commit: 7903717+T-042b
 ---
 
 # Módulo: planejamento

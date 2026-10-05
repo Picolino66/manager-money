@@ -1,6 +1,6 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-05T00:11:04.655Z",
+  "generated_at": "2026-10-05T00:38:38.041Z",
   "source_commit": "2f01394",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
@@ -997,7 +997,7 @@
         "inativa"
       ],
       "symbols": [
-        "launchRecurringFixedExpenses",
+        "launchRecurringCharges",
         "selectRecurringIssues",
         "payFixedExpense",
         "undoFixedPayment",

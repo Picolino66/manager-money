@@ -325,7 +325,7 @@ export function ConfigPage() {
                           hint={
                             activeCards.length === 0 && !enabled
                               ? 'Cadastre um cartão em Cartões para usar.'
-                              : 'Lançada sozinha no cartão ao abrir cada ciclo (1 parcela, sem juros).'
+                              : 'Cobrada sozinha no cartão toda vez que a fatura vira (1 parcela, sem juros).'
                           }
                           aria-label={`Despesa fixa ${index + 1} recorrente no cartão de crédito`}
                           checked={enabled}

@@ -1,4 +1,4 @@
-import { isAfter, parseISO, startOfDay } from 'date-fns';
+import { format, isAfter, parseISO, startOfDay } from 'date-fns';
 
 import {
   buildCardStatements,
@@ -13,6 +13,8 @@ import {
   cycleKeyOffset,
   listEffectiveInstallments,
   statementDueDate,
+  statementKeysStartingBetween,
+  statementStartDate,
 } from '../domain/financial/credit-card';
 import {
   calculateDefaultCycleStartDate,
@@ -157,16 +159,21 @@ export function selectPendingFixedExpenses(state: LocalState, cycleId: string): 
 
 /**
  * BR-FIN-035: por que uma fixa recorrente no cartão continua pendente no ciclo ativo (id da fixa →
- * mensagem). Só entram as pendentes com `recurringCardId`.
+ * mensagem): ainda não chegou a virada da fatura, o cartão não serve, o usuário desfez ou a recusa do
+ * núcleo. Só entram as pendentes com `recurringCardId`.
  */
-export function selectRecurringIssues(state: LocalState, cycleId: string): Record<string, string> {
+export function selectRecurringIssues(
+  state: LocalState,
+  cycleId: string,
+  today: Date = new Date(),
+): Record<string, string> {
   const cycle = state.cycles.find((record) => record.id === cycleId && isLive(record));
 
   if (!cycle) {
     return {};
   }
 
-  const cycleKey = cycleKeyFromStartDate(cycle.startDate);
+  const todayIso = toISODate(today);
 
   return Object.fromEntries(
     selectPendingFixedExpenses(state, cycleId).flatMap((expense) => {
@@ -177,15 +184,40 @@ export function selectRecurringIssues(state: LocalState, cycleId: string): Recor
       const card = state.creditCards.find(
         (record) => record.id === expense.recurringCardId && isLive(record),
       );
+
+      if (!card) {
+        return [[expense.id, 'O cartão desta despesa recorrente foi excluído.'] as const];
+      }
+
+      if (!card.active) {
+        return [
+          [expense.id, `O cartão ${card.name} está inativo: a despesa não foi lançada.`] as const,
+        ];
+      }
+
       const undone = state.fixedPayments.some(
-        (payment) => payment.id === `auto-pay-${cycleKey}-${expense.id}`,
+        (payment) =>
+          payment.cycleId === cycleId &&
+          payment.fixedExpenseId === expense.id &&
+          payment.id.startsWith('auto-pay-') &&
+          payment.deletedAt,
       );
-      const message = !card
-        ? 'O cartão desta despesa recorrente foi excluído.'
-        : !card.active
-          ? `O cartão ${card.name} está inativo: a despesa não foi lançada.`
-          : undone
-            ? 'Lançamento automático desfeito neste ciclo.'
+
+      if (undone) {
+        return [[expense.id, 'Lançamento automático desfeito neste ciclo.'] as const];
+      }
+
+      const starts = statementKeysStartingBetween(
+        card.closingDay,
+        cycle.startDate,
+        cycle.endDate,
+      ).map((key) => format(statementStartDate(key, card.closingDay), 'yyyy-MM-dd'));
+      const next = starts.find((date) => date > todayIso);
+      const message =
+        starts.length === 0
+          ? 'Nenhuma virada de fatura neste ciclo: continua reservada.'
+          : next && starts.every((date) => date > todayIso)
+            ? `Será lançada na virada da fatura ${card.name}, em ${next.slice(8, 10)}/${next.slice(5, 7)}.`
             : 'Não foi possível lançar no cartão neste ciclo.';
 
       return [[expense.id, message] as const];

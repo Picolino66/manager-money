@@ -16,7 +16,7 @@ symbols: [saveConfig, calculateIncomeTotal, calculateFixedExpensesTotal, calcula
 adrs: [ADR-017, ADR-023]
 tests: [packages/core/src/application/cycle.use-cases.test.ts, packages/core/src/application/recurring-card.test.ts, packages/core/src/application/financial-vision.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-010, BR-FIN-014, BR-FIN-015, BR-FIN-018, BR-FIN-035]
-last_verified_commit: 7903717+T-042
+last_verified_commit: 7903717+T-042b
 ---
 
 # Configurar base financeira
@@ -43,4 +43,4 @@ last_verified_commit: 7903717+T-042
 - Com ciclo ativo, salvar recalcula o saldo inicial do ciclo (BR-FIN-014; mantém pagamentos, rendas avulsas e faturas) e ativa no ciclo atual
   os parcelamentos ativos ainda não iniciados.
 
-- **Despesa fixa recorrente no cartão (BR-FIN-035, SPEC-024):** cada despesa fixa **permanente** tem o interruptor "Recorrente no cartão de crédito" e a escolha do cartão (só cartões ativos; sem cartão ativo fica desabilitado com a dica). `saveConfig` valida que o cartão existe e está ativo ao marcar (quem já tinha a marca com cartão inativado depois pode salvar de novo) e remove o campo ao desmarcar. Vale no app (`ConfigScreen`) e no web (`ConfigPage`); o lançamento acontece ao abrir cada ciclo ([fixed-expense](../payment/fixed-expense.md)). Parcelamentos fora do cartão não têm o campo.
+- **Despesa fixa recorrente no cartão (BR-FIN-035, SPEC-024):** cada despesa fixa **permanente** tem o interruptor "Recorrente no cartão de crédito" e a escolha do cartão (só cartões ativos; sem cartão ativo fica desabilitado com a dica). `saveConfig` valida que o cartão existe e está ativo ao marcar (quem já tinha a marca com cartão inativado depois pode salvar de novo) e remove o campo ao desmarcar. Vale no app (`ConfigScreen`) e no web (`ConfigPage`); a cobrança acontece a cada virada de fatura do cartão ([fixed-expense](../payment/fixed-expense.md)). Parcelamentos fora do cartão não têm o campo.

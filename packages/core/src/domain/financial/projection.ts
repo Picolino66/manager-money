@@ -1,4 +1,4 @@
-import { parseISO } from 'date-fns';
+import { addDays, format, parseISO } from 'date-fns';
 
 import {
   addCycleKeys,
@@ -6,7 +6,8 @@ import {
   CardPurchase,
   CreditCard,
   statementCycleKey,
-  statementKeyForDate,
+  statementKeysStartingBetween,
+  statementStartDate,
 } from './credit-card';
 import { calculateIncomeTotal, calculatePrimaryPayday } from './financial.calculations';
 import { FinancialConfig, FixedExpense, isActive, MoneyCents } from './financial.types';
@@ -54,32 +55,41 @@ function recurringCard(
 }
 
 /**
- * BR-FIN-035: compra virtual da fixa recorrente no início de um ciclo futuro (1 parcela, sem juros), com
- * as mesmas regras de fechamento e vencimento da compra real; assim ela pesa no ciclo da fatura.
+ * BR-FIN-035: compras virtuais da fixa recorrente num ciclo futuro — uma por virada de fatura que cai
+ * no ciclo (1 parcela, sem juros, na data da virada), com as mesmas regras de fechamento e vencimento
+ * da compra real; assim ela pesa no ciclo da fatura.
  */
-function virtualRecurringPurchase(
+function virtualRecurringPurchases(
   expense: FixedExpense & { type: 'permanent' },
   card: Pick<CreditCard, 'id' | 'closingDay' | 'dueDay'>,
   cycleKey: string,
   payday: number,
-): CardPurchase {
-  const purchaseDate = `${cycleKey}-${String(payday).padStart(2, '0')}`;
-  const firstStatementKey = statementKeyForDate(parseISO(purchaseDate), card.closingDay);
-  const dueCycleKey = statementCycleKey(firstStatementKey, card, payday);
+): CardPurchase[] {
+  const pad = (day: number) => String(day).padStart(2, '0');
+  const start = `${cycleKey}-${pad(payday)}`;
+  const end = format(
+    addDays(parseISO(`${addCycleKeys(cycleKey, 1)}-${pad(payday)}`), -1),
+    'yyyy-MM-dd',
+  );
 
-  return {
-    id: `virtual-${cycleKey}-${expense.id}`,
-    cardId: card.id,
-    description: expense.name,
-    category: expense.category,
-    totalAmount: expense.amount,
-    installments: 1,
-    purchaseDate,
-    firstStatementKey,
-    firstCycleKey: dueCycleKey > cycleKey ? dueCycleKey : cycleKey,
-    settledInstallments: 0,
-    createdAt: purchaseDate,
-  };
+  return statementKeysStartingBetween(card.closingDay, start, end).map((statementKey) => {
+    const purchaseDate = format(statementStartDate(statementKey, card.closingDay), 'yyyy-MM-dd');
+    const dueCycleKey = statementCycleKey(statementKey, card, payday);
+
+    return {
+      id: `virtual-${statementKey}-${expense.id}`,
+      cardId: card.id,
+      description: expense.name,
+      category: expense.category,
+      totalAmount: expense.amount,
+      installments: 1,
+      purchaseDate,
+      firstStatementKey: statementKey,
+      firstCycleKey: dueCycleKey > cycleKey ? dueCycleKey : cycleKey,
+      settledInstallments: 0,
+      createdAt: purchaseDate,
+    };
+  });
 }
 
 /**
@@ -115,7 +125,7 @@ export function projectCycles(
         const card = recurringCard(expense, usableCards);
 
         return card && expense.type === 'permanent'
-          ? [virtualRecurringPurchase(expense, card, key, payday)]
+          ? virtualRecurringPurchases(expense, card, key, payday)
           : [];
       }),
     );

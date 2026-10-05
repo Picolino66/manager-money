@@ -665,7 +665,7 @@ type RecurringCardFieldProps = {
 };
 
 /**
- * BR-FIN-035: marca a despesa fixa como recorrente no cartão de crédito. Ao abrir cada ciclo ela é
+ * BR-FIN-035: marca a despesa fixa como recorrente no cartão de crédito. A cada virada de fatura ela é
  * lançada sozinha nesse cartão (1 parcela, sem juros). Só cartões ativos podem ser escolhidos.
  */
 function RecurringCardField({ cards, index, value, onChange }: RecurringCardFieldProps) {
@@ -690,7 +690,7 @@ function RecurringCardField({ cards, index, value, onChange }: RecurringCardFiel
           <Text style={styles.hint}>
             {activeCards.length === 0 && !enabled
               ? 'Cadastre um cartão em Cartões para usar.'
-              : 'Lançada sozinha no cartão ao abrir cada ciclo (1 parcela, sem juros).'}
+              : 'Cobrada sozinha no cartão toda vez que a fatura vira (1 parcela, sem juros).'}
           </Text>
         </View>
         <Switch

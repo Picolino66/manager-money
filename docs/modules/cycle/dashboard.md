@@ -18,7 +18,7 @@ symbols: [buildDashboardSummary, calculateDailyLimitForDate, calculateDayStatus,
 adrs: [ADR-017, ADR-018]
 tests: [packages/core/src/application/card-rules.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/domain/financial/projection.test.ts, packages/core/src/domain/financial/financial.calculations.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-007, BR-FIN-008, BR-FIN-009, BR-FIN-030, BR-FIN-031, BR-FIN-033, BR-FIN-034]
-last_verified_commit: 7903717+T-042
+last_verified_commit: 7903717+T-042b
 ---
 
 # Painel do dia (Hoje)
@@ -59,4 +59,4 @@ o restante de faturas parciais transportado do ciclo anterior.
 Sem configuração → "Configuração inicial"; sem ciclo ativo → base financeira + "Iniciar ciclo" (a projeção
 parte do próximo ciclo a abrir); sem compromissos → mensagem de vazio.
 
-- **Projeção e fixa recorrente no cartão (BR-FIN-035):** `projectCycles` recebe os cartões; a fixa permanente recorrente num cartão ativo sai de "fixas" e entra como cobrança de cartão no ciclo em que vence a fatura da compra virtual daquele ciclo (início do ciclo, mesmas regras de fechamento/vencimento). Cartão inativo/excluído: volta a contar como fixa.
+- **Projeção e fixa recorrente no cartão (BR-FIN-035):** `projectCycles` recebe os cartões; a fixa permanente recorrente num cartão ativo sai de "fixas" e entra como cobrança de cartão no ciclo em que vence a fatura de cada compra virtual (uma por virada de fatura que cai no ciclo, mesmas regras de fechamento/vencimento). Cartão inativo/excluído: volta a contar como fixa.

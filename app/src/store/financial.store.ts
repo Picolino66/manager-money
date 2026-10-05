@@ -1,3 +1,4 @@
+import { AppState } from 'react-native';
 import { create } from 'zustand';
 
 import * as cardUseCases from '@manager-money/core/application/card.use-cases';
@@ -58,6 +59,8 @@ type FinancialState = {
   undoStatementPayment: (paymentId: string) => Promise<void>;
   payFixedExpense: (input: paymentUseCases.PayFixedExpenseInput) => Promise<void>;
   undoFixedPayment: (paymentId: string) => Promise<void>;
+  /** BR-FIN-035: lança as cobranças recorrentes cuja virada de fatura já chegou. */
+  launchRecurring: () => Promise<void>;
   addExtraIncome: (input: paymentUseCases.ExtraIncomeInput) => Promise<void>;
   deleteExtraIncome: (incomeId: string) => Promise<void>;
   closeActiveMonth: () => Promise<void>;
@@ -77,6 +80,16 @@ let contextFactory: () => UseCaseContext = createDefaultContext;
 let writeQueue: Promise<unknown> = Promise.resolve();
 let syncRemote: SyncRemote | null = null;
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
+let recurringTriggerInstalled = false;
+
+/** Ao voltar para o primeiro plano, confere se alguma fatura virou (vale também no modo local). */
+function installRecurringTrigger(launch: () => Promise<void>) {
+  if (recurringTriggerInstalled) return;
+  recurringTriggerInstalled = true;
+  AppState.addEventListener('change', (state) => {
+    if (state === 'active') void launch().catch(() => undefined);
+  });
+}
 let backoffMs = 0;
 
 /** Permite relógio e IDs determinísticos em testes. */
@@ -145,13 +158,19 @@ export const useFinancialStore = create<FinancialState>((set, get) => {
         }
 
         // O saldo do ciclo ativo é derivado: recalcula com as regras atuais (migração, ADR-017).
-        const state = useCases.recalculateActiveCycleBalance(result.state, contextFactory());
+        const ctx = contextFactory();
+        const state = useCases.recalculateActiveCycleBalance(
+          // BR-FIN-035: cobranças recorrentes cuja virada de fatura chegou desde a última abertura.
+          paymentUseCases.launchRecurringCharges(result.state, ctx),
+          ctx,
+        );
 
         if (state !== result.state) await localStore.save(state);
 
         set({ ...derive(state), isLoading: false });
         logger.event('app.load', { ok: true, durationMs: Date.now() - startedAt });
         get().scheduleSync(0);
+        installRecurringTrigger(() => get().launchRecurring());
       } catch (error) {
         logger.error(error);
         set({
@@ -188,6 +207,7 @@ export const useFinancialStore = create<FinancialState>((set, get) => {
       run((doc, ctx) => cardUseCases.undoStatementPayment(doc, id, ctx)),
     payFixedExpense: (input) => run((doc, ctx) => paymentUseCases.payFixedExpense(doc, input, ctx)),
     undoFixedPayment: (id) => run((doc, ctx) => paymentUseCases.undoFixedPayment(doc, id, ctx)),
+    launchRecurring: () => run((doc, ctx) => paymentUseCases.launchRecurringCharges(doc, ctx)),
     addExtraIncome: (input) => run((doc, ctx) => paymentUseCases.addExtraIncome(doc, input, ctx)),
     deleteExtraIncome: (id) => run((doc, ctx) => paymentUseCases.deleteExtraIncome(doc, id, ctx)),
 
@@ -232,6 +252,8 @@ export const useFinancialStore = create<FinancialState>((set, get) => {
 
       if (outcome.ok) {
         backoffMs = 0;
+        // O pull pode ter trazido cartão, ciclo ou fixas novas: confere as cobranças recorrentes.
+        void get().launchRecurring().catch(() => undefined);
         if (get().pendingChanges > 0) get().scheduleSync();
       } else if (outcome.code === 'network' || outcome.code === 'unknown') {
         backoffMs = Math.min(MAX_BACKOFF_MS, backoffMs ? backoffMs * 2 : SYNC_DEBOUNCE_MS);

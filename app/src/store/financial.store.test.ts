@@ -181,4 +181,68 @@ describe('useFinancialStore', () => {
     useFinancialStore.setState({ isSyncing: true });
     expect(await store().syncNow()).toEqual({ ok: false, code: 'busy' });
   });
+
+  describe('fixa recorrente no cartão (BR-FIN-035)', () => {
+    async function setupRecurring() {
+      await store().loadAppData();
+      await store().saveConfig({
+        ...config,
+        fixedExpenses: [
+          { id: 'netflix', type: 'permanent', name: 'Netflix', category: 'Lazer', amount: 5000 },
+        ],
+      });
+      await store().saveCreditCard({ name: 'Nubank', closingDay: 5, dueDay: 15 });
+      const cardId = store().doc.creditCards[0]!.id;
+      await store().saveConfig({
+        ...config,
+        fixedExpenses: [
+          {
+            id: 'netflix',
+            type: 'permanent',
+            name: 'Netflix',
+            category: 'Lazer',
+            amount: 5000,
+            recurringCardId: cardId,
+          },
+        ],
+      });
+      await store().startFinancialCycle();
+    }
+
+    it('lança quando a fatura vira (dia seguinte ao fechamento) e não escreve se nada mudou', async () => {
+      await setupRecurring();
+      expect(store().doc.cardPurchases).toHaveLength(0);
+
+      // Antes da virada (06/11) não há nada a lançar.
+      now = new Date(2026, 10, 5, 12);
+      const before = store().doc;
+      await store().launchRecurring();
+      expect(store().doc).toBe(before);
+
+      now = new Date(2026, 10, 6, 12);
+      await store().launchRecurring();
+      expect(store().doc.cardPurchases).toHaveLength(1);
+      expect(store().doc.fixedPayments[0]).toMatchObject({
+        id: 'auto-pay-2026-12-netflix',
+        method: 'credit',
+        dirty: true,
+      });
+      expect(store().pendingChanges).toBeGreaterThan(0);
+
+      const launched = store().doc;
+      await store().launchRecurring();
+      expect(store().doc).toBe(launched);
+    });
+
+    it('ao carregar o app, lança o que a virada deixou pendente enquanto o app estava fechado', async () => {
+      await setupRecurring();
+      now = new Date(2026, 10, 8, 12);
+      useFinancialStore.setState({ isLoading: true });
+      await store().loadAppData();
+
+      expect(store().doc.cardPurchases.map((purchase) => purchase.id)).toEqual([
+        'auto-buy-2026-12-netflix',
+      ]);
+    });
+  });
 });

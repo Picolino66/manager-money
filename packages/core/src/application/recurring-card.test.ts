@@ -1,10 +1,8 @@
+import { statementKeysStartingBetween, statementStartDate } from '../domain/financial/credit-card';
+import { FinancialConfigInput } from '../domain/financial/financial.types';
 import { saveCreditCard, setCreditCardActive } from './card.use-cases';
 import { closeCycle, openCycle, saveConfig } from './cycle.use-cases';
-import {
-  launchRecurringFixedExpenses,
-  payFixedExpense,
-  undoFixedPayment,
-} from './payment.use-cases';
+import { launchRecurringCharges, payFixedExpense, undoFixedPayment } from './payment.use-cases';
 import {
   selectActiveCycle,
   selectCardLimitUsage,
@@ -12,11 +10,10 @@ import {
   selectCreditCards,
   selectCycleProjections,
   selectCyclePayments,
-  selectRecurringIssues,
   selectPendingFixedExpenses,
+  selectRecurringIssues,
 } from './selectors';
 import { createEmptyState, LocalState, UseCaseContext } from './state';
-import { FinancialConfigInput } from '../domain/financial/financial.types';
 
 let sequence = 0;
 const at = (day: number, month = 10): UseCaseContext => ({
@@ -41,37 +38,51 @@ const config = (recurringCardId?: string): FinancialConfigInput => ({
   ],
 });
 
-/** Config + cartão (fecha dia 5, vence dia 15) prontos para abrir o ciclo. */
-function ready(recurring = true): LocalState {
+/**
+ * Cartão com vencimento dia 15. `closingDay` 6 faz a fatura virar no dia 7 (início do ciclo, payday 7);
+ * `closingDay` 5 faz virar no dia 6 (último dia do ciclo).
+ */
+function ready(closingDay: number, recurring = true): LocalState {
   let state = saveConfig(createEmptyState(), config(), at(1));
   state = saveCreditCard(
     state,
-    { name: 'Nubank', closingDay: 5, dueDay: 15, creditLimit: 200000 },
+    { name: 'Nubank', closingDay, dueDay: 15, creditLimit: 200000 },
     at(2),
   );
   return recurring ? saveConfig(state, config(state.creditCards[0]!.id), at(3)) : state;
 }
 
-describe('fixa recorrente no cartão (BR-FIN-035)', () => {
-  it('ao abrir o ciclo lança a compra e o pagamento no crédito, sem juros e fora da reserva', () => {
-    const state = openCycle(ready(), at(7));
+describe('virada de fatura (datas)', () => {
+  it('a fatura começa no dia seguinte ao fechamento da anterior', () => {
+    expect(statementStartDate('2026-11', 6).toISOString().slice(0, 10)).toBe('2026-10-07');
+    expect(statementKeysStartingBetween(6, '2026-10-07', '2026-11-06')).toEqual(['2026-11']);
+    expect(statementKeysStartingBetween(5, '2026-10-07', '2026-11-06')).toEqual(['2026-12']);
+    // Entre duas viradas não há nenhuma.
+    expect(statementKeysStartingBetween(5, '2026-10-07', '2026-11-05')).toEqual([]);
+  });
+});
+
+describe('fixa recorrente no cartão: cobra a cada virada de fatura (BR-FIN-035)', () => {
+  it('virada no início do ciclo: lança ao abrir, no crédito, sem juros e fora da reserva', () => {
+    const state = openCycle(ready(6), at(7));
     const cycle = selectActiveCycle(state)!;
     const payments = selectCyclePayments(state, cycle.id);
 
     expect(payments).toHaveLength(1);
     expect(payments[0]).toMatchObject({
-      id: 'auto-pay-2026-10-netflix',
+      id: 'auto-pay-2026-11-netflix',
       method: 'credit',
       amount: 5000,
       interest: 0,
-      paidAt: cycle.startDate,
-      cardPurchaseId: 'auto-buy-2026-10-netflix',
+      paidAt: '2026-10-07',
+      cardPurchaseId: 'auto-buy-2026-11-netflix',
     });
     expect(state.cardPurchases[0]).toMatchObject({
-      id: 'auto-buy-2026-10-netflix',
+      id: 'auto-buy-2026-11-netflix',
       totalAmount: 5000,
       installments: 1,
-      purchaseDate: cycle.startDate,
+      purchaseDate: '2026-10-07',
+      firstStatementKey: '2026-11',
       dirty: true,
     });
     expect(selectPendingFixedExpenses(state, cycle.id).map((fixed) => fixed.id)).toEqual([
@@ -80,8 +91,8 @@ describe('fixa recorrente no cartão (BR-FIN-035)', () => {
   });
 
   it('dá o mesmo saldo, fatura e limite que pagar a fixa no crédito (1x, sem juros) manualmente', () => {
-    const auto = openCycle(ready(), at(7));
-    let manual = openCycle(ready(false), at(7));
+    const auto = openCycle(ready(6), at(7));
+    let manual = openCycle(ready(6, false), at(7));
     const cardId = manual.creditCards[0]!.id;
     manual = payFixedExpense(
       manual,
@@ -103,70 +114,124 @@ describe('fixa recorrente no cartão (BR-FIN-035)', () => {
     expect(amounts(auto)).toEqual(amounts(manual));
   });
 
+  it('virada no meio do ciclo: fica pendente (reservada) até a virada e então é lançada', () => {
+    const opened = openCycle(ready(5), at(7));
+    const cycleId = selectActiveCycle(opened)!.id;
+
+    expect(opened.cardPurchases).toHaveLength(0);
+    expect(selectPendingFixedExpenses(opened, cycleId)).toHaveLength(2);
+    expect(selectRecurringIssues(opened, cycleId, at(8).now)).toEqual({
+      netflix: 'Será lançada na virada da fatura Nubank, em 06/11.',
+    });
+    // Antes da virada nada é lançado e o estado é o mesmo (nenhuma escrita).
+    expect(launchRecurringCharges(opened, at(5, 11))).toBe(opened);
+
+    const launched = launchRecurringCharges(opened, at(6, 11));
+
+    expect(launched.cardPurchases[0]).toMatchObject({
+      id: 'auto-buy-2026-12-netflix',
+      purchaseDate: '2026-11-06',
+      firstStatementKey: '2026-12',
+    });
+    expect(launched.fixedPayments[0]).toMatchObject({
+      id: 'auto-pay-2026-12-netflix',
+      method: 'credit',
+    });
+    expect(selectPendingFixedExpenses(launched, cycleId).map((fixed) => fixed.id)).toEqual([
+      'aluguel',
+    ]);
+    // Idempotente: rodar de novo não escreve nada.
+    expect(launchRecurringCharges(launched, at(6, 11))).toBe(launched);
+    expect(launchRecurringCharges(launched, at(6, 11)).cardPurchases).toHaveLength(1);
+  });
+
   it('cartão inativo: não lança e a fixa continua pendente e reservada', () => {
-    let state = ready();
+    let state = ready(6);
     state = setCreditCardActive(state, state.creditCards[0]!.id, false, at(4));
     const opened = openCycle(state, at(7));
-    const reserved = openCycle(ready(false), at(7));
+    const reserved = openCycle(ready(6, false), at(7));
+    const cycleId = selectActiveCycle(opened)!.id;
 
-    expect(selectCyclePayments(opened, selectActiveCycle(opened)!.id)).toHaveLength(0);
     expect(opened.cardPurchases).toHaveLength(0);
-    expect(selectPendingFixedExpenses(opened, selectActiveCycle(opened)!.id)).toHaveLength(2);
+    expect(selectPendingFixedExpenses(opened, cycleId)).toHaveLength(2);
     expect(selectActiveCycle(opened)!.initialAvailableAmount).toBe(
       selectActiveCycle(reserved)!.initialAvailableAmount,
     );
+    expect(selectRecurringIssues(opened, cycleId, at(8).now)).toEqual({
+      netflix: 'O cartão Nubank está inativo: a despesa não foi lançada.',
+    });
   });
 
-  it('fixa inativa ou sem valor não é lançada', () => {
-    let state = ready();
+  it('fixa inativa não é lançada', () => {
+    let state = ready(6);
+    const cardId = state.creditCards[0]!.id;
     state = saveConfig(
       state,
       {
-        ...config(state.creditCards[0]!.id),
-        fixedExpenses: config(state.creditCards[0]!.id).fixedExpenses.map((fixed) =>
+        ...config(cardId),
+        fixedExpenses: config(cardId).fixedExpenses.map((fixed) =>
           fixed.id === 'netflix' ? { ...fixed, active: false } : fixed,
         ),
       },
       at(4),
     );
-    const opened = openCycle(state, at(7));
 
-    expect(opened.fixedPayments).toHaveLength(0);
+    expect(openCycle(state, at(7)).fixedPayments).toHaveLength(0);
   });
 
-  it('é idempotente e respeita o desfazer: não relança no mesmo ciclo', () => {
-    const opened = openCycle(ready(), at(7));
+  it('respeita o desfazer: não relança no mesmo ciclo e explica', () => {
+    const opened = openCycle(ready(6), at(7));
+    const undone = undoFixedPayment(opened, 'auto-pay-2026-11-netflix', at(8));
+    const cycleId = selectActiveCycle(undone)!.id;
 
-    expect(launchRecurringFixedExpenses(opened, at(7)).fixedPayments).toHaveLength(1);
-
-    const undone = undoFixedPayment(opened, 'auto-pay-2026-10-netflix', at(8));
-
-    expect(selectCyclePayments(undone, selectActiveCycle(undone)!.id)).toHaveLength(0);
-    expect(
-      launchRecurringFixedExpenses(undone, at(8)).fixedPayments.filter((p) => !p.deletedAt),
-    ).toHaveLength(0);
-    expect(
-      selectPendingFixedExpenses(undone, selectActiveCycle(undone)!.id).map((fixed) => fixed.id),
-    ).toEqual(['netflix', 'aluguel']);
+    expect(selectCyclePayments(undone, cycleId)).toHaveLength(0);
+    expect(launchRecurringCharges(undone, at(8))).toBe(undone);
+    expect(selectPendingFixedExpenses(undone, cycleId).map((fixed) => fixed.id)).toEqual([
+      'netflix',
+      'aluguel',
+    ]);
+    expect(selectRecurringIssues(undone, cycleId, at(8).now).netflix).toMatch(/desfeito/);
   });
 
-  it('o ciclo seguinte lança de novo, com ids do novo ciclo', () => {
-    let state = openCycle(ready(), at(7));
+  it('fixa já paga à mão no ciclo não é cobrada de novo na virada', () => {
+    let state = openCycle(ready(5), at(7));
+    const cardId = state.creditCards[0]!.id;
+    state = payFixedExpense(state, { fixedExpenseId: 'netflix', method: 'credit', cardId }, at(8));
+
+    expect(launchRecurringCharges(state, at(6, 11))).toBe(state);
+  });
+
+  it('o ciclo seguinte lança na virada seguinte, com ids da nova fatura', () => {
+    let state = openCycle(ready(6), at(7));
     state = closeCycle(state, at(7, 11));
     state = openCycle(state, at(7, 11));
 
     expect(state.fixedPayments.map((payment) => payment.id)).toEqual([
-      'auto-pay-2026-10-netflix',
       'auto-pay-2026-11-netflix',
+      'auto-pay-2026-12-netflix',
     ]);
     expect(state.cardPurchases.map((purchase) => purchase.id)).toEqual([
-      'auto-buy-2026-10-netflix',
       'auto-buy-2026-11-netflix',
+      'auto-buy-2026-12-netflix',
     ]);
   });
 
+  it('dois aparelhos que lançam a mesma virada geram os mesmos ids (sem duplicar)', () => {
+    const a = openCycle(ready(6), at(7));
+    const b = openCycle(ready(6), at(7));
+
+    expect(a.cardPurchases.map((purchase) => purchase.id)).toEqual(
+      b.cardPurchases.map((purchase) => purchase.id),
+    );
+    expect(a.fixedPayments.map((payment) => payment.id)).toEqual(
+      b.fixedPayments.map((payment) => payment.id),
+    );
+  });
+});
+
+describe('fixa recorrente: configuração', () => {
   it('saveConfig exige cartão existente e ativo ao marcar; marca antiga com cartão inativo passa', () => {
-    const state = ready(false);
+    const state = ready(6, false);
     const cardId = state.creditCards[0]!.id;
 
     expect(() => saveConfig(state, config('inexistente'), at(4))).toThrow(
@@ -179,19 +244,15 @@ describe('fixa recorrente no cartão (BR-FIN-035)', () => {
       false,
       at(5),
     );
-    // Salvar de novo com a mesma marca (o cartão ficou inativo depois) não é bloqueado.
     expect(() => saveConfig(inactive, config(cardId), at(6))).not.toThrow();
     expect(selectCreditCards(inactive)[0]!.active).toBe(false);
-    // Marcar um cartão inativo agora é recusado.
-    expect(() => saveConfig(state, config(cardId), at(4))).not.toThrow();
     expect(() =>
       saveConfig(setCreditCardActive(state, cardId, false, at(4)), config(cardId), at(5)),
     ).toThrow();
   });
 
   it('desmarcar remove a recorrência e marca a fixa como alterada', () => {
-    const marked = ready();
-    const cleared = saveConfig(marked, config(), at(4));
+    const cleared = saveConfig(ready(6), config(), at(4));
     const fixed = cleared.fixedExpenses.find((record) => record.id === 'netflix')!;
 
     expect(fixed).not.toHaveProperty('recurringCardId');
@@ -199,41 +260,25 @@ describe('fixa recorrente no cartão (BR-FIN-035)', () => {
   });
 });
 
-describe('fixa recorrente: aviso e projeção', () => {
-  it('explica por que a fixa ficou pendente', () => {
-    let state = ready();
-    state = setCreditCardActive(state, state.creditCards[0]!.id, false, at(4));
-    const opened = openCycle(state, at(7));
-    const cycleId = selectActiveCycle(opened)!.id;
-
-    expect(selectRecurringIssues(opened, cycleId)).toEqual({
-      netflix: 'O cartão Nubank está inativo: a despesa não foi lançada.',
-    });
-
-    const launched = openCycle(ready(), at(7));
-    expect(selectRecurringIssues(launched, selectActiveCycle(launched)!.id)).toEqual({});
-    const undone = undoFixedPayment(launched, 'auto-pay-2026-10-netflix', at(8));
-    expect(selectRecurringIssues(undone, selectActiveCycle(undone)!.id).netflix).toMatch(
-      /desfeito/,
-    );
-  });
-
-  it('a projeção conta a fixa recorrente como fatura, sem duplicar como fixa', () => {
-    const recurring = selectCycleProjections(openCycle(ready(), at(7)), at(8).now, 3);
-    const manual = selectCycleProjections(openCycle(ready(false), at(7)), at(8).now, 3);
+describe('fixa recorrente: projeção', () => {
+  it('conta a fixa como fatura no ciclo da fatura, sem duplicar como fixa', () => {
+    const recurring = selectCycleProjections(openCycle(ready(6), at(7)), at(8).now, 3);
+    const manual = selectCycleProjections(openCycle(ready(6, false), at(7)), at(8).now, 3);
 
     expect(recurring.map((item) => item.cyclesAhead)).toEqual([1, 2, 3]);
-    // Netflix (R$ 50) sai de "fixas" e entra em "cartão" (no ciclo da fatura).
-    expect(manual[1]!.fixedExpenses - recurring[1]!.fixedExpenses).toBe(5000);
+    for (let index = 0; index < 3; index += 1) {
+      // Netflix (R$ 50) sai de "fixas" e entra em "cartão" (no ciclo em que vence a fatura).
+      expect(manual[index]!.fixedExpenses - recurring[index]!.fixedExpenses).toBe(5000);
+      expect(recurring[index]!.cardCharges).toBeGreaterThanOrEqual(manual[index]!.cardCharges);
+    }
     expect(recurring[1]!.cardCharges - manual[1]!.cardCharges).toBe(5000);
   });
 
   it('cartão inativo: a projeção volta a contar a fixa como fixa', () => {
-    let state = ready();
+    let state = ready(6);
     state = setCreditCardActive(state, state.creditCards[0]!.id, false, at(4));
-    const opened = openCycle(state, at(7));
-    const reference = selectCycleProjections(openCycle(ready(false), at(7)), at(8).now, 2);
-    const projected = selectCycleProjections(opened, at(8).now, 2);
+    const reference = selectCycleProjections(openCycle(ready(6, false), at(7)), at(8).now, 2);
+    const projected = selectCycleProjections(openCycle(state, at(7)), at(8).now, 2);
 
     expect(projected.map((item) => item.fixedExpenses)).toEqual(
       reference.map((item) => item.fixedExpenses),

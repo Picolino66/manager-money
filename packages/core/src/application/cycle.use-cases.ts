@@ -443,7 +443,7 @@ export function openCycle(state: LocalState, ctx: UseCaseContext): LocalState {
     cycles: [...state.cycles, cycle],
   };
 
-  // BR-FIN-035: fixas recorrentes no cartão são lançadas ao abrir o ciclo; o saldo é recalculado.
+  // BR-FIN-035: cobranças recorrentes cuja virada de fatura já caiu no ciclo; o saldo é recalculado.
   return recalculateActiveCycleBalance(launchRecurringFixedExpenses(opened, ctx), ctx);
 }
 

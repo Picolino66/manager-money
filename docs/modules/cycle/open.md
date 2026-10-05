@@ -13,7 +13,7 @@ code:
 symbols: [openCycle, calculateNextCycleStartDate, advanceInstallments, startPendingInstallments]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-006, BR-FIN-010, BR-FIN-013, BR-FIN-017, BR-FIN-025, BR-FIN-034]
 tests: [packages/core/src/application/cycle.use-cases.test.ts, packages/core/src/application/financial-vision.test.ts, packages/core/src/application/card-rules.test.ts]
-last_verified_commit: 7903717+T-042
+last_verified_commit: 7903717+T-042b
 ---
 
 # Abrir ciclo
@@ -31,4 +31,4 @@ Spec: [SPEC-002](../../../specs/SPEC-002-ciclo-de-vida.md).
   período, dias, limite inicial, ajustes (`selectCycleAdjustments`) e fixas pendentes que ficarão reservadas.
 - Erros aparecem em Alert (DEF-007).
 
-- **Fixas recorrentes no cartão (BR-FIN-035, SPEC-024):** ao final de `openCycle`, `launchRecurringFixedExpenses` lança no cartão cada fixa permanente ativa com `recurringCardId` (compra de 1 parcela, sem juros, na data de início do ciclo + pagamento ligado) e o saldo inicial é recalculado (a fixa sai da reserva). Falha (cartão inativo/excluído, fatura da data já paga) deixa a fixa pendente e reservada. Ver [fixed-expense](../payment/fixed-expense.md).
+- **Fixas recorrentes no cartão (BR-FIN-035, SPEC-024):** ao final de `openCycle`, `launchRecurringFixedExpenses` cobra as viradas de fatura que já caem no novo ciclo (ex.: fatura que vira no dia de início do ciclo) e o saldo inicial é recalculado (a fixa sai da reserva). As demais viradas do ciclo são cobradas quando chegam ([fixed-expense](../payment/fixed-expense.md)).

@@ -1,4 +1,13 @@
-import { addMonths, format, isAfter, parseISO, setDate, startOfDay, startOfMonth } from 'date-fns';
+import {
+  addDays,
+  addMonths,
+  format,
+  isAfter,
+  parseISO,
+  setDate,
+  startOfDay,
+  startOfMonth,
+} from 'date-fns';
 
 import { ExpenseCategory, MoneyCents } from './financial.types';
 
@@ -181,6 +190,31 @@ export function statementKeyForDate(purchaseDate: Date, closingDay: number): str
 
 export function statementClosingDate(key: string, closingDay: number): Date {
   return setDate(parseISO(`${key}-01`), closingDay);
+}
+
+/** Dia em que a fatura `key` começa a receber compras: o dia seguinte ao fechamento da anterior. */
+export function statementStartDate(key: string, closingDay: number): Date {
+  return addDays(statementClosingDate(addCycleKeys(key, -1), closingDay), 1);
+}
+
+/**
+ * Faturas que "viram" (começam) entre duas datas yyyy-MM-dd, inclusive — BR-FIN-035. Em geral há uma
+ * por ciclo; pode haver nenhuma ou, raramente, duas.
+ */
+export function statementKeysStartingBetween(
+  closingDay: number,
+  from: string,
+  to: string,
+): string[] {
+  const base = statementKeyForDate(parseISO(from), closingDay);
+
+  return [-1, 0, 1, 2]
+    .map((offset) => addCycleKeys(base, offset))
+    .filter((key) => {
+      const start = format(statementStartDate(key, closingDay), 'yyyy-MM-dd');
+
+      return start >= from && start <= to;
+    });
 }
 
 /** Vencimento: o próximo `dueDay` depois do fechamento (mesmo mês se vier depois; senão, o seguinte). */

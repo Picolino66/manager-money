@@ -17,11 +17,11 @@ code:
   - packages/core/src/domain/financial/payments.ts
   - packages/core/src/domain/financial/financial.calculations.ts
   - packages/core/src/application/selectors.ts
-symbols: [launchRecurringFixedExpenses, selectRecurringIssues, payFixedExpense, undoFixedPayment, calculatePaidFixedAmount, calculateBaseAvailableAmount, calculateInitialAvailableAmount, selectCycleAdjustments, selectPendingFixedExpenses]
+symbols: [launchRecurringCharges, selectRecurringIssues, payFixedExpense, undoFixedPayment, calculatePaidFixedAmount, calculateBaseAvailableAmount, calculateInitialAvailableAmount, selectCycleAdjustments, selectPendingFixedExpenses]
 adrs: [ADR-015, ADR-014, ADR-017, ADR-023]
 tests: [packages/core/src/application/payment.use-cases.test.ts, packages/core/src/application/recurring-card.test.ts, packages/core/src/application/financial-vision.test.ts, app/src/screens/screens.test.tsx, app/src/infrastructure/sync/sync-engine.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-021, BR-FIN-022, BR-FIN-030, BR-FIN-035]
-last_verified_commit: 7903717+T-042
+last_verified_commit: 7903717+T-042b
 ---
 
 # Pagar despesas fixas do ciclo
@@ -42,12 +42,13 @@ Specs: [SPEC-014](../../../specs/SPEC-014-pagamento-de-fixas-e-renda-avulsa.md),
   cada fatura (BR-FIN-030, sem dupla contagem). Só cartões ativos; se `valor + juros` passar do limite disponível,
   mostra `CardLimitNotice` e o Alert "Continuar mesmo assim?" (avisa, não bloqueia). Sem cartão: atalho para cadastrar.
 - **Recorrente no cartão (BR-FIN-035, ADR-023, [SPEC-024](../../../specs/SPEC-024-fixa-recorrente-no-cartao.md)):** a fixa permanente com
-  `recurringCardId` é **lançada sozinha ao abrir o ciclo** (`openCycle` → `launchRecurringFixedExpenses`): compra no cartão de 1
-  parcela, sem juros, na data de início do ciclo + pagamento ligado, como o "Pagar no crédito". Sai da reserva e pesa pela fatura.
-  Ids `auto-buy-`/`auto-pay-` + `yyyy-MM` do ciclo + id da fixa (idempotente entre aparelhos). A linha mostra "Pago · Crédito ·
-  lançada automaticamente". Se não foi possível (cartão inativo/excluído, fatura da data já paga) ou o usuário desfez, a fixa fica
-  **pendente e reservada** com o motivo (`selectRecurringIssues`). Mudança de valor/cartão vale no próximo ciclo; ligar com o ciclo
-  ativo não lança retroativamente.
+  `recurringCardId` é **cobrada sozinha a cada virada de fatura** do cartão (dia seguinte ao fechamento): compra de 1 parcela, sem
+  juros, datada na virada + pagamento ligado, como o "Pagar no crédito" (`launchRecurringFixedExpenses`). O app confere ao carregar, ao
+  voltar ao primeiro plano, depois de sincronizar e ao abrir o ciclo (`launchRecurringCharges`, `launchRecurring` no store). Sai da
+  reserva e pesa pela fatura. Ids `auto-buy-`/`auto-pay-` + `yyyy-MM` da fatura + id da fixa. A linha mostra "Pago · Crédito ·
+  lançada automaticamente". Antes da virada, ou se não foi possível (cartão inativo/excluído, fatura da data já paga) ou o usuário
+  desfez, a fixa fica **pendente e reservada** com o motivo (`selectRecurringIssues`, ex.: "Será lançada na virada da fatura Nubank,
+  em 06/11"). Mudança de valor/cartão vale na próxima virada.
 - Um pagamento vigente por despesa e ciclo; a data do pagamento é hoje, limitada ao período do ciclo.
 - **Desfazer** (ciclo ativo): remove o pagamento (a fixa volta a ficar reservada) e, no crédito, a compra no
   cartão — bloqueado se a compra já pesou em ciclo fechado ou em fatura com lançamento (BR-FIN-029).
