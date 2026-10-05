@@ -47,6 +47,7 @@ import {
   HistoryRow,
   sumAmounts,
 } from '@/lib/expenses';
+import { cn } from '@/lib/cn';
 import { useDataStore } from '@/store/data.store';
 
 import { CardPurchaseFormDialog } from './CardPurchaseFormDialog';
@@ -134,7 +135,14 @@ export function ExpensesPage() {
         id: 'name',
         accessorKey: 'name',
         header: 'Descrição',
-        cell: (info) => info.row.original.name || <span className="text-muted">—</span>,
+        cell: (info) => (
+          <>
+            {info.row.original.name || <span className="text-muted">—</span>}
+            {info.row.original.upcoming ? (
+              <span className="ml-2 text-xs text-muted">a vencer</span>
+            ) : null}
+          </>
+        ),
       },
       {
         id: 'type',
@@ -178,7 +186,9 @@ export function ExpensesPage() {
 
   function startEdit(row: HistoryRow) {
     if (row.type === 'card') {
-      setEditingPurchase(doc?.cardPurchases.find((purchase) => purchase.id === row.id) ?? null);
+      setEditingPurchase(
+        doc?.cardPurchases.find((purchase) => purchase.id === row.sourceId) ?? null,
+      );
     } else {
       setEditing(row);
     }
@@ -362,7 +372,11 @@ export function ExpensesPage() {
         {filtered.length} item(ns) · total pago{' '}
         <Money value={sumAmounts(filtered)} className="font-semibold text-ink" />
         {filtered.some((row) => !row.countsInTotal) ? (
-          <span> (pagamentos de fatura não entram: a compra já foi contada)</span>
+          <span>
+            {' '}
+            (não entram: pagamentos de fatura, que a compra já contou, e parcelas por vir ou
+            quitadas antes do app)
+          </span>
         ) : null}
       </p>
 
@@ -420,7 +434,10 @@ export function ExpensesPage() {
               {pageRows.map((row) => {
                 const expense = row.original;
                 return (
-                  <tr key={row.id} className="hover:bg-surface-muted">
+                  <tr
+                    key={row.id}
+                    className={cn('hover:bg-surface-muted', expense.upcoming && 'text-muted')}
+                  >
                     {row
                       .getVisibleCells()
                       .map((cell) =>

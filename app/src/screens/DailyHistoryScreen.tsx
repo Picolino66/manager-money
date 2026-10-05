@@ -96,11 +96,25 @@ export function DailyHistoryScreen({ navigation }: Props) {
       activeMonth ? selectPaidHistory(doc).filter((item) => item.cycleId === activeMonth.id) : [],
     [activeMonth, doc],
   );
+  // Parcelas por vir (BR-FIN-038) que caem depois deste ciclo: aparecem num bloco à parte.
+  const upcomingItems = useMemo(
+    () =>
+      activeMonth
+        ? filterPaidHistory(
+            selectPaidHistory(doc)
+              .filter((item) => item.upcoming && item.cycleId !== activeMonth.id)
+              .sort((a, b) => a.date.localeCompare(b.date) || a.id.localeCompare(b.id)),
+            { ...filter, cycleId: null },
+          )
+        : [],
+    [activeMonth, doc, filter],
+  );
   const categories = useMemo(
     () => [...new Set(cycleItems.map((item) => item.category))].sort((a, b) => a.localeCompare(b)),
     [cycleItems],
   );
-  const hasFilter = JSON.stringify({ ...filter, cycleId: null }) !== JSON.stringify(EMPTY_PAID_HISTORY_FILTER);
+  const hasFilter =
+    JSON.stringify({ ...filter, cycleId: null }) !== JSON.stringify(EMPTY_PAID_HISTORY_FILTER);
 
   const groups = useMemo<DayGroup[]>(() => {
     const grouped = filterPaidHistory(cycleItems, filter).reduce<Record<string, PaidHistoryItem[]>>(
@@ -145,6 +159,45 @@ export function DailyHistoryScreen({ navigation }: Props) {
     />
   ) : null;
 
+  function renderRow(item: PaidHistoryItem, showDate = false) {
+    return (
+      <View key={item.id} style={styles.expenseRow}>
+        <View style={styles.expenseTextContainer}>
+          <Text style={styles.expenseDescription}>{item.name}</Text>
+          <Text style={styles.expenseCategory}>
+            {showDate ? `${formatDateLabel(item.date)} · ` : ''}
+            {PAID_HISTORY_MEANS_LABELS[item.means]} · {PAID_HISTORY_LABELS[item.type]} ·{' '}
+            {item.category}
+            {item.upcoming ? ' · a vencer' : ''}
+          </Text>
+        </View>
+        <View style={styles.expenseActions}>
+          <Text style={styles.expenseAmount}>{formatCurrency(item.amount)}</Text>
+          {item.editable ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Editar ${REMOVAL[item.type].noun} ${item.name}`}
+              hitSlop={8}
+              onPress={() => editItem(item)}
+            >
+              <Ionicons color={colors.primary} name="pencil-outline" size={20} />
+            </Pressable>
+          ) : null}
+          {item.deletable ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`${REMOVAL[item.type].action} ${REMOVAL[item.type].noun} ${item.name}`}
+              hitSlop={8}
+              onPress={() => removeItem(item)}
+            >
+              <Ionicons color={colors.critical} name="trash-outline" size={20} />
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+    );
+  }
+
   function editItem(item: PaidHistoryItem) {
     if (item.type === 'expense') {
       navigation.navigate('AddExpense', { expenseId: item.id });
@@ -152,7 +205,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
     }
 
     // Compra no cartão: a edição fica no detalhe do cartão.
-    const purchase = doc.cardPurchases.find((record) => record.id === item.id);
+    const purchase = doc.cardPurchases.find((record) => record.id === item.sourceId);
 
     if (purchase) {
       navigation.navigate('CardDetail', { cardId: purchase.cardId });
@@ -212,7 +265,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
     );
   }
 
-  if (groups.length === 0 && hasFilter) {
+  if (groups.length === 0 && upcomingItems.length === 0 && hasFilter) {
     return (
       <Screen refreshable>
         {header}
@@ -228,7 +281,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
     );
   }
 
-  if (groups.length === 0) {
+  if (groups.length === 0 && upcomingItems.length === 0) {
     return (
       <Screen refreshable>
         <Text style={styles.title}>Histórico diário</Text>
@@ -278,40 +331,7 @@ export function DailyHistoryScreen({ navigation }: Props) {
 
             {isExpanded ? (
               <>
-                {group.items.map((item) => (
-                  <View key={item.id} style={styles.expenseRow}>
-                    <View style={styles.expenseTextContainer}>
-                      <Text style={styles.expenseDescription}>{item.name}</Text>
-                      <Text style={styles.expenseCategory}>
-                        {PAID_HISTORY_MEANS_LABELS[item.means]} · {PAID_HISTORY_LABELS[item.type]} ·{' '}
-                        {item.category}
-                      </Text>
-                    </View>
-                    <View style={styles.expenseActions}>
-                      <Text style={styles.expenseAmount}>{formatCurrency(item.amount)}</Text>
-                      {item.editable ? (
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`Editar ${REMOVAL[item.type].noun} ${item.name}`}
-                          hitSlop={8}
-                          onPress={() => editItem(item)}
-                        >
-                          <Ionicons color={colors.primary} name="pencil-outline" size={20} />
-                        </Pressable>
-                      ) : null}
-                      {item.deletable ? (
-                        <Pressable
-                          accessibilityRole="button"
-                          accessibilityLabel={`${REMOVAL[item.type].action} ${REMOVAL[item.type].noun} ${item.name}`}
-                          hitSlop={8}
-                          onPress={() => removeItem(item)}
-                        >
-                          <Ionicons color={colors.critical} name="trash-outline" size={20} />
-                        </Pressable>
-                      ) : null}
-                    </View>
-                  </View>
-                ))}
+                {group.items.map((item) => renderRow(item))}
                 <View style={styles.divider} />
                 <MetricRow
                   label="Saldo do dia"
@@ -323,6 +343,15 @@ export function DailyHistoryScreen({ navigation }: Props) {
           </Card>
         );
       })}
+      {upcomingItems.length > 0 ? (
+        <Card>
+          <Text style={styles.groupTitle}>Próximas parcelas</Text>
+          <Text style={styles.groupSubtitle}>
+            Parcelas de compras no cartão que caem nos próximos ciclos; não entram nos totais.
+          </Text>
+          {upcomingItems.map((item) => renderRow(item, true))}
+        </Card>
+      ) : null}
       {filterModal}
     </Screen>
   );

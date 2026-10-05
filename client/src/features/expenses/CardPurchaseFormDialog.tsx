@@ -133,7 +133,8 @@ export function CardPurchaseFormDialog({ open, onOpenChange, cycle, categories, 
         </Field>
         {valuesLocked ? (
           <p className="text-sm text-muted">
-            Compra anterior ao app: valor e parcelas não mudam; a data é só informativa.
+            Compra anterior ao app: valor e parcelas não mudam. A data é a da 1ª parcela; as demais
+            seguem mês a mês (mudar aqui ajusta todas).
           </p>
         ) : null}
         {error ? (

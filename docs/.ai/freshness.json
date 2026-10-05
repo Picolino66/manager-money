@@ -1,13 +1,13 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-05T01:01:59.051Z",
-  "source_commit": "d2338d5",
+  "generated_at": "2026-10-05T02:47:03.770Z",
+  "source_commit": "b691e17",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
     "architecture/client-web-plan.md": {
       "id": "architecture.client-web-plan",
-      "last_verified_commit": "7903717+T-042e",
+      "last_verified_commit": "7903717+T-042g",
       "state": "fresh",
       "source_hashes": {
         "package.json": "sha256:052fc5534bf1bee397ee1cca5da2ddeb609ced41ce4952d767661ee49e2e91eb",
@@ -278,7 +278,7 @@
     },
     "modules/core/shared-package.md": {
       "id": "core.shared-package",
-      "last_verified_commit": "7903717+T-042d",
+      "last_verified_commit": "7903717+T-042g",
       "state": "fresh",
       "source_hashes": {
         "collectDirty": "sha256:57814d10f566ec59d056debf253507a28ff02c581c7cfc990dcb791e63476b72",
@@ -286,7 +286,7 @@
         "markAllClean": "sha256:32ce698dbdbe8b10fee52877520944a8a7d63632950d63d78b4bb890f3ce7a1c",
         "mapSupabaseError": "sha256:bdd714798783c699815006f3718d165d11d216d7c41d2d64b420701b0dc49fd3",
         "filterPaidHistory": "sha256:dd0426e97b285d3c3bf293a9c2f28b471d368f7fc771fd4e7f07e8868ee43311",
-        "selectPaidHistory": "sha256:6b35ced5a941e889cb81bd9d14888c42858e7903ff5a1f28ef3a45dc2406c0ce",
+        "selectPaidHistory": "sha256:cb96c7fcf65d911ead7d919cc61040bb7ae43e79910a58842874f2ae9c92203a",
         "sumPaidHistory": "sha256:42b1e85704c7445dca1c55b60f62ec6f59337c5b3bf6ecda0ee24202b0b46a09",
         "selectCategorizedItems": "sha256:662a0309882498b1c76757583709b6ec4b3566c8dd4a74cdbc31b3e4837a709e",
         "filterCategorizedItems": "sha256:491df81f6ca22ee486f44e82e53d44cc44e8f55ce1cb7b42a4195c6cb3771488",
@@ -323,11 +323,11 @@
     },
     "modules/cycle/history.md": {
       "id": "cycle.history",
-      "last_verified_commit": "7903717+T-042e",
+      "last_verified_commit": "7903717+T-042g",
       "state": "fresh",
       "source_hashes": {
         "filterPaidHistory": "sha256:dd0426e97b285d3c3bf293a9c2f28b471d368f7fc771fd4e7f07e8868ee43311",
-        "selectPaidHistory": "sha256:6b35ced5a941e889cb81bd9d14888c42858e7903ff5a1f28ef3a45dc2406c0ce",
+        "selectPaidHistory": "sha256:82154885369bc00890e433570efd7edb7d886ffee2ae8e3200ca4031a7d2fe56",
         "sumPaidHistory": "sha256:42b1e85704c7445dca1c55b60f62ec6f59337c5b3bf6ecda0ee24202b0b46a09",
         "calculateDayBalance": "sha256:fb42174e932181cea938be6113183edf45901abc8f7d10f68d2aac8abb581179",
         "calculateFinalBalance": "sha256:08e27d475c050f0048b26cd3923d5077be41593ef96cd26a5e5f4bef6892a049",
@@ -659,14 +659,14 @@
     },
     "modules/web/expenses.md": {
       "id": "web.expenses",
-      "last_verified_commit": "7903717+T-042d",
+      "last_verified_commit": "7903717+T-042g",
       "state": "fresh",
       "source_hashes": {
         "filterPaidHistory": "sha256:dd0426e97b285d3c3bf293a9c2f28b471d368f7fc771fd4e7f07e8868ee43311",
         "CardPurchaseFormDialog": "sha256:fd34f23fba765a7b13421ac6b538d6cb2bc0d6dcf31c56805eeaada43cda8a9e",
-        "buildHistoryRows": "sha256:a5b1060ab7152f6687d9f48f04442bb7003af01b0037e3f3e02e21dcb3a435a5",
+        "buildHistoryRows": "sha256:a7ece52afecd3bb5e71bf90d577f53ab520a75f786202be25446ac618be937ba",
         "filterHistoryRows": "sha256:f102a264d9d0a6f338c1d7bccf68fb43e4305adf1d555550eee1b9da05ca4e8e",
-        "selectPaidHistory": "sha256:6b35ced5a941e889cb81bd9d14888c42858e7903ff5a1f28ef3a45dc2406c0ce",
+        "selectPaidHistory": "sha256:cb96c7fcf65d911ead7d919cc61040bb7ae43e79910a58842874f2ae9c92203a",
         "ExpenseFormDialog": "sha256:182cf5871b588be298ce639f489c004884c7827e52787b0966bab298337a8510",
         "MoneyInput": "sha256:7199aefffc18da197912f6ac07d46029cc540bdc57b87a3611b39caf85dfcfbe"
       }

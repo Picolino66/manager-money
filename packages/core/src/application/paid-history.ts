@@ -1,5 +1,9 @@
+import { addMonths, parseISO } from 'date-fns';
+
+import { listInstallments } from '../domain/financial/credit-card';
 import { normalizeCategory } from '../domain/financial/financial.calculations';
 import { MoneyCents } from '../domain/financial/financial.types';
+import { toISODate } from '../utils/date';
 import {
   CATEGORIZED_ITEM_LABELS,
   CategorizedItemType,
@@ -52,6 +56,10 @@ export type PaidHistoryItem = {
    * ciclo ativo (desfazer). Fixa e fatura não têm edição, só desfazer.
    */
   deletable: boolean;
+  /** Parcela (n/N) de compra parcelada no cartão; nulo nos demais itens (BR-FIN-038). */
+  installment: { number: number; total: number } | null;
+  /** Parcela ainda por vir (data depois de hoje): aparece, mas não entra na soma. */
+  upcoming: boolean;
 };
 
 export const PAID_HISTORY_LABELS: Record<PaidHistoryType, string> = {
@@ -61,8 +69,15 @@ export const PAID_HISTORY_LABELS: Record<PaidHistoryType, string> = {
 
 export const STATEMENT_CATEGORY = 'Cartão de crédito';
 
-/** Todos os itens pagos de ciclos vivos, do mais recente para o mais antigo. */
-export function selectPaidHistory(state: LocalState): PaidHistoryItem[] {
+/**
+ * Todos os itens pagos de ciclos vivos, do mais recente para o mais antigo. Compra parcelada no
+ * cartão gera uma linha por parcela (1/3, 2/3, 3/3), na data da compra somada mês a mês (a 1ª, na
+ * própria data da compra); nada é ocultado nem somado em uma linha só (BR-FIN-038).
+ */
+export function selectPaidHistory(
+  state: LocalState,
+  today: string = toISODate(new Date()),
+): PaidHistoryItem[] {
   const cycles = state.cycles.filter(isLive);
   const activeIds = new Set(cycles.filter((cycle) => cycle.status === 'active').map((c) => c.id));
   const purchases = new Map(state.cardPurchases.filter(isLive).map((p) => [p.id, p] as const));
@@ -74,38 +89,84 @@ export function selectPaidHistory(state: LocalState): PaidHistoryItem[] {
   const cycleOfDate = (date: string) =>
     cycles.find((cycle) => cycle.startDate <= date && date <= cycle.endDate)?.id ?? null;
 
-  const items: PaidHistoryItem[] = selectCategorizedItems(state).map((item) => {
-    const cycleId = cycleByItem.get(item.id) ?? cycleOfDate(item.date);
-    const inActiveCycle = cycleId !== null && activeIds.has(cycleId);
-    let editable = false;
-    let deletable = false;
+  const items: PaidHistoryItem[] = selectCategorizedItems(state)
+    .filter((item) => item.type !== 'card')
+    .map((item) => {
+      const cycleId = cycleByItem.get(item.id) ?? cycleOfDate(item.date);
+      const inActiveCycle = cycleId !== null && activeIds.has(cycleId);
+      let editable = false;
+      let deletable = false;
 
-    if (item.type === 'expense') {
-      editable = deletable = inActiveCycle;
-    } else if (item.type === 'card') {
-      const purchase = purchases.get(item.id);
-      editable = deletable = purchase !== undefined && canModifyCardPurchase(state, purchase);
-    } else {
-      // Fixa/parcelado: desfazer o pagamento (no crédito remove também a compra no cartão).
-      const payment = payments.get(item.id);
-      const purchase = payment?.cardPurchaseId ? purchases.get(payment.cardPurchaseId) : undefined;
-      deletable =
-        inActiveCycle && (purchase === undefined || canModifyCardPurchase(state, purchase));
+      if (item.type === 'expense') {
+        editable = deletable = inActiveCycle;
+      } else {
+        // Fixa/parcelado: desfazer o pagamento (no crédito remove também a compra no cartão).
+        const payment = payments.get(item.id);
+        const purchase = payment?.cardPurchaseId
+          ? purchases.get(payment.cardPurchaseId)
+          : undefined;
+        deletable =
+          inActiveCycle && (purchase === undefined || canModifyCardPurchase(state, purchase));
+      }
+
+      const means: PaidHistoryMeans =
+        payments.get(item.id)?.method === 'credit' ? 'credit' : 'balance';
+
+      return {
+        ...item,
+        cycleId,
+        means,
+        sourceId: item.id,
+        countsInTotal: true,
+        editable,
+        deletable,
+        installment: null,
+        upcoming: false,
+      };
+    });
+
+  const fromFixed = new Set(
+    state.fixedPayments.filter(isLive).flatMap((p) => (p.cardPurchaseId ? [p.cardPurchaseId] : [])),
+  );
+
+  for (const purchase of purchases.values()) {
+    if (fromFixed.has(purchase.id)) continue;
+
+    const modifiable = canModifyCardPurchase(state, purchase);
+    const category = normalizeCategory(purchase.category);
+    const single = purchase.installments === 1 || purchase.kind === 'statement-balance';
+
+    for (const installment of listInstallments(purchase)) {
+      const first = installment.number === 1;
+      const date = toISODate(addMonths(parseISO(purchase.purchaseDate), installment.number - 1));
+
+      if (single && !first) continue;
+
+      const upcoming = date > today;
+      const prior = installment.number <= purchase.settledInstallments;
+
+      items.push({
+        id: single ? purchase.id : `${purchase.id}#${installment.number}`,
+        type: 'card',
+        name: single
+          ? purchase.installments > 1
+            ? `${purchase.description} (${purchase.installments}x)`
+            : purchase.description
+          : `${purchase.description} (${installment.number}/${purchase.installments})`,
+        category,
+        amount: single ? purchase.totalAmount : installment.nominalAmount,
+        date,
+        cycleId: cycleOfDate(date),
+        countsInTotal: single ? true : !upcoming && !prior,
+        means: 'credit',
+        sourceId: purchase.id,
+        editable: modifiable,
+        deletable: modifiable,
+        installment: single ? null : { number: installment.number, total: purchase.installments },
+        upcoming: single ? false : upcoming,
+      });
     }
-
-    const means: PaidHistoryMeans =
-      item.type === 'card' || payments.get(item.id)?.method === 'credit' ? 'credit' : 'balance';
-
-    return {
-      ...item,
-      cycleId,
-      means,
-      sourceId: item.id,
-      countsInTotal: true,
-      editable,
-      deletable,
-    };
-  });
+  }
 
   const cardNames = new Map(state.creditCards.map((card) => [card.id, card.name]));
 
@@ -120,6 +181,8 @@ export function selectPaidHistory(state: LocalState): PaidHistoryItem[] {
       sourceId: payment.id,
       editable: false,
       deletable: activeIds.has(payment.cycleId),
+      installment: null,
+      upcoming: false,
     };
 
     // `paidAmount` já inclui os encargos; o principal é o que a compra no cartão já tinha pesado.

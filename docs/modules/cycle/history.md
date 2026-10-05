@@ -16,13 +16,13 @@ code:
   - packages/core/src/domain/financial/financial.calculations.ts
 symbols: [filterPaidHistory, selectPaidHistory, sumPaidHistory, calculateDayBalance, calculateFinalBalance, selectCycleSpending, selectCycleSpendingRange]
 business_rules: [BR-FIN-006, BR-FIN-008]
-last_verified_commit: 7903717+T-042e
+last_verified_commit: 7903717+T-042g
 ---
 
 # Histórico
 
 - **Histórico (aba):** tudo que foi pago no **ciclo ativo** (`selectPaidHistory`, núcleo): gasto à vista,
-  compra no cartão (data da compra, valor total), fixas e parcelamentos pagos e pagamentos de fatura.
+  compra no cartão (**uma linha por parcela**, 1/3, 2/3, 3/3 — BR-FIN-038; à vista, uma linha), fixas e parcelamentos pagos e pagamentos de fatura.
   Dias em ordem decrescente; cada dia mostra o total pago (`sumPaidHistory`) e se expande para listar os
   itens com meio, tipo e categoria ("Meio · Tipo · Categoria"): Meio = Crédito ou Saldo (Pix, débito e
   dinheiro); Tipo = Gasto, Cartão, Fixo, Parcelamento, Fatura. Cada linha tem **lápis** (editar) e

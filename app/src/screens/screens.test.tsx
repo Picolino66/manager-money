@@ -1057,6 +1057,38 @@ describe('DailyHistoryScreen (tudo que foi pago no ciclo)', () => {
     expect(mockNavigate).toHaveBeenCalledWith('CardDetail', { cardId: expect.any(String) });
   });
 
+  it('compra parcelada mostra a parcela de hoje como 1/3 e o lápis edita a compra inteira', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    let doc = docWithFixed(true);
+    const cardId = doc.creditCards[0]!.id;
+    doc = addCardPurchase(
+      doc,
+      {
+        cardId,
+        description: 'Notebook',
+        category: 'Lazer',
+        totalAmount: 90000,
+        installments: 3,
+        date: format(ctx.now, 'yyyy-MM-dd'),
+      },
+      ctx,
+    );
+    await seed(doc);
+    render(
+      <DailyHistoryScreen
+        navigation={navigation}
+        route={{ key: 'k', name: 'DailyHistory', params: undefined }}
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText(/Alternar detalhes de/));
+    expect(await screen.findByText('Notebook (1/3)')).toBeTruthy();
+    // Só a parcela de hoje (R$ 300,00) soma; as outras são "a vencer".
+    expect(screen.getAllByText('R$ 300,00').length).toBeGreaterThan(0);
+    fireEvent.press(screen.getByLabelText('Editar compra Notebook (1/3)'));
+    expect(mockNavigate).toHaveBeenCalledWith('CardDetail', { cardId });
+  });
+
   it('ícone de filtro abre o gadget; a busca filtra e limpar restaura', async () => {
     const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
     let doc = docWithFixed(true);

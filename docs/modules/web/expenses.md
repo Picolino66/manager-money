@@ -19,7 +19,7 @@ symbols: [filterPaidHistory, CardPurchaseFormDialog, buildHistoryRows, filterHis
 business_rules: [BR-FIN-001, BR-FIN-013]
 adrs: [ADR-020]
 tests: [packages/core/src/application/paid-history.test.ts, client/src/lib/view-models.test.ts, client/src/features/features.test.tsx]
-last_verified_commit: 7903717+T-042d
+last_verified_commit: 7903717+T-042g
 ---
 
 # Histórico em `/gastos` (CLIENT-011/012)
@@ -43,4 +43,5 @@ last_verified_commit: 7903717+T-042d
 - Registrar/editar: `addExpense`/`updateExpense` (data dentro do ciclo, valor > 0 em centavos — máscara
   igual à do app). Excluir: confirmação + `deleteExpense` (exclusão lógica, chega ao mobile no pull).
 - Falha ao gravar: diálogo continua aberto com a mensagem; a tabela não muda.
+- Compra parcelada no cartão aparece **uma linha por parcela** (n/N), na data da compra somada mês a mês (editar a data da compra reposiciona todas); parcelas por vir ficam em cinza com "a vencer" e, como as quitadas antes do app, não entram no total. Lápis e lixeira atuam na compra inteira (`sourceId`). BR-FIN-038.
 - Registrar compra no cartão, pagar fixa e pagar fatura ficam para o P1; aqui só se consulta.

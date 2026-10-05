@@ -21,7 +21,7 @@ code:
 symbols: [collectDirty, acknowledge, markAllClean, mapSupabaseError, filterPaidHistory, selectPaidHistory, sumPaidHistory, selectCategorizedItems, filterCategorizedItems, summarizeByCategory]
 adrs: [ADR-022, ADR-020, ADR-001]
 tests: [packages/core/src/contract/dirty.test.ts, packages/core/src/application/category-analysis.test.ts, packages/core/src/application/paid-history.test.ts, packages/core/src/application/card-view.test.ts, packages/core/src/application/export-data.test.ts]
-last_verified_commit: 7903717+T-042d
+last_verified_commit: 7903717+T-042g
 ---
 
 # Pacote @manager-money/core

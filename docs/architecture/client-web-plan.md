@@ -15,7 +15,7 @@ code:
   - .github/workflows/ci.yml
   - client/README.md
 adrs: [ADR-019, ADR-020, ADR-021, ADR-022, ADR-004, ADR-006]
-last_verified_commit: 7903717+T-042e
+last_verified_commit: 7903717+T-042g
 ---
 
 # Reorganização do repositório

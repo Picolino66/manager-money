@@ -19,10 +19,10 @@ export type HistoryFilter = PaidHistoryFilter;
 export const EMPTY_FILTER: HistoryFilter = EMPTY_PAID_HISTORY_FILTER;
 
 /** Itens pagos de todos os ciclos vivos, do mais recente para o mais antigo. */
-export function buildHistoryRows(state: LocalState): HistoryRow[] {
+export function buildHistoryRows(state: LocalState, today?: string): HistoryRow[] {
   const cycles = new Map(state.cycles.filter(isLive).map((cycle) => [cycle.id, cycle]));
 
-  return selectPaidHistory(state).map((item) => {
+  return selectPaidHistory(state, today).map((item) => {
     const cycle = item.cycleId ? cycles.get(item.cycleId) : undefined;
 
     return {

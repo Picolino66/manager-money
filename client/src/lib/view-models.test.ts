@@ -102,6 +102,36 @@ describe('histórico (tudo que foi pago)', () => {
   });
 });
 
+describe('histórico: parcelas do cartão (BR-FIN-038)', () => {
+  it('compra 3x vira 3 linhas (1/3, 2/3, 3/3); só a de hoje soma; lápis aponta a compra', () => {
+    let state = userFixture();
+    state = saveCreditCard(state, { name: 'Nubank', closingDay: 1, dueDay: 10 }, at(2026, 11, 8));
+    state = addCardPurchase(
+      state,
+      {
+        cardId: state.creditCards[0]!.id,
+        description: 'Notebook',
+        category: 'Lazer',
+        totalAmount: 90000,
+        installments: 3,
+        date: '2026-11-10',
+      },
+      at(2026, 11, 10),
+    );
+    const parcels = buildHistoryRows(state, '2026-11-12').filter((row) => row.type === 'card');
+
+    expect(parcels.map((row) => row.name).sort()).toEqual([
+      'Notebook (1/3)',
+      'Notebook (2/3)',
+      'Notebook (3/3)',
+    ]);
+    expect(parcels.map((row) => row.amount)).toEqual([30000, 30000, 30000]);
+    expect(parcels.filter((row) => row.upcoming)).toHaveLength(2);
+    expect(sumAmounts(parcels)).toBe(30000);
+    expect(new Set(parcels.map((row) => row.sourceId)).size).toBe(1);
+  });
+});
+
 describe('histórico com cartão e fixas', () => {
   function paidFixture() {
     let state = userFixture();
