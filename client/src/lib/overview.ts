@@ -1,4 +1,4 @@
-import { eachDayOfInterval, isAfter, parseISO, startOfDay } from 'date-fns';
+import { addDays, eachDayOfInterval, isAfter, parseISO, startOfDay } from 'date-fns';
 
 import {
   selectActiveCreditCards,
@@ -10,17 +10,28 @@ import {
   CreditSnapshot,
   UpcomingCommitment,
 } from '@manager-money/core/application/selectors';
+import {
+  CreditDailyPoint,
+  selectCreditDailySeries,
+} from '@manager-money/core/application/credit-series';
 import { LocalState } from '@manager-money/core/application/state';
 import { CardLimitUsage } from '@manager-money/core/domain/financial/credit-card';
 import {
   buildDashboardSummary,
   calculateDailyLimitForDate,
+  calculateSpentBeforeDate,
   calculateTodaySpent,
 } from '@manager-money/core/domain/financial/financial.calculations';
 import { DashboardSummary, MoneyCents } from '@manager-money/core/domain/financial/financial.types';
 import { toISODate } from '@manager-money/core/utils/date';
 
-export type DailyPoint = { date: string; spent: MoneyCents; limit: MoneyCents };
+/** Saldo do dia: gasto, limite previsto e disponível no ciclo ao fim do dia. */
+export type DailyPoint = {
+  date: string;
+  spent: MoneyCents;
+  limit: MoneyCents;
+  available: MoneyCents;
+};
 
 export type CardLimitView = { id: string; name: string; usage: CardLimitUsage | null };
 
@@ -37,6 +48,7 @@ export type OverviewView =
       cards: CardLimitView[];
       credit: CreditSnapshot;
       daily: DailyPoint[];
+      creditDaily: CreditDailyPoint[];
     };
 
 /**
@@ -77,6 +89,12 @@ export function buildOverview(state: LocalState, now: Date): OverviewView {
       date: toISODate(day),
       spent: calculateTodaySpent(month.expenses, day),
       limit: calculateDailyLimitForDate(month, day),
+      available:
+        month.initialAvailableAmount - calculateSpentBeforeDate(month.expenses, addDays(day, 1)),
     })),
+    creditDaily: selectCreditDailySeries(
+      state,
+      days.map((day) => toISODate(day)),
+    ),
   };
 }

@@ -113,18 +113,36 @@ describe('login', () => {
 });
 
 describe('visão geral', () => {
-  it('mostra os KPIs do ciclo ativo', async () => {
+  it('mostra os 5 cards na ordem pedida e os dois gráficos com tabela', async () => {
     signedIn();
     renderApp('/');
 
     expect(await screen.findByText('Ainda pode gastar hoje')).toBeInTheDocument();
-    expect(screen.getByText('Disponível no ciclo')).toBeInTheDocument();
-    expect(screen.getByText('Disponível no crédito')).toBeInTheDocument();
-    expect(screen.getByText('Gasto no saldo')).toBeInTheDocument();
-    expect(screen.getByText('Gasto no crédito')).toBeInTheDocument();
+    const order = [
+      'Ainda pode gastar hoje',
+      'Gasto no saldo',
+      'Disponível no ciclo',
+      'Gasto no crédito',
+      'Disponível no crédito',
+    ].map((label) => screen.getAllByText(label)[0]!);
+
+    order.slice(1).forEach((node, index) => {
+      expect(order[index]!.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING).toBe(
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+    });
     expect(screen.getByText('Nenhuma fatura vence neste ciclo.')).toBeInTheDocument();
     expect(screen.queryByText('Limite previsto para hoje')).not.toBeInTheDocument();
     expect(screen.getByText(/Ciclo atual|Ciclo ativo/)).toBeInTheDocument();
+
+    // Gráfico 1: saldo (gasto, limite previsto, disponível); gráfico 2: crédito.
+    expect(screen.getByText('Saldo no ciclo')).toBeInTheDocument();
+    expect(screen.getByText('Crédito no ciclo')).toBeInTheDocument();
+    expect(screen.getAllByText('Ver dados em tabela')).toHaveLength(2);
+    for (const column of ['Gasto do saldo', 'Limite previsto', 'Gasto do crédito']) {
+      expect(screen.getAllByText(column).length).toBeGreaterThan(0);
+    }
+    expect(screen.getAllByText('Disponível de crédito').length).toBeGreaterThan(0);
   });
 });
 

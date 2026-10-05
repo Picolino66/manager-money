@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-05T03:34:00.005Z",
-  "source_commit": "986fc84",
+  "generated_at": "2026-10-05T03:55:54.044Z",
+  "source_commit": "04a4e76",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "features": [
@@ -1641,7 +1641,7 @@
       "type": "feature",
       "module": "web",
       "title": "Visão geral do ciclo ativo (web)",
-      "summary": "KPIs do ciclo ativo (ainda pode gastar hoje, disponível no ciclo, disponível no crédito, gasto no saldo, gasto no crédito das faturas que vencem no ciclo), gráfico de gasto diário vs. limite, compromissos reservados e limite dos cartões, todos calculados pelo núcleo.",
+      "summary": "KPIs do ciclo ativo na ordem: ainda pode gastar hoje, gasto no saldo, disponível no ciclo, gasto no crédito (faturas que vencem no ciclo) e disponível no crédito; dois gráficos diários (saldo e crédito), compromissos reservados e limite dos cartões, todos calculados pelo núcleo.",
       "doc": "modules/web/overview.md",
       "state": "implemented",
       "keywords": [
@@ -1652,9 +1652,11 @@
         "kpi"
       ],
       "symbols": [
+        "selectCreditDailySeries",
         "buildOverview",
         "OverviewPage",
-        "moneyTicks"
+        "moneyTicks",
+        "moneyTicksBetween"
       ],
       "business_rules": [
         "BR-FIN-004",
@@ -1667,7 +1669,9 @@
       ],
       "tests": [
         "client/src/lib/view-models.test.ts",
-        "client/src/lib/chart.test.ts"
+        "client/src/lib/chart.test.ts",
+        "packages/core/src/application/credit-series.test.ts",
+        "client/src/features/features.test.tsx"
       ],
       "spec": "SPEC-022"
     },

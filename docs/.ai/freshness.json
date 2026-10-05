@@ -1,7 +1,7 @@
 {
   "schema_version": "1",
-  "generated_at": "2026-10-05T03:34:00.005Z",
-  "source_commit": "986fc84",
+  "generated_at": "2026-10-05T03:55:54.044Z",
+  "source_commit": "04a4e76",
   "generator": "scripts/ai-docs/build-index.mjs",
   "repository_id": "manager-money",
   "documents": {
@@ -694,12 +694,14 @@
     },
     "modules/web/overview.md": {
       "id": "web.overview",
-      "last_verified_commit": "7903717+T-042i",
+      "last_verified_commit": "7903717+T-042l",
       "state": "fresh",
       "source_hashes": {
-        "buildOverview": "sha256:d0aaa07ff1516bf44325b85861c4e7ec4a2c4a143848aca609848d7c0535618a",
-        "OverviewPage": "sha256:ea14761bff9b943fe94b485a36be44c385949582655dfe1cce80e556c5fee8b2",
-        "moneyTicks": "sha256:17e8af977a5885e407b51b5c214f62778307504df31b3e7017330062b3844a54"
+        "selectCreditDailySeries": "sha256:a43403894d94912d837d8115cf83bd34b961936c5ae7e3d5d70034c9cf5b1fb7",
+        "buildOverview": "sha256:60e7ff2b862746e0744b6b2b28db1adcd8092d824aad6a93c2e48f2097fccb8a",
+        "OverviewPage": "sha256:e1c239cbf3826a2530429f067c780c3e2a68a859254532e9ac68728035205100",
+        "moneyTicks": "sha256:17e8af977a5885e407b51b5c214f62778307504df31b3e7017330062b3844a54",
+        "moneyTicksBetween": "sha256:987522fec5b7788e5a19b9edb1e2cb7617b04d2c8d970c9f8e40e8d119c40f18"
       }
     },
     "modules/web/settings.md": {

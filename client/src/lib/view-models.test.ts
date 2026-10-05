@@ -53,6 +53,12 @@ describe('visão geral (paridade com o Hoje do app)', () => {
       '2026-11-12',
     ]);
     expect(view.daily.find((point) => point.date === '2026-11-08')?.spent).toBe(3000);
+    // Disponível ao fim de cada dia: o último é o "disponível no ciclo" do resumo; só cai com gasto.
+    expect(view.daily.at(-1)?.available).toBe(view.summary.remainingAvailableAmount);
+    expect(view.daily[0]!.available).toBeGreaterThan(view.daily.at(-1)!.available);
+    // Crédito: um ponto por dia (sem cartão, tudo zerado e sem limite).
+    expect(view.creditDaily).toHaveLength(view.daily.length);
+    expect(view.creditDaily.every((point) => point.creditAvailable === null)).toBe(true);
   });
 
   it('estados sem configuração e sem ciclo', () => {
