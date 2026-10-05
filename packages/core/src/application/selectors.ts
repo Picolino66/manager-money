@@ -155,6 +155,44 @@ export function selectPendingFixedExpenses(state: LocalState, cycleId: string): 
   );
 }
 
+/**
+ * BR-FIN-035: por que uma fixa recorrente no cartão continua pendente no ciclo ativo (id da fixa →
+ * mensagem). Só entram as pendentes com `recurringCardId`.
+ */
+export function selectRecurringIssues(state: LocalState, cycleId: string): Record<string, string> {
+  const cycle = state.cycles.find((record) => record.id === cycleId && isLive(record));
+
+  if (!cycle) {
+    return {};
+  }
+
+  const cycleKey = cycleKeyFromStartDate(cycle.startDate);
+
+  return Object.fromEntries(
+    selectPendingFixedExpenses(state, cycleId).flatMap((expense) => {
+      if (expense.type !== 'permanent' || !expense.recurringCardId) {
+        return [];
+      }
+
+      const card = state.creditCards.find(
+        (record) => record.id === expense.recurringCardId && isLive(record),
+      );
+      const undone = state.fixedPayments.some(
+        (payment) => payment.id === `auto-pay-${cycleKey}-${expense.id}`,
+      );
+      const message = !card
+        ? 'O cartão desta despesa recorrente foi excluído.'
+        : !card.active
+          ? `O cartão ${card.name} está inativo: a despesa não foi lançada.`
+          : undone
+            ? 'Lançamento automático desfeito neste ciclo.'
+            : 'Não foi possível lançar no cartão neste ciclo.';
+
+      return [[expense.id, message] as const];
+    }),
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Cartões, faturas e limite (BR-FIN-025, BR-FIN-026)
 // ---------------------------------------------------------------------------
@@ -265,7 +303,13 @@ export function selectCycleProjections(state: LocalState, now: Date, count = 3):
     ? cycleKeyFromStartDate(cycle.startDate)
     : cycleKeyFromStartDate(toISODate(calculateDefaultCycleStartDate(now, config.payday)));
 
-  return projectCycles(config, state.cardPurchases.filter(isLive), referenceKey, count);
+  return projectCycles(
+    config,
+    state.cardPurchases.filter(isLive),
+    referenceKey,
+    count,
+    selectCreditCards(state),
+  );
 }
 
 /**

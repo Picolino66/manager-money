@@ -38,6 +38,8 @@ export type FixedExpenseRow = RowMeta & {
   started_at_cycle_id: string | null;
   /** Contrato v1 aditivo (ADR-017): ausente em linhas antigas = ativa. */
   active?: boolean;
+  /** Contrato v1 aditivo (ADR-023): cartão da fixa recorrente; ausente/nulo = pagamento manual. */
+  recurring_card_id?: string | null;
 };
 
 export type CreditCardRow = RowMeta & {

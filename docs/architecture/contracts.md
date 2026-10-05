@@ -17,7 +17,7 @@ code:
   - app/src/infrastructure/sync/supabase-remote.ts
   - packages/core/src/contract/mappers.ts
 adrs: [ADR-003, ADR-004, ADR-008, ADR-017, ADR-018]
-last_verified_commit: 3b9bf25+T-033
+last_verified_commit: 7903717+T-042
 ---
 
 # Contratos de dados e API — v1
@@ -45,7 +45,7 @@ cycles 1─N extra_incomes
 | Entidade | Chave | Regras garantidas no servidor |
 |---|---|---|
 | `settings` | `user_id` | valores ≥ 0; `payday` entre 1 e 28 (BR-FIN-002); até 50 categorias |
-| `fixed_expenses` | `(user_id, id)` | forma por `kind`; `remaining ≤ total` (BR-FIN-010); `active` boolean, padrão `true` (ADR-017) |
+| `fixed_expenses` | `(user_id, id)` | forma por `kind`; `remaining ≤ total` (BR-FIN-010); `active` boolean, padrão `true` (ADR-017); `recurring_card_id` texto nulável, só `kind='permanent'`, **sem FK** (ADR-023) |
 | `credit_cards` | `(user_id, id)` | nome 1–40; `closing_day` e `due_day` entre 1 e 28 (BR-FIN-025); `credit_limit` nulo ou ≥ 0; `active` boolean, padrão `true` (BR-FIN-026/028) |
 | `card_purchases` | `(user_id, id)` | `total_amount > 0` (com juros); 1–48 parcelas; `first_cycle_key` `yyyy-MM`; `first_statement_key` nulo ou `yyyy-MM`; `0 ≤ settled_installments < installments` (padrão 0); `origin` nulo ou `'existing'`; `kind` nulo ou `'statement-balance'` e `included_in_balance` boolean, padrão `false` (ADR-018); FK para o cartão (BR-FIN-020/025/027/029/032) |
 | `statement_payments` | `(user_id, id)` | **vários lançamentos por fatura** (id gerado no cliente; o índice único `statement_payments_one_per_statement` da ADR-017 foi **removido** e virou o índice comum `statement_payments_statement_idx` em `(user_id, card_id, statement_key)` vivos); `statement_key` `yyyy-MM`; `statement_amount ≥ 0`; `charges` **nulável, sem default**, nulo ou ≥ 0 (linha de cliente antigo chega nula; o app deriva `pago − fatura`); `paid_amount ≥ 0 and paid_amount + coalesce(charges, 0) > 0` (substitui `paid_amount ≥ statement_amount`); FKs para o cartão e o ciclo; RLS sem DELETE (BR-FIN-026/033) |
@@ -74,6 +74,7 @@ Valores monetários são `bigint` em centavos no banco e `number` inteiro no cli
 | `fixed_expenses.installment_amount` | `fixedExpense.installmentAmount` | centavos |
 | `fixed_expenses.total_installments` / `remaining_installments` | idem camelCase | inteiros |
 | `fixed_expenses.started_at_cycle_id` | `fixedExpense.startedAtCycleId` | `string \| undefined` |
+| `fixed_expenses.recurring_card_id` | `fixedExpense.recurringCardId?` | `string \| undefined` (BR-FIN-035); nulo/ausente = pagamento manual |
 | `fixed_expenses.active` | `fixedExpense.active?` | `boolean`; ausente/`true` = ativa (o mapper só grava `active: false` no local) |
 | `credit_cards.closing_day` / `due_day` | `creditCard.closingDay` / `dueDay` | 1–28 |
 | `credit_cards.credit_limit` / `active` | `creditCard.creditLimit` / `active` | centavos ou `null` (não informado) / `boolean` (ausente = `true`) |

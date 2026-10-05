@@ -18,7 +18,7 @@ symbols: [calculatePrimaryPayday, calculatePrimaryIncomeSource, saveConfig, calc
 adrs: [ADR-013, ADR-016, ADR-017]
 tests: [packages/core/src/application/cycle.use-cases.test.ts, app/src/infrastructure/storage/local-store.test.ts, packages/core/src/contract/mappers.test.ts, app/src/screens/screens.test.tsx]
 business_rules: [BR-FIN-004, BR-FIN-018, BR-FIN-024]
-last_verified_commit: c47cf18+T-025
+last_verified_commit: 7903717+T-042
 ---
 
 # Múltiplas fontes de renda

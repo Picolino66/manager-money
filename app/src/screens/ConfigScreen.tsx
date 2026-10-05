@@ -31,6 +31,8 @@ import {
 } from '@manager-money/core/domain/financial/financial.types';
 import { spacing, typography } from '../design/theme';
 import { makeStyles, useTheme } from '../design/useTheme';
+import { selectCreditCards } from '@manager-money/core/application/selectors';
+import { SelectField } from '../components/SelectField';
 import { useFinancialStore } from '../store/financial.store';
 import { formatCurrency } from '@manager-money/core/utils/currency';
 
@@ -64,6 +66,7 @@ const configSchema = z.object({
       category: z.string().trim().min(1),
       amount: z.number().int().min(0, 'Valor não pode ser negativo.'),
       active: z.boolean().optional(),
+      recurringCardId: z.string().optional(),
     }),
   ),
   installmentExpenses: z.array(
@@ -109,6 +112,8 @@ export function ConfigScreen({ navigation }: Props) {
   const config = useFinancialStore((state) => state.config);
   const activeMonth = useFinancialStore((state) => state.activeMonth);
   const saveConfig = useFinancialStore((state) => state.saveConfig);
+  const doc = useFinancialStore((state) => state.doc);
+  const cards = selectCreditCards(doc);
   const categories = getSortedCategories(config);
   const [isPermanentExpanded, setIsPermanentExpanded] = useState(false);
   const [isInstallmentExpanded, setIsInstallmentExpanded] = useState(false);
@@ -472,6 +477,18 @@ export function ConfigScreen({ navigation }: Props) {
                 />
                 <Controller
                   control={control}
+                  name={`permanentExpenses.${index}.recurringCardId`}
+                  render={({ field: itemField }) => (
+                    <RecurringCardField
+                      cards={cards}
+                      index={index}
+                      onChange={itemField.onChange}
+                      value={itemField.value}
+                    />
+                  )}
+                />
+                <Controller
+                  control={control}
                   name={`permanentExpenses.${index}.active`}
                   render={({ field: itemField }) => (
                     <ActiveToggle
@@ -640,6 +657,71 @@ export function ConfigScreen({ navigation }: Props) {
   );
 }
 
+type RecurringCardFieldProps = {
+  cards: { id: string; name: string; active: boolean }[];
+  index: number;
+  value: string | undefined;
+  onChange: (value: string | undefined) => void;
+};
+
+/**
+ * BR-FIN-035: marca a despesa fixa como recorrente no cartão de crédito. Ao abrir cada ciclo ela é
+ * lançada sozinha nesse cartão (1 parcela, sem juros). Só cartões ativos podem ser escolhidos.
+ */
+function RecurringCardField({ cards, index, value, onChange }: RecurringCardFieldProps) {
+  const { colors } = useTheme();
+  const styles = useStyles();
+  const activeCards = cards.filter((card) => card.active);
+  const selected = cards.find((card) => card.id === value);
+  const options = [...activeCards, ...(selected && !selected.active ? [selected] : [])].map(
+    (card) => ({ label: card.active ? card.name : `${card.name} (inativo)`, value: card.id }),
+  );
+  const enabled = Boolean(value);
+
+  function toggle(next: boolean) {
+    onChange(next ? (activeCards[0]?.id ?? undefined) : undefined);
+  }
+
+  return (
+    <View style={styles.recurringBox}>
+      <View style={styles.activeRow}>
+        <View style={styles.activeText}>
+          <Text style={styles.activeLabel}>Recorrente no cartão de crédito</Text>
+          <Text style={styles.hint}>
+            {activeCards.length === 0 && !enabled
+              ? 'Cadastre um cartão em Cartões para usar.'
+              : 'Lançada sozinha no cartão ao abrir cada ciclo (1 parcela, sem juros).'}
+          </Text>
+        </View>
+        <Switch
+          accessibilityLabel={`Despesa fixa ${index + 1} recorrente no cartão de crédito`}
+          accessibilityRole="switch"
+          disabled={activeCards.length === 0 && !enabled}
+          onValueChange={toggle}
+          thumbColor={colors.surface}
+          trackColor={{ false: colors.disabled, true: colors.primary }}
+          value={enabled}
+        />
+      </View>
+      {enabled ? (
+        <>
+          <SelectField
+            label="Cartão da despesa recorrente"
+            onChange={(next) => onChange(next)}
+            options={options}
+            value={value ?? ''}
+          />
+          {selected && !selected.active ? (
+            <Text style={styles.errorText}>
+              Este cartão está inativo: a despesa não será lançada até você escolher outro.
+            </Text>
+          ) : null}
+        </>
+      ) : null}
+    </View>
+  );
+}
+
 type ActiveToggleProps = {
   accessibilityLabel: string;
   inactiveHint: string;
@@ -670,6 +752,9 @@ function ActiveToggle({ accessibilityLabel, inactiveHint, value, onChange }: Act
 }
 
 const useStyles = makeStyles((colors) => ({
+  recurringBox: {
+    gap: spacing.sm,
+  },
   activeRow: {
     alignItems: 'center',
     flexDirection: 'row',

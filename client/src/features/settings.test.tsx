@@ -89,6 +89,39 @@ describe('configuração financeira', () => {
     expect(gateway.upserts.map((item) => item.table)).not.toContain('expenses');
   });
 
+  it('despesa fixa recorrente no cartão: marca, escolhe o cartão e grava a coluna nova', async () => {
+    signedIn(true);
+    renderApp('/ajustes/configuracao');
+    const user = userEvent.setup();
+
+    expect(screen.queryByLabelText('Cartão da despesa recorrente')).toBeNull();
+    await user.click(
+      await screen.findByRole('checkbox', {
+        name: 'Despesa fixa 1 recorrente no cartão de crédito',
+      }),
+    );
+    expect(await screen.findByLabelText('Cartão da despesa recorrente')).toHaveValue(
+      gatewayCardId(),
+    );
+    await user.click(screen.getByRole('button', { name: 'Salvar configuração' }));
+
+    await waitFor(() =>
+      expect(gateway.rows.fixed_expenses[0]?.recurring_card_id).toBe(gatewayCardId()),
+    );
+    expect(gateway.upserts.map((item) => item.table)).toContain('fixed_expenses');
+  });
+
+  it('sem cartão ativo a opção fica desabilitada com a dica', async () => {
+    signedIn();
+    renderApp('/ajustes/configuracao');
+
+    const box = await screen.findByRole('checkbox', {
+      name: 'Despesa fixa 1 recorrente no cartão de crédito',
+    });
+    expect(box).toBeDisabled();
+    expect(screen.getByText('Cadastre um cartão em Cartões para usar.')).toBeInTheDocument();
+  });
+
   it('plano acima da renda pede confirmação antes de salvar', async () => {
     signedIn();
     renderApp('/ajustes/configuracao');

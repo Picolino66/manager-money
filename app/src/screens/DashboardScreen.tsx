@@ -31,6 +31,7 @@ import {
   selectCardLimitUsage,
   selectCycleAdjustments,
   selectCyclePayments,
+  selectRecurringIssues,
 } from '@manager-money/core/application/selectors';
 import { FixedPaymentRecord, isLive } from '@manager-money/core/application/state';
 import { DayStatus, FixedExpense } from '@manager-money/core/domain/financial/financial.types';
@@ -268,6 +269,7 @@ export function DashboardScreen() {
       <FixedExpensesCard
         expenses={config.fixedExpenses}
         installmentsByPurchaseId={installmentsByPurchaseId}
+        issues={selectRecurringIssues(doc, activeMonth.id)}
         onPay={setPayingExpense}
         onUndo={handleUndoPayment}
         payments={cyclePayments}

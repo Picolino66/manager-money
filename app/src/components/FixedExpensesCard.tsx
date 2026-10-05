@@ -18,16 +18,19 @@ type FixedExpensesCardProps = {
   payments: FixedPaymentRecord[];
   /** Parcelas da compra no cartão por id, para descrever pagamentos no crédito. */
   installmentsByPurchaseId: Record<string, number>;
+  /** BR-FIN-035: por que uma fixa recorrente no cartão continua pendente (id da fixa → mensagem). */
+  issues?: Record<string, string>;
   onPay: (expense: FixedExpense) => void;
   onUndo: (payment: FixedPaymentRecord) => void;
 };
 
 function describePayment(payment: FixedPaymentRecord, installments?: number): string {
   const method = PAYMENT_METHOD_LABELS[payment.method];
+  const automatic = payment.id.startsWith('auto-pay-') ? ' · lançada automaticamente' : '';
 
   return payment.method === 'credit' && installments && installments > 1
-    ? `Pago · ${method} em ${installments}x`
-    : `Pago · ${method}`;
+    ? `Pago · ${method} em ${installments}x${automatic}`
+    : `Pago · ${method}${automatic}`;
 }
 
 /**
@@ -38,6 +41,7 @@ export function FixedExpensesCard({
   expenses,
   payments,
   installmentsByPurchaseId,
+  issues = {},
   onPay,
   onUndo,
 }: FixedExpensesCardProps) {
@@ -113,6 +117,9 @@ export function FixedExpensesCard({
                       )
                     : 'Pendente'}
                 </Text>
+                {!payment && issues[expense.id] ? (
+                  <Text style={styles.issue}>{issues[expense.id]}</Text>
+                ) : null}
               </View>
               <View style={styles.rowAction}>
                 <Text style={styles.amount}>{formatCurrency(amount)}</Text>
@@ -144,6 +151,11 @@ export function FixedExpensesCard({
 }
 
 const useStyles = makeStyles((colors) => ({
+  issue: {
+    color: colors.warning,
+    fontSize: 12,
+    fontWeight: '700',
+  },
   title: {
     color: colors.ink,
     fontSize: typography.sectionTitle,

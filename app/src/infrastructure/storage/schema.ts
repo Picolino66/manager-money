@@ -44,6 +44,7 @@ const fixedExpenseSchema = z.discriminatedUnion('type', [
     category: z.string(),
     amount: cents.min(0),
     active: z.boolean().optional(),
+    recurringCardId: z.string().optional(),
   }),
   z.object({
     ...syncMeta,

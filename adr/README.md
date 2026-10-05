@@ -27,3 +27,4 @@ Fonte primária das decisões arquiteturais. ADRs nunca são apagadas: só passa
 | [ADR-020](ADR-020-client-web-stack-e-integracao.md) | Client web: React + Vite SPA, online direto no Supabase (sem sync) e núcleo compartilhado | F2 (evolução) | ACCEPTED |
 | [ADR-021](ADR-021-tema-claro-e-escuro.md) | Tema claro e escuro (mobile e web) | F4 (evolução) | ACCEPTED |
 | [ADR-022](ADR-022-nucleo-compartilhado-packages-core.md) | Núcleo compartilhado em `packages/core` com npm workspaces | F2 (evolução) | ACCEPTED |
+| [ADR-023](ADR-023-fixa-recorrente-no-cartao.md) | Despesa fixa recorrente no cartão: lançamento automático ao abrir o ciclo | F3 (evolução) | ACCEPTED |

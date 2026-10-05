@@ -1,4 +1,5 @@
 import { calculateFixedExpenseAmount } from '../domain/financial/financial.calculations';
+import { cycleKeyFromStartDate } from '../domain/financial/credit-card';
 import { isActive } from '../domain/financial/financial.types';
 import { PAYMENT_METHODS, PaymentMethod } from '../domain/financial/payments';
 import { clampIsoDate, toISODate } from '../utils/date';
@@ -9,7 +10,7 @@ import {
   requireActiveCycle,
 } from './cycle.use-cases';
 import { DomainError } from './errors';
-import { selectConfig, selectCyclePayments } from './selectors';
+import { selectActiveCycle, selectConfig, selectCyclePayments } from './selectors';
 import {
   CardPurchaseRecord,
   CycleRecord,
@@ -243,4 +244,92 @@ export function deleteExtraIncome(
     },
     ctx,
   );
+}
+
+/**
+ * BR-FIN-035: lança no cartão, ao abrir o ciclo, cada despesa fixa permanente ativa com valor e
+ * `recurringCardId`. É a mesma composição de `payFixedExpense` no crédito (compra de 1 parcela, sem
+ * juros, na data de início do ciclo + pagamento ligado), com ids determinísticos — a abertura do mesmo
+ * ciclo em dois aparelhos não duplica. Qualquer recusa do núcleo (cartão inativo ou excluído, fatura
+ * da data já paga) deixa a fixa pendente e reservada. Não recalcula o saldo: quem chama faz isso.
+ */
+export function launchRecurringFixedExpenses(state: LocalState, ctx: UseCaseContext): LocalState {
+  const cycle = selectActiveCycle(state);
+
+  if (!cycle) {
+    return state;
+  }
+
+  const cycleKey = cycleKeyFromStartDate(cycle.startDate);
+
+  return state.fixedExpenses.reduce((current, fixed) => {
+    if (
+      !isLive(fixed) ||
+      !isActive(fixed) ||
+      fixed.type !== 'permanent' ||
+      !fixed.recurringCardId ||
+      calculateFixedExpenseAmount(fixed) <= 0
+    ) {
+      return current;
+    }
+
+    const paymentId = `auto-pay-${cycleKey}-${fixed.id}`;
+
+    // Já lançada (ou desfeita pelo usuário neste ciclo): nunca lança de novo.
+    if (
+      current.fixedPayments.some(
+        (payment) =>
+          payment.id === paymentId ||
+          (payment.cycleId === cycle.id && payment.fixedExpenseId === fixed.id && isLive(payment)),
+      )
+    ) {
+      return current;
+    }
+
+    try {
+      const amount = calculateFixedExpenseAmount(fixed);
+      const purchase: CardPurchaseRecord = {
+        ...buildCardPurchase(
+          current,
+          {
+            cardId: fixed.recurringCardId,
+            description: fixed.name,
+            category: fixed.category,
+            totalAmount: amount,
+            installments: 1,
+            date: cycle.startDate,
+          },
+          ctx,
+        ),
+        id: `auto-buy-${cycleKey}-${fixed.id}`,
+      };
+      const payment: FixedPaymentRecord = {
+        id: paymentId,
+        cycleId: cycle.id,
+        fixedExpenseId: fixed.id,
+        name: fixed.name,
+        category: fixed.category,
+        method: 'credit',
+        amount,
+        interest: 0,
+        paidAt: cycle.startDate,
+        cardPurchaseId: purchase.id,
+        updatedAt: ctx.now.toISOString(),
+        deletedAt: null,
+        dirty: true,
+      };
+
+      return {
+        ...current,
+        cardPurchases: [...current.cardPurchases, purchase],
+        fixedPayments: [...current.fixedPayments, payment],
+      };
+    } catch (error) {
+      if (error instanceof DomainError) {
+        return current;
+      }
+
+      throw error;
+    }
+  }, state);
 }

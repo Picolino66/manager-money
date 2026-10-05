@@ -8,7 +8,7 @@ summary: >
 code:
   - packages/core/src/domain/financial/financial.calculations.ts
   - packages/core/src/domain/financial/projection.ts
-last_verified_commit: bfe9de6+T-028
+last_verified_commit: 7903717+T-042
 ---
 
 # Visão de produto — Manager Money

@@ -39,6 +39,8 @@ export const configSchema = z.object({
       category: z.string().trim().min(1),
       amount: z.number().int().min(0, 'Valor não pode ser negativo.'),
       active: z.boolean(),
+      /** BR-FIN-035: cartão da fixa recorrente; ausente = pagamento manual. */
+      recurringCardId: z.string().optional(),
     }),
   ),
   installmentExpenses: z.array(
@@ -82,6 +84,7 @@ export function configToForm(
               category: expense.category,
               amount: expense.amount,
               active: expense.active !== false,
+              recurringCardId: expense.recurringCardId,
             },
           ]
         : [],

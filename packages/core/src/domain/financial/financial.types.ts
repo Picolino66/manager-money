@@ -49,6 +49,11 @@ export type PermanentFixedExpense = {
   amount: MoneyCents;
   /** Inativa não entra no ciclo nem na projeção. Ausente = ativa (dados antigos). */
   active?: boolean;
+  /**
+   * Recorrente no cartão de crédito (BR-FIN-035): ao abrir cada ciclo, a fixa é lançada sozinha nesse
+   * cartão (1 parcela, sem juros). Ausente = pagamento manual, como antes.
+   */
+  recurringCardId?: string;
 };
 
 export type InstallmentFixedExpense = {

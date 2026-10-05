@@ -2,7 +2,11 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react-nativ
 import { addMonths, format } from 'date-fns';
 import { Alert } from 'react-native';
 
-import { addCardPurchase, saveCreditCard } from '@manager-money/core/application/card.use-cases';
+import {
+  addCardPurchase,
+  saveCreditCard,
+  setCreditCardActive,
+} from '@manager-money/core/application/card.use-cases';
 import { addExpense, openCycle, saveConfig } from '@manager-money/core/application/cycle.use-cases';
 import { payFixedExpense } from '@manager-money/core/application/payment.use-cases';
 import {
@@ -274,6 +278,83 @@ describe('ConfigScreen (BR-FIN-018: várias fontes de renda)', () => {
     expect(useFinancialStore.getState().doc.fixedExpenses[0]).not.toHaveProperty('active');
   });
 
+  it('despesa fixa recorrente no cartão: liga o interruptor, escolhe o cartão e salva', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    const fixed = [
+      {
+        id: 'netflix',
+        type: 'permanent' as const,
+        name: 'Netflix',
+        category: 'Lazer',
+        amount: 5000,
+      },
+    ];
+    let doc = saveConfig(createEmptyState(), { ...config, fixedExpenses: fixed }, ctx);
+    doc = saveCreditCard(doc, { name: 'Nubank', closingDay: 5, dueDay: 15 }, ctx);
+    doc = saveCreditCard(doc, { name: 'Inter', closingDay: 8, dueDay: 18 }, ctx);
+    await seed(doc);
+    render(
+      <ConfigScreen
+        navigation={navigation}
+        route={{ key: 'k', name: 'Config', params: undefined }}
+      />,
+    );
+    fireEvent.press(screen.getByText('Despesas fixas'));
+
+    // Desligada por padrão: sem escolha de cartão.
+    expect(screen.queryByText('Cartão da despesa recorrente')).toBeNull();
+    fireEvent(
+      screen.getByLabelText('Despesa fixa 1 recorrente no cartão de crédito'),
+      'valueChange',
+      true,
+    );
+    expect(await screen.findByText('Cartão da despesa recorrente')).toBeTruthy();
+    fireEvent.press(screen.getAllByText('Nubank')[0]!);
+    fireEvent.press(await screen.findByText('Inter'));
+
+    fireEvent.press(screen.getByText('Salvar configuração'));
+    await waitFor(() =>
+      expect(useFinancialStore.getState().doc.fixedExpenses[0]).toHaveProperty('recurringCardId'),
+    );
+    const { doc: saved } = useFinancialStore.getState();
+    const inter = saved.creditCards.find((card) => card.name === 'Inter')!;
+    expect(saved.fixedExpenses[0]).toMatchObject({ recurringCardId: inter.id, dirty: true });
+  });
+
+  it('sem cartão ativo o interruptor fica desabilitado com a dica', async () => {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    await seed(
+      saveConfig(
+        createEmptyState(),
+        {
+          ...config,
+          fixedExpenses: [
+            {
+              id: 'n',
+              type: 'permanent' as const,
+              name: 'Netflix',
+              category: 'Lazer',
+              amount: 5000,
+            },
+          ],
+        },
+        ctx,
+      ),
+    );
+    render(
+      <ConfigScreen
+        navigation={navigation}
+        route={{ key: 'k', name: 'Config', params: undefined }}
+      />,
+    );
+    fireEvent.press(screen.getByText('Despesas fixas'));
+
+    expect(screen.getByText('Cadastre um cartão em Cartões para usar.')).toBeTruthy();
+    expect(
+      screen.getByLabelText('Despesa fixa 1 recorrente no cartão de crédito').props.disabled,
+    ).toBe(true);
+  });
+
   it('exige nome e valor em cada fonte', async () => {
     render(
       <ConfigScreen
@@ -309,6 +390,50 @@ function docWithFixed(withCard = false) {
 
 const expandFixed = () =>
   fireEvent.press(screen.getByLabelText('Mostrar ou ocultar despesas fixas do ciclo'));
+
+describe('Hoje: fixa recorrente no cartão (BR-FIN-035)', () => {
+  function recurringDoc(cardActive: boolean) {
+    const ctx = { now: new Date(), newId: (p: string) => `${p}-${Math.random()}` };
+    const fixed = (recurringCardId?: string) => [
+      {
+        id: 'netflix',
+        type: 'permanent' as const,
+        name: 'Netflix',
+        category: 'Lazer',
+        amount: 5000,
+        ...(recurringCardId ? { recurringCardId } : {}),
+      },
+    ];
+    let doc = saveConfig(createEmptyState(), { ...config, fixedExpenses: fixed() }, ctx);
+    doc = saveCreditCard(doc, { name: 'Nubank', closingDay: 28, dueDay: 5 }, ctx);
+    const cardId = doc.creditCards[0]!.id;
+    doc = saveConfig(doc, { ...config, fixedExpenses: fixed(cardId) }, ctx);
+    if (!cardActive) doc = setCreditCardActive(doc, cardId, false, ctx);
+
+    return openCycle(doc, ctx);
+  }
+
+  it('ao abrir o ciclo a fixa já aparece paga no cartão, lançada automaticamente', async () => {
+    await seed(recurringDoc(true));
+    render(<DashboardScreen />);
+    expandFixed();
+
+    expect(await screen.findByText(/Pago · Crédito · lançada automaticamente/)).toBeTruthy();
+    expect(screen.queryByLabelText('Pagar Netflix')).toBeNull();
+    expect(useFinancialStore.getState().doc.cardPurchases).toHaveLength(1);
+  });
+
+  it('cartão inativo: fica pendente com o motivo e pode ser paga manualmente', async () => {
+    await seed(recurringDoc(false));
+    render(<DashboardScreen />);
+    expandFixed();
+
+    expect(
+      await screen.findByText('O cartão Nubank está inativo: a despesa não foi lançada.'),
+    ).toBeTruthy();
+    expect(screen.getByLabelText('Pagar Netflix')).toBeTruthy();
+  });
+});
 
 describe('Despesas fixas do ciclo (BR-FIN-021/022)', () => {
   it('nasce encolhida só com o resumo, expande ao tocar e a tela não tem mais o botão Config', async () => {

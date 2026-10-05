@@ -96,6 +96,7 @@ export function fixedExpenseToRow(record: FixedExpenseRecord, userId: string): F
       total_installments: record.totalInstallments,
       remaining_installments: record.remainingInstallments,
       started_at_cycle_id: record.startedAtCycleId ?? null,
+      recurring_card_id: null,
     };
   }
 
@@ -106,6 +107,7 @@ export function fixedExpenseToRow(record: FixedExpenseRecord, userId: string): F
     total_installments: null,
     remaining_installments: null,
     started_at_cycle_id: null,
+    recurring_card_id: record.recurringCardId ?? null,
   };
 }
 
@@ -138,6 +140,7 @@ export function fixedExpenseFromRow(row: FixedExpenseRow): FixedExpenseRecord {
     name: row.name,
     category: row.category,
     amount: Number(row.amount ?? 0),
+    ...(row.recurring_card_id ? { recurringCardId: row.recurring_card_id } : {}),
   };
 }
 

@@ -26,6 +26,7 @@ import {
 } from '../domain/financial/financial.types';
 import { toISODate } from '../utils/date';
 import { DomainError } from './errors';
+import { launchRecurringFixedExpenses } from './payment.use-cases';
 import {
   selectActiveCycle,
   selectClosedMonths,
@@ -87,6 +88,7 @@ function fixedExpenseFields(expense: FixedExpense): string {
         expense.category,
         expense.amount,
         isActive(expense),
+        expense.recurringCardId ?? null,
       ]);
 }
 
@@ -211,12 +213,56 @@ function findEditableExpense(state: LocalState, cycle: CycleRecord, expenseId: s
 // Configuração (RF-01, RF-02, RF-12)
 // ---------------------------------------------------------------------------
 
+/** `recurringCardId` vazio vira ausente; só a fixa permanente tem o campo (BR-FIN-035). */
+function normalizeRecurringCard(expense: FixedExpense): FixedExpense {
+  if (expense.type === 'installment') {
+    return expense;
+  }
+
+  const { recurringCardId, ...rest } = expense;
+
+  return recurringCardId?.trim() ? { ...rest, recurringCardId: recurringCardId.trim() } : rest;
+}
+
+/**
+ * BR-FIN-035: o cartão da fixa recorrente precisa existir e estar ativo ao ser marcado. Quem já tinha
+ * a marca e não mudou o cartão passa: cartão inativado depois só impede o lançamento, não o salvar.
+ */
+function assertRecurringCards(state: LocalState, expenses: FixedExpense[]) {
+  for (const expense of expenses) {
+    if (expense.type !== 'permanent' || !expense.recurringCardId) {
+      continue;
+    }
+
+    const unchanged = state.fixedExpenses.some(
+      (record) =>
+        record.id === expense.id &&
+        isLive(record) &&
+        record.type === 'permanent' &&
+        record.recurringCardId === expense.recurringCardId,
+    );
+    const card = state.creditCards.find(
+      (record) => record.id === expense.recurringCardId && isLive(record),
+    );
+
+    if (!unchanged && (!card || !card.active)) {
+      throw new DomainError(
+        `O cartão da despesa recorrente "${expense.name.trim()}" precisa existir e estar ativo.`,
+      );
+    }
+  }
+}
+
 export function saveConfig(
   state: LocalState,
   input: FinancialConfigInput,
   ctx: UseCaseContext,
 ): LocalState {
   const nowIso = ctx.now.toISOString();
+  const fixedInput = input.fixedExpenses.map(normalizeRecurringCard);
+
+  assertRecurringCards(state, fixedInput);
+
   const incomeSources = input.incomeSources.map((source) => ({
     id: source.id,
     name: source.name.trim(),
@@ -263,9 +309,9 @@ export function saveConfig(
       ? currentSettings
       : { ...nextSettingsFields, updatedAt: nowIso, deletedAt: null, dirty: true };
 
-  const inputIds = new Set(input.fixedExpenses.map((expense) => expense.id));
+  const inputIds = new Set(fixedInput.map((expense) => expense.id));
   let fixedExpenses: FixedExpenseRecord[] = state.fixedExpenses.map((record) => {
-    const next = input.fixedExpenses.find((expense) => expense.id === record.id);
+    const next = fixedInput.find((expense) => expense.id === record.id);
 
     if (next) {
       return replaceFixedExpense(record, next, ctx.now);
@@ -274,7 +320,7 @@ export function saveConfig(
     return isLive(record) ? touch({ ...record, deletedAt: nowIso }, ctx.now) : record;
   });
 
-  for (const expense of input.fixedExpenses) {
+  for (const expense of fixedInput) {
     if (!state.fixedExpenses.some((record) => record.id === expense.id)) {
       fixedExpenses.push({ ...expense, updatedAt: nowIso, deletedAt: null, dirty: true });
     }
@@ -391,11 +437,14 @@ export function openCycle(state: LocalState, ctx: UseCaseContext): LocalState {
     sumCarried(lastClosed?.carriedStatements),
   );
 
-  return {
+  const opened: LocalState = {
     ...state,
     fixedExpenses: startPendingInstallments(advanced, cycle.id, ctx.now),
     cycles: [...state.cycles, cycle],
   };
+
+  // BR-FIN-035: fixas recorrentes no cartão são lançadas ao abrir o ciclo; o saldo é recalculado.
+  return recalculateActiveCycleBalance(launchRecurringFixedExpenses(opened, ctx), ctx);
 }
 
 export function canReceiveIncomeEarlyNow(state: LocalState, now: Date): boolean {

@@ -93,6 +93,12 @@ select pg_temp.expect_error($q$insert into public.statement_payments (id,card_id
 select pg_temp.expect_error($q$delete from public.statement_payments where id='sp1'$q$,'42501','DELETE físico de pagamento de fatura negado');
 update public.fixed_expenses set active=false where id='nenhuma';
 do $$ begin raise notice 'ok - coluna active em fixed_expenses disponível'; end $$;
+insert into public.fixed_expenses (id,kind,name,category,amount,recurring_card_id,client_updated_at) values ('fr1','permanent','Netflix','Lazer',5000,'k1',now());
+do $$ begin assert (select recurring_card_id from public.fixed_expenses where id='fr1')='k1'; raise notice 'ok - ADR-023 cartão da fixa recorrente gravado'; end $$;
+select pg_temp.expect_error($q$insert into public.fixed_expenses (id,kind,name,category,installment_amount,total_installments,remaining_installments,recurring_card_id,client_updated_at) values ('fr2','installment','Notebook','Outros',100,3,2,'k1',now())$q$,'23514','parcelamento não pode ser recorrente no cartão');
+select pg_temp.expect_error($q$update public.fixed_expenses set recurring_card_id='' where id='fr1'$q$,'23514','cartão vazio rejeitado');
+update public.fixed_expenses set recurring_card_id=null where id='fr1';
+do $$ begin assert (select recurring_card_id from public.fixed_expenses where id='fr1') is null; raise notice 'ok - recorrência removida (nulo)'; end $$;
 
 -- ordem closed→active na mesma instrução (contrato §3)
 insert into public.cycles (id,start_date,end_date,received_at,started_at,closed_at,status,initial_available_amount,previous_month_debt,final_balance,client_updated_at)

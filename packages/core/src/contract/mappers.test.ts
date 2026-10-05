@@ -244,6 +244,14 @@ describe('mappers (contracts.md §2): ida e volta sem perda', () => {
       installment_amount: null,
     });
     expect(fixedExpenseFromRow(fixedExpenseToRow(permanent, 'u'))).toEqual(permanent);
+    // ADR-023: cartão da fixa recorrente vai e volta; ausente grava nulo e não reaparece.
+    expect(fixedExpenseToRow(permanent, 'u').recurring_card_id).toBeNull();
+    const recurring = { ...permanent, recurringCardId: 'k1' };
+    expect(fixedExpenseToRow(recurring, 'u').recurring_card_id).toBe('k1');
+    expect(fixedExpenseFromRow(fixedExpenseToRow(recurring, 'u'))).toEqual(recurring);
+    expect(fixedExpenseFromRow(fixedExpenseToRow(permanent, 'u'))).not.toHaveProperty(
+      'recurringCardId',
+    );
     expect(fixedExpenseFromRow(fixedExpenseToRow(installment, 'u'))).toEqual(installment);
     const notStarted = { ...installment, startedAtCycleId: undefined };
     expect(fixedExpenseToRow(notStarted, 'u').started_at_cycle_id).toBeNull();

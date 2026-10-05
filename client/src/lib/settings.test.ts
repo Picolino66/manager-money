@@ -66,6 +66,18 @@ describe('configuração financeira (formulário ↔ núcleo)', () => {
     ).toBe(false);
   });
 
+  it('fixa recorrente no cartão atravessa o formulário e vai ao núcleo', () => {
+    const values = configToForm(selectConfig(userFixture()), newId);
+    values.permanentExpenses[0]!.recurringCardId = 'k1';
+
+    expect(formToConfigInput(values, []).fixedExpenses[0]).toMatchObject({
+      type: 'permanent',
+      recurringCardId: 'k1',
+    });
+    expect(configSchema.safeParse(values).success).toBe(true);
+    expect(configToForm(null, newId).permanentExpenses).toEqual([]);
+  });
+
   it('parcelas restantes nunca passam do total', () => {
     const values = configToForm(null, newId);
     values.installmentExpenses = [

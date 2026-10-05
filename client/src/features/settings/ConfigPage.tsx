@@ -5,7 +5,7 @@ import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { saveConfig } from '@manager-money/core/application/cycle.use-cases';
-import { selectConfig } from '@manager-money/core/application/selectors';
+import { selectConfig, selectCreditCards } from '@manager-money/core/application/selectors';
 import { createDefaultContext } from '@manager-money/core/application/state';
 import {
   calculateFixedExpensesTotal,
@@ -48,6 +48,8 @@ export function ConfigPage() {
   const doc = useDataStore((state) => state.doc);
   const run = useDataStore((state) => state.run);
   const config = doc ? selectConfig(doc) : null;
+  const cards = doc ? selectCreditCards(doc) : [];
+  const activeCards = cards.filter((card) => card.active);
   const categories = useMemo(() => getSortedCategories(config), [config]);
   const initial = useMemo(() => configToForm(config, newId), [config]);
   const [error, setError] = useState<string | null>(null);
@@ -305,6 +307,62 @@ export function ConfigPage() {
                     <Trash2 aria-hidden className="h-4 w-4" />
                   </Button>
                 </div>
+                <Controller
+                  control={control}
+                  name={`permanentExpenses.${index}.recurringCardId`}
+                  render={({ field }) => {
+                    const selected = cards.find((card) => card.id === field.value);
+                    const options = [
+                      ...activeCards,
+                      ...(selected && !selected.active ? [selected] : []),
+                    ];
+                    const enabled = Boolean(field.value);
+
+                    return (
+                      <div className="flex flex-col gap-2 md:col-span-full">
+                        <CheckboxField
+                          label="Recorrente no cartão de crédito"
+                          hint={
+                            activeCards.length === 0 && !enabled
+                              ? 'Cadastre um cartão em Cartões para usar.'
+                              : 'Lançada sozinha no cartão ao abrir cada ciclo (1 parcela, sem juros).'
+                          }
+                          aria-label={`Despesa fixa ${index + 1} recorrente no cartão de crédito`}
+                          checked={enabled}
+                          disabled={activeCards.length === 0 && !enabled}
+                          onChange={(event) =>
+                            field.onChange(event.target.checked ? activeCards[0]?.id : undefined)
+                          }
+                        />
+                        {enabled ? (
+                          <div className="max-w-xs">
+                            <Field label="Cartão da despesa recorrente">
+                              {(props) => (
+                                <NativeSelect
+                                  {...props}
+                                  value={field.value ?? ''}
+                                  onChange={(event) => field.onChange(event.target.value)}
+                                >
+                                  {options.map((card) => (
+                                    <option key={card.id} value={card.id}>
+                                      {card.active ? card.name : `${card.name} (inativo)`}
+                                    </option>
+                                  ))}
+                                </NativeSelect>
+                              )}
+                            </Field>
+                            {selected && !selected.active ? (
+                              <p className="mt-1 text-xs text-critical">
+                                Este cartão está inativo: a despesa não será lançada até você
+                                escolher outro.
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  }}
+                />
               </fieldset>
             ))}
           </div>

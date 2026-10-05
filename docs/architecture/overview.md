@@ -13,7 +13,7 @@ code:
   - app/src/infrastructure/sync/sync-engine.ts
   - app/src/store/financial.store.ts
 adrs: [ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007]
-last_verified_commit: 7903717+T-041c
+last_verified_commit: 7903717+T-042
 ---
 
 # Visão de arquitetura
