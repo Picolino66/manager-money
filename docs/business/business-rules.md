@@ -13,7 +13,7 @@ code:
   - packages/core/src/application/card.use-cases.ts
   - packages/core/src/application/selectors.ts
   - app/src/infrastructure/sync/sync-engine.ts
-last_verified_commit: 7903717+T-042b
+last_verified_commit: 7903717+T-042c
 ---
 
 # Regras de negócio

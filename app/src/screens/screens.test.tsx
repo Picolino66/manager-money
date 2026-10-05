@@ -8,7 +8,10 @@ import {
   setCreditCardActive,
 } from '@manager-money/core/application/card.use-cases';
 import { addExpense, openCycle, saveConfig } from '@manager-money/core/application/cycle.use-cases';
-import { payFixedExpense } from '@manager-money/core/application/payment.use-cases';
+import {
+  openCycleAndLaunch,
+  payFixedExpense,
+} from '@manager-money/core/application/payment.use-cases';
 import {
   CardPurchaseRecord,
   createEmptyState,
@@ -411,7 +414,7 @@ describe('Hoje: fixa recorrente no cartão (BR-FIN-035)', () => {
     doc = saveConfig(doc, { ...config, fixedExpenses: fixed(cardId) }, ctx);
     if (!cardActive) doc = setCreditCardActive(doc, cardId, false, ctx);
 
-    return openCycle(doc, ctx);
+    return openCycleAndLaunch(doc, ctx);
   }
 
   it('quando a fatura vira a fixa aparece paga no cartão, lançada automaticamente', async () => {

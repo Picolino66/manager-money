@@ -7,7 +7,7 @@ import { Card } from '../components/Card';
 import { EmptyState } from '../components/EmptyState';
 import { MetricRow } from '../components/MetricRow';
 import { Screen } from '../components/Screen';
-import { openCycle } from '@manager-money/core/application/cycle.use-cases';
+import { openCycleAndLaunch } from '@manager-money/core/application/payment.use-cases';
 import {
   calculateDailyLimit,
   calculateFixedExpenseAmount,
@@ -33,7 +33,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'StartMonth'>;
  */
 function previewCycle(doc: LocalState, now: Date) {
   try {
-    const preview = openCycle(doc, { now, newId: (prefix) => `${prefix}-preview` });
+    const preview = openCycleAndLaunch(doc, { now, newId: (prefix) => `${prefix}-preview` });
     const cycle = selectActiveCycle(preview);
 
     return cycle

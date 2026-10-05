@@ -26,7 +26,6 @@ import {
 } from '../domain/financial/financial.types';
 import { toISODate } from '../utils/date';
 import { DomainError } from './errors';
-import { launchRecurringFixedExpenses } from './payment.use-cases';
 import {
   selectActiveCycle,
   selectClosedMonths,
@@ -443,8 +442,7 @@ export function openCycle(state: LocalState, ctx: UseCaseContext): LocalState {
     cycles: [...state.cycles, cycle],
   };
 
-  // BR-FIN-035: cobranças recorrentes cuja virada de fatura já caiu no ciclo; o saldo é recalculado.
-  return recalculateActiveCycleBalance(launchRecurringFixedExpenses(opened, ctx), ctx);
+  return recalculateActiveCycleBalance(opened, ctx);
 }
 
 export function canReceiveIncomeEarlyNow(state: LocalState, now: Date): boolean {

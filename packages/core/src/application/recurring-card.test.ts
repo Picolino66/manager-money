@@ -1,8 +1,13 @@
 import { statementKeysStartingBetween, statementStartDate } from '../domain/financial/credit-card';
 import { FinancialConfigInput } from '../domain/financial/financial.types';
 import { saveCreditCard, setCreditCardActive } from './card.use-cases';
-import { closeCycle, openCycle, saveConfig } from './cycle.use-cases';
-import { launchRecurringCharges, payFixedExpense, undoFixedPayment } from './payment.use-cases';
+import { closeCycle, saveConfig } from './cycle.use-cases';
+import {
+  launchRecurringCharges,
+  openCycleAndLaunch as openCycle,
+  payFixedExpense,
+  undoFixedPayment,
+} from './payment.use-cases';
 import {
   selectActiveCycle,
   selectCardLimitUsage,

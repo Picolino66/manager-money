@@ -8,7 +8,7 @@ summary: >
   análise de viabilidade e métricas de sucesso.
 code:
   - app/src/store/financial.store.ts
-last_verified_commit: 7903717+T-042b
+last_verified_commit: 7903717+T-042c
 ---
 
 # Requisitos, escopo, viabilidade e métricas — v1.0 (lojas)

@@ -35,7 +35,7 @@ ciclo. O usuário pediu marcar a fixa como recorrente no cartão e escolher qual
   `credit_cards`); validação no núcleo.
 
 ## Consequências
-- `openCycle` e o store do app chamam `launchRecurringCharges` (dependência circular de módulos resolvida por funções
-  chamadas em tempo de execução, sem uso na carga do módulo).
+- O store do app chama `launchRecurringCharges` e abre o ciclo por `openCycleAndLaunch` (em `payment.use-cases`);
+  `openCycle` (ciclo) não importa o módulo de pagamento, para não haver ciclo de importação (o Metro avisa).
 - Aparelhos com versão antiga não lançam; os ids determinísticos evitam duplicar quando os dois lançam.
 - BR-FIN-004/021/022 ganham a menção ao automático; nova regra BR-FIN-035.

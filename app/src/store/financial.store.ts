@@ -182,7 +182,7 @@ export const useFinancialStore = create<FinancialState>((set, get) => {
 
     saveConfig: (input) => run((doc, ctx) => useCases.saveConfig(doc, input, ctx)),
     addCategory: (name) => run((doc, ctx) => useCases.addCategory(doc, name, ctx)),
-    startFinancialCycle: () => run((doc, ctx) => useCases.openCycle(doc, ctx)),
+    startFinancialCycle: () => run((doc, ctx) => paymentUseCases.openCycleAndLaunch(doc, ctx)),
     receiveIncomeEarly: () => run((doc, ctx) => useCases.receiveIncomeEarly(doc, ctx)),
     addExpense: (input) => run((doc, ctx) => useCases.addExpense(doc, input, ctx)),
     updateExpense: (id, input) => run((doc, ctx) => useCases.updateExpense(doc, id, input, ctx)),

@@ -16,7 +16,7 @@ symbols: [saveConfig, calculateIncomeTotal, calculateFixedExpensesTotal, calcula
 adrs: [ADR-017, ADR-023]
 tests: [packages/core/src/application/cycle.use-cases.test.ts, packages/core/src/application/recurring-card.test.ts, packages/core/src/application/financial-vision.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-010, BR-FIN-014, BR-FIN-015, BR-FIN-018, BR-FIN-035]
-last_verified_commit: 7903717+T-042b
+last_verified_commit: 7903717+T-042c
 ---
 
 # Configurar base financeira

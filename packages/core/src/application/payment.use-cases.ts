@@ -8,6 +8,7 @@ import { clampIsoDate, toISODate } from '../utils/date';
 import { buildCardPurchase, canModifyCardPurchase } from './card.use-cases';
 import {
   assertDateWithinCycle,
+  openCycle,
   recalculateActiveCycleBalance,
   requireActiveCycle,
 } from './cycle.use-cases';
@@ -374,4 +375,13 @@ export function launchRecurringCharges(state: LocalState, ctx: UseCaseContext): 
   const launched = launchRecurringFixedExpenses(state, ctx);
 
   return launched === state ? state : recalculateActiveCycleBalance(launched, ctx);
+}
+
+/**
+ * Abre o ciclo e já lança as cobranças recorrentes cuja virada de fatura caiu nele (BR-FIN-035).
+ * Fica aqui, e não em `openCycle`, para o módulo de ciclo não depender do de pagamento (sem ciclo
+ * de importação).
+ */
+export function openCycleAndLaunch(state: LocalState, ctx: UseCaseContext): LocalState {
+  return launchRecurringCharges(openCycle(state, ctx), ctx);
 }

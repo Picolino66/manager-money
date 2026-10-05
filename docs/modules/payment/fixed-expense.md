@@ -21,7 +21,7 @@ symbols: [launchRecurringCharges, selectRecurringIssues, payFixedExpense, undoFi
 adrs: [ADR-015, ADR-014, ADR-017, ADR-023]
 tests: [packages/core/src/application/payment.use-cases.test.ts, packages/core/src/application/recurring-card.test.ts, packages/core/src/application/financial-vision.test.ts, app/src/screens/screens.test.tsx, app/src/infrastructure/sync/sync-engine.test.ts]
 business_rules: [BR-FIN-004, BR-FIN-005, BR-FIN-021, BR-FIN-022, BR-FIN-030, BR-FIN-035]
-last_verified_commit: 7903717+T-042b
+last_verified_commit: 7903717+T-042c
 ---
 
 # Pagar despesas fixas do ciclo
